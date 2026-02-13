@@ -1,26 +1,91 @@
-<div id="<%= dom_id grocery_list %>" class="w-full sm:w-auto my-5 space-y-5">
-  <div>
-    <strong class="block font-medium mb-1">Week of:</strong>
-    <%= grocery_list.week_of %>
-  </div>
-  <div>
-    <strong class="block font-medium mb-1">Ingredient:</strong>
-    <%= grocery_list.ingredient_id %>
-  </div>
-  <div>
-    <strong class="block font-medium mb-1">Meal:</strong>
-    <%= grocery_list.meal_id %>
-  </div>
-  <div>
-    <strong class="block font-medium mb-1">Units:</strong>
-    <%= grocery_list.units %>
-  </div>
-  <div>
-    <strong class="block font-medium mb-1">Checked:</strong>
-    <%= grocery_list.checked? ? "Yes" : "No" %>
-  </div>
-  <div>
-    <strong class="block font-medium mb-1">Manually adjusted:</strong>
-    <%= grocery_list.manually_adjusted? ? "Yes" : "No" %>
-  </div>
-</div>
+<li id="grocery_list_<%= grocery_list.id %>"
+    class="flex justify-between gap-x-6 py-5"
+    data-controller="grocery-item">
+
+  <%= form_with model: grocery_list,
+                class: "flex justify-between gap-x-6 w-full",
+                data: {
+                  grocery_item_target: "form",
+                  turbo: true
+                } do |f| %>
+
+    <!-- Checkbox -->
+    <div class="flex items-center">
+      <%= f.check_box :checked,
+                      checked: grocery_list.checked == true,
+                      data: { action: "change->grocery-item#toggleCheck" },
+                      style: "accent-color: #5f734c;",
+                      class: "h-5 w-5 rounded border-gray-300 focus:ring-[#5f734c] dark:border-gray-600" %>
+    </div>
+
+    <!-- Item Details -->
+    <div class="flex min-w-0 flex-1 gap-x-4 ml-3">
+      <div class="min-w-0 flex-auto">
+        <p class="font-semibold text-gray-900 dark:text-white transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
+          <%= grocery_list.ingredient.ingredient %>
+        </p>
+
+        <p class="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400 transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
+          <%= grocery_list.ingredient.brand %>
+        </p>
+        <p>
+          <%= ingredient_family_tag(grocery_list.ingredient.family) || "-" %>
+        </p>
+      </div>
+    </div>
+
+    <!-- Hidden units field -->
+    <%= f.hidden_field :units, data: { grocery_item_target: "units" } %>
+
+    <!-- Quantity Controls & Info -->
+    <div class=" shrink-0 flex flex-col items-center gap-2">
+      <!-- Quantity Controls -->
+      <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1">
+        <button type="button"
+                data-action="click->grocery-item#decrement"
+                class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          −
+        </button>
+
+        <span class="text-sm font-semibold text-gray-900 dark:text-white min-w-[2ch] text-center">
+          <%= grocery_list.units %>
+        </span>
+
+        <button type="button"
+                data-action="click->grocery-item#increment"
+                class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+          +
+        </button>
+      </div>
+
+      <!-- Price Info -->
+      <p class="font-bold text-gray-900 dark:text-white">
+        <% if grocery_list.ingredient.unit_price.present? %>
+          <span>
+            $<%= (grocery_list.ingredient.unit_price * grocery_list.units).round(2) %>
+          </span>
+        <% else %>
+          $n/a
+        <% end %>
+      </p>
+      <% if grocery_list.manually_adjusted? %>
+        <p class="text-xs font-thin italic text-rose-600 dark:text-rose-300">
+          manually adjusted
+        </p>
+      <% end %>
+    </div>
+
+  <% end %>
+
+  <%= button_to grocery_list_path(grocery_list),
+                method: :delete,
+                data: {
+                  turbo_confirm: "Remove this item?",
+                  turbo: true
+                },
+                class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400" do %>
+    <svg viewBox="0 0 20 20" fill="currentColor" class="size-6" aria-hidden="true">
+      <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
+    </svg>
+  <% end %>
+</li>

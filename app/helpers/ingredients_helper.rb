@@ -1,8 +1,8 @@
 module IngredientsHelper
   INGREDIENT_FAMILIES = {
     'protein' => { color: 'mauve', label: 'Protein' },
-    'vegetable' => { color: 'mist', label: 'Vegetable' },
-    'fruit' => { color: 'taupe', label: 'Fruit' },
+    'produce' => { color: 'mist', label: 'Produce' },
+    'dairy' => { color: 'taupe', label: 'Dairy' },
     'grain' => { color: 'honey', label: 'Grain' },
     'fat' => { color: 'terracotta', label: 'Fat' }
   }.freeze

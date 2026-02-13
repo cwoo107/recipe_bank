@@ -1,5 +1,9 @@
 Rails.application.routes.draw do
-  resources :grocery_lists
+  resources :grocery_lists do
+    collection do
+      post :generate
+    end
+  end
   resources :meals
   resources :household_members
   resources :households

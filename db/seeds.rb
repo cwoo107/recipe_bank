@@ -1,6 +1,8 @@
 # db/seeds.rb
 
 puts "Clearing existing data..."
+GroceryList.destroy_all
+Meal.destroy_all
 RecipeTag.destroy_all
 RecipeIngredient.destroy_all
 Step.destroy_all
@@ -31,7 +33,9 @@ chicken_breast = Ingredient.create!(
   ingredient: "Chicken Breast",
   family: "protein",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 8.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: chicken_breast,
@@ -47,7 +51,9 @@ salmon = Ingredient.create!(
   ingredient: "Salmon Fillet",
   family: "protein",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 12.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: salmon,
@@ -63,7 +69,9 @@ eggs = Ingredient.create!(
   ingredient: "Large Eggs",
   family: "protein",
   brand: nil,
-  organic: true
+  organic: true,
+  unit_price: 4.99,
+  unit_servings: 12
 )
 NutritionFact.create!(
   ingredient: eggs,
@@ -79,7 +87,9 @@ ground_beef = Ingredient.create!(
   ingredient: "Ground Beef",
   family: "protein",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 5.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: ground_beef,
@@ -95,7 +105,9 @@ bacon = Ingredient.create!(
   ingredient: "Bacon",
   family: "protein",
   brand: "Wright Brand",
-  organic: false
+  organic: false,
+  unit_price: 7.99,
+  unit_servings: 12
 )
 NutritionFact.create!(
   ingredient: bacon,
@@ -111,7 +123,9 @@ pork_chops = Ingredient.create!(
   ingredient: "Pork Chops",
   family: "protein",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 9.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: pork_chops,
@@ -127,7 +141,9 @@ shrimp = Ingredient.create!(
   ingredient: "Large Shrimp",
   family: "protein",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 11.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: shrimp,
@@ -139,12 +155,23 @@ NutritionFact.create!(
   calories: 100
 )
 
-# Vegetables
+soy_sauce = Ingredient.create!(
+  ingredient: "Soy Sauce",
+  family: "protein",
+  brand: "Kikkoman",
+  organic: false,
+  unit_price: 3.99,
+  unit_servings: 40
+)
+
+# Produce
 spinach = Ingredient.create!(
   ingredient: "Fresh Spinach",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: true
+  organic: true,
+  unit_price: 3.99,
+  unit_servings: 5
 )
 NutritionFact.create!(
   ingredient: spinach,
@@ -158,9 +185,11 @@ NutritionFact.create!(
 
 broccoli = Ingredient.create!(
   ingredient: "Broccoli",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 2.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: broccoli,
@@ -174,9 +203,11 @@ NutritionFact.create!(
 
 bell_pepper = Ingredient.create!(
   ingredient: "Red Bell Pepper",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 1.99,
+  unit_servings: 2
 )
 NutritionFact.create!(
   ingredient: bell_pepper,
@@ -190,9 +221,11 @@ NutritionFact.create!(
 
 tomatoes = Ingredient.create!(
   ingredient: "Roma Tomatoes",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: true
+  organic: true,
+  unit_price: 3.49,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: tomatoes,
@@ -206,9 +239,11 @@ NutritionFact.create!(
 
 garlic = Ingredient.create!(
   ingredient: "Fresh Garlic",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 0.99,
+  unit_servings: 10
 )
 NutritionFact.create!(
   ingredient: garlic,
@@ -222,9 +257,11 @@ NutritionFact.create!(
 
 onion = Ingredient.create!(
   ingredient: "Yellow Onion",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 1.49,
+  unit_servings: 3
 )
 NutritionFact.create!(
   ingredient: onion,
@@ -238,9 +275,11 @@ NutritionFact.create!(
 
 mushrooms = Ingredient.create!(
   ingredient: "Button Mushrooms",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 3.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: mushrooms,
@@ -254,9 +293,11 @@ NutritionFact.create!(
 
 potatoes = Ingredient.create!(
   ingredient: "Russet Potatoes",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 4.99,
+  unit_servings: 8
 )
 NutritionFact.create!(
   ingredient: potatoes,
@@ -270,9 +311,11 @@ NutritionFact.create!(
 
 asparagus = Ingredient.create!(
   ingredient: "Asparagus",
-  family: "vegetable",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 4.49,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: asparagus,
@@ -284,12 +327,13 @@ NutritionFact.create!(
   calories: 20
 )
 
-# Fruits
 banana = Ingredient.create!(
   ingredient: "Banana",
-  family: "fruit",
+  family: "produce",
   brand: nil,
-  organic: true
+  organic: true,
+  unit_price: 0.69,
+  unit_servings: 1
 )
 NutritionFact.create!(
   ingredient: banana,
@@ -303,9 +347,11 @@ NutritionFact.create!(
 
 blueberries = Ingredient.create!(
   ingredient: "Fresh Blueberries",
-  family: "fruit",
+  family: "produce",
   brand: nil,
-  organic: true
+  organic: true,
+  unit_price: 5.99,
+  unit_servings: 4
 )
 NutritionFact.create!(
   ingredient: blueberries,
@@ -319,9 +365,11 @@ NutritionFact.create!(
 
 strawberries = Ingredient.create!(
   ingredient: "Fresh Strawberries",
-  family: "fruit",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 4.99,
+  unit_servings: 8
 )
 NutritionFact.create!(
   ingredient: strawberries,
@@ -335,9 +383,11 @@ NutritionFact.create!(
 
 lemon = Ingredient.create!(
   ingredient: "Lemon",
-  family: "fruit",
+  family: "produce",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 0.79,
+  unit_servings: 1
 )
 NutritionFact.create!(
   ingredient: lemon,
@@ -349,12 +399,23 @@ NutritionFact.create!(
   calories: 20
 )
 
+ginger = Ingredient.create!(
+  ingredient: "Fresh Ginger",
+  family: "produce",
+  brand: nil,
+  organic: false,
+  unit_price: 2.99,
+  unit_servings: 10
+)
+
 # Grains
 rice = Ingredient.create!(
   ingredient: "Basmati Rice",
   family: "grain",
   brand: "Royal",
-  organic: false
+  organic: false,
+  unit_price: 8.99,
+  unit_servings: 20
 )
 NutritionFact.create!(
   ingredient: rice,
@@ -370,7 +431,9 @@ quinoa = Ingredient.create!(
   ingredient: "Quinoa",
   family: "grain",
   brand: "Bob's Red Mill",
-  organic: true
+  organic: true,
+  unit_price: 6.99,
+  unit_servings: 12
 )
 NutritionFact.create!(
   ingredient: quinoa,
@@ -386,7 +449,9 @@ oats = Ingredient.create!(
   ingredient: "Rolled Oats",
   family: "grain",
   brand: "Quaker",
-  organic: false
+  organic: false,
+  unit_price: 4.99,
+  unit_servings: 30
 )
 NutritionFact.create!(
   ingredient: oats,
@@ -402,7 +467,9 @@ flour = Ingredient.create!(
   ingredient: "All-Purpose Flour",
   family: "grain",
   brand: "King Arthur",
-  organic: false
+  organic: false,
+  unit_price: 5.99,
+  unit_servings: 45
 )
 NutritionFact.create!(
   ingredient: flour,
@@ -418,7 +485,9 @@ pasta = Ingredient.create!(
   ingredient: "Penne Pasta",
   family: "grain",
   brand: "Barilla",
-  organic: false
+  organic: false,
+  unit_price: 2.99,
+  unit_servings: 8
 )
 NutritionFact.create!(
   ingredient: pasta,
@@ -434,7 +503,9 @@ bread = Ingredient.create!(
   ingredient: "Sourdough Bread",
   family: "grain",
   brand: nil,
-  organic: false
+  organic: false,
+  unit_price: 5.49,
+  unit_servings: 16
 )
 NutritionFact.create!(
   ingredient: bread,
@@ -446,12 +517,32 @@ NutritionFact.create!(
   calories: 260
 )
 
+sugar = Ingredient.create!(
+  ingredient: "Granulated Sugar",
+  family: "grain",
+  brand: "Domino",
+  organic: false,
+  unit_price: 3.49,
+  unit_servings: 100
+)
+
+baking_powder = Ingredient.create!(
+  ingredient: "Baking Powder",
+  family: "grain",
+  brand: "Clabber Girl",
+  organic: false,
+  unit_price: 2.99,
+  unit_servings: 50
+)
+
 # Fats
 olive_oil = Ingredient.create!(
   ingredient: "Extra Virgin Olive Oil",
   family: "fat",
   brand: "Bertolli",
-  organic: false
+  organic: false,
+  unit_price: 12.99,
+  unit_servings: 50
 )
 NutritionFact.create!(
   ingredient: olive_oil,
@@ -467,7 +558,9 @@ butter = Ingredient.create!(
   ingredient: "Unsalted Butter",
   family: "fat",
   brand: "Land O'Lakes",
-  organic: false
+  organic: false,
+  unit_price: 4.99,
+  unit_servings: 32
 )
 NutritionFact.create!(
   ingredient: butter,
@@ -483,7 +576,9 @@ avocado = Ingredient.create!(
   ingredient: "Avocado",
   family: "fat",
   brand: nil,
-  organic: true
+  organic: true,
+  unit_price: 1.99,
+  unit_servings: 2
 )
 NutritionFact.create!(
   ingredient: avocado,
@@ -495,12 +590,68 @@ NutritionFact.create!(
   calories: 160
 )
 
-# Dairy & Other
+honey = Ingredient.create!(
+  ingredient: "Raw Honey",
+  family: "fat",
+  brand: nil,
+  organic: true,
+  unit_price: 9.99,
+  unit_servings: 24
+)
+NutritionFact.create!(
+  ingredient: honey,
+  serving_size: 21,
+  serving_unit: "g",
+  total_fat: 0,
+  total_carb: 17,
+  protein: 0.1,
+  calories: 60
+)
+
+maple_syrup = Ingredient.create!(
+  ingredient: "Pure Maple Syrup",
+  family: "fat",
+  brand: nil,
+  organic: false,
+  unit_price: 12.99,
+  unit_servings: 24
+)
+
+vanilla = Ingredient.create!(
+  ingredient: "Vanilla Extract",
+  family: "fat",
+  brand: "McCormick",
+  organic: false,
+  unit_price: 8.99,
+  unit_servings: 48
+)
+
+cream = Ingredient.create!(
+  ingredient: "Heavy Cream",
+  family: "fat",
+  brand: nil,
+  organic: false,
+  unit_price: 4.49,
+  unit_servings: 32
+)
+NutritionFact.create!(
+  ingredient: cream,
+  serving_size: 15,
+  serving_unit: "ml",
+  total_fat: 5.5,
+  total_carb: 0.4,
+  protein: 0.3,
+  calories: 50
+)
+
+# Dairy
 milk = Ingredient.create!(
   ingredient: "Whole Milk",
-  family: "protein",
+  family: "dairy",
   brand: "Organic Valley",
-  organic: true
+  organic: true,
+  unit_price: 5.99,
+  unit_servings: 8
 )
 NutritionFact.create!(
   ingredient: milk,
@@ -514,9 +665,11 @@ NutritionFact.create!(
 
 cheese = Ingredient.create!(
   ingredient: "Parmesan Cheese",
-  family: "protein",
+  family: "dairy",
   brand: "Kraft",
-  organic: false
+  organic: false,
+  unit_price: 6.99,
+  unit_servings: 8
 )
 NutritionFact.create!(
   ingredient: cheese,
@@ -530,9 +683,11 @@ NutritionFact.create!(
 
 cheddar = Ingredient.create!(
   ingredient: "Sharp Cheddar Cheese",
-  family: "protein",
+  family: "dairy",
   brand: "Tillamook",
-  organic: false
+  organic: false,
+  unit_price: 7.99,
+  unit_servings: 8
 )
 NutritionFact.create!(
   ingredient: cheddar,
@@ -542,80 +697,6 @@ NutritionFact.create!(
   total_carb: 0.4,
   protein: 7,
   calories: 110
-)
-
-cream = Ingredient.create!(
-  ingredient: "Heavy Cream",
-  family: "fat",
-  brand: nil,
-  organic: false
-)
-NutritionFact.create!(
-  ingredient: cream,
-  serving_size: 15,
-  serving_unit: "ml",
-  total_fat: 5.5,
-  total_carb: 0.4,
-  protein: 0.3,
-  calories: 50
-)
-
-honey = Ingredient.create!(
-  ingredient: "Raw Honey",
-  family: "fruit",
-  brand: nil,
-  organic: true
-)
-NutritionFact.create!(
-  ingredient: honey,
-  serving_size: 21,
-  serving_unit: "g",
-  total_fat: 0,
-  total_carb: 17,
-  protein: 0.1,
-  calories: 60
-)
-
-soy_sauce = Ingredient.create!(
-  ingredient: "Soy Sauce",
-  family: "protein",
-  brand: "Kikkoman",
-  organic: false
-)
-
-ginger = Ingredient.create!(
-  ingredient: "Fresh Ginger",
-  family: "vegetable",
-  brand: nil,
-  organic: false
-)
-
-maple_syrup = Ingredient.create!(
-  ingredient: "Pure Maple Syrup",
-  family: "fruit",
-  brand: nil,
-  organic: false
-)
-
-vanilla = Ingredient.create!(
-  ingredient: "Vanilla Extract",
-  family: "fruit",
-  brand: "McCormick",
-  organic: false
-)
-
-sugar = Ingredient.create!(
-  ingredient: "Granulated Sugar",
-  family: "fruit",
-  brand: "Domino",
-  organic: false
-)
-
-baking_powder = Ingredient.create!(
-  ingredient: "Baking Powder",
-  family: "grain",
-  brand: "Clabber Girl",
-  organic: false
 )
 
 puts "Creating recipes..."

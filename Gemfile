@@ -68,3 +68,7 @@ group :test do
 end
 
 gem 'acts_as_list'
+
+gem 'nokogiri'
+gem 'httparty'
+gem 'fuzzy_match'

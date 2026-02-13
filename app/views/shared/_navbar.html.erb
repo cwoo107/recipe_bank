@@ -14,6 +14,9 @@
           <%= link_to "Meals", meals_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(meals_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
 
+          <%= link_to "Grocery List", grocery_lists_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(grocery_lists_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
+
           <%= link_to "Recipes", recipes_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(recipes_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
 
