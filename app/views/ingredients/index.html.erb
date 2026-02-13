@@ -1,0 +1,109 @@
+<div class="sm:flex sm:items-center sm:justify-between">
+  <div>
+    <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Ingredients</h1>
+    <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Manage your ingredient library.</p>
+  </div>
+  <div class="mt-4 sm:ml-16 sm:mt-0">
+    <%= link_to new_ingredient_path,
+                class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+      <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+      </svg>
+      New Ingredient
+    <% end %>
+  </div>
+</div>
+
+<div class="mt-8">
+  <div class="my-2">
+
+    <% @ingredient_families.each do |tag| %>
+      <%= link_to ingredients_path(filter: tag[:label].downcase) do %>
+                <span class="inline-flex items-center rounded-full bg-<%= tag[:color] %>-300 px-2 py-1 text-xs font-medium text-<%= tag[:color] %>-600 inset-ring inset-ring-<%= tag[:color] %>-600/20 dark:bg-<%= tag[:color] %>-800/20 dark:text-<%= tag[:color] %>-300 dark:inset-ring-<%= tag[:color] %>-300/30">
+                  <%= tag[:label] %>
+                </span>
+      <% end %>
+
+
+    <% end %>
+    <% if params[:filter].present? %>
+      <%= link_to ingredients_path do %>
+    <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10">
+                  clear filter
+                </span>
+      <% end %>
+    <% end %>
+  </div>
+
+  <%= form_with url: ingredients_path, method: :get, class: "flex gap-4" do |form| %>
+    <div class="flex-1">
+      <label for="query" class="sr-only">Search</label>
+      <div class="grid grid-cols-1">
+        <%= form.text_field :query,
+                            value: params[:query],
+                            placeholder: "Search ingredients...",
+                            class: "col-start-1 row-start-1 block w-full rounded-md bg-white py-1.5 pr-3 pl-10 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:pl-9 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
+        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4 dark:text-gray-500">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    </div>
+    <button type="submit"
+            class="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">
+      Search
+    </button>
+  <% end %>
+</div>
+
+<div class="mt-8">
+  <div class="overflow-hidden bg-white shadow-sm inset-ring inset-ring-gray-900/5 sm:rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
+    <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
+      <thead class="bg-gray-50 dark:bg-white/5">
+      <tr>
+        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">Name</th>
+        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Brand</th>
+        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Family</th>
+        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Type</th>
+        <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
+      <% @ingredients.each do |ingredient| %>
+        <tr>
+          <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
+            <%= link_to ingredient, class: "color-sage-500" do %>
+            <%= ingredient.ingredient %>
+              <% end %>
+          </td>
+          <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+            <%= ingredient.brand || "—" %>
+          </td>
+          <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+            <%= ingredient_family_tag(ingredient.family) || "-" %>
+          </td>
+          <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+            <% if ingredient.organic? %>
+                <span class="inline-flex items-center rounded-full bg-[#e8ede3] px-2 py-1 text-xs font-medium text-[#5f734c] inset-ring inset-ring-[#5f734c]/20 dark:bg-[#7a8f62]/20 dark:text-[#7a8f62] dark:inset-ring-[#7a8f62]/30">
+                  Organic
+                </span>
+            <% else %>
+              —
+            <% end %>
+          </td>
+          <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+            <%= link_to "Edit", edit_ingredient_path(ingredient),
+                        class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62] dark:hover:text-[#5f734c]" %>
+            <span class="text-gray-300 dark:text-gray-600"> | </span>
+            <%= button_to "Delete", ingredient_path(ingredient),
+                          method: :delete,
+                          data: { turbo_confirm: "Are you sure?" },
+                          class: "text-red-600 hover:text-red-900 dark:text-red-400" %>
+          </td>
+        </tr>
+      <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,21 @@
+<div class="mx-auto max-w-2xl">
+  <div class="mb-8">
+    <%= link_to ingredients_path, class: "inline-flex items-center gap-x-1.5 text-sm font-semibold text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]" do %>
+      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+        <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
+      </svg>
+      Back to ingredients
+    <% end %>
+  </div>
+
+  <div>
+    <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">New Ingredient</h1>
+    <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+      Add a new ingredient to your library.
+    </p>
+  </div>
+
+  <div class="mt-8">
+    <%= render 'form', ingredient: @ingredient %>
+  </div>
+</div>

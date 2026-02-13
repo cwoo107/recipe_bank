@@ -1,0 +1,47 @@
+<%= form_with(model: grocery_list, class: "contents") do |form| %>
+  <% if grocery_list.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
+      <h2><%= pluralize(grocery_list.errors.count, "error") %> prohibited this grocery_list from being saved:</h2>
+
+      <ul class="list-disc ml-6">
+        <% grocery_list.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-5">
+    <%= form.label :week_of %>
+    <%= form.date_field :week_of, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:week_of].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:week_of].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :ingredient_id %>
+    <%= form.text_field :ingredient_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:ingredient_id].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:ingredient_id].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :meal_id %>
+    <%= form.text_field :meal_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:meal_id].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:meal_id].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :units %>
+    <%= form.number_field :units, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:units].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:units].any?}] %>
+  </div>
+
+  <div class="my-5 flex items-center gap-2">
+    <%= form.label :checked %>
+    <%= form.checkbox :checked, class: ["block shadow-sm rounded-md border order-first h-5 w-5", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:checked].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:checked].any?}] %>
+  </div>
+
+  <div class="my-5 flex items-center gap-2">
+    <%= form.label :manually_adjusted %>
+    <%= form.checkbox :manually_adjusted, class: ["block shadow-sm rounded-md border order-first h-5 w-5", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:manually_adjusted].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:manually_adjusted].any?}] %>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>

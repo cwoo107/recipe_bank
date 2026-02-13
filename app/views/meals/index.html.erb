@@ -1,0 +1,110 @@
+<% content_for :title, "Meals" %>
+
+<div class="w-full">
+  <div class="sm:flex sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Meals</h1>
+      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Meal plan for the week of <%= @date.strftime("%b %d, %Y") %>.</p>
+    </div>
+    <div class="mt-4 sm:ml-16 sm:mt-0">
+      <div data-controller="dialog" data-action="click->dialog#backdropClose">
+        <dialog data-dialog-target="dialog" class="rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+          <%= turbo_frame_tag 'new_meal', src: new_meal_path do %>
+          <% end %>
+          <div class="mt-4">
+            <button type="button" data-action="dialog#close" autofocus class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">close</button>
+          </div>
+        </dialog>
+
+        <button type="button" data-action="dialog#open" class="inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]">
+          <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+          </svg>
+          Add a meal
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-8 mb-8">
+    <div class="sm:flex sm:items-center sm:justify-between">
+      <div class="mb-2">
+        <%= link_to meals_path(date: @date - 1.week),
+                    class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+          </svg>
+
+          Previous Week
+        <% end %>
+      </div>
+      <div class="mb-2">
+        <%= link_to meals_path(date: @date + 1.week),
+                    class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+          Next Week
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+          </svg>
+
+      <% end %>
+      </div>
+    </div>
+    <div class="isolate flex flex-auto flex-col overflow-auto bg-[var(--ivory)] dark:bg-[#1a1f16]">
+      <div class="flex max-w-full flex-none flex-col">
+        <!-- Header with meal types -->
+        <div class="text-3xl sticky top-0 z-30 flex-none shadow-sm dark:shadow-none " style="font-family: 'Instrument Serif', serif">
+          <div class="grid text-sm/6 text-gray-500 dark:text-gray-400" style="grid-template-columns: 8rem 1fr 1fr 1fr;">
+            <div class="border-r border-gray-200 dark:border-white/10"></div>
+            <div class="flex items-center justify-center py-4 border-r border-gray-200 dark:border-white/10">
+              <span class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]">Breakfast</span>
+            </div>
+            <div class="flex items-center justify-center py-4 border-r border-gray-200 dark:border-white/10">
+              <span class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]">Lunch</span>
+            </div>
+            <div class="flex items-center justify-center py-4">
+              <span class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]">Dinner</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="flex flex-auto">
+          <div class="grid flex-auto grid-cols-1 grid-rows-1">
+            <!-- Days of week (vertical) -->
+            <div class="text-2xl col-start-1 col-end-2 row-start-1 grid divide-y divide-gray-200 dark:divide-white/10" style="grid-template-rows: repeat(7, 8rem);">
+              <% 7.times do |i| %>
+                <% current_date = @date + i.days %>
+                <% is_today = current_date == Date.today %>
+
+                <div class="flex">
+                  <div class="sticky left-0 z-20 w-32 flex items-center justify-center text-sm font-medium border-r border-gray-200 dark:border-white/10">
+                    <div class="text-xl flex flex-col items-center rounded-full px-4 py-4 <%= is_today ? 'bg-[#5f734c] text-white dark:bg-[#7a8f62]' : 'text-gray-900 dark:text-white' %>">
+                      <%= current_date.strftime("%a") %>
+                      <div class="text-sm"><%= current_date.strftime("%b %d") %></div>
+                    </div>
+                  </div>
+                </div>
+              <% end %>
+            </div>
+
+            <!-- Meal columns with proper grid -->
+            <div class="col-start-1 col-end-2 row-start-1 grid divide-x divide-gray-200 dark:divide-white/10" style="grid-template-columns: 8rem 1fr 1fr 1fr; grid-template-rows: repeat(7, 8rem);">
+              <div class="col-start-1"></div>
+              <div class="col-start-2"></div>
+              <div class="col-start-3"></div>
+              <div class="col-start-4"></div>
+            </div>
+
+            <!-- Events -->
+            <%= turbo_stream_from "meals" %>
+            <ol id="meals" style="display: grid; grid-template-rows: repeat(7, 8rem); grid-template-columns: 8rem 1fr 1fr 1fr;" class="col-start-1 col-end-2 row-start-1">              <% @meals.each do |meal| %>
+                <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
+              <% end %>
+            </ol>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

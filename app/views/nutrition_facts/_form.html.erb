@@ -1,0 +1,52 @@
+<%= form_with(model: nutrition_fact, class: "contents") do |form| %>
+  <% if nutrition_fact.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
+      <h2><%= pluralize(nutrition_fact.errors.count, "error") %> prohibited this nutrition_fact from being saved:</h2>
+
+      <ul class="list-disc ml-6">
+        <% nutrition_fact.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-5">
+    <%= form.label :ingredient_id %>
+    <%= form.text_field :ingredient_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": nutrition_fact.errors[:ingredient_id].none?, "border-red-400 focus:outline-red-600": nutrition_fact.errors[:ingredient_id].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :serving_unit %>
+    <%= form.text_field :serving_unit, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": nutrition_fact.errors[:serving_unit].none?, "border-red-400 focus:outline-red-600": nutrition_fact.errors[:serving_unit].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :serving_size %>
+    <%= form.text_field :serving_size, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": nutrition_fact.errors[:serving_size].none?, "border-red-400 focus:outline-red-600": nutrition_fact.errors[:serving_size].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :calories, "Calories per serving" %>
+    <%= form.text_field :calories, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": nutrition_fact.errors[:total_fat].none?, "border-red-400 focus:outline-red-600": nutrition_fact.errors[:total_fat].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :total_fat %>
+    <%= form.text_field :total_fat, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": nutrition_fact.errors[:total_fat].none?, "border-red-400 focus:outline-red-600": nutrition_fact.errors[:total_fat].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :total_carb %>
+    <%= form.text_field :total_carb, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": nutrition_fact.errors[:total_carb].none?, "border-red-400 focus:outline-red-600": nutrition_fact.errors[:total_carb].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :protein %>
+    <%= form.text_field :protein, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": nutrition_fact.errors[:protein].none?, "border-red-400 focus:outline-red-600": nutrition_fact.errors[:protein].any?}] %>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>

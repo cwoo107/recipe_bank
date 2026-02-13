@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  ingredient: MyString
+  family: MyString
+  brand: MyString
+  organic: false
+
+two:
+  ingredient: MyString
+  family: MyString
+  brand: MyString
+  organic: false

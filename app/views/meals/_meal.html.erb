@@ -1,0 +1,18 @@
+<% colors = meal_color_classes(meal) %>
+<li style="<%= meal_grid_position(meal, date) %>" class="relative m-1">
+  <div class="group block h-full rounded-lg <%= colors[:bg] %> p-3 text-xs/5 <%= colors[:hover] %> inset-ring <%= colors[:ring] %> <%= colors[:dark_bg] %> <%= colors[:dark_ring] %>">
+    <%= link_to meal.recipe, class: "absolute inset-0 z-0" do %>
+      <span class="sr-only"><%= meal.recipe.title %></span>
+    <% end %>
+
+    <div class="relative z-10 pointer-events-none">
+      <p class="font-semibold <%= colors[:title] %>"><%= meal.recipe.title %></p>
+      <p class="mt-1 <%= colors[:subtitle] %>"><%= (meal.recipe.total_calories / meal.recipe.servings).to_int %> calories / <%= meal.recipe.servings %> servings</p>
+      <p class="mt-1 <%= colors[:subtitle] %>"><%=(meal.recipe.total_protein/meal.recipe.servings).to_i %>g protein / <%=(meal.recipe.total_carbs/meal.recipe.servings).to_i %>g carbs / <%=(meal.recipe.total_fat/meal.recipe.servings).to_i %>g fat</p>
+    </div>
+
+    <div class="text-end relative z-10 pointer-events-auto">
+      <%= button_to "Remove", meal, method: :delete, class: "-mb-2 text-dusty-rose-600 hover:text-dusty-rose-800 p-1", data: { turbo_confirm: "Remove this meal?" } %>
+    </div>
+  </div>
+</li>

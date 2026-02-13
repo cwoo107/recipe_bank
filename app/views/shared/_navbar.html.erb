@@ -1,0 +1,56 @@
+<nav class="bg-white shadow-sm dark:bg-gray-900">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-16 justify-between">
+      <div class="flex">
+        <div class="flex shrink-0 items-center">
+          <%= link_to root_path, class: "flex items-center gap-2" do %>
+            <span class="text-2xl  dark:text-white">
+              <span class="text-[#5f734c] font-bold" style="font-family: 'Instrument Serif', serif;">Recipe<span class="text-olive-800">Bank</span></span>
+            </span>
+          <% end %>
+        </div>
+
+        <div class="hidden sm:ml-8 sm:flex sm:gap-x-4">
+          <%= link_to "Meals", meals_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(meals_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
+
+          <%= link_to "Recipes", recipes_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(recipes_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
+
+          <%= link_to "Ingredients", ingredients_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(ingredients_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
+
+          <%= link_to "Tags", tags_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(tags_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
+
+        </div>
+      </div>
+
+
+      <div class="flex items-center sm:hidden">
+        <button type="button"
+                data-controller="mobile-menu"
+                data-action="click->mobile-menu#toggle"
+                class="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus:outline-2 focus:outline-offset-2 focus:outline-[#5f734c] dark:text-gray-300 dark:hover:bg-gray-800">
+          <span class="sr-only">Open main menu</span>
+          <svg class="block size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden sm:hidden" data-mobile-menu-target="menu">
+    <div class="space-y-1 pb-3 pt-2">
+      <%= link_to "Recipes", recipes_path,
+                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(recipes_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
+
+      <%= link_to "Ingredients", ingredients_path,
+                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(ingredients_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
+
+      <%= link_to "Tags", tags_path,
+                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(tags_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
+    </div>
+  </div>
+</nav>

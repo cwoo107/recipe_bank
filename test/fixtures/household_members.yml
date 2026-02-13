@@ -1,0 +1,11 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  household: one
+  name: MyString
+  child: false
+
+two:
+  household: two
+  name: MyString
+  child: false

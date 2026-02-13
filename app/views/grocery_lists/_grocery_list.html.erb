@@ -1,0 +1,26 @@
+<div id="<%= dom_id grocery_list %>" class="w-full sm:w-auto my-5 space-y-5">
+  <div>
+    <strong class="block font-medium mb-1">Week of:</strong>
+    <%= grocery_list.week_of %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Ingredient:</strong>
+    <%= grocery_list.ingredient_id %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Meal:</strong>
+    <%= grocery_list.meal_id %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Units:</strong>
+    <%= grocery_list.units %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Checked:</strong>
+    <%= grocery_list.checked? ? "Yes" : "No" %>
+  </div>
+  <div>
+    <strong class="block font-medium mb-1">Manually adjusted:</strong>
+    <%= grocery_list.manually_adjusted? ? "Yes" : "No" %>
+  </div>
+</div>

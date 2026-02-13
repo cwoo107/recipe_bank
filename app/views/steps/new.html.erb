@@ -1,0 +1,39 @@
+<div class="mx-auto max-w-2xl">
+  <div class="mb-8">
+    <%= link_to recipe_path(@recipe), class: "inline-flex items-center gap-x-1.5 text-sm font-semibold text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]" do %>
+      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+        <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
+      </svg>
+      Back to <%= @recipe.title %>
+    <% end %>
+  </div>
+
+  <div>
+    <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Add Step</h1>
+    <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+      Add a new step to <%= @recipe.title %>.
+    </p>
+  </div>
+
+  <div class="mt-8">
+    <%= form_with(model: [@recipe, @step], url: recipe_steps_path(@recipe), class: "space-y-6") do |form| %>
+      <div>
+        <%= form.label :content, "Instructions", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+        <div class="mt-2">
+          <%= form.rich_text_area :content,
+                                  placeholder: "Describe this step in detail...",
+                                  class: "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
+        </div>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Provide clear, detailed instructions for this step.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-x-3 border-t border-gray-900/10 pt-6 dark:border-white/10">
+        <%= link_to "Cancel", recipe_path(@recipe),
+                    class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+
+        <%= form.submit "Add Step",
+                        class: "rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+      </div>
+    <% end %>
+  </div>
+</div>

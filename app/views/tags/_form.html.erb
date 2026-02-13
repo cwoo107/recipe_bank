@@ -1,0 +1,53 @@
+<%= form_with(model: tag, class: "space-y-6") do |form| %>
+  <% if tag.errors.any? %>
+    <div class="rounded-md bg-red-50 p-4 dark:bg-red-500/10">
+      <div class="flex">
+        <div class="shrink-0">
+          <svg class="size-5 text-red-400 dark:text-red-500" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-400">
+            <%= pluralize(tag.errors.count, "error") %> prohibited this tag from being saved:
+          </h3>
+          <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+            <ul class="list-disc space-y-1 pl-5">
+              <% tag.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :tag, "Tag Name", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+    <div class="mt-2">
+      <%= form.text_field :tag,
+                          required: true,
+                          placeholder: "e.g., Dessert",
+                          class: "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :color, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+    <div class="mt-2 flex items-center gap-x-3">
+      <%= form.color_field :color,
+                           value: tag.color || "#5f734c",
+                           class: "block size-14 rounded-md cursor-pointer" %>
+      <span class="text-sm text-gray-500 dark:text-gray-400">Choose a color for this tag</span>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-end gap-x-3 border-t border-gray-900/10 pt-6 dark:border-white/10">
+    <%= link_to "Cancel", tags_path,
+                class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+
+    <%= form.submit tag.persisted? ? "Update Tag" : "Create Tag",
+                    class: "rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+  </div>
+<% end %>

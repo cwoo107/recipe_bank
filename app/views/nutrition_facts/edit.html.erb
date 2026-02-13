@@ -1,0 +1,79 @@
+<div class="mx-auto max-w-2xl">
+  <div class="mb-8">
+    <%= link_to ingredient_path(@ingredient), class: "inline-flex items-center gap-x-1.5 text-sm font-semibold text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]" do %>
+      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+        <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
+      </svg>
+      Back to <%= @ingredient.ingredient %>
+    <% end %>
+  </div>
+
+  <div>
+    <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Edit Nutrition Facts</h1>
+    <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+      Update nutrition information for <%= @ingredient.ingredient %>.
+    </p>
+  </div>
+
+  <div class="mt-8">
+    <%= form_with model: [@ingredient, @nutrition_fact], url: ingredient_nutrition_fact_path(@ingredient, @nutrition_fact), method: :patch, class: "space-y-6" do |form| %>
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div>
+          <%= form.label :serving_size, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+          <%= form.number_field :serving_size,
+                                step: 0.01,
+                                required: true,
+                                class: "mt-2 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]" %>
+        </div>
+
+        <div>
+          <%= form.label :serving_unit, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+          <%= form.text_field :serving_unit,
+                              required: true,
+                              class: "mt-2 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]" %>
+        </div>
+        <div>
+          <%= form.label :calories, "Calories per serving", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+          <%= form.number_field :calories,
+                                step: 10,
+                                required: true,
+                                class: "mt-2 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]" %>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+        <div>
+          <%= form.label :total_fat, "Total Fat (g)", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+          <%= form.number_field :total_fat,
+                                step: 0.1,
+                                required: true,
+                                class: "mt-2 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]" %>
+        </div>
+
+        <div>
+          <%= form.label :total_carb, "Total Carbs (g)", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+          <%= form.number_field :total_carb,
+                                step: 0.1,
+                                required: true,
+                                class: "mt-2 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]" %>
+        </div>
+
+        <div>
+          <%= form.label :protein, "Protein (g)", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+          <%= form.number_field :protein,
+                                step: 0.1,
+                                required: true,
+                                class: "mt-2 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]" %>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-x-3 border-t border-gray-900/10 pt-6 dark:border-white/10">
+        <%= link_to "Cancel", ingredient_path(@ingredient),
+                    class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+
+        <%= form.submit "Update Nutrition Facts",
+                        class: "rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+      </div>
+    <% end %>
+  </div>
+</div>

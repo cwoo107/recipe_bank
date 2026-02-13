@@ -1,0 +1,10 @@
+<% content_for :title, "Editing recipe tag" %>
+
+<div class="md:w-2/3 w-full">
+  <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Editing recipe tag</h1>
+
+  <%= render "form", recipe_tag: @recipe_tag %>
+
+  <%= link_to "Show this recipe tag", @recipe_tag, class: "w-full sm:w-auto text-center mt-2 sm:mt-0 sm:ml-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
+  <%= link_to "Back to recipe tags", recipe_tags_path, class: "w-full sm:w-auto text-center mt-2 sm:mt-0 sm:ml-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
+</div>

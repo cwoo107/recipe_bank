@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  week_of: 2026-02-12
+  ingredient: one
+  meal: one
+  units: 1
+  checked: false
+  manually_adjusted: false
+
+two:
+  week_of: 2026-02-12
+  ingredient: two
+  meal: two
+  units: 1
+  checked: false
+  manually_adjusted: false

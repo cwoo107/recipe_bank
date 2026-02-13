@@ -1,0 +1,32 @@
+<%= form_with(model: household_member, class: "contents") do |form| %>
+  <% if household_member.errors.any? %>
+    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
+      <h2><%= pluralize(household_member.errors.count, "error") %> prohibited this household_member from being saved:</h2>
+
+      <ul class="list-disc ml-6">
+        <% household_member.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="my-5">
+    <%= form.label :household_id %>
+    <%= form.text_field :household_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": household_member.errors[:household_id].none?, "border-red-400 focus:outline-red-600": household_member.errors[:household_id].any?}] %>
+  </div>
+
+  <div class="my-5">
+    <%= form.label :name %>
+    <%= form.text_field :name, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": household_member.errors[:name].none?, "border-red-400 focus:outline-red-600": household_member.errors[:name].any?}] %>
+  </div>
+
+  <div class="my-5 flex items-center gap-2">
+    <%= form.label :child %>
+    <%= form.checkbox :child, class: ["block shadow-sm rounded-md border order-first h-5 w-5", {"border-gray-400 focus:outline-blue-600": household_member.errors[:child].none?, "border-red-400 focus:outline-red-600": household_member.errors[:child].any?}] %>
+  </div>
+
+  <div class="inline">
+    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  </div>
+<% end %>
