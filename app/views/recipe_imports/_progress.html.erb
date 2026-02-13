@@ -1,0 +1,10 @@
+<!-- app/views/recipe_imports/_progress.html.erb -->
+<%= turbo_stream_from "recipe_import_#{import_job.id}" %>
+
+<div class="bg-white rounded-lg p-6 ">
+  <h2 class="text-xl font-semibold mb-4">Importing Recipe...</h2>
+
+  <%= turbo_frame_tag dom_id(import_job) do %>
+    <%= render import_job %>
+  <% end %>
+</div>

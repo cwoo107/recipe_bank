@@ -1,0 +1,4 @@
+<!-- app/views/recipe_imports/create.turbo_stream.erb -->
+<%= turbo_stream.replace "import_progress" do %>
+  <%= render "recipe_imports/progress", import_job: @import_job %>
+<% end %>

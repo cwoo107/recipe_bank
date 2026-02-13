@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  root 'meals#index'
+
   resources :grocery_lists do
     collection do
       post :generate
@@ -7,7 +9,7 @@ Rails.application.routes.draw do
   resources :meals
   resources :household_members
   resources :households
-  root 'meals#index'
+  resources :recipe_imports, only: [:new, :create, :show]
 
   resources :recipes do
     resources :recipe_ingredients, only: [:create, :destroy]
@@ -16,6 +18,9 @@ Rails.application.routes.draw do
       collection do
         post :reorder
       end
+    end
+    member do
+      get :import
     end
   end
   resources :ingredients do

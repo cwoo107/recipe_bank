@@ -4,7 +4,8 @@ module IngredientsHelper
     'produce' => { color: 'mist', label: 'Produce' },
     'dairy' => { color: 'taupe', label: 'Dairy' },
     'grain' => { color: 'honey', label: 'Grain' },
-    'fat' => { color: 'terracotta', label: 'Fat' }
+    'fat' => { color: 'terracotta', label: 'Fat' },
+    'spices' => { color: 'mist', label: 'Spices' }
   }.freeze
 
   def ingredient_family_tag(family)

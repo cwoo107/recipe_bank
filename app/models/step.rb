@@ -4,7 +4,7 @@ class Step < ApplicationRecord
 
   acts_as_list scope: :recipe
 
-  validates :content, presence: true
+  # validates :content, presence: true
 
   before_validation :set_position, on: :create
 

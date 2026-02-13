@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  url: MyString
+  status: MyString
+  current_step: MyString
+  progress: 1
+  total_steps: 1
+  recipe_id: 1
+  error_message: MyText
+  scraped_data: 
+  matched_ingredients: 
+
+two:
+  url: MyString
+  status: MyString
+  current_step: MyString
+  progress: 1
+  total_steps: 1
+  recipe_id: 1
+  error_message: MyText
+  scraped_data: 
+  matched_ingredients: 

@@ -1,0 +1,20 @@
+<!-- app/views/recipe_imports/new.html.erb -->
+<div class="max-w-2xl mx-auto p-6">
+  <h1 class="text-3xl font-bold mb-6">Import Recipe from URL</h1>
+
+  <%= form_with url: recipe_imports_path, method: :post, data: { turbo_frame: "import_progress" } do |f| %>
+    <div class="mb-4">
+      <%= f.label :url, "Recipe URL", class: "block text-sm font-medium mb-2" %>
+      <%= f.text_field :url,
+                       placeholder: "https://example.com/recipe",
+                       class: "w-full px-4 py-2 border rounded-lg",
+                       required: true %>
+    </div>
+
+    <%= f.submit "Import Recipe", class: "mb-4 inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+  <% end %>
+
+  <%= turbo_frame_tag "import_progress", class: "mt-8" do %>
+    <!-- Progress will be inserted here -->
+  <% end %>
+</div>

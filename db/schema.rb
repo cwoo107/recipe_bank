@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_13_181748) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_13_211226) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -116,6 +116,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_13_181748) do
     t.float "total_fat"
     t.datetime "updated_at", null: false
     t.index ["ingredient_id"], name: "index_nutrition_facts_on_ingredient_id"
+  end
+
+  create_table "recipe_import_jobs", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "current_step"
+    t.text "error_message"
+    t.json "matched_ingredients"
+    t.integer "progress", default: 0
+    t.integer "recipe_id"
+    t.json "scraped_data"
+    t.string "status", default: "pending", null: false
+    t.integer "total_steps", default: 5
+    t.datetime "updated_at", null: false
+    t.string "url"
   end
 
   create_table "recipe_ingredients", force: :cascade do |t|

@@ -1,0 +1,83 @@
+<!-- app/views/recipe_imports/show.html.erb -->
+<%= turbo_stream_from "recipe_import_#{@import_job.id}" %>
+
+<%= turbo_frame_tag "import_status_#{@import_job.id}" do %>
+  <div class="space-y-4" id="import_status_<%= @import_job.id %>">
+    <!-- Progress bar -->
+    <div class="w-full bg-gray-200 rounded-full h-4">
+      <div class="bg-blue-600 h-4 rounded-full transition-all duration-500"
+           style="width: <%= [@import_job.progress.to_f / @import_job.total_steps * 100, 100].min %>%">
+      </div>
+    </div>
+
+    <!-- Current step -->
+    <div class="flex items-center space-x-3">
+      <% if @import_job.completed? %>
+        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+      <% elsif @import_job.failed? %>
+        <svg class="w-6 h-6 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+      <% else %>
+        <svg class="animate-spin h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      <% end %>
+
+      <span class="text-lg font-medium">
+        <%= @import_job.current_step %>
+      </span>
+    </div>
+
+    <!-- Steps checklist -->
+    <div class="space-y-2 mt-4">
+      <%= render_step_item("Fetching HTML", :fetching_html, @import_job) %>
+      <%= render_step_item("Parsing Recipe", :parsing_recipe, @import_job) %>
+      <%= render_step_item("Matching Ingredients (#{@import_job.progress}/#{@import_job.scraped_data&.dig('ingredients')&.length || 0})", :matching_ingredients, @import_job) %>
+      <%= render_step_item("Resolving with AI", :resolving_with_ai, @import_job) %>
+      <%= render_step_item("Creating Recipe", :creating_recipe, @import_job) %>
+    </div>
+
+    <!-- Error message -->
+    <% if @import_job.failed? %>
+      <div class="bg-red-50 border border-red-200 rounded p-4 mt-4">
+        <p class="text-red-800"><%= @import_job.error_message %></p>
+      </div>
+    <% end %>
+
+    <!-- Success actions -->
+    <% if @import_job.completed? %>
+      <div class="flex space-x-3 mt-6">
+        <%= link_to "View Recipe", recipe_path(@import_job.recipe),
+                    class: "bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700" %>
+        <%= link_to "Import Another", new_recipe_import_path,
+                    class: "bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% unless @import_job.completed? || @import_job.failed? %>
+    <meta http-equiv="refresh" content="1">
+  <% end %>
+<% end %>
+
+<%# Helper method for step items %>
+<% def render_step_item(label, status, job)
+     is_current = job.status == status.to_s
+     is_complete = job.status_before_type_cast.to_i > RecipeImportJob.statuses[status]
+
+     icon = if is_complete
+              '<svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>'.html_safe
+            elsif is_current
+              '<svg class="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>'.html_safe
+            else
+              '<svg class="w-5 h-5 text-gray-300" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12z" clip-rule="evenodd"/></svg>'.html_safe
+            end
+
+     content_tag(:div, class: "flex items-center space-x-3") do
+       icon + content_tag(:span, label, class: "text-sm #{is_complete ? 'text-gray-900' : 'text-gray-500'}")
+     end
+   end %>

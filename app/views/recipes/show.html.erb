@@ -120,7 +120,7 @@
                 <td class="whitespace-nowrap py-4  text-sm font-medium  dark:text-white">
                   <%= link_to recipe_ingredient.ingredient do %>
                     <span class="text-sm font-medium text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]">
-                      <%= recipe_ingredient.ingredient.ingredient %>
+                      <%= truncate(recipe_ingredient.ingredient.ingredient, length: 20) %>
                     </span>
                   <% end %>
                 </td>
@@ -128,7 +128,7 @@
                   <%= ingredient_family_tag(recipe_ingredient.ingredient.family) || "-" %>
                 </td>
                 <td class="whitespace-nowrap text-center px-2 text-sm text-gray-500 dark:text-gray-400">
-                  <%= recipe_ingredient.quantity %> <%= recipe_ingredient.unit %>
+                  <%= display_quantity_with_unit(recipe_ingredient.quantity, recipe_ingredient.unit) %>
                 </td>
                 <td class="relative whitespace-nowrap  text-right text-sm font-medium sm:pr-6">
                   <%= button_to recipe_recipe_ingredient_path(@recipe, recipe_ingredient),

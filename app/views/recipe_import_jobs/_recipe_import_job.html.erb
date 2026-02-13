@@ -1,0 +1,52 @@
+<!-- app/views/recipe_import_jobs/_recipe_import_job.html.erb -->
+<%= turbo_frame_tag dom_id(recipe_import_job) do %>
+  <div class="flow-root mt-2">
+    <ul role="list" class="-mb-8">
+      <%= render_import_step(recipe_import_job, :fetching_html, "Fetching HTML", "Downloaded recipe page") %>
+      <%= render_import_step(recipe_import_job, :parsing_recipe, "Parsing Recipe", "Extracted title, ingredients, and instructions") %>
+      <%= render_import_step(recipe_import_job, :matching_ingredients, "Matching Ingredients", "Matched #{recipe_import_job.progress} of #{recipe_import_job.scraped_data&.dig('ingredients')&.length || 0} ingredients") %>
+      <%= render_import_step(recipe_import_job, :resolving_with_ai, "Resolving with AI", "Classified ingredient families") %>
+      <%= render_import_step(recipe_import_job, :creating_recipe, "Creating Recipe", "Saved recipe to database", last: true) %>
+    </ul>
+  </div>
+
+  <!-- Error message -->
+  <% if recipe_import_job.failed? %>
+    <div class="bg-red-50 border border-red-200 rounded p-4 mt-6 dark:bg-red-900/20 dark:border-red-800">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Import failed</h3>
+          <p class="mt-2 text-sm text-red-700 dark:text-red-300"><%= recipe_import_job.error_message %></p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+  <!-- Success actions -->
+  <% if recipe_import_job.completed? %>
+    <div class="flex space-x-3 mt-6">
+      <%= link_to recipe_path(recipe_import_job.recipe),
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]",
+                  data: { turbo: false } do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+        </svg>
+        View Recipe
+      <% end %>
+      <%= link_to new_recipe_import_path,
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:ring-white/20 dark:hover:bg-white/20",
+                  data: { turbo: false } do %>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        Import Another
+      <% end %>
+    </div>
+  <% end %>
+<% end %>
