@@ -88,10 +88,20 @@
       <% @recipes.each do |recipe| %>
         <tr>
           <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
-            <%= link_to recipe, class: "color-sage-500" do %>
-              <%= recipe.title %>
-            <% end %>
+            <div class="flex items-center gap-x-2">
+              <% if recipe.favorite? %>
+      <span class="text-yellow-500">
+        <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
+          <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" />
+        </svg>
+      </span>
+              <% end %>
+              <%= link_to recipe, class: "color-sage-500" do %>
+                <%= recipe.title %>
+              <% end %>
+            </div>
           </td>
+
           <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
             <% if recipe.tags.any? %>
               <div class="mt-4 flex flex-wrap gap-2">

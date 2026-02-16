@@ -11,37 +11,41 @@
     </div>
   <% end %>
 
-  <div class="my-5">
-    <%= form.label :week_of %>
-    <%= form.date_field :week_of, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:week_of].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:week_of].any?}] %>
+    <%= form.hidden_field :week_of,
+                        required: true,
+                        value: Date.today,
+                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border #{grocery_list.errors[:week_of].any? ? 'border-red-400 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20'} focus:ring-2 outline-none transition" %>
+
+  <div class="mb-4" data-controller="searchable-select" data-searchable-select-placeholder-value="Search for an ingredient...">
+    <%= form.label :ingredient_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= form.select :ingredient_id,
+                    options_for_select(
+                      Ingredient.order(favorite: :desc, ingredient: :asc).map { |r|
+                        [r.ingredient, r.id, { 'data-favorite' => r.favorite }]
+                      },
+                      grocery_list.ingredient_id
+                    ),
+                    { include_blank: true },
+                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                    data: {
+                      dynamic_filter_target: "field",
+                      searchable_select_target: "select",
+                      action: "change->dynamic-filter#updateValueField"
+                    }
+    %>
   </div>
 
-  <div class="my-5">
-    <%= form.label :ingredient_id %>
-    <%= form.text_field :ingredient_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:ingredient_id].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:ingredient_id].any?}] %>
+  <div class="mb-4">
+    <%= form.label :units, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= form.number_field :units, value: 1, min: 1,
+                          class: ["block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", {"": grocery_list.errors[:units].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:units].any?}],
+    required: true
+    %>
   </div>
 
-  <div class="my-5">
-    <%= form.label :meal_id %>
-    <%= form.text_field :meal_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:meal_id].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:meal_id].any?}] %>
-  </div>
-
-  <div class="my-5">
-    <%= form.label :units %>
-    <%= form.number_field :units, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:units].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:units].any?}] %>
-  </div>
-
-  <div class="my-5 flex items-center gap-2">
-    <%= form.label :checked %>
-    <%= form.checkbox :checked, class: ["block shadow-sm rounded-md border order-first h-5 w-5", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:checked].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:checked].any?}] %>
-  </div>
-
-  <div class="my-5 flex items-center gap-2">
-    <%= form.label :manually_adjusted %>
-    <%= form.checkbox :manually_adjusted, class: ["block shadow-sm rounded-md border order-first h-5 w-5", {"border-gray-400 focus:outline-blue-600": grocery_list.errors[:manually_adjusted].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:manually_adjusted].any?}] %>
-  </div>
+    <%= form.hidden_field :manually_adjusted, value: true %>
 
   <div class="inline">
-    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+    <%= form.submit "Add to list", class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
   </div>
 <% end %>

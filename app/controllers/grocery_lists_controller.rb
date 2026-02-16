@@ -88,8 +88,16 @@ class GroceryListsController < ApplicationController
 
     respond_to do |format|
       if @grocery_list.save
+        @grocery_list.broadcast_append_to(
+          "grocery_lists",
+          target: "grocery_lists",
+          partial: "grocery_lists/grocery_list",
+          locals: { grocery_list: @grocery_list }
+        )
         format.html { redirect_to @grocery_list, notice: "Grocery list was successfully created." }
         format.json { render :show, status: :created, location: @grocery_list }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("new_grocery_list", partial: "grocery_lists/new", locals: { grocery_list: GroceryList.new }) }
+
       else
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @grocery_list.errors, status: :unprocessable_entity }
@@ -124,13 +132,12 @@ class GroceryListsController < ApplicationController
 
   # DELETE /grocery_lists/1 or /grocery_lists/1.json
   def destroy
+    @ingredient_name = @grocery_list.ingredient.ingredient
     @grocery_list.destroy!
 
     respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.remove("grocery_list_#{@grocery_list.id}")
-      end
-      format.html { redirect_to grocery_lists_path, notice: "Grocery list was successfully destroyed.", status: :see_other }
+      format.turbo_stream
+      format.html { redirect_to grocery_lists_path, notice: "#{@ingredient_name} removed from list.", status: :see_other }
       format.json { head :no_content }
     end
   end
@@ -152,7 +159,7 @@ class GroceryListsController < ApplicationController
   def calculate_servings_needed(recipe_ingredient, ingredient)
     nutrition_fact = ingredient.nutrition_fact
     return 1 unless nutrition_fact&.serving_size.present?
-
+    return 1 unless recipe_ingredient.quantity&.positive?
     if recipe_ingredient.unit == nutrition_fact.serving_unit
       recipe_ingredient.quantity / nutrition_fact.serving_size
     else

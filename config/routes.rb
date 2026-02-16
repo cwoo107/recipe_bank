@@ -20,11 +20,15 @@ Rails.application.routes.draw do
       end
     end
     member do
+      patch :toggle_favorite
       get :import
     end
   end
   resources :ingredients do
     resources :nutrition_facts, only: [:create, :edit, :update, :destroy]
+    member do
+      patch :toggle_favorite
+    end
   end
   resources :tags
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

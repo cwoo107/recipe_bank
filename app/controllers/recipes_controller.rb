@@ -1,5 +1,5 @@
 class RecipesController < ApplicationController
-  before_action :set_recipe, only: %i[ show edit update destroy ]
+  before_action :set_recipe, only: %i[ show edit update toggle_favorite destroy ]
 
   def index
     @recipes = Recipe.includes(:tags, :recipe_ingredients, :steps).all
@@ -42,6 +42,15 @@ class RecipesController < ApplicationController
       redirect_to @recipe, notice: "Recipe was successfully updated."
     else
       render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def toggle_favorite
+    @recipe.update(favorite: !@recipe.favorite)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @recipe }
     end
   end
 

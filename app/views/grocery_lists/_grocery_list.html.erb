@@ -1,12 +1,14 @@
-<li id="grocery_list_<%= grocery_list.id %>"
-    class="flex justify-between gap-x-6 py-5"
-    data-controller="grocery-item">
+<div id="grocery_list_<%= grocery_list.id %>"
+     class="flex justify-between gap-x-6 py-5 px-4 hover:bg-[#faf9f7] hover:dark:bg-[#1a1f16] rounded"
+     data-controller="grocery-item">
 
   <%= form_with model: grocery_list,
+                url: grocery_list_path(grocery_list),
+                method: :patch,
                 class: "flex justify-between gap-x-6 w-full",
                 data: {
                   grocery_item_target: "form",
-                  turbo: true
+                  format: :turbo_stream
                 } do |f| %>
 
     <!-- Checkbox -->
@@ -21,12 +23,22 @@
     <!-- Item Details -->
     <div class="flex min-w-0 flex-1 gap-x-4 ml-3">
       <div class="min-w-0 flex-auto">
-        <p class="font-semibold text-gray-900 dark:text-white transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
-          <%= grocery_list.ingredient.ingredient %>
-        </p>
-
+        <div class="flex items-center gap-x-2">
+  <span class="font-semibold text-gray-900 dark:text-white transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
+    <% if grocery_list.ingredient.favorite? %>
+      <span class="text-yellow-500">
+        <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
+          <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" />
+        </svg>
+      </span>
+    <% end %>
+    <%= link_to grocery_list.ingredient, class: "color-sage-500" do %>
+      <%= grocery_list.ingredient.ingredient %>
+    <% end %>
+  </span>
+        </div>
         <p class="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400 transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
-          <%= grocery_list.ingredient.brand %>
+          used in <%= grocery_list.meal_ids.count %> meals
         </p>
         <p>
           <%= ingredient_family_tag(grocery_list.ingredient.family) || "-" %>
@@ -80,7 +92,6 @@
   <%= button_to grocery_list_path(grocery_list),
                 method: :delete,
                 data: {
-                  turbo_confirm: "Remove this item?",
                   turbo: true
                 },
                 class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400" do %>
@@ -88,4 +99,4 @@
       <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
     </svg>
   <% end %>
-</li>
+</div>

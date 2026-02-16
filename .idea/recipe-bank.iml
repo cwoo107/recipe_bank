@@ -530,6 +530,15 @@
               <RakeTaskImpl description="Truncate all/specified *.log files in log/ to zero bytes (specify which logs with LOGS=test,development)" fullCommand="log:clear" id="clear" />
             </subtasks>
           </RakeTaskImpl>
+          <RakeTaskImpl id="products">
+            <subtasks>
+              <RakeTaskImpl description="Import a single product from Trader Joe's URL" fullCommand="products:import[url]" id="import[url]" />
+              <RakeTaskImpl description="Import multiple products from a Trader Joe's category page" fullCommand="products:import_category[url,limit]" id="import_category[url,limit]" />
+              <RakeTaskImpl description="List available Trader Joe's categories" fullCommand="products:list_categories" id="list_categories" />
+              <RakeTaskImpl description="" fullCommand="products:import" id="import" />
+              <RakeTaskImpl description="" fullCommand="products:import_category" id="import_category" />
+            </subtasks>
+          </RakeTaskImpl>
           <RakeTaskImpl id="solid_cable">
             <subtasks>
               <RakeTaskImpl description="Copy over the schema and set cable adapter for Solid Cable" fullCommand="solid_cable:install" id="install" />

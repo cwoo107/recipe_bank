@@ -10,28 +10,47 @@
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :recipe_id, "Recipe", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+  <div class="mb-4" data-controller="searchable-select" data-searchable-select-placeholder-value="Search for a recipe...">
+    <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= form.select :recipe_id,
-                    options_from_collection_for_select(Recipe.all, :id, :title, meal.recipe_id),
-                    { prompt: "Select a recipe" },
-                    required: true,
-                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+                    options_for_select(
+                      Recipe.order(favorite: :desc, title: :asc).map { |r|
+                        [r.title, r.id, { 'data-favorite' => r.favorite }]
+                      },
+                      meal.recipe_id
+                    ),
+                    { include_blank: true },
+                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                    data: {
+                      dynamic_filter_target: "field",
+                      searchable_select_target: "select",
+                      action: "change->dynamic-filter#updateValueField"
+                    }
+    %>
   </div>
+
 
   <div>
-    <%= form.label :meal_name, "Meal Type", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= form.select :meal_name,
-                    [['Breakfast', 'breakfast'], ['Lunch', 'lunch'], ['Dinner', 'dinner']],
-                    { prompt: "Select meal type" },
-                    required: true,
-                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+    <%= form.label :meal_name, "Meal", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <div class="space-y-2">
+      <% [['Breakfast', 'breakfast'], ['Lunch', 'lunch'], ['Dinner', 'dinner']].each do |label, value| %>
+        <label class="flex items-center">
+          <%= form.radio_button :meal_name,
+                                value,
+                                required: true,
+                                checked: value == 'breakfast' && form.object.meal_name.nil?,
+                                style: "accent-color: #5f734c;",
+                                class: "h-5 w-5 border-gray-300 focus:ring-[#5f734c] dark:border-gray-600" %>
+          <span class="ml-2 text-gray-900 dark:text-white font-semibold "><%= label %></span>
+        </label>
+      <% end %>
+    </div>
   </div>
-
   <div>
     <%= form.label :date, "Date", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= form.date_field :date,
                         required: true,
+                        value: Date.today,
                         class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border #{meal.errors[:date].any? ? 'border-red-400 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20'} focus:ring-2 outline-none transition" %>
   </div>
 

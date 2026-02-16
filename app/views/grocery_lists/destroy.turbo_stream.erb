@@ -1,0 +1,5 @@
+<%= turbo_stream.remove "grocery_list_#{@grocery_list.id}" %>
+
+<%= turbo_stream.prepend "flash" do %>
+  <%= render "shared/flash", notice: "#{@ingredient_name} removed from list." %>
+<% end %>

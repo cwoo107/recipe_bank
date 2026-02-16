@@ -1,41 +1,50 @@
 <div class="mx-auto max-w-4xl">
   <div class="flex items-start justify-between">
     <div class="min-w-0 flex-1">
-      <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">
-        <%= @ingredient.ingredient %>
-      </h1>
-      <div class="mt-2 flex items-center gap-x-4 text-sm text-gray-500 dark:text-gray-400">
-        <% if @ingredient.brand.present? %>
-          <span class="flex items-center gap-x-1.5">
-            <%= @ingredient.brand %>
-          </span>
-        <% end %>
-        <% if @ingredient.family.present? %>
-          <%= ingredient_family_tag(@ingredient.family) %>
-          <% if false %>
-            <% @ingredient_families = {
-              'protein' => { color: 'mauve', label: 'Protein' },
-              'vegetable' => { color: 'mist', label: 'Vegetable' },
-              'fruit' => { color: 'taupe', label: 'Fruit' },
-              'grain' => { color: 'honey', label: 'Grain' },
-              'fat' => { color: 'terracotta', label: 'Fat' }
-            } %>
-            <% @ingredient_families.each do |i| %>
-          <div class="bg-<%= i.color %>-300 text-<%= i.color %>-600 inset-ring-<%= i.color %>-600/20 dark:bg-<%= i.color %>-800/20 dark:text-<%= i.color %>-300 dark:inset-ring-<%= i.color %>-300/30">
-              </div>
-            <% end %>
+      <div class="flex items-center gap-x-3">
+        <%= button_to toggle_favorite_ingredient_path(@ingredient),
+                      method: :patch,
+                      id: "favorite_button_#{@ingredient.id}",
+                      data: { turbo: true },
+                      class: " px-2 py-2 text-sm font-semibold hover:opacity-80 transition-opacity #{@ingredient.favorite? ? 'text-yellow-500' : 'text-gray-400'}" do %>
+          <% if @ingredient.favorite? %>
+            <!-- Filled Star -->
+            <svg viewBox="0 0 20 20" fill="currentColor" class="size-7" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" />
+            </svg>
+          <% else %>
+            <!-- Empty Star -->
+            <svg viewBox="0 0 20 20" fill="currentColor" class="size-7" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" />
+            </svg>
           <% end %>
         <% end %>
 
+        <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">
+          <%= @ingredient.ingredient %>
+        </h1>
+      </div>
+
+      <div class="mt-2 flex items-center gap-x-4 text-sm text-gray-500 dark:text-gray-400">
+        <% if @ingredient.brand.present? %>
+      <span class="flex items-center gap-x-1.5">
+        <%= @ingredient.brand %>
+      </span>
+        <% end %>
+        <% if @ingredient.family.present? %>
+          <%= ingredient_family_tag(@ingredient.family) %>
+        <% end %>
+
         <% if @ingredient.organic? %>
-          <span class="inline-flex items-center rounded-full bg-[#e8ede3] px-2 py-1 text-xs font-medium text-[#5f734c] inset-ring inset-ring-[#5f734c]/20 dark:bg-[#7a8f62]/20 dark:text-[#7a8f62] dark:inset-ring-[#7a8f62]/30">
-            Organic
-          </span>
+      <span class="inline-flex items-center rounded-full bg-[#e8ede3] px-2 py-1 text-xs font-medium text-[#5f734c] inset-ring inset-ring-[#5f734c]/20 dark:bg-[#7a8f62]/20 dark:text-[#7a8f62] dark:inset-ring-[#7a8f62]/30">
+        Organic
+      </span>
         <% end %>
       </div>
     </div>
 
     <div class="ml-4 flex shrink-0 gap-x-3">
+
       <%= link_to edit_ingredient_path(@ingredient),
                   class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" do %>
         <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5 inline-block" aria-hidden="true">

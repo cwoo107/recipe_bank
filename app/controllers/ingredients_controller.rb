@@ -1,5 +1,5 @@
 class IngredientsController < ApplicationController
-  before_action :set_ingredient, only: %i[ show edit update destroy ]
+  before_action :set_ingredient, only: %i[ show edit update toggle_favorite destroy ]
 
   def index
     @ingredients = Ingredient.all
@@ -51,6 +51,15 @@ def update
     render :edit, status: :unprocessable_entity
   end
 end
+
+  def toggle_favorite
+    @ingredient.update(favorite: !@ingredient.favorite)
+
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_to @ingredient }
+    end
+  end
 
   def destroy
     @ingredient.destroy!

@@ -20,7 +20,7 @@
         Auto generate list
       <% end %>
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
-        <dialog data-dialog-target="dialog" class="rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+        <dialog data-dialog-target="dialog" class="w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
           <%= turbo_frame_tag 'new_grocery_list', src: new_grocery_list_path do %>
           <% end %>
           <div class="mt-4">
@@ -63,9 +63,10 @@
     </div>
 
     <div class="p-4 bg-white shadow-sm inset-ring inset-ring-gray-900/5 sm:rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
-      <ul role="list" class="divide-y divide-gray-100 dark:divide-white/5">
+      <div role="list" class="divide-y divide-gray-100 dark:divide-white/5">
+        <%= turbo_stream_from 'grocery_lists' %>
         <%= render @grocery_lists %>
-        <li class="flex justify-between gap-x-6 p-4 bg-gray-50 dark:bg-gray-800/50">
+        <div class="flex justify-between gap-x-6 p-4 bg-[#faf9f7] dark:bg-[#1a1f16]">
           <div class="flex min-w-0 flex-1 gap-x-4 ml-3">
             <div class="min-w-0 flex-auto">
               <p class="text-lg font-bold text-gray-900 dark:text-white">
@@ -83,8 +84,8 @@
               $<%= subtotal.round(2) %>
             </p>
           </div>
-        </li>
-      </ul>
+        </div>
+      </div>
     </div>
   </div>
 </div>

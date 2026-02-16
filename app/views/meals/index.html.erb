@@ -8,7 +8,7 @@
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0">
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
-        <dialog data-dialog-target="dialog" class="rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+        <dialog data-dialog-target="dialog" class="w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
           <%= turbo_frame_tag 'new_meal', src: new_meal_path do %>
           <% end %>
           <div class="mt-4">
@@ -88,7 +88,7 @@
             </div>
 
             <!-- Meal columns with proper grid -->
-            <div class="col-start-1 col-end-2 row-start-1 grid divide-x divide-gray-200 dark:divide-white/10" style="grid-template-columns: 8rem 1fr 1fr 1fr; grid-template-rows: repeat(7, 8rem);">
+            <div class="col-start-1 col-end-2 row-start-1 grid divide-gray-200 dark:divide-white/10" style="grid-template-columns: 8rem 1fr 1fr 1fr; grid-template-rows: repeat(7, 8rem);">
               <div class="col-start-1"></div>
               <div class="col-start-2"></div>
               <div class="col-start-3"></div>
