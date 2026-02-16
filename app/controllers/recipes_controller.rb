@@ -13,7 +13,31 @@ class RecipesController < ApplicationController
       @recipes = @recipes.joins(:tags).where(tags: { id: params[:filter] })
     end
 
-    @recipes = @recipes.order(created_at: :desc)
+    if params[:sort].present?
+      sort_column = params[:sort]
+      sort_direction = params[:direction] == 'desc' ? :desc : :asc
+
+      case sort_column
+      when 'ingredients'
+        @recipes = @recipes.left_joins(:recipe_ingredients)
+                           .group('recipes.id')
+                           .order("COUNT(recipe_ingredients.id) #{sort_direction}")
+      when 'steps'
+        @recipes = @recipes.left_joins(:steps)
+                           .group('recipes.id')
+                           .order("COUNT(steps.id) #{sort_direction}")
+      when 'tags'
+        @recipes = @recipes.left_joins(:tags)
+                           .group('recipes.id')
+                           .order("COUNT(tags.id) #{sort_direction}")
+      when 'title', 'servings', 'created_at'
+        @recipes = @recipes.order(sort_column => sort_direction)
+      else
+        @recipes = @recipes.order(created_at: :desc)
+      end
+    else
+      @recipes = @recipes.order(created_at: :desc)
+    end
   end
 
   def show

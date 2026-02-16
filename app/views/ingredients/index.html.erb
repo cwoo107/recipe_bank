@@ -60,10 +60,29 @@
     <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
       <thead class="bg-gray-50 dark:bg-white/5">
       <tr>
-        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">Name</th>
-        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Brand</th>
-        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Family</th>
-        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Type</th>
+        <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">
+          <%= link_to "Name", ingredients_path(
+            sort: 'ingredient',
+            direction: params[:sort] == 'ingredient' && params[:direction] == 'asc' ? 'desc' : 'asc'
+          ) %>
+          </th>
+        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+          <%= link_to "Brand", ingredients_path(
+            sort: 'brand',
+            direction: params[:sort] == 'brand' && params[:direction] == 'asc' ? 'desc' : 'asc'
+          ) %>
+        </th>
+        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+          <%= link_to "Family", ingredients_path(
+            sort: 'family',
+            direction: params[:sort] == 'family' && params[:direction] == 'asc' ? 'desc' : 'asc'
+          ) %>
+          </th>
+        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+          <%= link_to "Organic", ingredients_path(
+            sort: 'organic',
+            direction: params[:sort] == 'organic' && params[:direction] == 'asc' ? 'desc' : 'asc'
+          ) %></th>
         <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6">
           <span class="sr-only">Actions</span>
         </th>

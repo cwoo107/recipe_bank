@@ -9,6 +9,8 @@ class Recipe < ApplicationRecord
   validates :title, presence: true
   validates :servings, numericality: { greater_than: 0 }, allow_nil: true
 
+  # default_scope { order(favorite: :desc) }
+
   # Calculate total macros for the entire recipe
   def total_protein
     recipe_ingredients.includes(ingredient: :nutrition_fact).sum do |ri|

@@ -5,10 +5,11 @@ class IngredientsController < ApplicationController
     @ingredients = Ingredient.all
     @ingredient_families = [
       { color: 'mauve', label: 'Protein' },
-      { color: 'mist', label: 'Vegetable' },
-      { color: 'taupe', label: 'Fruit' },
+      { color: 'mist', label: 'Produce' },
+      { color: 'taupe', label: 'Dairy' },
       { color: 'honey', label: 'Grain' },
-      { color: 'terracotta', label: 'Fat' }
+      { color: 'terracotta', label: 'Fat' },
+      { color: 'mist', label: 'Spices' }
     ]
 
     if params[:query].present?
@@ -20,7 +21,13 @@ class IngredientsController < ApplicationController
       @ingredients = @ingredients.where(family: params[:filter] )
     end
 
-    @ingredients = @ingredients.order(:ingredient)
+    if params[:sort].present?
+      sort_column = params[:sort]
+      sort_direction = params[:direction] == 'desc' ? :desc : :asc
+      @ingredients = @ingredients.order(sort_column => sort_direction)
+    else
+      @ingredients = @ingredients.order(:ingredient)
+    end
   end
 
   def show

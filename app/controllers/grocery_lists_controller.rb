@@ -4,11 +4,22 @@ class GroceryListsController < ApplicationController
 
   # GET /grocery_lists or /grocery_lists.json
   def index
+    @ingredient_families = [
+      { color: 'mauve', label: 'Protein' },
+      { color: 'mist', label: 'Produce' },
+      { color: 'taupe', label: 'Dairy' },
+      { color: 'honey', label: 'Grain' },
+      { color: 'terracotta', label: 'Fat' },
+      { color: 'mist', label: 'Spices' }
+    ]
     @grocery_lists = GroceryList.where("week_of >= ?", @date)
                                 .where('week_of < ?', @date + 7)
                                 .includes(:ingredient)
                                 .joins(:ingredient)
                                 .order('ingredients.family ASC, ingredients.ingredient ASC')
+    if params[:filter].present?
+      @grocery_lists = @grocery_lists.where(ingredients: { family: params[:filter] })
+    end
   end
 
   def generate

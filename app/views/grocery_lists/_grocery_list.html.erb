@@ -24,7 +24,7 @@
     <div class="flex min-w-0 flex-1 gap-x-4 ml-3">
       <div class="min-w-0 flex-auto">
         <div class="flex items-center gap-x-2">
-  <span class="font-semibold text-gray-900 dark:text-white transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
+  <span class="flex items-center gap-x-2 font-semibold text-gray-900 dark:text-white transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
     <% if grocery_list.ingredient.favorite? %>
       <span class="text-yellow-500">
         <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
@@ -32,9 +32,7 @@
         </svg>
       </span>
     <% end %>
-    <%= link_to grocery_list.ingredient, class: "color-sage-500" do %>
-      <%= grocery_list.ingredient.ingredient %>
-    <% end %>
+    <%= link_to grocery_list.ingredient.ingredient, grocery_list.ingredient, class: "color-sage-500" %>
   </span>
         </div>
         <p class="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400 transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">

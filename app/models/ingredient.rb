@@ -5,4 +5,7 @@ class Ingredient < ApplicationRecord
   has_many :grocery_lists, dependent: :destroy
 
   validates :ingredient, presence: true
+
+  # default_scope { order(favorite: :desc) }
+
 end
