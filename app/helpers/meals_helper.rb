@@ -1,20 +1,4 @@
 module MealsHelper
-  def meal_grid_position(meal, week_start_date)
-    # Calculate row (1-7 based on day of week)
-    days_from_start = (meal.date - week_start_date).to_i
-    row = days_from_start + 1
-
-    # Calculate column based on meal_name (2=breakfast, 3=lunch, 4=dinner)
-    column = case meal.meal_name.downcase
-             when "breakfast" then 2
-             when "lunch" then 3
-             when "dinner" then 4
-             else 2 # default to breakfast column
-             end
-
-    "grid-row: #{row} / span 1; grid-column: #{column} / span 1"
-  end
-
   def meal_color_classes(meal)
     case meal.meal_name.downcase
     when "breakfast"
@@ -47,8 +31,27 @@ module MealsHelper
         title: "text-mist-800 dark:text-mist-300",
         subtitle: "text-mist-700 dark:text-mist-400"
       }
+    when "snack"
+      {
+        bg: "bg-mauve-300",
+        hover: "hover:bg-mauve-400",
+        ring: "inset-ring-mauve-600/20",
+        dark_bg: "dark:bg-mauve-800/20",
+        dark_ring: "dark:inset-ring-mauve-300/30",
+        title: "text-mauve-800 dark:text-mauve-300",
+        subtitle: "text-mauve-700 dark:text-mauve-400"
+      }
+    when "dessert"
+      {
+        bg: "bg-dusty-rose-300",
+        hover: "hover:bg-dusty-rose-400",
+        ring: "inset-ring-dusty-rose-600/20",
+        dark_bg: "dark:bg-dusty-rose-800/20",
+        dark_ring: "dark:inset-ring-dusty-rose-300/30",
+        title: "text-dusty-rose-800 dark:text-dusty-rose-300",
+        subtitle: "text-dusty-rose-700 dark:text-dusty-rose-400"
+      }
     else
-      # Default to breakfast colors
       {
         bg: "bg-honey-300",
         hover: "hover:bg-honey-400",
@@ -59,10 +62,5 @@ module MealsHelper
         subtitle: "text-honey-700 dark:text-honey-400"
       }
     end
-  end
-
-  def calories_per_serving(meal)
-    return 0 if meal.recipe.servings.zero?
-    (meal.recipe.total_calories.to_f / meal.recipe.servings).to_i
   end
 end

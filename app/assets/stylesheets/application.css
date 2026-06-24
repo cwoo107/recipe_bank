@@ -8,6 +8,34 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+@import "accordion";
+
+/* Accordion content panel
+ *
+ * Uses the grid-template-rows: 0fr → 1fr trick.
+ * This is the only reliable CSS-only approach that transitions
+ * to an unknown height without any JS measurement.
+ *
+ * The content target needs a single child element (the inner wrapper)
+ * so that min-content is constrained to 0 when rows = 0fr.
+ * In our template the content div wraps the slot divs directly — that's fine.
+ */
+
+.accordion-content {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 200ms ease;
+    overflow: hidden;
+}
+
+.accordion-content.accordion-open {
+    grid-template-rows: 1fr;
+}
+
+/* The direct child must have overflow:hidden so it collapses to 0 */
+.accordion-content > * {
+    overflow: hidden;
+}
 
 dialog {
     position: fixed;

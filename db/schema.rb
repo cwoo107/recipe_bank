@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_16_180721) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -102,6 +102,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_16_180721) do
     t.date "date"
     t.string "meal_name"
     t.integer "recipe_id", null: false
+    t.integer "servings"
     t.datetime "updated_at", null: false
     t.index ["recipe_id"], name: "index_meals_on_recipe_id"
   end

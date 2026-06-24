@@ -8,7 +8,7 @@
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0">
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
-        <dialog data-dialog-target="dialog" class="w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+        <dialog data-dialog-target="dialog" class="w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
           <%= turbo_frame_tag 'new_meal', src: new_meal_path do %>
           <% end %>
           <div class="mt-4">
@@ -27,84 +27,192 @@
   </div>
 
   <div class="mt-8 mb-8">
-    <div class="sm:flex sm:items-center sm:justify-between">
-      <div class="mb-2">
-        <%= link_to meals_path(date: @date - 1.week),
-                    class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-          </svg>
+    <%# Week navigation %>
+    <div class="flex items-center justify-between mb-4 gap-2">
+      <%= link_to meals_path(date: @date - 1.week),
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        <span class="hidden sm:inline">Previous Week</span>
+        <span class="sm:hidden">Prev</span>
+      <% end %>
 
-          Previous Week
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300 sm:hidden">
+        <%= @date.strftime("%b %d") %> – <%= (@date + 6.days).strftime("%b %d") %>
+      </span>
+
+      <%= link_to meals_path(date: @date + 1.week),
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+        <span class="hidden sm:inline">Next Week</span>
+        <span class="sm:hidden">Next</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+        </svg>
+      <% end %>
+    </div>
+
+    <%#
+      ============================================================
+      DESKTOP CALENDAR GRID (hidden on mobile)
+      4-column CSS grid: day label + breakfast + lunch + dinner.
+      Cells grow vertically when multiple meals are added.
+      ============================================================
+    %>
+    <div class="hidden sm:block isolate bg-[var(--ivory)] dark:bg-[#1a1f16] rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+
+      <%# Sticky column headers %>
+      <div class="sticky top-0 z-30 grid border-b border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] shadow-sm"
+           style="grid-template-columns: 8rem 1fr 1fr 1fr;">
+        <div class="border-r border-gray-200 dark:border-white/10 py-4"></div>
+        <% %w[Breakfast Lunch Dinner].each_with_index do |label, i| %>
+          <div class="flex items-center justify-center py-4 <%= i < 2 ? 'border-r border-gray-200 dark:border-white/10' : '' %>">
+            <span class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif"><%= label %></span>
+          </div>
         <% end %>
       </div>
-      <div class="mb-2">
-        <%= link_to meals_path(date: @date + 1.week),
-                    class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
-          Next Week
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-          </svg>
 
-      <% end %>
-      </div>
-    </div>
-    <div class="isolate flex flex-auto flex-col overflow-auto bg-[var(--ivory)] dark:bg-[#1a1f16]">
-      <div class="flex max-w-full flex-none flex-col">
-        <!-- Header with meal types -->
-        <div class="text-3xl sticky top-0 z-30 flex-none shadow-sm dark:shadow-none " style="font-family: 'Instrument Serif', serif">
-          <div class="grid text-sm/6 text-gray-500 dark:text-gray-400" style="grid-template-columns: 8rem 1fr 1fr 1fr;">
-            <div class="border-r border-gray-200 dark:border-white/10"></div>
-            <div class="flex items-center justify-center py-4 border-r border-gray-200 dark:border-white/10">
-              <span class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]">Breakfast</span>
-            </div>
-            <div class="flex items-center justify-center py-4 border-r border-gray-200 dark:border-white/10">
-              <span class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]">Lunch</span>
-            </div>
-            <div class="flex items-center justify-center py-4">
-              <span class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]">Dinner</span>
+      <%# One row per day %>
+      <% 7.times do |i| %>
+        <% current_date = @date + i.days %>
+        <% is_today     = current_date == Date.today %>
+        <% is_last_row  = i == 6 %>
+
+        <div class="grid <%= is_last_row ? '' : 'border-b border-gray-200 dark:border-white/10' %>"
+             style="grid-template-columns: 8rem 1fr 1fr 1fr;">
+
+          <%# Day label %>
+          <div class="flex items-center justify-center border-r border-gray-200 dark:border-white/10 py-4 min-h-32">
+            <div class="flex flex-col items-center rounded-full px-4 py-4 text-xl
+                        <%= is_today ? 'bg-[#5f734c] text-white dark:bg-[#7a8f62]' : 'text-gray-900 dark:text-white' %>">
+              <%= current_date.strftime("%a") %>
+              <div class="text-sm"><%= current_date.strftime("%b %d") %></div>
             </div>
           </div>
-        </div>
 
-        <!-- Calendar grid -->
-        <div class="flex flex-auto">
-          <div class="grid flex-auto grid-cols-1 grid-rows-1">
-            <!-- Days of week (vertical) -->
-            <div class="text-2xl col-start-1 col-end-2 row-start-1 grid divide-y divide-gray-200 dark:divide-white/10" style="grid-template-rows: repeat(7, 8rem);">
-              <% 7.times do |i| %>
-                <% current_date = @date + i.days %>
-                <% is_today = current_date == Date.today %>
-
-                <div class="flex">
-                  <div class="sticky left-0 z-20 w-32 flex items-center justify-center text-sm font-medium border-r border-gray-200 dark:border-white/10">
-                    <div class="text-xl flex flex-col items-center rounded-full px-4 py-4 <%= is_today ? 'bg-[#5f734c] text-white dark:bg-[#7a8f62]' : 'text-gray-900 dark:text-white' %>">
-                      <%= current_date.strftime("%a") %>
-                      <div class="text-sm"><%= current_date.strftime("%b %d") %></div>
-                    </div>
-                  </div>
-                </div>
-              <% end %>
-            </div>
-
-            <!-- Meal columns with proper grid -->
-            <div class="col-start-1 col-end-2 row-start-1 grid divide-gray-200 dark:divide-white/10" style="grid-template-columns: 8rem 1fr 1fr 1fr; grid-template-rows: repeat(7, 8rem);">
-              <div class="col-start-1"></div>
-              <div class="col-start-2"></div>
-              <div class="col-start-3"></div>
-              <div class="col-start-4"></div>
-            </div>
-
-            <!-- Events -->
-            <%= turbo_stream_from "meals" %>
-            <ol id="meals" style="display: grid; grid-template-rows: repeat(7, 8rem); grid-template-columns: 8rem 1fr 1fr 1fr;" class="col-start-1 col-end-2 row-start-1">              <% @meals.each do |meal| %>
+          <%# Meal cells %>
+          <% %w[breakfast lunch dinner].each_with_index do |type, col_i| %>
+            <% meals_for_cell = @calendar_meals[[i, type]] || [] %>
+            <div id="desktop_cell_<%= i %>_<%= type %>"
+                 class="flex flex-col gap-2 p-2 min-h-32 <%= col_i < 2 ? 'border-r border-gray-200 dark:border-white/10' : '' %>">
+              <% meals_for_cell.each do |meal| %>
                 <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
               <% end %>
-            </ol>
+            </div>
+          <% end %>
 
+        </div>
+      <% end %>
+
+    </div>
+
+    <%#
+      ============================================================
+      MOBILE DAY LIST (visible only below sm breakpoint)
+      One card per day, each showing three labeled meal slots
+      stacked vertically. Today's card is visually highlighted.
+      ============================================================
+    %>
+    <div class="sm:hidden space-y-3">
+      <% 7.times do |i| %>
+        <% current_date    = @date + i.days %>
+        <% is_today        = current_date == Date.today %>
+        <% day_has_meals   = %w[breakfast lunch dinner].any? { |t| @calendar_meals[[i, t]].present? } %>
+
+        <div data-controller="accordion"
+             data-accordion-open-value="<%= is_today %>"
+             class="rounded-lg border overflow-hidden
+                    <%= is_today ? 'border-[#5f734c] dark:border-[#7a8f62]' : 'border-gray-200 dark:border-white/10' %>
+                    bg-[var(--ivory)] dark:bg-[#1a1f16]">
+
+          <%# Day header — clicking anywhere on it toggles the accordion %>
+          <button type="button"
+                  data-accordion-target="trigger"
+                  data-action="click->accordion#toggle"
+                  class="w-full flex items-center gap-3 px-4 py-3 border-b text-left
+                         <%= is_today ? 'bg-[#5f734c] dark:bg-[#7a8f62] border-[#4b5a3d] dark:border-[#5f734c]' : 'border-gray-200 dark:border-white/10' %>">
+            <div class="flex-1 <%= is_today ? 'text-white' : 'text-gray-900 dark:text-white' %>">
+              <span class="text-lg font-semibold" style="font-family: 'Instrument Serif', serif">
+                <%= current_date.strftime("%A") %>
+              </span>
+              <span class="ml-2 text-sm <%= is_today ? 'text-white/80' : 'text-gray-500 dark:text-gray-400' %>">
+                <%= current_date.strftime("%b %d") %>
+              </span>
+              <% if day_has_meals %>
+                <span class="ml-2 text-xs <%= is_today ? 'text-white/70' : 'text-gray-400 dark:text-gray-500' %>">
+                  · <%= %w[breakfast lunch dinner].sum { |t| (@calendar_meals[[i, t]] || []).size } %> meal<%= %w[breakfast lunch dinner].sum { |t| (@calendar_meals[[i, t]] || []).size } == 1 ? '' : 's' %>
+                </span>
+              <% else %>
+                <span class="ml-2 text-xs <%= is_today ? 'text-white/60' : 'text-gray-400 dark:text-gray-500' %>">· No meals</span>
+              <% end %>
+            </div>
+
+            <%# Chevron rotates open/closed via aria-expanded CSS %>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+                 class="size-5 shrink-0 transition-transform duration-200
+                        <%= is_today ? 'text-white/80' : 'text-gray-400 dark:text-gray-500' %>
+                        [[aria-expanded=true]_&]:rotate-180">
+              <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <%# Collapsible content %>
+          <div data-accordion-target="content" class="accordion-content">
+            <div>
+            <% %w[breakfast lunch dinner].each_with_index do |type, slot_i| %>
+              <% meals_for_cell = @calendar_meals[[i, type]] || [] %>
+              <% is_last_slot   = slot_i == 2 %>
+
+              <div class="<%= is_last_slot ? '' : 'border-b border-gray-100 dark:border-white/5' %>">
+                <%# Slot label %>
+                <div class="px-4 py-1.5 bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/5">
+                  <span class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+                    <%= type.capitalize %>
+                  </span>
+                </div>
+
+                <div id="mobile_cell_<%= i %>_<%= type %>"
+                     class="flex flex-col gap-2 p-2 <%= meals_for_cell.empty? ? 'min-h-10' : '' %>">
+                  <% meals_for_cell.each do |meal| %>
+                    <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
+            </div>
+          </div>
+
+        </div>
+      <% end %>
+    </div>
+
+
+        <%#
+      ============================================================
+      SNACKS & DESSERTS
+      ============================================================
+    %>
+    <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <% %w[snack dessert].each do |type| %>
+        <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+          <div class="px-4 py-3 border-b border-gray-200 dark:border-white/10">
+            <h2 class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif">
+              <%= type.capitalize.pluralize %>
+            </h2>
+          </div>
+
+          <div id="extra_meals_<%= type %>" class="flex flex-col gap-2 p-3 min-h-24">
+            <% (@extra_meals[type] || []).each do |meal| %>
+              <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
+            <% end %>
+
+            <% if (@extra_meals[type] || []).empty? %>
+              <p class="text-sm text-gray-400 dark:text-gray-500 italic py-2 px-1">No <%= type.pluralize %> this week.</p>
+            <% end %>
           </div>
         </div>
-      </div>
+      <% end %>
     </div>
+
   </div>
 </div>

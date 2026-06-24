@@ -50,10 +50,10 @@
             data-chartjs-type-value="pie"
             data-chartjs-data-value='<%= @recipe.macros_chart_data.to_json %>'
             data-chartjs-options-value='<%= {
-                                              responsive: true,
-                                              maintainAspectRatio: true,
-                                              plugins: { legend: { display: true, position: "left" } }
-                                            }.to_json %>'
+              responsive: true,
+              maintainAspectRatio: true,
+              plugins: { legend: { display: true, position: "left" } }
+            }.to_json %>'
             style="max-height: 250px; max-width: 600px">
           </canvas>
           <p class="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
@@ -113,31 +113,31 @@
           <div class="overflow-x-auto -mx-6 px-6">
             <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
               <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
-              <% @recipe.recipe_ingredients.each do |recipe_ingredient| %>
-                <tr>
-                  <td class="whitespace-nowrap py-4 text-sm font-medium dark:text-white">
-                    <%= link_to recipe_ingredient.ingredient do %>
+                <% @recipe.recipe_ingredients.each do |recipe_ingredient| %>
+                  <tr>
+                    <td class="whitespace-nowrap py-4 text-sm font-medium dark:text-white">
+                      <%= link_to recipe_ingredient.ingredient do %>
                         <span class="text-sm font-medium text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]">
                           <%= truncate(recipe_ingredient.ingredient.ingredient, length: 20) %>
                         </span>
-                    <% end %>
-                  </td>
-                  <td class="whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
-                    <%= ingredient_family_tag(recipe_ingredient.ingredient.family) || "-" %>
-                  </td>
-                  <td class="whitespace-nowrap text-center px-2 text-sm text-gray-500 dark:text-gray-400">
-                    <%= display_quantity_with_unit(recipe_ingredient.quantity, recipe_ingredient.unit) %>
-                  </td>
-                  <td class="relative whitespace-nowrap text-right text-sm font-medium">
-                    <%= button_to recipe_recipe_ingredient_path(@recipe, recipe_ingredient),
-                                  method: :delete,
-                                  data: { turbo_confirm: "Remove this ingredient?" },
-                                  class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400" do %>
-                      <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" /></svg>
-                    <% end %>
-                  </td>
-                </tr>
-              <% end %>
+                      <% end %>
+                    </td>
+                    <td class="whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
+                      <%= ingredient_family_tag(recipe_ingredient.ingredient.family) || "-" %>
+                    </td>
+                    <td class="whitespace-nowrap text-center px-2 text-sm text-gray-500 dark:text-gray-400">
+                      <%= display_quantity_with_unit(recipe_ingredient.quantity, recipe_ingredient.unit) %>
+                    </td>
+                    <td class="relative whitespace-nowrap text-right text-sm font-medium">
+                      <%= button_to recipe_recipe_ingredient_path(@recipe, recipe_ingredient),
+                                    method: :delete,
+                                    data: { turbo_confirm: "Remove this ingredient?" },
+                                    class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400" do %>
+                        <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" /></svg>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
               </tbody>
             </table>
           </div>

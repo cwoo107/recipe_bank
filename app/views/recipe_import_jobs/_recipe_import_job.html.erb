@@ -4,7 +4,7 @@
     <ul role="list" class="-mb-8">
       <%= render_import_step(recipe_import_job, :fetching_html, "Fetching HTML", "Downloaded recipe page") %>
       <%= render_import_step(recipe_import_job, :parsing_recipe, "Parsing Recipe", "Extracted title, ingredients, and instructions") %>
-      <%= render_import_step(recipe_import_job, :matching_ingredients, "Matching Ingredients", "Matched #{recipe_import_job.progress} of #{recipe_import_job.scraped_data&.dig('ingredients')&.length || 0} ingredients") %>
+      <%= render_import_step(recipe_import_job, :matching_ingredients, "Matching Ingredients", recipe_import_job.ingredient_match_summary) %>
       <%= render_import_step(recipe_import_job, :resolving_with_ai, "Resolving with AI", "Classified ingredient families") %>
       <%= render_import_step(recipe_import_job, :creating_recipe, "Creating Recipe", "Saved recipe to database", last: true) %>
     </ul>

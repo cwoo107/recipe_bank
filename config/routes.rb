@@ -1,7 +1,8 @@
 Rails.application.routes.draw do
   root 'meals#index'
 
-  resources :grocery_lists do
+  get 'grocery_list', to: 'grocery_lists#index', as: 'grocery_lists'
+  resources :grocery_lists, except: :index do
     collection do
       post :generate
     end

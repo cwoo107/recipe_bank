@@ -1,4 +1,4 @@
-<%= form_with(model: meal, class: "space-y-6")  do |form| %>
+<%= form_with(model: meal, class: "space-y-6") do |form| %>
   <% if meal.errors.any? %>
     <div id="error_explanation" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 font-medium rounded-lg border border-red-200 dark:border-red-800">
       <h2 class="font-semibold mb-2"><%= pluralize(meal.errors.count, "error") %> prohibited this meal from being saved:</h2>
@@ -10,12 +10,13 @@
     </div>
   <% end %>
 
+  <%# Recipe selector %>
   <div class="mb-4" data-controller="searchable-select" data-searchable-select-placeholder-value="Search for a recipe...">
     <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= form.select :recipe_id,
                     options_for_select(
                       Recipe.order(favorite: :desc, title: :asc).map { |r|
-                        [r.title, r.id, { 'data-favorite' => r.favorite }]
+                        [r.title, r.id, { 'data-favorite' => r.favorite, 'data-servings' => r.servings }]
                       },
                       meal.recipe_id
                     ),
@@ -24,37 +25,65 @@
                     data: {
                       dynamic_filter_target: "field",
                       searchable_select_target: "select",
-                      action: "change->dynamic-filter#updateValueField"
+                      action: "change->dynamic-filter#updateValueField change->meal-form#recipeChanged"
                     }
     %>
   </div>
 
+  <%# Servings — pre-filled from recipe default via Stimulus, editable %>
+  <div data-meal-form-target="servingsField">
+    <%= form.label :servings, "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <div class="flex items-center gap-3">
+      <%= form.number_field :servings,
+                            min: 1,
+                            value: meal.servings,
+                            placeholder: "e.g. 4",
+                            class: "w-28 rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                            data: { meal_form_target: "servingsInput" } %>
+      <span class="text-sm text-gray-500 dark:text-gray-400" data-meal-form-target="recipeServingsHint"></span>
+    </div>
+  </div>
 
-  <div>
+  <%# Meal type — Breakfast / Lunch / Dinner + Snack / Dessert %>
+  <div data-controller="meal-form">
     <%= form.label :meal_name, "Meal", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <div class="space-y-2">
-      <% [['Breakfast', 'breakfast'], ['Lunch', 'lunch'], ['Dinner', 'dinner']].each do |label, value| %>
-        <label class="flex items-center">
+      <% [
+           ["Breakfast", "Breakfast"],
+           ["Lunch",     "Lunch"],
+           ["Dinner",    "Dinner"],
+           ["Snack",     "Snack"],
+           ["Dessert",   "Dessert"]
+         ].each do |label, value| %>
+        <label class="flex items-center gap-2 cursor-pointer">
           <%= form.radio_button :meal_name,
                                 value,
                                 required: true,
-                                checked: value == 'breakfast' && form.object.meal_name.nil?,
+                                checked: value == "Breakfast" && meal.meal_name.nil?,
                                 style: "accent-color: #5f734c;",
-                                class: "h-5 w-5 border-gray-300 focus:ring-[#5f734c] dark:border-gray-600" %>
-          <span class="ml-2 text-gray-900 dark:text-white font-semibold "><%= label %></span>
+                                class: "h-5 w-5 border-gray-300 focus:ring-[#5f734c] dark:border-gray-600",
+                                data: { action: "change->meal-form#mealTypeChanged" } %>
+          <span class="text-gray-900 dark:text-white font-semibold"><%= label %></span>
         </label>
       <% end %>
     </div>
   </div>
-  <div>
+
+  <%#
+    Date field — hidden for Snack/Dessert (week-level, date is set to Monday in controller).
+    Stimulus toggles visibility via data-meal-form-target="dateSection".
+  %>
+  <div data-meal-form-target="dateSection">
     <%= form.label :date, "Date", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= form.date_field :date,
                         required: true,
-                        value: Date.today,
-                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border #{meal.errors[:date].any? ? 'border-red-400 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20'} focus:ring-2 outline-none transition" %>
+                        value: meal.date || Date.today,
+                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border #{meal.errors[:date].any? ? 'border-red-400 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20'} focus:ring-2 outline-none transition",
+                        data: { meal_form_target: "dateInput" } %>
   </div>
 
   <div class="flex gap-3 pt-4">
-    <%= form.submit "Add Meal", class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
+    <%= form.submit meal.persisted? ? "Update Meal" : "Add Meal",
+          class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
   </div>
 <% end %>

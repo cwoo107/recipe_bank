@@ -85,8 +85,8 @@
             <div class="flex items-center gap-3 shrink-0 ml-3">
               <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
               <%= button_to "Delete", recipe_path(recipe), method: :delete,
-                            data: { turbo_confirm: "Are you sure?" },
-                            class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400" %>
+                    data: { turbo_confirm: "Are you sure?" },
+                    class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400" %>
             </div>
           </div>
           <div class="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
@@ -113,63 +113,63 @@
     <div class="hidden sm:block overflow-hidden bg-white shadow-sm inset-ring inset-ring-gray-900/5 sm:rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
       <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
         <thead class="bg-gray-50 dark:bg-white/5">
-        <tr>
-          <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">
-            <%= link_to "Recipe", recipes_path(sort: 'title', direction: params[:sort] == 'title' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Tags</th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-            <%= link_to "Ingredients", recipes_path(sort: 'ingredients', direction: params[:sort] == 'ingredients' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-            <%= link_to "Steps", recipes_path(sort: 'steps', direction: params[:sort] == 'steps' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-            <%= link_to "Servings", recipes_path(sort: 'servings', direction: params[:sort] == 'servings' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
-        </tr>
+          <tr>
+            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">
+              <%= link_to "Recipe", recipes_path(sort: 'title', direction: params[:sort] == 'title' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+            </th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Tags</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <%= link_to "Ingredients", recipes_path(sort: 'ingredients', direction: params[:sort] == 'ingredients' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+            </th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <%= link_to "Steps", recipes_path(sort: 'steps', direction: params[:sort] == 'steps' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+            </th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+              <%= link_to "Servings", recipes_path(sort: 'servings', direction: params[:sort] == 'servings' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+            </th>
+            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
+          </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
-        <% @recipes.each do |recipe| %>
-          <tr>
-            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
-              <div class="flex items-center gap-x-2">
-                <% if recipe.favorite? %>
+          <% @recipes.each do |recipe| %>
+            <tr>
+              <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
+                <div class="flex items-center gap-x-2">
+                  <% if recipe.favorite? %>
                     <span class="text-yellow-500">
                       <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
                     </span>
-                <% end %>
-                <%= link_to recipe.title, recipe, class: "hover:text-[#5f734c] dark:hover:text-[#7a8f62]" %>
-              </div>
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              <% if recipe.tags.any? %>
-                <div class="flex flex-wrap gap-1">
-                  <% recipe.tags.limit(3).each do |tag| %>
+                  <% end %>
+                  <%= link_to recipe.title, recipe, class: "hover:text-[#5f734c] dark:hover:text-[#7a8f62]" %>
+                </div>
+              </td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                <% if recipe.tags.any? %>
+                  <div class="flex flex-wrap gap-1">
+                    <% recipe.tags.limit(3).each do |tag| %>
                       <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
                             style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
                         <%= tag.tag %>
                       </span>
-                  <% end %>
-                  <% if recipe.tags.count > 3 %>
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
-                  <% end %>
-                </div>
-              <% end %>
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.recipe_ingredients.count, 'ingredient') %></td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.steps.count, 'step') %></td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= recipe.servings %></td>
-            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-              <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
-              <span class="text-gray-300 dark:text-gray-600"> | </span>
-              <%= button_to "Delete", recipe_path(recipe), method: :delete,
-                            data: { turbo_confirm: "Are you sure?" },
-                            class: "text-dusty-rose-600 hover:text-dusty-rose-900 dark:text-dusty-rose-400" %>
-            </td>
-          </tr>
-        <% end %>
+                    <% end %>
+                    <% if recipe.tags.count > 3 %>
+                      <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
+                    <% end %>
+                  </div>
+                <% end %>
+              </td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.recipe_ingredients.count, 'ingredient') %></td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.steps.count, 'step') %></td>
+              <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= recipe.servings %></td>
+              <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+                <span class="text-gray-300 dark:text-gray-600"> | </span>
+                <%= button_to "Delete", recipe_path(recipe), method: :delete,
+                      data: { turbo_confirm: "Are you sure?" },
+                      class: "text-dusty-rose-600 hover:text-dusty-rose-900 dark:text-dusty-rose-400" %>
+              </td>
+            </tr>
+          <% end %>
         </tbody>
       </table>
     </div>

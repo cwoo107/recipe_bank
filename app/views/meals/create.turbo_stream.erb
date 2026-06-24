@@ -1,0 +1,22 @@
+<% if @meal.calendar_meal? %>
+  <% day_index = (@meal.date - @date).to_i %>
+  <% type      = @meal.meal_name.downcase %>
+
+  <%= turbo_stream.append "desktop_cell_#{day_index}_#{type}" do %>
+    <%= render partial: "meals/meal", locals: { meal: @meal, date: @date } %>
+  <% end %>
+
+  <%= turbo_stream.append "mobile_cell_#{day_index}_#{type}" do %>
+    <%= render partial: "meals/meal", locals: { meal: @meal, date: @date } %>
+  <% end %>
+
+<% else %>
+  <% section_id = "extra_meals_#{@meal.meal_name.downcase}" %>
+  <%= turbo_stream.append section_id do %>
+    <%= render partial: "meals/meal", locals: { meal: @meal, date: @date } %>
+  <% end %>
+<% end %>
+
+<%= turbo_stream.replace "new_meal" do %>
+  <%= render partial: "meals/new", locals: { meal: Meal.new } %>
+<% end %>

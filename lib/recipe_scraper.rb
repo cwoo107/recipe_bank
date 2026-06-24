@@ -85,19 +85,52 @@ class RecipeScraper
   def extract_schema_instructions(instructions)
     case instructions
     when Array
-      instructions.map do |step|
-        if step.is_a?(Hash)
-          clean_text(step['text'] || step['name'] || '')
-        else
-          clean_text(step)
-        end
-      end.reject(&:empty?)
+      instructions.flat_map { |step| extract_instruction_step(step) }.reject(&:empty?)
     when String
       [clean_text(instructions)]
     when Hash
-      [clean_text(instructions['text'] || '')]
+      extract_instruction_step(instructions).reject(&:empty?)
     else
       []
+    end
+  end
+
+  # Handle a single instruction node, which may be:
+  #   HowToStep  — has 'text' (the actual instruction body)
+  #   HowToSection — has 'name' (section header) and 'itemListElement' (nested steps)
+  #
+  # Many recipe sites wrap steps in sections like:
+  #   { "@type": "HowToSection", "name": "Make the Dough",
+  #     "itemListElement": [ { "@type": "HowToStep", "text": "..." }, ... ] }
+  #
+  # We flatten sections into a plain step list. The section name is prepended
+  # as a context line only when it adds meaning (i.e. there are multiple sections),
+  # which RecipeImporter handles naturally since steps are just an array of strings.
+  def extract_instruction_step(step)
+    return [clean_text(step)] unless step.is_a?(Hash)
+
+    type = Array(step['@type']).map(&:to_s)
+
+    if type.include?('HowToSection') || step.key?('itemListElement')
+      # Flatten nested steps from this section
+      nested = Array(step['itemListElement'])
+      extracted = nested.flat_map { |s| extract_instruction_step(s) }.reject(&:empty?)
+
+      # Prepend section name as a label if it exists and there are steps under it
+      section_name = clean_text(step['name'].to_s)
+      if section_name.present? && extracted.any?
+        # Attach the section name to the first step so it reads naturally
+        # e.g. "Make the Dough: Combine flour and salt in a large bowl."
+        first = "#{section_name}: #{extracted.first}"
+        [first] + extracted[1..]
+      else
+        extracted
+      end
+    else
+      # HowToStep or plain hash — prefer 'text' (full instruction) over 'name' (short label)
+      text = clean_text(step['text'].to_s)
+      text = clean_text(step['name'].to_s) if text.empty?
+      [text]
     end
   end
 

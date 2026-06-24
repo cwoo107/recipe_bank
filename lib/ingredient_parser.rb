@@ -31,9 +31,16 @@ class IngredientParser
     original = ingredient_string.strip
     text = normalize_fractions(original)
 
+    # Pre-process: strip parenthetical quantity annotations that appear before
+    # the actual ingredient name. Recipes often format ingredients as:
+    #   "(4 cups) all purpose flour"     <- leading qty annotation
+    #   "1 (15-oz) can black beans"      <- inline size annotation
+    # Both patterns must be removed before quantity/unit extraction.
+    text = strip_parenthetical_annotations(text)
+
     quantity = extract_quantity(text)
-    unit = extract_unit(text)
-    name = extract_name(text, quantity, unit)
+    unit     = extract_unit(text)
+    name     = extract_name(text, quantity, unit)
 
     {
       original: original,
@@ -45,6 +52,29 @@ class IngredientParser
   end
 
   private
+
+  # Remove parenthetical annotations that carry quantity/size info rather than
+  # ingredient detail. We strip:
+  #   1. A leading "(qty unit)" block: "(4 cups) flour" -> "4 cups flour"
+  #      so the normal qty/unit extraction can handle it.
+  #   2. Inline size qualifiers after a digit: "1 (15-oz) can" -> "1 can"
+  #      These are redundant — the outer quantity already captures the amount.
+  #
+  # We deliberately keep parentheticals that describe ingredient state/variety
+  # (e.g., "tomatoes (crushed)") — those are stripped later in extract_name.
+  def strip_parenthetical_annotations(text)
+    # Pattern 1: leading "(number unit)" — move the number+unit out of parens
+    # "(4 cups) all purpose flour" -> "4 cups all purpose flour"
+    text = text.sub(/^\((\d[^)]*)\)\s*/, '\1 ')
+
+    # Pattern 2: inline "(size-unit)" after an outer quantity
+    # "1 (15-oz) can" -> "1 can"
+    # "2 (14.5-ounce) cans" -> "2 cans"
+    unit_pattern = UNITS.map { |u| Regexp.escape(u) }.join('|')
+    text = text.gsub(/\(\d[\d\s\/\-\.]*(?:#{unit_pattern})\)/i, '').gsub(/\s+/, ' ').strip
+
+    text
+  end
 
   def normalize_fractions(text)
     FRACTIONS.each do |fraction, decimal|
@@ -69,8 +99,8 @@ class IngredientParser
     # Handle mixed numbers like "1 1/2"
     if qty_text.include?('/')
       parts = qty_text.split
-      whole = parts[0].to_f
-      fraction = parts[1] ? eval(parts[1]) : 0
+      whole    = parts[0].to_f
+      fraction = parts[1] ? eval(parts[1]) : 0  # rubocop:disable Security/Eval
       return whole + fraction
     end
 
@@ -81,7 +111,7 @@ class IngredientParser
     # Remove quantity first
     text_without_qty = text.sub(/^\d+(?:\.\d+)?(?:\s*-\s*\d+(?:\.\d+)?)?(?:\s+\d+\/\d+)?/, '').strip
 
-    # Look for unit at the beginning
+    # Look for unit at the beginning of remaining text
     UNITS.each do |unit|
       if text_without_qty.match?(/^\b#{Regexp.escape(unit)}\b/i)
         return standardize_unit(unit)
@@ -105,36 +135,35 @@ class IngredientParser
     # Remove common prefixes like "of"
     name = name.sub(/^of\s+/i, '').strip
 
+    # Remove ALL parentheticals — both inline annotations that survived
+    # strip_parenthetical_annotations and trailing prep notes like "(crushed)"
+    name = name.gsub(/\([^)]*\)/, '').strip
+
     # Remove descriptors
     DESCRIPTORS.each do |descriptor|
       name = name.gsub(/\b#{Regexp.escape(descriptor)}\b/i, '').strip
     end
 
-    # Remove trailing instructions in parentheses
-    name = name.sub(/\([^)]+\)$/, '').strip
-
     # Remove trailing preparation notes after comma
     name = name.sub(/,.*$/, '').strip
 
     # Clean up multiple spaces
-    name = name.gsub(/\s+/, ' ').strip
-
-    name
+    name.gsub(/\s+/, ' ').strip
   end
 
   def standardize_unit(unit)
     unit = unit.downcase
 
     case unit
-    when 'cups', 'c' then 'cup'
+    when 'cups', 'c'              then 'cup'
     when 'tablespoons', 'tbsp', 'tbs' then 'tablespoon'
-    when 'teaspoons', 'tsp' then 'teaspoon'
-    when 'ounces', 'oz' then 'ounce'
-    when 'pounds', 'lbs', 'lb' then 'pound'
-    when 'grams', 'g' then 'gram'
-    when 'kilograms', 'kg' then 'kilogram'
-    when 'milliliters', 'ml' then 'milliliter'
-    when 'liters', 'l' then 'liter'
+    when 'teaspoons', 'tsp'       then 'teaspoon'
+    when 'ounces', 'oz'           then 'ounce'
+    when 'pounds', 'lbs', 'lb'    then 'pound'
+    when 'grams', 'g'             then 'gram'
+    when 'kilograms', 'kg'        then 'kilogram'
+    when 'milliliters', 'ml'      then 'milliliter'
+    when 'liters', 'l'            then 'liter'
     else unit
     end
   end
