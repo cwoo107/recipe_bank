@@ -3,8 +3,5 @@
   "build": {
     "builder": "DOCKERFILE",
     "dockerfilePath": "Dockerfile"
-  },
-  "deploy": {
-    "preDeployCommand": "mkdir -p storage && bin/rails db:prepare && bin/rails db:migrate:queue && bin/rails db:migrate:cache && bin/rails db:migrate:cable"
   }
 }
