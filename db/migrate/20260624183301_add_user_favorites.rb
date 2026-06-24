@@ -16,7 +16,7 @@ class AddUserFavorites < ActiveRecord::Migration[8.1]
           INSERT INTO user_favorites (user_id, recipe_id, created_at, updated_at)
           SELECT user_id, id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
           FROM recipes
-          WHERE favorite = 1 AND user_id IS NOT NULL
+          WHERE favorite = TRUE AND user_id IS NOT NULL
         SQL
       end
     end

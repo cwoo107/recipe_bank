@@ -2,7 +2,7 @@ require 'httparty'
 
 class OllamaAssistant
   include HTTParty
-  base_uri 'http://localhost:11434'
+  base_uri ENV.fetch('OLLAMA_URL', 'http://localhost:11434')
 
   def initialize(model: 'llama2')
     @model = model
