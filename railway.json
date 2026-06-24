@@ -5,6 +5,6 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "preDeployCommand": "bundle exec rails db:prepare"
+    "preDeployCommand": "mkdir -p storage && bundle exec rails db:prepare && bundle exec rails db:migrate:queue && bundle exec rails db:migrate:cache && bundle exec rails db:migrate:cable"
   }
 }
