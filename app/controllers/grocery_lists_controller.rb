@@ -4,19 +4,20 @@ class GroceryListsController < ApplicationController
 
   def index
     @ingredient_families = [
-      { color: 'mauve', label: 'Protein' },
-      { color: 'mist', label: 'Produce' },
-      { color: 'taupe', label: 'Dairy' },
-      { color: 'honey', label: 'Grain' },
+      { color: 'mauve',      label: 'Protein' },
+      { color: 'mist',       label: 'Produce' },
+      { color: 'taupe',      label: 'Dairy' },
+      { color: 'honey',      label: 'Grain' },
       { color: 'terracotta', label: 'Fat' },
-      { color: 'mist', label: 'Spices' }
+      { color: 'mist',       label: 'Spices' }
     ]
 
-    @grocery_lists = GroceryList.where("week_of >= ?", @date)
-                                .where("week_of < ?", @date + 7)
-                                .includes(:ingredient)
-                                .joins(:ingredient)
-                                .order("ingredients.family ASC, ingredients.ingredient ASC")
+    @grocery_lists = current_user.grocery_lists
+                                 .where("week_of >= ?", @date)
+                                 .where("week_of < ?", @date + 7)
+                                 .includes(:ingredient)
+                                 .joins(:ingredient)
+                                 .order("ingredients.family ASC, ingredients.ingredient ASC")
 
     if params[:filter].present?
       @grocery_lists = @grocery_lists.where(ingredients: { family: params[:filter] })
@@ -24,31 +25,27 @@ class GroceryListsController < ApplicationController
   end
 
   def generate
-    meals = Meal.where("date >= ?", @date)
-                .where("date < ?", @date + 7)
-                .includes(recipe: { recipe_ingredients: { ingredient: :nutrition_fact } })
+    meals = current_user.meals
+                        .where("date >= ?", @date)
+                        .where("date < ?", @date + 7)
+                        .includes(recipe: { recipe_ingredients: { ingredient: :nutrition_fact } })
 
-    GroceryList.where("week_of >= ?", @date)
-               .where("week_of < ?", @date + 7)
-               .destroy_all
+    current_user.grocery_lists
+                .where("week_of >= ?", @date)
+                .where("week_of < ?", @date + 7)
+                .destroy_all
 
     ingredient_data = {}
 
     meals.each do |meal|
-      # Scale all ingredient quantities by how many servings we're actually making
       multiplier = meal.servings_multiplier
 
       meal.recipe.recipe_ingredients.each do |recipe_ingredient|
-        ingredient_id = recipe_ingredient.ingredient_id
-        ingredient    = recipe_ingredient.ingredient
+        ingredient_id    = recipe_ingredient.ingredient_id
+        ingredient       = recipe_ingredient.ingredient
+        scaled_quantity  = recipe_ingredient.quantity.to_f * multiplier
 
-        scaled_quantity = recipe_ingredient.quantity.to_f * multiplier
-
-        servings_needed = calculate_servings_needed_for(
-          scaled_quantity,
-          recipe_ingredient.unit,
-          ingredient
-        )
+        servings_needed = calculate_servings_needed_for(scaled_quantity, recipe_ingredient.unit, ingredient)
 
         units_needed = if ingredient.unit_servings.present? && ingredient.unit_servings > 0
                          (servings_needed / ingredient.unit_servings.to_f).ceil
@@ -64,17 +61,13 @@ class GroceryListsController < ApplicationController
           end
           ingredient_data[ingredient_id][:meal_ids] << meal.id
         else
-          ingredient_data[ingredient_id] = {
-            servings: servings_needed,
-            units: units_needed,
-            meal_ids: [meal.id]
-          }
+          ingredient_data[ingredient_id] = { servings: servings_needed, units: units_needed, meal_ids: [meal.id] }
         end
       end
     end
 
     ingredient_data.each do |ingredient_id, data|
-      GroceryList.create!(
+      current_user.grocery_lists.create!(
         ingredient_id: ingredient_id,
         units: data[:units],
         meal_ids: data[:meal_ids].uniq,
@@ -88,18 +81,12 @@ class GroceryListsController < ApplicationController
                 notice: "Grocery list generated for week of #{@date.strftime('%B %d, %Y')}"
   end
 
-  def show
-  end
-
-  def new
-    @grocery_list = GroceryList.new
-  end
-
-  def edit
-  end
+  def show; end
+  def new; @grocery_list = GroceryList.new; end
+  def edit; end
 
   def create
-    @grocery_list = GroceryList.new(grocery_list_params)
+    @grocery_list = current_user.grocery_lists.build(grocery_list_params)
 
     respond_to do |format|
       if @grocery_list.save
@@ -120,7 +107,6 @@ class GroceryListsController < ApplicationController
   end
 
   def update
-    # Track manual adjustment before writing new value
     if grocery_list_params[:units].to_i != @units
       @grocery_list.manually_adjusted = true
     end
@@ -157,7 +143,7 @@ class GroceryListsController < ApplicationController
   private
 
   def set_grocery_list
-    @grocery_list = GroceryList.find(params.expect(:id))
+    @grocery_list = current_user.grocery_lists.find(params.expect(:id))
     @units = @grocery_list.units
   end
 
@@ -166,8 +152,6 @@ class GroceryListsController < ApplicationController
     @date = Date.parse(params[:date]) if params[:date].present?
   end
 
-  # Renamed and signature changed: accepts a pre-scaled quantity rather than
-  # a recipe_ingredient object, so servings_multiplier is applied before this call.
   def calculate_servings_needed_for(quantity, unit, ingredient)
     nutrition_fact = ingredient.nutrition_fact
     return 1 unless nutrition_fact&.serving_size.present?
@@ -187,10 +171,10 @@ class GroceryListsController < ApplicationController
       'tsp' => 4.93, 'fl oz' => 29.57, 'piece' => 1, 'unit' => 1
     }
 
-    from_unit   = from_unit.to_s.downcase
+    from_unit    = from_unit.to_s.downcase
     serving_unit = serving_unit.to_s.downcase
-    from_base   = conversions[from_unit]
-    to_base     = conversions[serving_unit]
+    from_base    = conversions[from_unit]
+    to_base      = conversions[serving_unit]
 
     if from_base && to_base
       (quantity * from_base) / (serving_size * to_base)

@@ -1,17 +1,45 @@
 class Recipe < ApplicationRecord
+  belongs_to :user
   has_many :recipe_ingredients, dependent: :destroy
   has_many :ingredients, through: :recipe_ingredients
   has_many :recipe_tags, dependent: :destroy
   has_many :tags, through: :recipe_tags
   has_many :steps, -> { order(position: :asc) }, dependent: :destroy
   has_many :meals
+  has_many :user_favorites, dependent: :destroy
+  has_many :favorited_by, through: :user_favorites, source: :user
 
-  validates :title, presence: true
-  validates :servings, numericality: { greater_than: 0 }, allow_nil: true
+  VISIBILITY = %w[public private].freeze
 
-  # default_scope { order(favorite: :desc) }
+  validates :title,      presence: true
+  validates :visibility, inclusion: { in: VISIBILITY }
+  validates :servings,   numericality: { greater_than: 0 }, allow_nil: true
 
-  # Calculate total macros for the entire recipe
+  scope :publicly_visible, -> { where(visibility: 'public') }
+  scope :visible_to, ->(user) {
+    where(visibility: 'public').or(where(user: user))
+  }
+  # Sort favorites-first for a given user without a subquery per row.
+  # Usage: Recipe.visible_to(user).by_favorite_for(user)
+  scope :by_favorite_for, ->(user) {
+    joins(
+      <<~SQL
+        LEFT JOIN user_favorites uf_sort
+          ON uf_sort.recipe_id = recipes.id
+         AND uf_sort.user_id = #{user.id.to_i}
+      SQL
+    ).order(Arel.sql('uf_sort.id IS NULL ASC, recipes.title ASC'))
+  }
+
+  def owned_by?(user)
+    self.user_id == user&.id
+  end
+
+  def public?  = visibility == 'public'
+  def private? = visibility == 'private'
+
+  # ── Macros ────────────────────────────────────────────────────────────────
+
   def total_protein
     recipe_ingredients.includes(ingredient: :nutrition_fact).sum do |ri|
       calculate_macro_for_ingredient(ri, :protein)
@@ -36,7 +64,6 @@ class Recipe < ApplicationRecord
     end
   end
 
-  # Calculate macros per serving
   def protein_per_serving
     return 0 if servings.nil? || servings.zero?
     (total_protein / servings).round(1)
@@ -57,7 +84,6 @@ class Recipe < ApplicationRecord
     (total_calories / servings).round(0)
   end
 
-  # Data formatted for Chart.js
   def macros_chart_data
     {
       labels: [
@@ -69,83 +95,48 @@ class Recipe < ApplicationRecord
                    label: 'Macros per Serving (g)',
                    data: [protein_per_serving, carbs_per_serving, fat_per_serving],
                    backgroundColor: [
-                     'oklch(71.1% 0.019 323.02)',  # Mauve for protein
-                     'oklch(85% 0.08 95)',     # Mist for carbs
-                     'oklch(75% 0.06 45)'                      # Sage for fat
+                     'oklch(71.1% 0.019 323.02)',
+                     'oklch(85% 0.08 95)',
+                     'oklch(75% 0.06 45)'
                    ],
                    borderWidth: 2
                  }]
     }
-
   end
 
   private
 
-  # Convert ingredient quantity to grams and calculate macro
   def calculate_macro_for_ingredient(recipe_ingredient, macro_field)
-    ingredient = recipe_ingredient.ingredient
+    ingredient     = recipe_ingredient.ingredient
     nutrition_fact = ingredient.nutrition_fact
-
     return 0 unless nutrition_fact
 
-    # Get the macro value per serving from nutrition facts
-    macro_per_serving = nutrition_fact.send(macro_field) || 0
-
-    # Get nutrition fact serving size in grams
-    serving_size_grams = convert_to_grams(
-      nutrition_fact.serving_size,
-      nutrition_fact.serving_unit
-    )
-
+    macro_per_serving  = nutrition_fact.send(macro_field) || 0
+    serving_size_grams = convert_to_grams(nutrition_fact.serving_size, nutrition_fact.serving_unit)
     return 0 if serving_size_grams.zero?
 
-    # Get recipe ingredient quantity in grams
-    ingredient_grams = convert_to_grams(
-      recipe_ingredient.quantity,
-      recipe_ingredient.unit
-    )
-
-    # Calculate: (ingredient_grams / serving_size_grams) * macro_per_serving
+    ingredient_grams = convert_to_grams(recipe_ingredient.quantity, recipe_ingredient.unit)
     (ingredient_grams / serving_size_grams) * macro_per_serving
   end
 
-  # Convert various units to grams
   def convert_to_grams(quantity, unit)
     return 0 if quantity.nil? || unit.nil?
-
     unit = unit.downcase.strip
-
-    # Already in grams
     return quantity if ['g', 'gram', 'grams'].include?(unit)
 
-    # Volume to weight conversions (approximations for common ingredients)
     case unit
-    when 'ml', 'milliliter', 'milliliters'
-      quantity # 1 ml ≈ 1 g for water-based liquids
-    when 'cup', 'cups'
-      quantity * 240 # 1 cup ≈ 240g
-    when 'tbsp', 'tablespoon', 'tablespoons'
-      quantity * 15 # 1 tbsp ≈ 15g
-    when 'tsp', 'teaspoon', 'teaspoons'
-      quantity * 5 # 1 tsp ≈ 5g
-    when 'oz', 'ounce', 'ounces'
-      quantity * 28.35 # 1 oz = 28.35g
-    when 'lb', 'lbs', 'pound', 'pounds'
-      quantity * 453.592 # 1 lb = 453.592g
-    when 'kg', 'kilogram', 'kilograms'
-      quantity * 1000 # 1 kg = 1000g
-      # Count-based (rough estimates)
-    when 'whole', 'piece', 'pieces', 'item', 'items'
-      quantity * 100 # Assume 100g per item (very rough)
-    when 'clove', 'cloves' # garlic
-      quantity * 3 # 1 clove ≈ 3g
-    when 'slice', 'slices'
-      quantity * 30 # 1 slice ≈ 30g
-    when 'strip', 'strips' # bacon
-      quantity * 8 # 1 strip bacon ≈ 8g
-    else
-      # If unknown unit, treat as grams
-      quantity
+    when 'ml', 'milliliter', 'milliliters'       then quantity
+    when 'cup', 'cups'                            then quantity * 240
+    when 'tbsp', 'tablespoon', 'tablespoons'      then quantity * 15
+    when 'tsp', 'teaspoon', 'teaspoons'           then quantity * 5
+    when 'oz', 'ounce', 'ounces'                  then quantity * 28.35
+    when 'lb', 'lbs', 'pound', 'pounds'           then quantity * 453.592
+    when 'kg', 'kilogram', 'kilograms'            then quantity * 1000
+    when 'whole', 'piece', 'pieces', 'item', 'items' then quantity * 100
+    when 'clove', 'cloves'                        then quantity * 3
+    when 'slice', 'slices'                        then quantity * 30
+    when 'strip', 'strips'                        then quantity * 8
+    else quantity
     end
   end
 end

@@ -1,18 +1,16 @@
-# app/controllers/recipe_imports_controller.rb
 class RecipeImportsController < ApplicationController
   def new
     @import_job = RecipeImportJob.new
   end
 
   def create
-    @import_job = RecipeImportJob.create!(
+    @import_job = current_user.recipe_import_jobs.create!(
       url: params[:url],
       status: :pending,
       progress: 0,
       total_steps: 5
     )
 
-    # Kick off the import in a background thread
     Thread.new do
       ActiveRecord::Base.connection_pool.with_connection do
         RecipeImporter.new(@import_job).perform
@@ -32,7 +30,7 @@ class RecipeImportsController < ApplicationController
   end
 
   def show
-    @import_job = RecipeImportJob.find(params[:id])
+    @import_job = current_user.recipe_import_jobs.find(params[:id])
 
     if @import_job.completed?
       redirect_to recipe_path(@import_job.recipe)

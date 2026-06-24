@@ -1,58 +1,35 @@
 class RecipesController < ApplicationController
-  before_action :set_recipe, only: %i[ show edit update toggle_favorite destroy ]
+  before_action :set_recipe,        only: %i[show edit update destroy toggle_favorite]
+  before_action :require_ownership!, only: %i[edit update destroy]
 
   def index
-    @recipes = Recipe.includes(:tags, :recipe_ingredients, :steps).all
-
-    if params[:query].present?
-      @recipes = @recipes.where('title LIKE ? OR description LIKE ?',
-                                "%#{params[:query]}%", "%#{params[:query]}%")
-    end
+    @recipes = Recipe.visible_to(current_user)
+                     .includes(:tags, :recipe_ingredients, :steps, :user_favorites)
 
     if params[:filter].present?
-      @recipes = @recipes.joins(:tags).where(tags: { id: params[:filter] })
+      tag = Tag.find_by(id: params[:filter])
+      @recipes = @recipes.joins(:recipe_tags).where(recipe_tags: { tag_id: tag&.id })
     end
 
-    if params[:sort].present?
-      sort_column = params[:sort]
-      sort_direction = params[:direction] == 'desc' ? :desc : :asc
-
-      case sort_column
-      when 'ingredients'
-        @recipes = @recipes.left_joins(:recipe_ingredients)
-                           .group('recipes.id')
-                           .order("COUNT(recipe_ingredients.id) #{sort_direction}")
-      when 'steps'
-        @recipes = @recipes.left_joins(:steps)
-                           .group('recipes.id')
-                           .order("COUNT(steps.id) #{sort_direction}")
-      when 'tags'
-        @recipes = @recipes.left_joins(:tags)
-                           .group('recipes.id')
-                           .order("COUNT(tags.id) #{sort_direction}")
-      when 'title', 'servings', 'created_at'
-        @recipes = @recipes.order(sort_column => sort_direction)
-      else
-        @recipes = @recipes.order(created_at: :desc)
-      end
-    else
-      @recipes = @recipes.order(created_at: :desc)
+    if params[:query].present?
+      @recipes = @recipes.where("title LIKE ?", "%#{params[:query]}%")
     end
+
+    @recipes = apply_sort(@recipes)
   end
 
   def show
-    @recipe = Recipe.includes(:tags, recipe_ingredients: :ingredient, steps: []).find(params[:id])
   end
 
   def new
-    @recipe = Recipe.new
+    @recipe = current_user.recipes.build
   end
 
   def edit
   end
 
   def create
-    @recipe = Recipe.new(recipe_params)
+    @recipe = current_user.recipes.build(recipe_params)
 
     if @recipe.save
       redirect_to @recipe, notice: "Recipe was successfully created."
@@ -63,32 +40,63 @@ class RecipesController < ApplicationController
 
   def update
     if @recipe.update(recipe_params)
-      redirect_to @recipe, notice: "Recipe was successfully updated."
+      redirect_to @recipe, notice: "Recipe was successfully updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
   end
 
+  def destroy
+    @recipe.destroy!
+    redirect_to recipes_path, notice: "Recipe was successfully deleted.", status: :see_other
+  end
+
   def toggle_favorite
-    @recipe.update(favorite: !@recipe.favorite)
+    favorite = current_user.user_favorites.find_by(recipe: @recipe)
+
+    if favorite
+      favorite.destroy!
+    else
+      current_user.user_favorites.create!(recipe: @recipe)
+    end
 
     respond_to do |format|
-      format.turbo_stream
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "favorite_button_#{@recipe.id}",
+          partial: "recipes/favorite_button",
+          locals: { recipe: @recipe }
+        )
+      end
       format.html { redirect_to @recipe }
     end
   end
 
-  def destroy
-    @recipe.destroy!
-    redirect_to recipes_url, notice: "Recipe was successfully deleted."
+  private
+
+  def set_recipe
+    @recipe = Recipe.visible_to(current_user).find(params.expect(:id))
   end
 
-  private
-  def set_recipe
-    @recipe = Recipe.find(params[:id])
+  def require_ownership!
+    unless @recipe.owned_by?(current_user)
+      redirect_to recipes_path, alert: "You can only modify your own recipes."
+    end
+  end
+
+  def apply_sort(scope)
+    case params[:sort]
+    when 'title'    then scope.order(title: sort_direction)
+    when 'servings' then scope.order(servings: sort_direction)
+    else                 scope.by_favorite_for(current_user)
+    end
+  end
+
+  def sort_direction
+    params[:direction] == 'desc' ? :desc : :asc
   end
 
   def recipe_params
-    params.require(:recipe).permit(:title, :description, :servings)
+    params.expect(recipe: [:title, :description, :servings, :visibility])
   end
 end

@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  devise_for :views
+  devise_for :users
   root 'meals#index'
 
   get 'grocery_list', to: 'grocery_lists#index', as: 'grocery_lists'

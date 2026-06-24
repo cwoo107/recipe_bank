@@ -187,7 +187,9 @@ class RecipeImporter
       recipe = Recipe.create!(
         title: scraped_data[:title],
         description: scraped_data[:description],
-        servings: scraped_data[:servings] || 4
+        servings: scraped_data[:servings] || 4,
+        user: @job.user,
+        visibility: 'public'   # imported recipes are always public
       )
 
       # Create recipe ingredients
@@ -223,8 +225,9 @@ class RecipeImporter
     ingredient = Ingredient.create!(
       ingredient: parsed[:name],
       family: family || 'produce',
-      unit_price: nutrition&.dig(:unit_price),      # Changed to symbol
-      unit_servings: nutrition&.dig(:unit_servings) # Changed to symbol
+      unit_price: nutrition&.dig(:unit_price),
+      unit_servings: nutrition&.dig(:unit_servings),
+      created_by: @job.user
     )
 
     if nutrition && nutrition.is_a?(Hash)

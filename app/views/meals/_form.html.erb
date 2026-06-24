@@ -13,21 +13,8 @@
   <%# Recipe selector %>
   <div class="mb-4" data-controller="searchable-select" data-searchable-select-placeholder-value="Search for a recipe...">
     <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= form.select :recipe_id,
-                    options_for_select(
-                      Recipe.order(favorite: :desc, title: :asc).map { |r|
-                        [r.title, r.id, { 'data-favorite' => r.favorite, 'data-servings' => r.servings }]
-                      },
-                      meal.recipe_id
-                    ),
-                    { include_blank: true },
-                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                    data: {
-                      dynamic_filter_target: "field",
-                      searchable_select_target: "select",
-                      action: "change->dynamic-filter#updateValueField change->meal-form#recipeChanged"
-                    }
-    %>
+    <%= form.select :recipe_id, options_for_select( Recipe.visible_to(current_user).order(title: :asc).map { |r| [r.title, r.id, { 'data-favorite' => current_user.favorited?(r), 'data-servings' => r.servings }] }, meal.recipe_id ), { include_blank: true }, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", data: { dynamic_filter_target: "field", searchable_select_target: "select", action: "change->dynamic-filter#updateValueField change->meal-form#recipeChanged" } %>
+
   </div>
 
   <%# Servings — pre-filled from recipe default via Stimulus, editable %>
@@ -87,3 +74,4 @@
           class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
   </div>
 <% end %>
+

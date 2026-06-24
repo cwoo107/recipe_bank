@@ -24,19 +24,59 @@
         </div>
       </div>
 
-      <div class="flex items-center sm:hidden">
-        <button type="button"
-                data-action="click->mobile-menu#toggle"
-                class="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus:outline-2 focus:outline-offset-2 focus:outline-[#5f734c] dark:text-gray-300 dark:hover:bg-gray-800">
-          <span class="sr-only">Open main menu</span>
-          <svg class="block size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-          </svg>
-        </button>
+      <%# Right side: user dropdown (desktop) + hamburger (mobile) %>
+      <div class="flex items-center gap-2">
+
+        <% if user_signed_in? %>
+          <%# Desktop user dropdown %>
+          <div class="relative hidden sm:block" data-controller="dropdown" data-action="click@window->dropdown#closeOnOutsideClick">
+            <button type="button"
+                    data-action="click->dropdown#toggle"
+                    class="flex items-center rounded-full p-1.5 text-gray-500 hover:text-[#5f734c] hover:bg-gray-100 dark:text-gray-400 dark:hover:text-[#7a8f62] dark:hover:bg-white/10 transition-colors focus:outline-2 focus:outline-offset-2 focus:outline-[#5f734c]">
+              <span class="sr-only">Open user menu</span>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+              </svg>
+            </button>
+
+            <div data-dropdown-target="menu"
+                 class="hidden absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-lg bg-white dark:bg-[#242b1e] shadow-lg inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 py-1">
+              <div class="px-4 py-2.5 border-b border-gray-100 dark:border-white/10">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
+                <p class="text-sm font-medium text-gray-900 dark:text-white truncate"><%= current_user.email %></p>
+              </div>
+              <%= link_to "Account settings", edit_user_registration_path,
+                    class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
+              <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+                    class: "block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
+            </div>
+          </div>
+        <% else %>
+          <div class="hidden sm:flex sm:items-center sm:gap-x-3">
+            <%= link_to "Sign in", new_user_session_path,
+                  class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+            <%= link_to "Sign up", new_user_registration_path,
+                  class: "inline-flex items-center rounded-md bg-[#5f734c] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+          </div>
+        <% end %>
+
+        <%# Mobile hamburger %>
+        <div class="flex items-center sm:hidden">
+          <button type="button"
+                  data-action="click->mobile-menu#toggle"
+                  class="inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 focus:outline-2 focus:outline-offset-2 focus:outline-[#5f734c] dark:text-gray-300 dark:hover:bg-gray-800">
+            <span class="sr-only">Open main menu</span>
+            <svg class="block size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
 
+  <%# Mobile menu panel %>
   <div class="hidden" data-mobile-menu-target="menu">
     <div class="space-y-1 pb-3 pt-2">
       <%= link_to "Meals", meals_path,
@@ -50,5 +90,25 @@
       <%= link_to "Tags", tags_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(tags_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
     </div>
+
+    <% if user_signed_in? %>
+      <div class="border-t border-gray-200 dark:border-white/10 pb-3 pt-4">
+        <div class="px-4 mb-2">
+          <p class="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
+          <p class="text-sm font-medium text-gray-900 dark:text-white truncate"><%= current_user.email %></p>
+        </div>
+        <%= link_to "Account settings", edit_user_registration_path,
+              class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
+        <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+              class: "block w-full text-left border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
+      </div>
+    <% else %>
+      <div class="border-t border-gray-200 dark:border-white/10 pb-3 pt-4 space-y-1">
+        <%= link_to "Sign in", new_user_session_path,
+              class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
+        <%= link_to "Sign up", new_user_registration_path,
+              class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
+      </div>
+    <% end %>
   </div>
 </nav>

@@ -73,7 +73,7 @@
         <div class="rounded-lg bg-white shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10 overflow-hidden">
           <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/5">
             <div class="flex items-center gap-2 min-w-0">
-              <% if recipe.favorite? %>
+              <% if current_user.favorited?(recipe) %>
                 <span class="text-yellow-500 shrink-0">
                   <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
                 </span>
@@ -135,7 +135,7 @@
           <tr>
             <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
               <div class="flex items-center gap-x-2">
-                <% if recipe.favorite? %>
+                <% if current_user.favorited?(recipe) %>
                     <span class="text-yellow-500">
                       <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
                     </span>
@@ -162,11 +162,14 @@
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.steps.count, 'step') %></td>
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= recipe.servings %></td>
             <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-              <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+              <% if recipe.owned_by?(current_user) %>
+
+            <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
               <span class="text-gray-300 dark:text-gray-600"> | </span>
               <%= button_to "Delete", recipe_path(recipe), method: :delete,
                             data: { turbo_confirm: "Are you sure?" },
                             class: "text-dusty-rose-600 hover:text-dusty-rose-900 dark:text-dusty-rose-400" %>
+                <% end %>
             </td>
           </tr>
         <% end %>

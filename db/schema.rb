@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_24_183301) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -57,8 +57,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
     t.text "meal_ids"
     t.integer "units"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.date "week_of"
     t.index ["ingredient_id"], name: "index_grocery_lists_on_ingredient_id"
+    t.index ["user_id"], name: "index_grocery_lists_on_user_id"
   end
 
   create_table "household_members", force: :cascade do |t|
@@ -88,6 +90,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
   create_table "ingredients", force: :cascade do |t|
     t.string "brand"
     t.datetime "created_at", null: false
+    t.integer "created_by_id"
     t.string "family"
     t.boolean "favorite"
     t.string "ingredient"
@@ -95,6 +98,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
     t.float "unit_price"
     t.integer "unit_servings"
     t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_ingredients_on_created_by_id"
   end
 
   create_table "meals", force: :cascade do |t|
@@ -104,7 +108,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
     t.integer "recipe_id", null: false
     t.integer "servings"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["recipe_id"], name: "index_meals_on_recipe_id"
+    t.index ["user_id"], name: "index_meals_on_user_id"
   end
 
   create_table "nutrition_facts", force: :cascade do |t|
@@ -132,6 +138,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
     t.integer "total_steps", default: 5
     t.datetime "updated_at", null: false
     t.string "url"
+    t.integer "user_id"
+    t.index ["user_id"], name: "index_recipe_import_jobs_on_user_id"
   end
 
   create_table "recipe_ingredients", force: :cascade do |t|
@@ -157,10 +165,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
   create_table "recipes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
-    t.boolean "favorite"
     t.integer "servings"
     t.string "title"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.string "visibility", default: "public", null: false
+    t.index ["user_id", "visibility"], name: "index_recipes_on_user_id_and_visibility"
+    t.index ["user_id"], name: "index_recipes_on_user_id"
+    t.index ["visibility"], name: "index_recipes_on_visibility"
   end
 
   create_table "steps", force: :cascade do |t|
@@ -176,19 +188,51 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_154931) do
     t.datetime "created_at", null: false
     t.string "tag"
     t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["user_id"], name: "index_tags_on_user_id"
+  end
+
+  create_table "user_favorites", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "recipe_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["recipe_id"], name: "index_user_favorites_on_recipe_id"
+    t.index ["user_id", "recipe_id"], name: "index_user_favorites_on_user_id_and_recipe_id", unique: true
+    t.index ["user_id"], name: "index_user_favorites_on_user_id"
+  end
+
+  create_table "users", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", default: "", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at"
+    t.string "reset_password_token"
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "grocery_lists", "ingredients"
+  add_foreign_key "grocery_lists", "users"
   add_foreign_key "household_members", "households"
   add_foreign_key "ingredient_tags", "ingredients"
   add_foreign_key "ingredient_tags", "tags"
+  add_foreign_key "ingredients", "users", column: "created_by_id"
   add_foreign_key "meals", "recipes"
+  add_foreign_key "meals", "users"
   add_foreign_key "nutrition_facts", "ingredients"
+  add_foreign_key "recipe_import_jobs", "users"
   add_foreign_key "recipe_ingredients", "ingredients"
   add_foreign_key "recipe_ingredients", "recipes"
   add_foreign_key "recipe_tags", "recipes"
   add_foreign_key "recipe_tags", "tags"
+  add_foreign_key "recipes", "users"
   add_foreign_key "steps", "recipes"
+  add_foreign_key "tags", "users"
+  add_foreign_key "user_favorites", "recipes"
+  add_foreign_key "user_favorites", "users"
 end

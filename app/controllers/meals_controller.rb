@@ -4,16 +4,15 @@ class MealsController < ApplicationController
   def index
     @date = week_start_from_params
 
-    all_meals = Meal.where("date >= ?", @date)
-                    .where("date < ?", @date + 7)
-                    .includes(:recipe)
+    all_meals = current_user.meals
+                            .where("date >= ?", @date)
+                            .where("date < ?", @date + 7)
+                            .includes(:recipe)
 
-    # Calendar grid: breakfast / lunch / dinner, keyed by [day_index, meal_name]
     @calendar_meals = all_meals
                         .select(&:calendar_meal?)
                         .group_by { |m| [(m.date - @date).to_i, m.meal_name.downcase] }
 
-    # Below-grid extras, grouped by type
     @extra_meals = all_meals
                      .select(&:extra_meal?)
                      .group_by { |m| m.meal_name.downcase }
@@ -30,10 +29,8 @@ class MealsController < ApplicationController
   end
 
   def create
-    @meal = Meal.new(meal_params)
+    @meal = current_user.meals.build(meal_params)
 
-    # Snack/Dessert have no specific day — anchor them to the current week's Monday
-    # so they're still scoped to the right week when querying.
     if @meal.extra_meal? && @meal.date.blank?
       @meal.date = Date.today.beginning_of_week
     end
@@ -44,7 +41,7 @@ class MealsController < ApplicationController
       if @meal.save
         format.html { redirect_to meals_path, notice: "Meal was successfully added." }
         format.json { render :show, status: :created, location: @meal }
-        format.turbo_stream  # renders create.turbo_stream.erb
+        format.turbo_stream
       else
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @meal.errors, status: :unprocessable_entity }
@@ -78,7 +75,7 @@ class MealsController < ApplicationController
   private
 
   def set_meal
-    @meal = Meal.find(params.expect(:id))
+    @meal = current_user.meals.find(params.expect(:id))
   end
 
   def week_start_from_params

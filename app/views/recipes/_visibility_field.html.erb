@@ -1,0 +1,25 @@
+<%# Visibility selector — included in both new and edit recipe forms %>
+<div>
+  <%= form.label :visibility, "Visibility", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+  <div class="space-y-2">
+    <label class="flex items-center gap-3 cursor-pointer">
+      <%= form.radio_button :visibility, "public",
+            checked: form.object.visibility.blank? || form.object.visibility == "public",
+            class: "h-4 w-4 border-gray-300 focus:ring-[#5f734c]",
+            style: "accent-color: #5f734c;" %>
+      <span class="text-sm text-gray-900 dark:text-white">
+        <span class="font-medium">Public</span>
+        <span class="text-gray-500 dark:text-gray-400 ml-1">— visible to all users</span>
+      </span>
+    </label>
+    <label class="flex items-center gap-3 cursor-pointer">
+      <%= form.radio_button :visibility, "private",
+            class: "h-4 w-4 border-gray-300 focus:ring-[#5f734c]",
+            style: "accent-color: #5f734c;" %>
+      <span class="text-sm text-gray-900 dark:text-white">
+        <span class="font-medium">Private</span>
+        <span class="text-gray-500 dark:text-gray-400 ml-1">— only visible to you</span>
+      </span>
+    </label>
+  </div>
+</div>
