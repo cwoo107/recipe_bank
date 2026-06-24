@@ -43,6 +43,8 @@ RUN bundle install && \
     # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
     bundle exec bootsnap precompile -j 1 --gemfile
 
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+
 # Copy application code
 COPY . .
 
