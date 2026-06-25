@@ -13,7 +13,11 @@ Rails.application.routes.draw do
   resources :meals
   resources :household_members
   resources :households
-  resources :recipe_imports, only: [:new, :create, :show]
+  resources :recipe_imports, only: [:new, :create, :show] do
+    collection do
+      post :create_from_file
+    end
+  end
 
   resources :recipes do
     resources :recipe_ingredients, only: [:create, :destroy]
@@ -35,11 +39,8 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :collection_recipes, only: [:create] do
-    collection do
-      delete :destroy
-    end
-  end
+  resources :collection_recipes, only: [:create]
+  delete 'collection_recipes', to: 'collection_recipes#destroy', as: :collection_recipes_destroy
 
   resources :ingredients do
     resources :nutrition_facts, only: [:create, :edit, :update, :destroy]

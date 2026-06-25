@@ -1,4 +1,3 @@
-# app/services/recipe_importer.rb
 class RecipeImporter
   def initialize(import_job)
     @job = import_job
@@ -62,6 +61,66 @@ class RecipeImporter
       raise
     end
   end
+
+  def perform_from_file(file_data, content_type)
+    begin
+      # Step 1: Extract recipe from file via Claude
+      @job.update_progress(:fetching_html) # reuse status — "Fetching file"
+      sleep 0.3
+
+      # Build a temporary file-like object from the raw bytes
+      file_io = StringIO.new(file_data)
+      file_io.define_singleton_method(:content_type) { content_type }
+      file_io.define_singleton_method(:rewind) { seek(0) }
+
+      scraped_data = RecipeFileExtractor.new(file_io).extract
+
+      Rails.logger.info "=== FILE EXTRACTED DATA ==="
+      Rails.logger.info "Title: #{scraped_data[:title]}"
+      Rails.logger.info "Servings: #{scraped_data[:servings]}"
+      Rails.logger.info "Ingredients (#{scraped_data[:ingredients]&.length || 0})"
+      Rails.logger.info "Steps (#{scraped_data[:steps]&.length || 0})"
+
+      @job.update!(scraped_data: scraped_data)
+
+      # Steps 2–5 are identical to the URL import flow
+      @job.update_progress(:parsing_recipe)
+      sleep 0.3
+      validate_scraped_data(scraped_data)
+
+      @job.update_progress(:matching_ingredients, 0, scraped_data[:ingredients].length)
+      matched_results = match_ingredients(scraped_data[:ingredients])
+      @job.update!(matched_ingredients: matched_results)
+
+      @job.update_progress(:resolving_with_ai, 0, matched_results.length)
+      classify_and_resolve_ingredients(matched_results)
+
+      @job.update_progress(:creating_recipe)
+      sleep 0.3
+      recipe = create_recipe(scraped_data, matched_results)
+
+      @job.update!(
+        status: :completed,
+        recipe_id: recipe.id,
+        progress: 100,
+        current_step: 'Import completed!'
+      )
+
+      recipe
+    rescue => e
+      Rails.logger.error "=== FILE IMPORT ERROR ==="
+      Rails.logger.error e.message
+      Rails.logger.error e.backtrace.join("\n")
+
+      @job.update!(
+        status: :failed,
+        error_message: e.message,
+        current_step: "Error: #{e.message}"
+      )
+      raise
+    end
+  end
+
 
   private
 

@@ -1,9 +1,15 @@
 <!-- app/views/recipe_import_jobs/_recipe_import_job.html.erb -->
 <%= turbo_frame_tag dom_id(recipe_import_job) do %>
+  <% from_file = recipe_import_job.url.nil? %>
   <div class="flow-root mt-2">
     <ul role="list" class="-mb-8">
-      <%= render_import_step(recipe_import_job, :fetching_html, "Fetching HTML", "Downloaded recipe page") %>
-      <%= render_import_step(recipe_import_job, :parsing_recipe, "Parsing Recipe", "Extracted title, ingredients, and instructions") %>
+      <% if from_file %>
+        <%= render_import_step(recipe_import_job, :fetching_html, "Reading File", "Extracted recipe from file") %>
+        <%= render_import_step(recipe_import_job, :parsing_recipe, "Parsing Recipe", "Extracted title, ingredients, and instructions") %>
+      <% else %>
+        <%= render_import_step(recipe_import_job, :fetching_html, "Fetching HTML", "Downloaded recipe page") %>
+        <%= render_import_step(recipe_import_job, :parsing_recipe, "Parsing Recipe", "Extracted title, ingredients, and instructions") %>
+      <% end %>
       <%= render_import_step(recipe_import_job, :matching_ingredients, "Matching Ingredients", recipe_import_job.ingredient_match_summary) %>
       <%= render_import_step(recipe_import_job, :resolving_with_ai, "Resolving with AI", "Classified ingredient families") %>
       <%= render_import_step(recipe_import_job, :creating_recipe, "Creating Recipe", "Saved recipe to database", last: true) %>
