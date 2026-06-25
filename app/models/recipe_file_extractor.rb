@@ -1,7 +1,4 @@
-# app/services/recipe_file_extractor.rb
-# Sends an uploaded file (image or PDF) to Claude and extracts recipe data
-# in the same format that RecipeScraper returns.
-
+# app/models/recipe_file_extractor.rb
 require 'base64'
 require 'httparty'
 
@@ -10,6 +7,11 @@ class RecipeFileExtractor
 
   SUPPORTED_IMAGE_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
   SUPPORTED_TYPES = (SUPPORTED_IMAGE_TYPES + ['application/pdf']).freeze
+
+  # Max dimension for images before sending to Claude — reduces payload dramatically
+  MAX_DIMENSION = 1568
+  # Target JPEG quality after resize
+  JPEG_QUALITY = 85
 
   def initialize(file)
     @file = file
@@ -30,7 +32,7 @@ class RecipeFileExtractor
       ANTHROPIC_API_URL,
       headers: {
         'Content-Type'      => 'application/json',
-        'x-api-key'         => "ENV.fetch('ANTHROPIC_API_KEY')",
+        'x-api-key'         => ENV.fetch('ANTHROPIC_API_KEY'),
         'anthropic-version' => '2023-06-01'
       },
       body: {
@@ -41,10 +43,7 @@ class RecipeFileExtractor
             role:    'user',
             content: [
               file_content_block,
-              {
-                type: 'text',
-                text: extraction_prompt
-              }
+              { type: 'text', text: extraction_prompt }
             ]
           }
         ]
@@ -59,20 +58,36 @@ class RecipeFileExtractor
   end
 
   def file_content_block
-    data = Base64.strict_encode64(@file.read)
+    if @content_type == 'application/pdf'
+      data = Base64.strict_encode64(@file.read)
+      @file.rewind
+      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: data } }
+    else
+      data = Base64.strict_encode64(compressed_image_data)
+      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data } }
+    end
+  end
+
+  def compressed_image_data
+    require 'mini_magick'
+
+    image = MiniMagick::Image.read(@file.read)
     @file.rewind
 
-    if @content_type == 'application/pdf'
-      {
-        type:   'document',
-        source: { type: 'base64', media_type: 'application/pdf', data: data }
-      }
-    else
-      {
-        type:   'image',
-        source: { type: 'base64', media_type: @content_type, data: data }
-      }
+    # Resize if either dimension exceeds MAX_DIMENSION, preserving aspect ratio
+    if image.width > MAX_DIMENSION || image.height > MAX_DIMENSION
+      image.resize "#{MAX_DIMENSION}x#{MAX_DIMENSION}>"
     end
+
+    # Convert to JPEG and compress
+    image.format 'jpeg'
+    image.quality JPEG_QUALITY.to_s
+
+    image.to_blob
+  rescue => e
+    Rails.logger.warn "Image compression failed (#{e.message}), using original"
+    @file.rewind
+    @file.read
   end
 
   def extraction_prompt
@@ -98,7 +113,6 @@ class RecipeFileExtractor
   end
 
   def parse_response(text)
-    # Strip any accidental markdown fences
     cleaned = text.to_s.gsub(/```json\n?|\n?```/, '').strip
     data = JSON.parse(cleaned)
 
