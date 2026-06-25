@@ -352,6 +352,9 @@
   .hover\:bg-sage-700:hover { background-color: var(--sage-700); }
   .hover\:bg-mist-600:hover { background-color: var(--color-mist-600); }
   .hover\:bg-olive-600:hover { background-color: var(--color-olive-600); }
+  .hover\:bg-mauve-400:hover { background-color: var(--color-mauve-400); }
+  .hover\:bg-mauve-600:hover { background-color: var(--color-mauve-600); }
+  .hover\:text-dusty-rose-800:hover { color: oklch(35% 0.04 10); }
 
   .bg-honey-50 { background-color: oklch(98% 0.01 95); }
   .bg-honey-100 { background-color: oklch(95% 0.02 95); }

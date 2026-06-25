@@ -7,9 +7,10 @@ class User < ApplicationRecord
   has_many :grocery_lists,      dependent: :destroy
   has_many :tags,               dependent: :destroy
   has_many :recipe_import_jobs, dependent: :destroy
+  has_many :collections,        dependent: :destroy
   has_many :created_ingredients, class_name: 'Ingredient',
-           foreign_key: :created_by_id,
-           dependent: :nullify
+                                  foreign_key: :created_by_id,
+                                  dependent: :nullify
 
   has_many :user_favorites, dependent: :destroy
   has_many :favorited_recipes, through: :user_favorites, source: :recipe

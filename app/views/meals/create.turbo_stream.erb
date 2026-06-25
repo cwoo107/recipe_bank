@@ -11,7 +11,11 @@
   <% end %>
 
 <% else %>
-  <% section_id = "extra_meals_#{@meal.meal_name.downcase}" %>
+  <% type       = @meal.meal_name.downcase %>
+  <% section_id = "extra_meals_#{type}" %>
+
+  <%= turbo_stream.remove "no_#{type}_message" %>
+
   <%= turbo_stream.append section_id do %>
     <%= render partial: "meals/meal", locals: { meal: @meal, date: @date } %>
   <% end %>

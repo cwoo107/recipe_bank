@@ -1,6 +1,6 @@
 Rails.application.routes.draw do
-  devise_for :views
   devise_for :users
+
   root 'meals#index'
 
   get 'grocery_list', to: 'grocery_lists#index', as: 'grocery_lists'
@@ -9,6 +9,7 @@ Rails.application.routes.draw do
       post :generate
     end
   end
+
   resources :meals
   resources :household_members
   resources :households
@@ -27,22 +28,27 @@ Rails.application.routes.draw do
       get :import
     end
   end
+
+  resources :collections do
+    member do
+      get :add_recipe_dropdown  # Turbo Frame dropdown for a specific recipe
+    end
+  end
+
+  resources :collection_recipes, only: [:create] do
+    collection do
+      delete :destroy
+    end
+  end
+
   resources :ingredients do
     resources :nutrition_facts, only: [:create, :edit, :update, :destroy]
     member do
       patch :toggle_favorite
     end
   end
+
   resources :tags
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
-
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Defines the root path route ("/")
 end

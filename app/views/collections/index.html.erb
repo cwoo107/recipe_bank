@@ -1,0 +1,41 @@
+<% content_for :title, "Collections" %>
+
+<div class="w-full">
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Collections</h1>
+      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Organize your recipes into collections.</p>
+    </div>
+    <div>
+      <%= link_to new_collection_path,
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" do %>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5">
+          <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+        </svg>
+        New Collection
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mt-8">
+    <% if @collections.any? %>
+      <div id="collections_list" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <% @collections.each do |collection| %>
+          <%= render partial: "collections/collection", locals: { collection: collection } %>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="mt-12 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="mx-auto size-12 text-gray-400 dark:text-gray-600">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
+        </svg>
+        <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No collections yet</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Create a collection to organize your recipes.</p>
+        <div class="mt-6">
+          <%= link_to "New Collection", new_collection_path,
+                      class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

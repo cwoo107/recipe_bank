@@ -207,12 +207,12 @@
             <% end %>
 
             <% if (@extra_meals[type] || []).empty? %>
-              <p class="text-sm text-gray-400 dark:text-gray-500 italic py-2 px-1">No <%= type.pluralize %> this week.</p>
+              <p id="no_<%= type %>_message" class="text-sm text-gray-400 dark:text-gray-500 italic py-2 px-1">No <%= type.pluralize %> this week.</p>
             <% end %>
           </div>
         </div>
       <% end %>
     </div>
-
+    <span class="bg-mauve-300 hover:bg-mauve-400 inset-ring-mauve-600/20 dark:bg-mauve-800/20 dark:inset-ring-mauve-300/30 text-mauve-800 dark:text-mauve-300 text-mauve-700 dark:text-mauve-400 hidden"></span>
   </div>
 </div>

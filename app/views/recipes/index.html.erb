@@ -82,11 +82,14 @@
                 <%= recipe.title %>
               <% end %>
             </div>
-            <div class="flex items-center gap-3 shrink-0 ml-3">
-              <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
-              <%= button_to "Delete", recipe_path(recipe), method: :delete,
-                            data: { turbo_confirm: "Are you sure?" },
-                            class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400" %>
+            <div class="flex items-center gap-2 shrink-0 ml-3">
+              <%= render 'collections/collection_button', recipe: recipe %>
+              <% if recipe.owned_by?(current_user) %>
+                <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
+                <%= button_to "Delete", recipe_path(recipe), method: :delete,
+                              data: { turbo_confirm: "Are you sure?" },
+                              class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400" %>
+              <% end %>
             </div>
           </div>
           <div class="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
@@ -162,14 +165,16 @@
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.steps.count, 'step') %></td>
             <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= recipe.servings %></td>
             <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-              <% if recipe.owned_by?(current_user) %>
-
-            <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
-              <span class="text-gray-300 dark:text-gray-600"> | </span>
-              <%= button_to "Delete", recipe_path(recipe), method: :delete,
-                            data: { turbo_confirm: "Are you sure?" },
-                            class: "text-dusty-rose-600 hover:text-dusty-rose-900 dark:text-dusty-rose-400" %>
+              <div class="flex items-center justify-end gap-3">
+                <%= render 'collections/collection_button', recipe: recipe %>
+                <% if recipe.owned_by?(current_user) %>
+                  <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+                  <span class="text-gray-300 dark:text-gray-600"> | </span>
+                  <%= button_to "Delete", recipe_path(recipe), method: :delete,
+                                data: { turbo_confirm: "Are you sure?" },
+                                class: "text-dusty-rose-600 hover:text-dusty-rose-900 dark:text-dusty-rose-400" %>
                 <% end %>
+              </div>
             </td>
           </tr>
         <% end %>

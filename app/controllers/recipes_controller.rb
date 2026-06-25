@@ -86,9 +86,15 @@ class RecipesController < ApplicationController
 
   def apply_sort(scope)
     case params[:sort]
-    when 'title'    then scope.order(title: sort_direction)
-    when 'servings' then scope.order(servings: sort_direction)
-    else                 scope.by_favorite_for(current_user)
+    when 'title'       then scope.order(title: sort_direction)
+    when 'servings'    then scope.order(servings: sort_direction)
+    when 'ingredients' then scope.left_joins(:recipe_ingredients)
+                                 .group(:id)
+                                 .order(Arel.sql("COUNT(recipe_ingredients.id) #{sort_direction.to_s.upcase}"))
+    when 'steps'       then scope.left_joins(:steps)
+                                 .group(:id)
+                                 .order(Arel.sql("COUNT(steps.id) #{sort_direction.to_s.upcase}"))
+    else                    scope.by_favorite_for(current_user)
     end
   end
 

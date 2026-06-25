@@ -8,6 +8,8 @@ class Recipe < ApplicationRecord
   has_many :meals
   has_many :user_favorites, dependent: :destroy
   has_many :favorited_by, through: :user_favorites, source: :user
+  has_many :collection_recipes
+  has_many :collections, through: :collection_recipes
 
   VISIBILITY = %w[public private].freeze
 

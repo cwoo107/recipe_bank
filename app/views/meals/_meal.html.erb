@@ -7,7 +7,8 @@
   <div class="relative z-10 pointer-events-none">
     <p class="font-semibold <%= colors[:title] %>"><%= meal.recipe.title %></p>
     <p class="mt-0.5 <%= colors[:subtitle] %>">
-      <%= meal.servings %> serving<%= meal.servings == 1 ? "" : "s" %>
+      <%= meal.recipe.ingredients.count %> ingredients
+      &middot; <%= meal.servings %> serving<%= meal.servings == 1 ? "" : "s" %>
       &middot; <%= meal.calories_per_serving %> cal each
     </p>
     <p class="mt-0.5 <%= colors[:subtitle] %>">

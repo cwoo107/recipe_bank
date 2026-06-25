@@ -1,4 +1,4 @@
-<div class="mx-auto max-w-7xl">
+<div class="mx-auto max-w-7xl" data-controller="edit-mode">
 
   <%# ── Header ──────────────────────────────────────────────────────────── %>
   <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -15,24 +15,30 @@
     </div>
 
     <% if @recipe.owned_by?(current_user) %>
-    <div class="flex shrink-0 gap-x-3">
-      <%= link_to edit_recipe_path(@recipe),
-                  class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" do %>
-        <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5 inline-block" aria-hidden="true">
-          <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
-          <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
-        </svg>
-        Edit
-      <% end %>
-      <%= button_to recipe_path(@recipe),
-                    method: :delete,
-                    data: { turbo_confirm: "Are you sure you want to delete this recipe?" },
-                    class: "rounded-md bg-dusty-rose-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-dusty-rose-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dusty-rose-600 dark:bg-dusty-rose-500 dark:shadow-none dark:hover:bg-dusty-rose-400" do %>
-        Delete
-      <% end %>
-    </div>
-    <% end %>
+      <div class="flex shrink-0 gap-x-3">
+        <%# Edit Mode toggle — same style as original Edit button %>
+        <button type="button"
+                data-action="click->edit-mode#toggle"
+                data-edit-mode-target="editButton"
+                class="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">
+          <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5 inline-block" aria-hidden="true">
+            <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
+            <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
+          </svg>
+          Edit
+        </button>
 
+        <%# Delete — edit mode only %>
+        <div class="hidden" data-edit-mode-target="editOnlyItems">
+          <%= button_to recipe_path(@recipe),
+                        method: :delete,
+                        data: { turbo_confirm: "Are you sure you want to delete this recipe?" },
+                        class: "rounded-md bg-dusty-rose-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-dusty-rose-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-dusty-rose-600 dark:bg-dusty-rose-500 dark:shadow-none dark:hover:bg-dusty-rose-400" do %>
+            Delete
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 
   <%# ── Nutrition chart + Tags ──────────────────────────────────────────── %>
@@ -66,12 +72,15 @@
               <span class="inline-flex items-center gap-x-1.5 rounded-full px-3 py-1 text-sm font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
                     style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
                 <%= tag.tag %>
-                <%= button_to recipe_recipe_tag_path(@recipe, @recipe.recipe_tags.find_by(tag: tag)),
-                              method: :delete,
-                              data: { turbo_confirm: "Remove this tag?" },
-                              class: "inline-flex shrink-0" do %>
-                  <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg>
-                <% end %>
+                <%# Remove tag button — edit mode only %>
+                <span class="hidden" data-edit-mode-target="editOnlyItems">
+                  <%= button_to recipe_recipe_tag_path(@recipe, @recipe.recipe_tags.find_by(tag: tag)),
+                                method: :delete,
+                                data: { turbo_confirm: "Remove this tag?" },
+                                class: "inline-flex shrink-0" do %>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" /></svg>
+                  <% end %>
+                </span>
               </span>
             <% end %>
           </div>
@@ -79,7 +88,8 @@
           <p class="text-sm text-gray-500 dark:text-gray-400">No tags yet.</p>
         <% end %>
 
-        <div class="mt-4 border-t border-gray-200 pt-4 dark:border-white/10">
+        <%# Add tag form — edit mode only %>
+        <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10" data-edit-mode-target="editOnlyItems">
           <%= form_with model: [@recipe, @recipe.recipe_tags.build], class: "flex gap-x-3" do |form| %>
             <%= form.select :tag_id,
                             options_from_collection_for_select(Tag.all, :id, :tag),
@@ -99,7 +109,7 @@
   <%# ── Ingredients + Steps ─────────────────────────────────────────────── %>
   <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-3">
 
-    <%# Ingredients (full width on mobile, 1/3 on desktop) %>
+    <%# Ingredients %>
     <div class="lg:col-span-1">
       <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ingredients</h2>
@@ -123,7 +133,8 @@
                   <td class="whitespace-nowrap text-center px-2 text-sm text-gray-500 dark:text-gray-400">
                     <%= display_quantity_with_unit(recipe_ingredient.quantity, recipe_ingredient.unit) %>
                   </td>
-                  <td class="relative whitespace-nowrap text-right text-sm font-medium">
+                  <%# Remove ingredient — edit mode only %>
+                  <td class="relative whitespace-nowrap text-right text-sm font-medium hidden" data-edit-mode-target="editOnlyItems">
                     <%= button_to recipe_recipe_ingredient_path(@recipe, recipe_ingredient),
                                   method: :delete,
                                   data: { turbo_confirm: "Remove this ingredient?" },
@@ -140,7 +151,9 @@
           <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No ingredients yet.</p>
         <% end %>
 
-        <div class="mt-4 border-t border-gray-200 pt-4 dark:border-white/10"
+        <%# Add ingredient form — edit mode only %>
+        <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10"
+             data-edit-mode-target="editOnlyItems"
              data-controller="searchable-select"
              data-searchable-select-placeholder-value="Search for an ingredient...">
           <%= form_with model: [@recipe, @recipe.recipe_ingredients.build], class: "space-y-3" do |form| %>
@@ -177,7 +190,7 @@
       </div>
     </div>
 
-    <%# Steps (full width on mobile, 2/3 on desktop) %>
+    <%# Steps %>
     <div class="lg:col-span-2">
       <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Instructions</h2>
@@ -186,7 +199,8 @@
           <ol class="mt-4 space-y-4" data-controller="sortable" data-sortable-url-value="<%= reorder_recipe_steps_path(@recipe) %>">
             <% @recipe.steps.order(:position).each_with_index do |step, index| %>
               <li class="flex gap-x-4" data-sortable-target="item" data-id="<%= step.id %>">
-                <div class="flex items-start pt-2">
+                <%# Drag handle — edit mode only %>
+                <div class="hidden flex items-start pt-2" data-edit-mode-target="editOnlyItems">
                   <button type="button" class="sortable-handle cursor-move text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400">
                     <svg viewBox="0 0 20 20" fill="currentColor" class="size-5"><path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Zm-3.76 9.2a.75.75 0 0 1 1.06.04l2.7 2.908 2.7-2.908a.75.75 0 1 1 1.1 1.02l-3.25 3.5a.75.75 0 0 1-1.1 0l-3.25-3.5a.75.75 0 0 1 .04-1.06Z" clip-rule="evenodd" /></svg>
                   </button>
@@ -196,7 +210,8 @@
                 </div>
                 <div class="flex-1 min-w-0">
                   <div class="text-sm text-gray-900 dark:text-white"><%= step.content %></div>
-                  <div class="mt-2 flex items-center gap-x-4">
+                  <%# Edit/Delete step — edit mode only %>
+                  <div class="hidden mt-2 flex items-center gap-x-4" data-edit-mode-target="editOnlyItems">
                     <%= link_to "Edit", edit_recipe_step_path(@recipe, step),
                                 class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
                     <%= button_to recipe_step_path(@recipe, step), method: :delete,
@@ -213,7 +228,8 @@
           <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No steps yet.</p>
         <% end %>
 
-        <div class="mt-4 border-t border-gray-200 pt-4 dark:border-white/10">
+        <%# Add step — edit mode only %>
+        <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10" data-edit-mode-target="editOnlyItems">
           <%= link_to new_recipe_step_path(@recipe),
                       class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" do %>
             <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>

@@ -1,0 +1,57 @@
+<%# Locals: recipe %>
+<% user_collections = current_user.collections.order(:title) %>
+<% recipe_collection_ids = recipe.collection_recipes.where(collection: user_collections).pluck(:collection_id) %>
+
+<div id="collection_button_<%= recipe.id %>" class="relative" data-controller="collection-dropdown">
+  <button type="button"
+          data-action="click->collection-dropdown#toggle"
+          class="p-1 text-gray-400 hover:text-[#5f734c] dark:text-gray-500 dark:hover:text-[#7a8f62] transition-colors"
+          title="Add to collection">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
+    </svg>
+  </button>
+
+  <div data-collection-dropdown-target="menu"
+       class="hidden absolute right-0 z-50 mt-1 w-56 rounded-lg bg-white dark:bg-[#242b1e] shadow-lg inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 py-1">
+
+    <% if user_collections.any? %>
+      <p class="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Your collections</p>
+      <% user_collections.each do |collection| %>
+        <% in_collection = recipe_collection_ids.include?(collection.id) %>
+        <% if in_collection %>
+          <%= button_to collection_recipes_path,
+                method: :delete,
+                params: { collection_recipe: { recipe_id: recipe.id, collection_id: collection.id } },
+                class: "w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 text-gray-900 dark:text-white",
+                title: "Remove from #{collection.title}" do %>
+            <span class="truncate"><%= collection.title %></span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 shrink-0 ml-2 text-dusty-rose-500 dark:text-dusty-rose-400">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 13.5H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+            </svg>
+          <% end %>
+        <% else %>
+          <%= button_to collection_recipes_path,
+                method: :post,
+                params: { collection_recipe: { recipe_id: recipe.id, collection_id: collection.id } },
+                class: "w-full flex items-center justify-between px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 text-gray-900 dark:text-white",
+                title: "Add to #{collection.title}" do %>
+            <span class="truncate"><%= collection.title %></span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4 shrink-0 ml-2 text-[#5f734c] dark:text-[#7a8f62]">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+            </svg>
+          <% end %>
+        <% end %>
+      <% end %>
+      <div class="my-1 border-t border-gray-100 dark:border-white/10"></div>
+    <% end %>
+
+    <%= link_to new_collection_path,
+          class: "flex items-center gap-2 px-3 py-2 text-sm text-[#5f734c] hover:bg-gray-50 dark:text-[#7a8f62] dark:hover:bg-white/5" do %>
+      <svg viewBox="0 0 20 20" fill="currentColor" class="size-4">
+        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+      </svg>
+      New collection
+    <% end %>
+  </div>
+</div>

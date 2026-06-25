@@ -3,16 +3,6 @@ module MealsHelper
     case meal.meal_name.downcase
     when "breakfast"
       {
-        bg: "bg-honey-300",
-        hover: "hover:bg-honey-400",
-        ring: "inset-ring-honey-600/20",
-        dark_bg: "dark:bg-honey-800/20",
-        dark_ring: "dark:inset-ring-honey-300/30",
-        title: "text-honey-800 dark:text-honey-300",
-        subtitle: "text-honey-700 dark:text-honey-400"
-      }
-    when "lunch"
-      {
         bg: "bg-seafoam-300",
         hover: "hover:bg-seafoam-400",
         ring: "inset-ring-seafoam-600/20",
@@ -20,6 +10,16 @@ module MealsHelper
         dark_ring: "dark:inset-ring-seafoam-300/30",
         title: "text-seafoam-800 dark:text-seafoam-300",
         subtitle: "text-seafoam-700 dark:text-seafoam-400"
+      }
+    when "lunch"
+      {
+        bg: "bg-honey-300",
+        hover: "hover:bg-honey-400",
+        ring: "inset-ring-honey-600/20",
+        dark_bg: "dark:bg-honey-800/20",
+        dark_ring: "dark:inset-ring-honey-300/30",
+        title: "text-honey-800 dark:text-honey-300",
+        subtitle: "text-honey-700 dark:text-honey-400"
       }
     when "dinner"
       {
