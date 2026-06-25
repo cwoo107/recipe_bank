@@ -1,8 +1,7 @@
 class ApplicationController < ActionController::Base
   before_action :authenticate_user!
+  before_action :set_user_timezone
 
-  # Pundit-style ownership check without the gem overhead.
-  # Raises a 403 if the given record doesn't belong to current_user.
   def require_ownership!(record, owner_method: :user)
     owner = record.public_send(owner_method)
     unless owner == current_user
@@ -10,10 +9,19 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  # For ingredients where the column is created_by_id, not user_id
   def require_ingredient_ownership!(ingredient)
     unless ingredient.editable_by?(current_user)
       redirect_to ingredients_path, alert: "You can only edit ingredients you created."
+    end
+  end
+
+  private
+
+  def set_user_timezone
+    timezone = cookies[:browser_timezone]
+    if timezone.present?
+      # ActiveSupport understands IANA timezone names like "America/Denver"
+      Time.zone = ActiveSupport::TimeZone[timezone] || ActiveSupport::TimeZone.find_tzinfo(timezone) rescue Time.zone
     end
   end
 end
