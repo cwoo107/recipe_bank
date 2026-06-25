@@ -99,7 +99,7 @@
               <% if meals_for_cell.empty? %>
                 <div id="empty_cell_<%= i %>_<%= type %>" data-controller="dialog" data-action="click->dialog#backdropClose" class="flex-1 flex min-h-20">
                   <dialog data-dialog-target="dialog" class="w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
-                    <%= turbo_frame_tag "new_meal", src: new_meal_path(date: current_date.strftime('%Y-%m-%d'), meal_name: type.capitalize), loading: "lazy" do %>
+                    <%= turbo_frame_tag "new_meal_#{i}_#{type}", src: new_meal_path(date: current_date.strftime('%Y-%m-%d'), meal_name: type.capitalize), loading: "lazy" do %>
                     <% end %>
                     <div class="mt-4">
                       <button type="button" data-action="dialog#close" class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">Close</button>
@@ -171,25 +171,25 @@
 
           <div data-accordion-target="content" class="accordion-content">
             <div>
-              <% %w[breakfast lunch dinner].each_with_index do |type, slot_i| %>
-                <% meals_for_cell = @calendar_meals[[i, type]] || [] %>
-                <% is_last_slot   = slot_i == 2 %>
+            <% %w[breakfast lunch dinner].each_with_index do |type, slot_i| %>
+              <% meals_for_cell = @calendar_meals[[i, type]] || [] %>
+              <% is_last_slot   = slot_i == 2 %>
 
-                <div class="<%= is_last_slot ? '' : 'border-b border-gray-100 dark:border-white/5' %>">
-                  <div class="px-4 py-1.5 bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/5">
+              <div class="<%= is_last_slot ? '' : 'border-b border-gray-100 dark:border-white/5' %>">
+                <div class="px-4 py-1.5 bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/5">
                   <span class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                     <%= type.capitalize %>
                   </span>
-                  </div>
-
-                  <div id="mobile_cell_<%= i %>_<%= type %>"
-                       class="flex flex-col gap-2 p-2 <%= meals_for_cell.empty? ? 'min-h-10' : '' %>">
-                    <% meals_for_cell.each do |meal| %>
-                      <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
-                    <% end %>
-                  </div>
                 </div>
-              <% end %>
+
+                <div id="mobile_cell_<%= i %>_<%= type %>"
+                     class="flex flex-col gap-2 p-2 <%= meals_for_cell.empty? ? 'min-h-10' : '' %>">
+                  <% meals_for_cell.each do |meal| %>
+                    <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
             </div>
           </div>
 

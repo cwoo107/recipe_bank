@@ -20,6 +20,23 @@ export default class extends Controller {
         this.syncDateVisibility()
     }
 
+    // Called by the dialog controller after loading the form with a pre-set date/type
+    setDate(date, mealType) {
+        if (date && this.hasDateInputTarget) {
+            this.dateInputTarget.value = date
+        }
+
+        if (mealType) {
+            const radio = this.element.querySelector(
+                `input[name*='meal_name'][value='${mealType.charAt(0).toUpperCase() + mealType.slice(1)}']`
+            )
+            if (radio) {
+                radio.checked = true
+                this.syncDateVisibility()
+            }
+        }
+    }
+
     // Triggered by the recipe <select> changing
     recipeChanged(event) {
         const selected = event.target.selectedOptions[0]

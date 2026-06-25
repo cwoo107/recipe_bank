@@ -22,7 +22,7 @@ class MealsController < ApplicationController
   end
 
   def new
-    @meal = Meal.new
+    @meal = Meal.new(date: params[:date].present? ? Date.parse(params[:date]) : nil)
   end
 
   def edit
@@ -32,7 +32,7 @@ class MealsController < ApplicationController
     @meal = current_user.meals.build(meal_params)
 
     if @meal.extra_meal? && @meal.date.blank?
-      @meal.date = Date.today.beginning_of_week
+      @meal.date = Time.zone.today.beginning_of_week
     end
 
     @date = @meal.date.beginning_of_week
@@ -79,7 +79,7 @@ class MealsController < ApplicationController
   end
 
   def week_start_from_params
-    params[:date].present? ? Date.parse(params[:date]) : Date.today.beginning_of_week
+    params[:date].present? ? Date.parse(params[:date]) : Time.zone.today.beginning_of_week
   end
 
   def meal_params
