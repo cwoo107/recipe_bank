@@ -14,10 +14,17 @@ class RecipeIngredientsController < ApplicationController
   def destroy
     @recipe_ingredient = @recipe.recipe_ingredients.find(params[:id])
     @recipe_ingredient.destroy
-    redirect_to @recipe, notice: "Ingredient removed."
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.remove("recipe_ingredient_#{@recipe_ingredient.id}")
+      end
+      format.html { redirect_to @recipe, notice: "Ingredient removed." }
+    end
   end
 
   private
+
   def set_recipe
     @recipe = Recipe.find(params[:recipe_id])
   end

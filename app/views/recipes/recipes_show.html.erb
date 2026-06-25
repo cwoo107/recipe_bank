@@ -119,7 +119,7 @@
             <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
               <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
                 <% @recipe.recipe_ingredients.each do |recipe_ingredient| %>
-                  <tr>
+                  <tr id="recipe_ingredient_<%= recipe_ingredient.id %>">
                     <td class="whitespace-nowrap py-4 text-sm font-medium dark:text-white">
                       <%= link_to recipe_ingredient.ingredient do %>
                         <span class="text-sm font-medium text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]">
