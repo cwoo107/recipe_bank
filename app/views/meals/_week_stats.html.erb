@@ -1,0 +1,123 @@
+<%# app/views/meals/_week_stats.html.erb %>
+<%# Locals: week_stats, date %>
+
+<%# Backdrop %>
+<div data-week-stats-target="overlay"
+     data-action="click->week-stats#close"
+     class="fixed inset-0 z-40 bg-black/30 opacity-0 pointer-events-none transition-opacity duration-300">
+</div>
+
+<%# Slide-out panel %>
+<div data-week-stats-target="panel"
+     class="fixed inset-y-0 right-0 z-50 w-full sm:w-96 bg-white dark:bg-[#1a1f16] shadow-xl translate-x-full transition-transform duration-300 ease-in-out flex flex-col overflow-hidden">
+
+  <%# Header %>
+  <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-white/10 shrink-0">
+    <div>
+      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Week summary</h2>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5"><%= date.strftime("%b %d") %> – <%= (date + 6.days).strftime("%b %d") %> · <%= week_stats[:meal_count] %> <%= "meal".pluralize(week_stats[:meal_count]) %></p>
+    </div>
+    <button type="button" data-action="click->week-stats#close"
+            class="rounded-md p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-white/10 transition-colors">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5">
+        <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/>
+      </svg>
+    </button>
+  </div>
+
+  <% if week_stats[:meal_count] > 0 %>
+
+    <%# This div wraps the toggle buttons AND the views so the controller can find all targets %>
+    <div class="flex-1 overflow-y-auto px-6 py-4 space-y-6" data-controller="week-stats-toggle">
+
+      <%# Toggle: total vs per serving %>
+      <div class="inline-flex rounded-lg inset-ring inset-ring-gray-200 dark:inset-ring-white/10 p-0.5 gap-0.5">
+        <button type="button"
+                data-action="click->week-stats-toggle#showTotal"
+                data-week-stats-toggle-target="totalBtn"
+                class="px-3 py-1.5 text-xs font-medium rounded-md bg-[#5f734c] text-white dark:bg-[#7a8f62] transition-colors">
+          Total
+        </button>
+        <button type="button"
+                data-action="click->week-stats-toggle#showPerServing"
+                data-week-stats-toggle-target="perServingBtn"
+                class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+          Daily avg
+        </button>
+      </div>
+
+      <%# Macro pie chart %>
+      <div>
+        <canvas
+          data-controller="chartjs"
+          data-chartjs-type-value="pie"
+          data-chartjs-data-value='<%= week_stats[:chart_data].to_json %>'
+          data-chartjs-options-value='{"responsive":true,"maintainAspectRatio":true,"plugins":{"legend":{"display":true,"position":"bottom","labels":{"boxWidth":12,"font":{"size":11}}}}}'
+          style="max-height: 220px;">
+        </canvas>
+      </div>
+
+      <%# Totals grid %>
+      <div data-week-stats-toggle-target="totalView">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">Weekly totals</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Calories</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:total_calories] %></p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Est. cost</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5">$<%= sprintf('%.2f', week_stats[:total_cost]) %></p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Protein</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:total_protein] %>g</p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Carbs</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:total_carbs] %>g</p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3 col-span-2">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Fat</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:total_fat] %>g</p>
+          </div>
+        </div>
+      </div>
+
+      <%# Per-serving aggregate (hidden by default) %>
+      <div data-week-stats-toggle-target="perServingView" class="hidden">
+        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">Daily average</p>
+        <p class="text-xs text-gray-400 dark:text-gray-500 mb-3">Average per day across the full week</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Calories</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:per_serv_calories] %></p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Est. cost</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5">$<%= sprintf('%.2f', week_stats[:per_serv_cost]) %></p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Protein</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:per_serv_protein] %>g</p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Carbs</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:per_serv_carbs] %>g</p>
+          </div>
+          <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3 col-span-2">
+            <p class="text-xs text-gray-500 dark:text-gray-400">Fat</p>
+            <p class="text-xl font-semibold text-gray-900 dark:text-white mt-0.5"><%= week_stats[:per_serv_fat] %>g</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  <% else %>
+    <div class="flex-1 flex items-center justify-center">
+      <p class="text-sm text-gray-400 dark:text-gray-500 text-center px-6">No meals planned this week yet.</p>
+    </div>
+  <% end %>
+
+</div>

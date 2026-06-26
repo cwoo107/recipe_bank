@@ -1,6 +1,6 @@
 <% content_for :title, "Meals" %>
 
-<div class="w-full" data-controller="meal-calendar">
+<div class="w-full" data-controller="meal-calendar week-stats">
   <div class="sm:flex sm:items-center sm:justify-between">
     <div>
       <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Meals</h1>
@@ -8,7 +8,7 @@
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0">
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
-        <dialog data-dialog-target="dialog" data-meal-calendar-target="dialog" class="w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+        <dialog data-dialog-target="dialog" data-meal-calendar-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
           <%= turbo_frame_tag 'new_meal', src: new_meal_path, data: { 'meal-calendar-target': 'frame' } do %>
           <% end %>
           <div class="mt-4">
@@ -21,6 +21,14 @@
             <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
           </svg>
           Add a meal
+        </button>
+        <button type="button"
+                data-action="click->week-stats#toggle"
+                class="inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
+          <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5">
+            <path d="M15.5 2A1.5 1.5 0 0 0 14 3.5v13a1.5 1.5 0 0 0 3 0v-13A1.5 1.5 0 0 0 15.5 2ZM9.5 6A1.5 1.5 0 0 0 8 7.5v9a1.5 1.5 0 0 0 3 0v-9A1.5 1.5 0 0 0 9.5 6ZM3.5 10A1.5 1.5 0 0 0 2 11.5v5a1.5 1.5 0 0 0 3 0v-5A1.5 1.5 0 0 0 3.5 10Z"/>
+          </svg>
+          Week stats
         </button>
       </div>
     </div>
@@ -97,8 +105,8 @@
                 <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
               <% end %>
               <% if meals_for_cell.empty? %>
-                <div id="empty_cell_<%= i %>_<%= type %>" data-controller="dialog" data-action="click->dialog#backdropClose" class="flex-1 flex min-h-20">
-                  <dialog data-dialog-target="dialog" class="w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+                <div id="empty_cell_<%= i %>_<%= type %>" data-controller="dialog" data-action="click->dialog#backdropClose" class="flex-1 flex min-h-20 dark:bg-[#1a1f16]">
+                  <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
                     <%= turbo_frame_tag "new_meal", src: new_meal_path(date: current_date.strftime('%Y-%m-%d'), meal_name: type.capitalize), loading: "lazy" do %>
                     <% end %>
                     <div class="mt-4">
@@ -225,4 +233,5 @@
     </div>
     <span class="bg-mauve-300 hover:bg-mauve-400 inset-ring-mauve-600/20 dark:bg-mauve-800/20 dark:inset-ring-mauve-300/30 text-mauve-800 dark:text-mauve-300 text-mauve-700 dark:text-mauve-400 hidden"></span>
   </div>
+  <%= render 'meals/week_stats', week_stats: @week_stats, date: @date %>
 </div>
