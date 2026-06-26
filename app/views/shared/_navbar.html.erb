@@ -5,25 +5,18 @@
         <div class="flex shrink-0 items-center">
           <%= link_to root_path, class: "flex items-center gap-2" do %>
             <span class="text-2xl dark:text-white">
-              <span class="text-[#5f734c] font-bold" style="font-family: 'Instrument Serif', serif;">Recipe<span class="text-olive-800">Bank</span></span>
+              <span class="text-[#5f734c] font-bold" style="font-family: 'Instrument Serif', serif;">Homemakers<span class="text-olive-800">Haven</span></span>
             </span>
           <% end %>
         </div>
 
         <div class="hidden sm:ml-8 sm:flex sm:gap-x-4">
-          <%= link_to "Meals", meals_path,
+          <%= link_to "Meal Planning", meals_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(meals_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "Grocery List", grocery_lists_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(grocery_lists_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
-          <%= link_to "Recipes", recipes_path,
+          <%= link_to "Recipe Bank", recipes_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(recipes_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
-          <%= link_to "Collections", collections_path,
-                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(collections_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
-          <%= link_to "Ingredients", ingredients_path,
-                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(ingredients_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
-          <%= link_to "Tags", tags_path,
-                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(tags_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
-
         </div>
       </div>
 
@@ -82,18 +75,12 @@
   <%# Mobile menu panel %>
   <div class="hidden" data-mobile-menu-target="menu">
     <div class="space-y-1 pb-3 pt-2">
-      <%= link_to "Meals", meals_path,
+      <%= link_to "Meal Planning", meals_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(meals_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "Grocery List", grocery_lists_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(grocery_lists_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
-      <%= link_to "Recipes", recipes_path,
+      <%= link_to "Recipe Bank", recipes_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(recipes_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
-      <%= link_to "Collections", collections_path,
-                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(collections_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
-      <%= link_to "Ingredients", ingredients_path,
-                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(ingredients_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
-      <%= link_to "Tags", tags_path,
-                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(tags_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
 
     </div>
 

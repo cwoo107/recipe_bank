@@ -1,21 +1,76 @@
-<div class="mx-auto max-w-2xl">
-  <div class="mb-8">
-    <%= link_to ingredients_path, class: "inline-flex items-center gap-x-1.5 text-sm font-semibold text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]" do %>
-      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
-        <path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" />
-      </svg>
-      Back to ingredients
-    <% end %>
-  </div>
+<%= turbo_frame_tag "ingredient" do %>
+  <div class="mx-auto max-w-2xl py-8">
+    <h2 class="text-2xl font-bold text-olive-800 dark:text-[#e8ede3] mb-6">Edit Ingredient</h2>
 
-  <div>
-    <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Edit Ingredient</h1>
-    <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
-      Update ingredient information.
-    </p>
-  </div>
+    <div class="bg-white dark:bg-white/5 rounded-2xl shadow-sm inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 px-8 py-10">
+      <%= form_with model: @ingredient, class: "space-y-5" do |f| %>
+        <% if @ingredient.errors.any? %>
+          <div class="rounded-lg bg-dusty-rose-50 dark:bg-dusty-rose-900/20 border border-dusty-rose-200 dark:border-dusty-rose-800 px-4 py-3">
+            <ul class="list-disc ml-4 space-y-0.5 text-sm text-dusty-rose-600 dark:text-dusty-rose-400">
+              <% @ingredient.errors.each do |error| %>
+                <li><%= error.full_message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
 
-  <div class="mt-8">
-    <%= render 'form', ingredient: @ingredient %>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+          <div>
+            <%= f.label :ingredient, "Name", class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
+            <%= f.text_field :ingredient,
+                  class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
+          </div>
+
+          <div>
+            <%= f.label :brand, class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
+            <%= f.text_field :brand, placeholder: "Optional",
+                  class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
+          </div>
+
+          <div>
+            <%= f.label :family, class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
+            <%= f.select :family,
+                  [["Protein", "protein"], ["Produce", "produce"], ["Dairy", "dairy"],
+                   ["Grain", "grain"], ["Fat", "fat"], ["Spices", "spices"]],
+                  { include_blank: "Select family" },
+                  class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
+          </div>
+
+          <div>
+            <%= f.label :unit_price, "Unit Price ($)", class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
+            <%= f.number_field :unit_price, step: 0.01, placeholder: "4.99",
+                  class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
+          </div>
+
+          <div>
+            <%= f.label :unit_servings, "Servings per Unit", class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
+            <%= f.number_field :unit_servings, placeholder: "8",
+                  class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
+          </div>
+
+          <div class="flex items-center gap-3 pt-6">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <%= f.check_box :organic, style: "accent-color: #5f734c;", class: "h-4 w-4" %>
+              <span class="text-sm text-gray-900 dark:text-white font-medium">Organic</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <%= f.check_box :favorite, style: "accent-color: #5f734c;", class: "h-4 w-4" %>
+              <span class="text-sm text-gray-900 dark:text-white font-medium">Favorite</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+          <%= f.submit "Update Ingredient",
+                class: "flex-1 rounded-lg px-4 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-semibold text-sm transition-colors cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="mt-4 text-center">
+      <%= link_to "← Cancel", ingredient_path(@ingredient),
+            data: { turbo_frame: "ingredient" },
+            class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+    </div>
   </div>
-</div>
+<% end %>

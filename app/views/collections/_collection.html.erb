@@ -1,5 +1,5 @@
 <div id="<%= dom_id(collection) %>" class="relative flex flex-col rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10 hover:shadow-md transition-shadow">
-  <%= link_to collection_path(collection), class: "absolute inset-0 rounded-lg" do %>
+  <%= link_to collection_path(collection), data: { turbo_frame: "collection" }, class: "absolute inset-0 rounded-lg" do %>
     <span class="sr-only"><%= collection.title %></span>
   <% end %>
 
@@ -22,6 +22,7 @@
   <% if collection.owned_by?(current_user) %>
     <div class="relative z-10 mt-4 flex items-center gap-3 pt-4 border-t border-gray-100 dark:border-white/10">
       <%= link_to "Edit", edit_collection_path(collection),
+            data: { turbo_frame: "collection" },
             class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
       <%= button_to "Delete", collection_path(collection), method: :delete,
             data: { turbo_confirm: "Delete this collection?" },

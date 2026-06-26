@@ -55,8 +55,19 @@ class IngredientsController < ApplicationController
   end
 
   def destroy
+    ingredient_dom_id = "ingredient_#{@ingredient.id}"
     @ingredient.destroy!
-    redirect_to ingredients_path, notice: "Ingredient was successfully deleted.", status: :see_other
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.remove(ingredient_dom_id),
+          turbo_stream.replace("ingredient", "<turbo-frame id='ingredient'></turbo-frame>"),
+          turbo_stream.prepend("flash", partial: "shared/flash", locals: { notice: "Ingredient deleted." })
+        ]
+      end
+      format.html { redirect_to ingredients_path, notice: "Ingredient was successfully deleted.", status: :see_other }
+    end
   end
 
   private

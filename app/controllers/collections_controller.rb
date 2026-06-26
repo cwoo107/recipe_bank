@@ -1,4 +1,5 @@
 class CollectionsController < ApplicationController
+  include ActionView::RecordIdentifier
   before_action :set_collection, only: %i[show edit update destroy add_recipe_dropdown]
   before_action :require_ownership!, only: %i[edit update destroy]
 
@@ -38,12 +39,13 @@ class CollectionsController < ApplicationController
   end
 
   def destroy
+    collection_dom_id = ActionView::RecordIdentifier.dom_id(@collection)
     @collection.destroy!
 
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: [
-          turbo_stream.remove(dom_id(@collection)),
+          turbo_stream.remove(collection_dom_id),
           turbo_stream.prepend("flash", partial: "shared/flash", locals: { notice: "Collection deleted." })
         ]
       end

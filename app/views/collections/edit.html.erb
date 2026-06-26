@@ -1,14 +1,8 @@
-<% content_for :title, @collection.persisted? ? "Edit Collection" : "New Collection" %>
+<%= turbo_frame_tag "collection" do %>
+  <div class="mx-auto max-w-sm py-8">
+    <h2 class="text-2xl font-bold text-olive-800 dark:text-[#e8ede3] mb-6">Edit Collection</h2>
 
-<div class="min-h-screen flex flex-col justify-center py-12 px-4 bg-[var(--ivory)] dark:bg-[#1a1f16]">
-  <div class="mx-auto w-full max-w-sm">
-    <div class="text-center mb-8">
-      <h1 class="text-3xl font-bold text-olive-800 dark:text-[#e8ede3]">
-        <%= @collection.persisted? ? "Edit Collection" : "New Collection" %>
-      </h1>
-    </div>
-
-    <div class="bg-white dark:bg-[#242b1e] rounded-2xl shadow-sm inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 px-8 py-10">
+    <div class="bg-white dark:bg-white/5 rounded-2xl shadow-sm inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 px-8 py-10">
       <%= form_with model: @collection, class: "space-y-5" do |f| %>
         <% if @collection.errors.any? %>
           <div class="rounded-lg bg-dusty-rose-50 dark:bg-dusty-rose-900/20 border border-dusty-rose-200 dark:border-dusty-rose-800 px-4 py-3">
@@ -22,7 +16,7 @@
 
         <div>
           <%= f.label :title, class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
-          <%= f.text_field :title, placeholder: "e.g. Weeknight Dinners",
+          <%= f.text_field :title,
                 class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
         </div>
 
@@ -46,14 +40,17 @@
           </div>
         </div>
 
-        <%= f.submit @collection.persisted? ? "Update Collection" : "Create Collection",
-              class: "w-full rounded-lg px-4 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-semibold text-sm transition-colors cursor-pointer" %>
+        <div class="flex gap-3 pt-2">
+          <%= f.submit "Update Collection",
+                class: "flex-1 rounded-lg px-4 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-semibold text-sm transition-colors cursor-pointer" %>
+        </div>
       <% end %>
     </div>
 
-    <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-      <%= link_to "← Back", @collection.persisted? ? collection_path(@collection) : collections_path,
-            class: "font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
-    </p>
+    <div class="mt-4 text-center">
+      <%= link_to "← Cancel", collection_path(@collection),
+            data: { turbo_frame: "collection" },
+            class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+    </div>
   </div>
-</div>
+<% end %>

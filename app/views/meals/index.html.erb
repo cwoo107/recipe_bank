@@ -3,7 +3,9 @@
 <div class="w-full" data-controller="meal-calendar week-stats">
   <div class="sm:flex sm:items-center sm:justify-between">
     <div>
-      <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Meals</h1>
+      <h1 class="text-5xl  tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">Meal<span class="text-olive-800">Planning</span></span>
+        </h1>
       <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Meal plan for the week of <%= @date.strftime("%b %d, %Y") %>.</p>
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0">

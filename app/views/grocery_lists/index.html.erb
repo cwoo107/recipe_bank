@@ -3,7 +3,9 @@
 <div class="w-full">
   <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
     <div>
-      <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Grocery List</h1>
+      <h1 class="text-5xl  tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">Grocery<span class="text-olive-800">List</span></span>
+      </h1>
       <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Grocery List for the week of <%= @date.strftime("%b %d, %Y") %>.</p>
     </div>
     <div class="flex flex-col gap-2">

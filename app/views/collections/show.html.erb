@@ -1,5 +1,4 @@
-<% content_for :title, @collection.title %>
-
+<%= turbo_frame_tag "collection" do %>
 <div class="w-full">
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
     <div>
@@ -7,7 +6,7 @@
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-[#5f734c] dark:text-[#7a8f62]">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
         </svg>
-        <h1 class="text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]"><%= @collection.title %></h1>
+        <h1 class="text-4xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]"><%= link_to "Collections", collections_path %> / <%= @collection.title %></h1>
         <% if @collection.public? %>
           <span class="inline-flex items-center rounded-full bg-[#e8ede3] px-2 py-0.5 text-xs font-medium text-[#5f734c] dark:bg-[#7a8f62]/20 dark:text-[#7a8f62]">Public</span>
         <% end %>
@@ -18,6 +17,7 @@
     <% if @collection.owned_by?(current_user) %>
       <div class="flex gap-3 shrink-0">
         <%= link_to "Edit", edit_collection_path(@collection),
+                    data: { turbo_frame: "collection" },
                     class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
         <%= button_to "Delete", collection_path(@collection), method: :delete,
                       data: { turbo_confirm: "Delete this collection and remove all recipes from it?" },
@@ -39,7 +39,7 @@
                     <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
                   </span>
                 <% end %>
-                <%= link_to recipe.title, recipe, class: "text-sm font-semibold text-gray-900 dark:text-white truncate hover:text-[#5f734c] dark:hover:text-[#7a8f62]" %>
+                <%= link_to recipe.title, recipe, data: { turbo: false }, class: "text-sm font-semibold text-gray-900 dark:text-white truncate hover:text-[#5f734c] dark:hover:text-[#7a8f62]" %>
               </div>
               <% if @collection.owned_by?(current_user) %>
                 <%= button_to collection_recipes_path, method: :delete,
@@ -75,15 +75,18 @@
     <% else %>
       <div class="mt-12 text-center">
         <p class="text-sm text-gray-500 dark:text-gray-400">No recipes in this collection yet.</p>
-        <%= link_to "Browse recipes", recipes_path, class: "mt-4 inline-block text-sm font-medium text-[#5f734c] dark:text-[#7a8f62]" %>
+        <%= link_to "Browse recipes", recipes_path, data: { turbo: false }, class: "mt-4 inline-block text-sm font-medium text-[#5f734c] dark:text-[#7a8f62]" %>
       </div>
     <% end %>
   </div>
 
   <div class="mt-8">
-    <%= link_to collections_path, class: "inline-flex items-center gap-x-1.5 text-sm font-semibold text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]" do %>
+    <button type="button"
+            onclick="document.getElementById('collection').src = '<%= collections_path %>'"
+            class="inline-flex items-center gap-x-1.5 text-sm font-semibold text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]">
       <svg viewBox="0 0 20 20" fill="currentColor" class="size-5"><path fill-rule="evenodd" d="M17 10a.75.75 0 0 1-.75.75H5.612l4.158 3.96a.75.75 0 1 1-1.04 1.08l-5.5-5.25a.75.75 0 0 1 0-1.08l5.5-5.25a.75.75 0 1 1 1.04 1.08L5.612 9.25H16.25A.75.75 0 0 1 17 10Z" clip-rule="evenodd" /></svg>
       Back to collections
-    <% end %>
+    </button>
   </div>
 </div>
+<% end %>
