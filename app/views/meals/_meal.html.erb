@@ -9,13 +9,19 @@
     <p class="mt-0.5 <%= colors[:subtitle] %>">
       <%= meal.recipe.ingredients.count %> ingredients
       &middot; <%= meal.servings %> serving<%= meal.servings == 1 ? "" : "s" %>
-      &middot; <%= meal.calories_per_serving %> cal each
+      &middot; <%= meal.calories_per_serving %> cal/serving
     </p>
     <p class="mt-0.5 <%= colors[:subtitle] %>">
       <%= meal.protein_per_serving %>g protein
       / <%= meal.carbs_per_serving %>g carbs
       / <%= meal.fat_per_serving %>g fat
     </p>
+    <% if meal.cost_per_serving > 0 %>
+      <p class="mt-0.5 <%= colors[:subtitle] %>">
+        $<%= sprintf('%.2f', meal.cost_per_serving) %> per serving
+        &middot; $<%= sprintf('%.2f', meal.total_cost) %> total
+      </p>
+    <% end %>
   </div>
 
   <div class="text-end relative z-10 pointer-events-auto mt-1">

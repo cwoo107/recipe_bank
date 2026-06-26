@@ -48,4 +48,19 @@ class Meal < ApplicationRecord
 
   def calendar_meal? = CALENDAR_TYPES.include?(meal_name.downcase)
   def extra_meal?    = EXTRA_TYPES.include?(meal_name.downcase)
+
+  def total_cost
+    recipe.recipe_ingredients.includes(:ingredient).sum do |ri|
+      ingredient = ri.ingredient
+      next 0 unless ingredient.unit_price.present? && ingredient.unit_servings.present? && ingredient.unit_servings > 0
+
+      fraction_of_unit = 1.0 / ingredient.unit_servings
+      ingredient.unit_price * fraction_of_unit * servings_multiplier
+    end
+  end
+
+  def cost_per_serving
+    return 0 if servings.nil? || servings.zero?
+    total_cost / servings
+  end
 end
