@@ -11,6 +11,7 @@ class User < ApplicationRecord
   has_many :created_ingredients, class_name: 'Ingredient',
                                   foreign_key: :created_by_id,
                                   dependent: :nullify
+  has_many :todos
 
   has_many :user_favorites, dependent: :destroy
   has_many :favorited_recipes, through: :user_favorites, source: :recipe

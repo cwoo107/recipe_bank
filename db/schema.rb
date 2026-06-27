@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_153147) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_27_171945) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -210,6 +210,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_153147) do
     t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
+  create_table "todos", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "position", default: 0, null: false
+    t.integer "priority", null: false
+    t.string "status", default: "todo", null: false
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id", "status", "position"], name: "index_todos_on_user_id_and_status_and_position"
+    t.index ["user_id", "status"], name: "index_todos_on_user_id_and_status"
+    t.index ["user_id"], name: "index_todos_on_user_id"
+  end
+
   create_table "user_favorites", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "recipe_id", null: false
@@ -254,6 +268,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_153147) do
   add_foreign_key "recipes", "users"
   add_foreign_key "steps", "recipes"
   add_foreign_key "tags", "users"
+  add_foreign_key "todos", "users"
   add_foreign_key "user_favorites", "recipes"
   add_foreign_key "user_favorites", "users"
 end

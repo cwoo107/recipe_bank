@@ -1,0 +1,10 @@
+<%= turbo_frame_tag "new_todo" do %>
+  <%= render "form", todo: @todo %>
+<% end %>
+
+<%# Also render in per-column turbo frames if status param present %>
+<% if params[:status].present? %>
+  <%= turbo_frame_tag "new_todo_#{params[:status]}" do %>
+    <%= render "form", todo: @todo %>
+  <% end %>
+<% end %>

@@ -51,5 +51,14 @@ Rails.application.routes.draw do
 
   resources :tags
 
-  get "up" => "rails/health#show", as: :rails_health_check
+  resources :todos do
+    collection do
+      post :reorder
+    end
+    member do
+      post :move
+    end
+  end
+
+    get "up" => "rails/health#show", as: :rails_health_check
 end

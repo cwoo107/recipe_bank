@@ -1,0 +1,12 @@
+<%# Prepend the new card into the correct column list %>
+<%= turbo_stream.prepend "todos_#{@todo.status}" do %>
+  <%
+    priority_config = {
+      "low"    => { label: "Low",    classes: "bg-seafoam-100 text-seafoam-800 dark:bg-seafoam-900/30 dark:text-seafoam-300" },
+      "medium" => { label: "Medium", classes: "bg-honey-100 text-honey-800 dark:bg-honey-900/30 dark:text-honey-300" },
+      "high"   => { label: "High",   classes: "bg-mauve-100 text-mauve-800 dark:bg-mauve-900/30 dark:text-mauve-300" },
+      "urgent" => { label: "Urgent", classes: "bg-dusty-rose-100 text-dusty-rose-800 dark:bg-dusty-rose-900/30 dark:text-dusty-rose-300" }
+    }
+  %>
+  <%= render "todos/todo", todo: @todo, priority_config: priority_config %>
+<% end %>
