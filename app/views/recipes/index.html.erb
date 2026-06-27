@@ -5,242 +5,243 @@
     </h1>
   </div>
 </div>
-  <div data-controller="tabs" class="mb-6">
-    <div class="flex border-b border-gray-200 dark:border-white/10">
-      <button type="button"
-              data-tabs-target="tab"
-              data-action="click->tabs#show"
-              data-tabs-panel="recipes-panel"
-              class="px-4 py-2.5 text-sm font-medium border-b-2 border-[#5f734c] text-[#5f734c] dark:text-[#7a8f62] dark:border-[#7a8f62] -mb-px">
-        Recipes
-      </button>
-      <button type="button"
-              data-tabs-target="tab"
-              data-action="click->tabs#show"
-              data-tabs-panel="collections-panel"
-              class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
-        Collections
-      </button>
-      <button type="button"
-              data-tabs-target="tab"
-              data-action="click->tabs#show"
-              data-tabs-panel="ingredients-panel"
-              class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
-        Ingredients
-      </button>
-    </div>
-    <div id="recipes-panel" data-tabs-target="panel" class="mt-6">
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-3">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-[#5f734c] dark:text-[#7a8f62]">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-            </svg>
-
-            <h1 class="text-4xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Recipes</h1>
-
-          </div>
-          <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Manage your recipes and discover new ones.</p>
-        </div>
-    <div class="flex flex-row sm:flex-col gap-2">
-    <%= link_to new_recipe_import_path,
-                class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-      </svg>
-      <span class="hidden sm:inline">Import from URL</span>
-      <span class="sm:hidden">Import</span>
-    <% end %>
-    <%= link_to new_recipe_path,
-                class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
-      <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
-        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-      </svg>
-      <span class="hidden sm:inline">Create a Recipe</span>
-      <span class="sm:hidden">New</span>
-    <% end %>
+<div data-controller="tabs" class="mb-6">
+  <div class="flex border-b border-gray-200 dark:border-white/10">
+    <button type="button"
+            data-tabs-target="tab"
+            data-action="click->tabs#show"
+            data-tabs-panel="recipes-panel"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 border-[#5f734c] text-[#5f734c] dark:text-[#7a8f62] dark:border-[#7a8f62] -mb-px">
+      Recipes
+    </button>
+    <button type="button"
+            data-tabs-target="tab"
+            data-action="click->tabs#show"
+            data-tabs-panel="collections-panel"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
+      Collections
+    </button>
+    <button type="button"
+            data-tabs-target="tab"
+            data-action="click->tabs#show"
+            data-tabs-panel="ingredients-panel"
+            class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
+      Ingredients
+    </button>
   </div>
-</div>
+  <div id="recipes-panel" data-tabs-target="panel" class="mt-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 text-[#5f734c] dark:text-[#7a8f62]">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+          </svg>
 
-<div class="mt-8">
-  <%# Tag filters %>
-  <div class="my-2 flex flex-wrap gap-2">
-    <% Tag.all.each do |tag| %>
-      <%= link_to recipes_path(filter: tag) do %>
+          <h1 class="text-4xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Recipes</h1>
+
+        </div>
+        <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Manage your recipes and discover new ones.</p>
+      </div>
+      <div class="flex flex-row sm:flex-col gap-2">
+        <%= link_to new_recipe_import_path,
+                    class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+          <span class="hidden sm:inline">Import from URL</span>
+          <span class="sm:hidden">Import</span>
+        <% end %>
+        <%= link_to new_recipe_path,
+                    class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+          <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+          </svg>
+          <span class="hidden sm:inline">Create a Recipe</span>
+          <span class="sm:hidden">New</span>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="mt-8">
+      <%# Tag filters %>
+      <div class="my-2 flex flex-wrap gap-2">
+        <% Tag.all.each do |tag| %>
+          <%= link_to recipes_path(filter: tag) do %>
         <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
               style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
           <%= tag.tag %>
         </span>
-      <% end %>
-    <% end %>
-    <% if params[:filter].present? %>
-      <%= link_to recipes_path do %>
+          <% end %>
+        <% end %>
+        <% if params[:filter].present? %>
+          <%= link_to recipes_path do %>
         <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10">
           clear filter
         </span>
-      <% end %>
-    <% end %>
-  </div>
-
-  <%# Search %>
-  <%= form_with url: recipes_path, method: :get, class: "flex gap-4" do |form| %>
-    <div class="flex-1">
-      <label for="query" class="sr-only">Search</label>
-      <div class="grid grid-cols-1">
-        <%= form.text_field :query,
-                            value: params[:query],
-                            placeholder: "Search recipes...",
-                            class: "col-start-1 row-start-1 block w-full rounded-md bg-white py-1.5 pr-3 pl-10 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:pl-9 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
-        <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4 dark:text-gray-500">
-          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
-        </svg>
+          <% end %>
+        <% end %>
       </div>
+
+      <%# Search %>
+      <%= form_with url: recipes_path, method: :get, class: "flex gap-4" do |form| %>
+        <div class="flex-1">
+          <label for="query" class="sr-only">Search</label>
+          <div class="grid grid-cols-1">
+            <%= form.text_field :query,
+                                value: params[:query],
+                                placeholder: "Search recipes...",
+                                class: "col-start-1 row-start-1 block w-full rounded-md bg-white py-1.5 pr-3 pl-10 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:pl-9 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4 dark:text-gray-500">
+              <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+        <button type="submit"
+                class="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">
+          Search
+        </button>
+      <% end %>
     </div>
-    <button type="submit"
-            class="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">
-      Search
-    </button>
-  <% end %>
-</div>
 
-<% if @recipes.any? %>
-  <div class="mt-4">
+    <% if @recipes.any? %>
+      <div class="mt-4">
 
-    <%# ── MOBILE: card list ──────────────────────────────────────── %>
-    <div class="sm:hidden space-y-3">
-      <% @recipes.each do |recipe| %>
-        <div class="rounded-lg bg-white shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10 overflow-hidden">
-          <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/5">
-            <div class="flex items-center gap-2 min-w-0">
-              <% if current_user.favorited?(recipe) %>
+        <%# ── MOBILE: card list ──────────────────────────────────────── %>
+        <div class="sm:hidden space-y-3">
+          <% @recipes.each do |recipe| %>
+            <div class="rounded-lg bg-white shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10 overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/5">
+                <div class="flex items-center gap-2 min-w-0">
+                  <% if current_user.favorited?(recipe) %>
                 <span class="text-yellow-500 shrink-0">
                   <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
                 </span>
-              <% end %>
-              <%= link_to recipe, class: "text-sm font-semibold text-gray-900 dark:text-white truncate" do %>
-                <%= recipe.title %>
-              <% end %>
-            </div>
-            <div class="flex items-center gap-2 shrink-0 ml-3">
-              <%= render 'collections/collection_button', recipe: recipe %>
-              <% if recipe.owned_by?(current_user) %>
-                <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
-                <%= button_to "Delete", recipe_path(recipe), method: :delete,
-                              data: { turbo_confirm: "Are you sure?" },
-                              class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400" %>
-              <% end %>
-            </div>
-          </div>
-          <div class="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
-            <span><%= pluralize(recipe.recipe_ingredients.count, 'ingredient') %></span>
-            <span><%= pluralize(recipe.steps.count, 'step') %></span>
-            <% if recipe.servings.present? %>
-              <span><%= pluralize(recipe.servings, 'serving') %></span>
-            <% end %>
-            <% recipe.tags.limit(3).each do |tag| %>
+                  <% end %>
+                  <%= link_to recipe, class: "text-sm font-semibold text-gray-900 dark:text-white truncate" do %>
+                    <%= recipe.title %>
+                  <% end %>
+                </div>
+                <div class="flex items-center gap-2 shrink-0 ml-3">
+                  <%= render 'collections/collection_button', recipe: recipe %>
+                  <% if recipe.owned_by?(current_user) %>
+                    <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
+                    <%= button_to "Delete", recipe_path(recipe), method: :delete,
+                                  data: { turbo_confirm: "Are you sure?" },
+                                  class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400" %>
+                  <% end %>
+                </div>
+              </div>
+              <div class="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
+                <span><%= pluralize(recipe.recipe_ingredients.count, 'ingredient') %></span>
+                <span><%= pluralize(recipe.steps.count, 'step') %></span>
+                <% if recipe.servings.present? %>
+                  <span><%= pluralize(recipe.servings, 'serving') %></span>
+                <% end %>
+                <% recipe.tags.limit(3).each do |tag| %>
               <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
                     style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
                 <%= tag.tag %>
               </span>
-            <% end %>
-            <% if recipe.tags.count > 3 %>
-              <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
-            <% end %>
-          </div>
+                <% end %>
+                <% if recipe.tags.count > 3 %>
+                  <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         </div>
-      <% end %>
-    </div>
 
-    <%# ── DESKTOP: table ─────────────────────────────────────────── %>
-    <div class="hidden sm:block overflow-hidden bg-white shadow-sm inset-ring inset-ring-gray-900/5 sm:rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
-      <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
-        <thead class="bg-gray-50 dark:bg-white/5">
-        <tr>
-          <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">
-            <%= link_to "Recipe", recipes_path(sort: 'title', direction: params[:sort] == 'title' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Tags</th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-            <%= link_to "Ingredients", recipes_path(sort: 'ingredients', direction: params[:sort] == 'ingredients' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-            <%= link_to "Steps", recipes_path(sort: 'steps', direction: params[:sort] == 'steps' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
-            <%= link_to "Servings", recipes_path(sort: 'servings', direction: params[:sort] == 'servings' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
-          </th>
-          <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
-        </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
-        <% @recipes.each do |recipe| %>
-          <tr>
-            <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
-              <div class="flex items-center gap-x-2">
-                <% if current_user.favorited?(recipe) %>
+        <%# ── DESKTOP: table ─────────────────────────────────────────── %>
+        <div class="hidden sm:block overflow-hidden bg-white shadow-sm inset-ring inset-ring-gray-900/5 sm:rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
+          <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
+            <thead class="bg-gray-50 dark:bg-white/5">
+            <tr>
+              <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 dark:text-white">
+                <%= link_to "Recipe", recipes_path(sort: 'title', direction: params[:sort] == 'title' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+              </th>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Tags</th>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                <%= link_to "Ingredients", recipes_path(sort: 'ingredients', direction: params[:sort] == 'ingredients' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+              </th>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                <%= link_to "Steps", recipes_path(sort: 'steps', direction: params[:sort] == 'steps' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+              </th>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">
+                <%= link_to "Servings", recipes_path(sort: 'servings', direction: params[:sort] == 'servings' && params[:direction] == 'asc' ? 'desc' : 'asc') %>
+              </th>
+              <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
+            </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
+            <% @recipes.each do |recipe| %>
+              <tr>
+                <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
+                  <div class="flex items-center gap-x-2">
+                    <% if current_user.favorited?(recipe) %>
                     <span class="text-yellow-500">
                       <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
                     </span>
-                <% end %>
-                <%= link_to recipe.title, recipe, class: "hover:text-[#5f734c] dark:hover:text-[#7a8f62]" %>
-              </div>
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-              <% if recipe.tags.any? %>
-                <div class="flex flex-wrap gap-1">
-                  <% recipe.tags.limit(3).each do |tag| %>
+                    <% end %>
+                    <%= link_to recipe.title, recipe, class: "hover:text-[#5f734c] dark:hover:text-[#7a8f62]" %>
+                  </div>
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  <% if recipe.tags.any? %>
+                    <div class="flex flex-wrap gap-1">
+                      <% recipe.tags.limit(3).each do |tag| %>
                       <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
                             style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
                         <%= tag.tag %>
                       </span>
+                      <% end %>
+                      <% if recipe.tags.count > 3 %>
+                        <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
+                      <% end %>
+                    </div>
                   <% end %>
-                  <% if recipe.tags.count > 3 %>
-                    <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
-                  <% end %>
-                </div>
-              <% end %>
-            </td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.recipe_ingredients.count, 'ingredient') %></td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.steps.count, 'step') %></td>
-            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= recipe.servings %></td>
-            <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-              <div class="flex items-center justify-end gap-3">
-                <%= render 'collections/collection_button', recipe: recipe %>
-                <% if recipe.owned_by?(current_user) %>
-                  <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
-                  <span class="text-gray-300 dark:text-gray-600"> | </span>
-                  <%= button_to "Delete", recipe_path(recipe), method: :delete,
-                                data: { turbo_confirm: "Are you sure?" },
-                                class: "text-dusty-rose-600 hover:text-dusty-rose-900 dark:text-dusty-rose-400" %>
-                <% end %>
-              </div>
-            </td>
-          </tr>
-        <% end %>
-        </tbody>
-      </table>
-    </div>
+                </td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.recipe_ingredients.count, 'ingredient') %></td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= pluralize(recipe.steps.count, 'step') %></td>
+                <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400"><%= recipe.servings %></td>
+                <td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+                  <div class="flex items-center justify-end gap-3">
+                    <%= render 'collections/collection_button', recipe: recipe %>
+                    <% if recipe.owned_by?(current_user) %>
+                      <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+                      <span class="text-gray-300 dark:text-gray-600"> | </span>
+                      <%= button_to "Delete", recipe_path(recipe), method: :delete,
+                                    data: { turbo_confirm: "Are you sure?" },
+                                    class: "text-dusty-rose-600 hover:text-dusty-rose-900 dark:text-dusty-rose-400" %>
+                    <% end %>
+                  </div>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        </div>
 
+      </div>
+    <% else %>
+      <div class="mt-12 text-center">
+        <svg class="mx-auto size-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+        </svg>
+        <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No recipes</h3>
+        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new recipe.</p>
+        <div class="mt-6">
+          <%= link_to "New Recipe", new_recipe_path,
+                      class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+        </div>
+      </div>
+    <% end %>
   </div>
-<% else %>
-  <div class="mt-12 text-center">
-    <svg class="mx-auto size-12 text-gray-400 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-    </svg>
-    <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No recipes</h3>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started by creating a new recipe.</p>
-    <div class="mt-6">
-      <%= link_to "New Recipe", new_recipe_path,
-                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
-    </div>
-  </div>
-<% end %>
-  </div>
-  <div id="collections-panel" data-tabs-target="panel" class="mt-6">
+
+  <div id="collections-panel" data-tabs-target="panel" class="mt-6 hidden">
     <%= turbo_frame_tag "collections-index", src: collections_path, lazy: true %>
   </div>
-  <div id="ingredients-panel" data-tabs-target="panel" class="mt-6">
-    <%= turbo_frame_tag "ingredients-index", src: ingredients_path, lazy: true %>
 
+  <div id="ingredients-panel" data-tabs-target="panel" class="mt-6 hidden">
+    <%= turbo_frame_tag "ingredients-index", src: ingredients_path, lazy: true %>
   </div>
 </div>
