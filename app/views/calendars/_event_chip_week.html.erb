@@ -1,0 +1,20 @@
+<%# _event_chip_week.html.erb — for all-day strips %>
+<div data-controller="dialog" data-action="click->dialog#backdropClose">
+  <dialog data-dialog-target="dialog"
+          class="dark:bg-[#1a1f16] w-11/12 sm:w-[480px] rounded-xl p-0 shadow-2xl backdrop:bg-black/50 overflow-hidden">
+    <%= turbo_frame_tag "calendar_event_#{event.id}", src: calendar_event_path(event), loading: "lazy" %>
+    <div class="px-6 py-4">
+      <button type="button" data-action="dialog#close"
+              class="rounded-lg px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20
+                     text-sm font-medium text-gray-700 dark:text-white transition">
+        Close
+      </button>
+    </div>
+  </dialog>
+
+  <button type="button" data-action="dialog#open"
+          class="w-full text-left block truncate rounded px-2 py-0.5 text-xs font-medium ring-1 ring-inset
+                 hover:ring-2 transition <%= event_chip_classes(event) %>">
+    <%= event.title %>
+  </button>
+</div>

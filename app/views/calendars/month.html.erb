@@ -1,0 +1,120 @@
+<% content_for :title, "Calendar — #{@date.strftime("%B %Y")}" %>
+<div class="w-full" data-controller="calendar">
+  <%# ── Header ── %>
+  <div class="sm:flex sm:items-center sm:justify-between mb-6">
+    <div>
+      <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span style="font-family: 'Instrument Serif', serif;">
+          <span class="text-[#5f734c]"><%= @date.strftime("%B") %></span>
+          <span class="text-olive-800 dark:text-[#e8ede3]"><%= @date.year %></span>
+        </span>
+      </h1>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <%= @events.count %> event<%= @events.count == 1 ? "" : "s" %> this month
+      </p>
+    </div>
+
+    <div class="mt-4 sm:mt-0 flex items-center gap-2 flex-wrap">
+      <%# View switcher %>
+      <%= render "calendars/view_switcher", current: :month, date: @date %>
+
+      <%# Today button %>
+      <%= link_to "Today", month_calendars_path(year: Time.zone.today.year, month: Time.zone.today.month),
+            class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs
+                    inset-ring inset-ring-gray-300 hover:bg-gray-50
+                    dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+
+      <%# Month navigation %>
+      <div class="flex items-center gap-1">
+        <%= link_to prev_month_path(@date),
+              class: "p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition" do %>
+          <svg class="size-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd" /></svg>
+        <% end %>
+        <%= link_to next_month_path(@date),
+              class: "p-2 rounded-md hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 transition" do %>
+          <svg class="size-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>
+        <% end %>
+      </div>
+
+      <%# Add event %>
+      <%= link_to new_calendar_event_path,
+            class: "inline-flex items-center gap-x-1.5 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold
+                    text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" do %>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
+        New event
+      <% end %>
+    </div>
+  </div>
+
+  <div class="flex gap-6">
+    <%# ── Calendar Grid ── %>
+    <div class="flex-1 min-w-0">
+      <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+        <%# Day-of-week headers %>
+        <div class="grid grid-cols-7 border-b border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16]">
+          <% %w[Sun Mon Tue Wed Thu Fri Sat].each do |day| %>
+            <div class="py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              <%= day %>
+            </div>
+          <% end %>
+        </div>
+
+        <%# Calendar cells %>
+        <div class="grid grid-cols-7">
+          <% (@range_start..@range_end).each_with_index do |date, idx| %>
+            <% is_today      = date == Time.zone.today %>
+            <% in_month      = date.month == @date.month %>
+            <% is_last_row   = idx >= ((@range_end - @range_start).to_i / 7) * 7 %>
+            <% day_events    = @events_by_date[date] || [] %>
+
+            <div class="relative min-h-24 p-1.5 border-r border-b border-gray-100 dark:border-white/5
+                        <%= is_last_row ? 'border-b-0' : '' %>
+                        <%= (idx + 1) % 7 == 0 ? 'border-r-0' : '' %>
+                        <%= in_month ? 'bg-[var(--ivory)] dark:bg-[#1a1f16]' : 'bg-gray-50/60 dark:bg-black/10' %>"
+                 data-calendar-date="<%= date.to_s %>">
+
+              <%# Day number %>
+              <%= link_to day_calendars_path(date: date.to_s),
+                    class: "inline-flex size-7 items-center justify-center rounded-full text-sm mb-1 transition
+                            #{is_today ? 'bg-[#5f734c] text-white font-semibold dark:bg-[#7a8f62]' :
+                              in_month ? 'text-gray-900 hover:bg-gray-100 dark:text-white dark:hover:bg-white/10' :
+                                         'text-gray-400 hover:bg-gray-100 dark:text-gray-600 dark:hover:bg-white/5'}" do %>
+                <%= date.day %>
+              <% end %>
+
+              <%# Events (up to 3, then "+N more") %>
+              <div class="space-y-0.5">
+                <% visible = day_events.first(3) %>
+                <% hidden  = day_events.size - visible.size %>
+
+                <% visible.each do |event| %>
+                  <%= render "calendars/event_chip_month", event: event %>
+                <% end %>
+
+                <% if hidden > 0 %>
+                  <%= link_to day_calendars_path(date: date.to_s),
+                        class: "block text-xs text-gray-500 dark:text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] px-1 transition" do %>
+                    +<%= hidden %> more
+                  <% end %>
+                <% end %>
+
+                <%# Quick-add trigger on empty days %>
+                <% if day_events.empty? %>
+                  <%= link_to new_calendar_event_path(starts_at: date.to_s),
+                        class: "hidden group-hover:flex absolute inset-0 items-center justify-center
+                                text-gray-300 hover:text-[#5f734c] hover:bg-[#5f734c]/5 rounded transition",
+                        data: { turbo_frame: "modal" } do %>
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Sidebar: Calendars ── %>
+    <%= render "calendars/sidebar", sources: @sources %>
+  </div>
+</div>

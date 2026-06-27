@@ -1,0 +1,98 @@
+<%# calendar_events/_form.html.erb %>
+<%= form_with model: event, class: "space-y-5" do |f| %>
+  <% if event.errors.any? %>
+    <div class="rounded-lg bg-dusty-rose-50 dark:bg-dusty-rose-900/20 border border-dusty-rose-200 dark:border-dusty-rose-800/40 p-4">
+      <ul class="text-sm text-dusty-rose-700 dark:text-dusty-rose-300 space-y-1 list-disc list-inside">
+        <% event.errors.each do |e| %><li><%= e.full_message %></li><% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%# Title %>
+  <%= f.text_field :title, placeholder: "Event title", autofocus: true,
+        class: "w-full text-lg font-medium rounded-lg border border-gray-300 dark:border-white/10
+                bg-white dark:bg-white/5 px-3.5 py-2.5 text-gray-900 dark:text-white
+                placeholder:text-gray-400 dark:placeholder:text-gray-500
+                focus:outline-none focus:ring-2 focus:ring-[#5f734c] dark:focus:ring-[#7a8f62]" %>
+
+  <%# Calendar source %>
+  <div>
+    <%= f.label :calendar_source_id, "Calendar", class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
+    <div class="flex flex-wrap gap-2">
+      <% sources.each do |source| %>
+        <label class="cursor-pointer">
+          <%= f.radio_button :calendar_source_id, source.id, class: "sr-only peer" %>
+          <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium border
+                       peer-checked:ring-2 peer-checked:ring-offset-1 peer-checked:ring-[#5f734c] dark:peer-checked:ring-[#7a8f62]
+                       border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 transition">
+            <span class="size-2 rounded-full <%= source.color_classes[:dot] %>"></span>
+            <%= source.name %>
+          </span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <%# All-day toggle %>
+  <label class="flex items-center gap-3 cursor-pointer">
+    <%= f.check_box :all_day,
+          class: "size-4 rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]" %>
+    <span class="text-sm text-gray-700 dark:text-gray-300">All day</span>
+  </label>
+
+  <%# Date/time %>
+  <div class="grid grid-cols-2 gap-3" id="datetime_fields">
+    <div>
+      <%= f.label :starts_at, "Starts", class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
+      <%= f.datetime_local_field :starts_at,
+            value: event.starts_at&.strftime("%Y-%m-%dT%H:%M"),
+            class: "w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5
+                    px-3 py-2 text-sm text-gray-900 dark:text-white
+                    focus:outline-none focus:ring-2 focus:ring-[#5f734c] dark:focus:ring-[#7a8f62]" %>
+    </div>
+    <div>
+      <%= f.label :ends_at, "Ends", class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
+      <%= f.datetime_local_field :ends_at,
+            value: event.ends_at&.strftime("%Y-%m-%dT%H:%M"),
+            class: "w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5
+                    px-3 py-2 text-sm text-gray-900 dark:text-white
+                    focus:outline-none focus:ring-2 focus:ring-[#5f734c] dark:focus:ring-[#7a8f62]" %>
+    </div>
+  </div>
+
+  <%# Location %>
+  <div>
+    <%= f.label :location, "Location", class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
+    <%= f.text_field :location, placeholder: "Add location",
+          class: "w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5
+                  px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-[#5f734c] dark:focus:ring-[#7a8f62]" %>
+  </div>
+
+  <%# Description %>
+  <div>
+    <%= f.label :description, "Notes", class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
+    <%= f.text_area :description, rows: 3, placeholder: "Add notes",
+          class: "w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5
+                  px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500
+                  focus:outline-none focus:ring-2 focus:ring-[#5f734c] dark:focus:ring-[#7a8f62] resize-none" %>
+  </div>
+
+  <div class="flex items-center justify-between pt-1">
+    <div class="flex gap-2">
+      <%= f.submit event.new_record? ? "Create Event" : "Save Event",
+            class: "rounded-lg bg-[#5f734c] px-5 py-2.5 text-sm font-semibold text-white shadow-xs
+                    hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer transition" %>
+      <button type="button" data-action="dialog#close"
+              class="rounded-lg px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20
+                     text-sm font-medium text-gray-700 dark:text-white transition">
+        Cancel
+      </button>
+    </div>
+    <% unless event.new_record? %>
+      <%= button_to "Delete", calendar_event_path(event), method: :delete,
+            class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400 hover:text-dusty-rose-800 dark:hover:text-dusty-rose-200 transition",
+            data: { turbo_confirm: "Delete this event?" } %>
+    <% end %>
+  </div>
+<% end %>

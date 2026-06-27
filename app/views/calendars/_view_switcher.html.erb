@@ -1,0 +1,16 @@
+<%# _view_switcher.html.erb — args: current (:month/:week/:day), date (Date) %>
+<%# Uses @today for cross-view jumps so switching Month→Week always lands on the current week %>
+<% jump = @today || Time.zone.today %>
+<div class="inline-flex rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5">
+  <% [
+    [:month, "Month", month_calendars_path(year: jump.year, month: jump.month)],
+    [:week,  "Week",  week_calendars_path(date: jump.to_s)],
+    [:day,   "Day",   day_calendars_path(date: jump.to_s)]
+  ].each do |view, label, path| %>
+    <%= link_to label, path,
+          class: "px-3.5 py-2 text-sm font-medium transition
+                  #{view == current ?
+                    'bg-[#5f734c] text-white dark:bg-[#7a8f62]' :
+                    'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/10'}" %>
+  <% end %>
+</div>

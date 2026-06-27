@@ -60,5 +60,23 @@ Rails.application.routes.draw do
     end
   end
 
-    get "up" => "rails/health#show", as: :rails_health_check
+  resources :calendar_sources do
+    member do
+      patch :toggle_visible
+      post  :sync
+    end
+    collection do
+      post :reorder
+    end
+  end
+
+  resources :calendar_events
+
+  # Named routes for the three calendar views
+  get  "calendar",                       to: "calendars#index",  as: :calendars
+  get  "calendar/month/:year/:month",    to: "calendars#month",  as: :month_calendars
+  get  "calendar/week",                  to: "calendars#week",   as: :week_calendars
+  get  "calendar/day",                   to: "calendars#day",    as: :day_calendars
+
+  get "up" => "rails/health#show", as: :rails_health_check
 end

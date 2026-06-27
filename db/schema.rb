@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_27_171945) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_27_212428) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -47,6 +47,51 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_171945) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "calendar_events", force: :cascade do |t|
+    t.boolean "all_day", default: false, null: false
+    t.integer "calendar_source_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.datetime "ends_at", null: false
+    t.string "external_uid"
+    t.string "location"
+    t.string "recurrence_rule"
+    t.datetime "starts_at", null: false
+    t.string "status", default: "confirmed"
+    t.string "title", null: false
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.integer "user_id", null: false
+    t.index ["calendar_source_id", "starts_at"], name: "index_calendar_events_on_calendar_source_id_and_starts_at"
+    t.index ["calendar_source_id"], name: "index_calendar_events_on_calendar_source_id"
+    t.index ["ends_at"], name: "index_calendar_events_on_ends_at"
+    t.index ["external_uid"], name: "index_calendar_events_on_external_uid"
+    t.index ["starts_at"], name: "index_calendar_events_on_starts_at"
+    t.index ["user_id", "starts_at"], name: "index_calendar_events_on_user_id_and_starts_at"
+    t.index ["user_id"], name: "index_calendar_events_on_user_id"
+  end
+
+  create_table "calendar_sources", force: :cascade do |t|
+    t.string "access_token"
+    t.string "color", default: "olive", null: false
+    t.datetime "created_at", null: false
+    t.string "external_id"
+    t.string "ical_url"
+    t.datetime "last_synced_at"
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.string "provider", null: false
+    t.string "refresh_token"
+    t.boolean "synced", default: false, null: false
+    t.datetime "token_expires_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.boolean "visible", default: true, null: false
+    t.index ["provider"], name: "index_calendar_sources_on_provider"
+    t.index ["user_id", "position"], name: "index_calendar_sources_on_user_id_and_position"
+    t.index ["user_id"], name: "index_calendar_sources_on_user_id"
   end
 
   create_table "collection_recipes", force: :cascade do |t|
@@ -248,6 +293,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_171945) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "calendar_events", "calendar_sources"
+  add_foreign_key "calendar_events", "users"
+  add_foreign_key "calendar_sources", "users"
   add_foreign_key "collection_recipes", "collections"
   add_foreign_key "collection_recipes", "recipes"
   add_foreign_key "collections", "users"

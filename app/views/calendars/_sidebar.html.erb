@@ -1,0 +1,90 @@
+<%# _sidebar.html.erb — args: sources %>
+<aside class="hidden lg:block w-56 shrink-0 space-y-4">
+  <%# Mini month navigator %>
+  <div class="rounded-lg border border-gray-200 dark:border-white/10
+              bg-[var(--ivory)] dark:bg-[#1a1f16] p-3">
+    <% mini_date = defined?(@date) ? @date : Time.zone.today %>
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold text-gray-600 dark:text-gray-300">
+        <%= mini_date.strftime("%B %Y") %>
+      </span>
+      <div class="flex gap-1">
+        <%= link_to "‹", month_calendars_path(year: (mini_date - 1.month).year, month: (mini_date - 1.month).month),
+              class: "text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] text-sm px-1 transition" %>
+        <%= link_to "›", month_calendars_path(year: (mini_date + 1.month).year, month: (mini_date + 1.month).month),
+              class: "text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] text-sm px-1 transition" %>
+      </div>
+    </div>
+    <div class="grid grid-cols-7 gap-0 text-center">
+      <% %w[S M T W T F S].each do |d| %>
+        <div class="text-[10px] font-medium text-gray-400 dark:text-gray-600 py-0.5"><%= d %></div>
+      <% end %>
+      <% mini_start = mini_date.beginning_of_month.beginning_of_week(:sunday)
+         mini_end   = mini_date.end_of_month.end_of_week(:sunday)
+         (mini_start..mini_end).each do |d| %>
+        <% is_today = d == Time.zone.today
+           in_month = d.month == mini_date.month %>
+        <%= link_to d.day,
+              day_calendars_path(date: d.to_s),
+              class: "text-[11px] py-0.5 rounded-full transition
+                      #{is_today ? 'bg-[#5f734c] text-white dark:bg-[#7a8f62] font-semibold' :
+                        in_month ? 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10' :
+                                   'text-gray-300 dark:text-gray-700'}" %>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Calendars list %>
+  <div class="rounded-lg border border-gray-200 dark:border-white/10
+              bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+    <div class="flex items-center justify-between px-3 py-2.5 border-b border-gray-100 dark:border-white/5">
+      <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        Calendars
+      </h3>
+      <%= link_to new_calendar_source_path,
+            class: "text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition" do %>
+        <svg class="size-4" viewBox="0 0 20 20" fill="currentColor"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
+      <% end %>
+    </div>
+
+    <% if sources.any? %>
+      <ul class="divide-y divide-gray-100 dark:divide-white/5">
+        <% sources.each do |source| %>
+          <li id="calendar_source_<%= source.id %>"
+              class="flex items-center gap-2.5 px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-white/5 transition group">
+            <%# Toggle visibility %>
+            <%= button_to toggle_visible_calendar_source_path(source),
+                  method: :patch,
+                  class: "shrink-0 rounded-full size-3.5 ring-1 ring-offset-1 transition
+                          #{source.visible ? source.color_classes[:dot] + ' ring-current' : 'bg-transparent ring-gray-300 dark:ring-gray-600'}",
+                  form: { "data-turbo-stream": "true" } do %>
+            <% end %>
+
+            <div class="flex-1 min-w-0">
+              <div class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
+                <%= source.name %>
+              </div>
+              <div class="text-[10px] text-gray-400 dark:text-gray-600 capitalize">
+                <%= source.provider_label %>
+              </div>
+            </div>
+
+            <%# Edit menu %>
+            <div class="opacity-0 group-hover:opacity-100 transition flex gap-1">
+              <%= link_to edit_calendar_source_path(source),
+                    class: "text-gray-300 hover:text-gray-600 dark:text-gray-600 dark:hover:text-gray-300 transition" do %>
+                <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="m5.433 13.917 1.144-3.201a.75.75 0 0 1 .162-.261l8.36-8.36c.72-.72 1.888-.72 2.609 0l.638.638c.72.72.72 1.888 0 2.609l-8.36 8.36a.75.75 0 0 1-.261.162l-3.201 1.144a.5.5 0 0 1-.632-.632Z" /><path d="m11 3.188.96 1.15-6.75 6.75L4.062 9.94Z" /></svg>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <div class="px-3 py-6 text-center">
+        <p class="text-xs text-gray-400 dark:text-gray-600 mb-3">No calendars yet.</p>
+        <%= link_to "Add one", new_calendar_source_path,
+              class: "text-xs text-[#5f734c] dark:text-[#7a8f62] hover:underline font-medium" %>
+      </div>
+    <% end %>
+  </div>
+</aside>
