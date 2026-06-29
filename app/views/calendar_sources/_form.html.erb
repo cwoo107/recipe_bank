@@ -133,7 +133,7 @@
 
   <%# ── Submit ── %>
   <div class="flex items-center gap-3 pt-2">
-    <%= f.submit source.new_record? ? "Connect Calendar" : "Save Changes",
+    <%= f.submit source.new_record? ? "Connect Calendar" : "Save Changes", data: { turbo: false },
           class: "rounded-lg bg-[#5f734c] px-5 py-2.5 text-sm font-semibold text-white shadow-xs
                   hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer transition" %>
     <%= link_to "Cancel", calendars_path,

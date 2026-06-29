@@ -99,7 +99,8 @@
             <% d = @date + i.days %>
             <div class="relative border-l border-gray-100 dark:border-white/5 pointer-events-auto" style="height: #{24 * 3}rem;">
               <% (@events_by_day[d] || []).reject(&:all_day?).each do |event| %>
-                <div data-controller="dialog" data-action="click->dialog#backdropClose"
+                <div data-controller="dialog event-stack"
+                     data-action="click->dialog#backdropClose mouseenter->event-stack#lift mouseleave->event-stack#drop"
                      class="absolute left-0.5 right-0.5"
                      style="<%= event_position_style(event, hour_height_rem: 3.0) %>">
                   <dialog data-dialog-target="dialog"

@@ -69,9 +69,10 @@
           </div>
 
           <%# Events overlay %>
-          <div class="absolute top-0 left-[4.5rem] right-0 pointer-events-none" style="height: <%= 24 * 3.5 %>rem;">
+          <div class="absolute top-0 left-[4.5rem] right-0" style="height: <%= 24 * 3.5 %>rem;">
             <% @timed_events.each do |event| %>
-              <div data-controller="dialog" data-action="click->dialog#backdropClose"
+              <div data-controller="dialog event-stack"
+                   data-action="click->dialog#backdropClose mouseenter->event-stack#lift mouseleave->event-stack#drop"
                    class="absolute left-2 right-2"
                    style="<%= event_position_style(event, hour_height_rem: 3.5) %>">
                 <dialog data-dialog-target="dialog"
