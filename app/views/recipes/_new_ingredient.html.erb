@@ -1,0 +1,51 @@
+<%= turbo_frame_tag "new_ingredient" do %>
+  <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10"
+       data-edit-mode-target="editOnlyItems"
+       data-controller="searchable-select"
+       data-searchable-select-placeholder-value="Search for an ingredient...">
+    <%= form_with model: [@recipe, @recipe.recipe_ingredients.build], class: "space-y-3" do |form| %>
+      <div>
+        <%= form.label :ingredient_id, "Ingredient", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+        <%= form.select :ingredient_id,
+                        options_for_select(
+                          Ingredient.order(favorite: :desc, ingredient: :asc).map { |r|
+                            [r.ingredient, r.id, { 'data-favorite' => r.favorite }]
+                          },
+                          form.object.ingredient_id
+                        ),
+                        { include_blank: true },
+                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                        data: {
+                          dynamic_filter_target: "field",
+                          searchable_select_target: "select",
+                          action: "change->dynamic-filter#updateValueField"
+                        } %>
+      </div>
+
+      <div>
+        <%= form.label :quantity, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+        <%= form.number_field :quantity,
+                              step: 0.01,
+                              placeholder: "2",
+                              required: true,
+                              class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+      </div>
+
+      <div>
+        <%= form.label :unit, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+        <%= form.text_field :unit,
+                            placeholder: "cups",
+                            required: true,
+                            class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+      </div>
+
+      <%= form.submit "Add Ingredient",
+                      class: "w-full rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+    <% end %>
+
+    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+      Or <%= link_to "create a new ingredient", new_ingredient_path(recipe_id: @recipe.id), class: "font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+
+    </p>
+  </div>
+<% end %>
