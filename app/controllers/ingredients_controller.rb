@@ -40,7 +40,8 @@ class IngredientsController < ApplicationController
     @ingredient.created_by = current_user
 
     if @ingredient.save
-      redirect_to @ingredient, notice: "Ingredient was successfully created."
+      @recipe = Recipe.find(params[:recipe_id]) if params[:recipe_id].present?
+       render turbo_stream: turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient")
     else
       render :new, status: :unprocessable_entity
     end

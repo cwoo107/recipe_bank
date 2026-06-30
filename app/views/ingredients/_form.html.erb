@@ -69,7 +69,14 @@
         <%= form.number_field :unit_servings,
                               class: "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
       </div>
-
+      <%= hidden_field_tag :recipe_id, params[:recipe_id] %>
+    </div>
+    <div>
+      <%= form.label :calories, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+      <div class="mt-2">
+        <%= form.number_field :calories,
+                              class: "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
+      </div>
     </div>
   </div>
 
@@ -82,7 +89,7 @@
   </div>
 
   <div class="flex items-center justify-end gap-x-3 border-t border-gray-900/10 pt-6 dark:border-white/10">
-    <%= link_to "Cancel", ingredients_path,
+    <%= link_to "Cancel", :back,
                 class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" %>
 
     <%= form.submit ingredient.persisted? ? "Update Ingredient" : "Create Ingredient",

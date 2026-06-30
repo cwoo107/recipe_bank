@@ -1,10 +1,13 @@
-<div id="<%= dom_id step %>" class="w-full sm:w-auto my-5 space-y-5">
-  <div>
-    <strong class="block font-medium mb-1">Recipe:</strong>
-    <%= step.recipe_id %>
+<%= turbo_frame_tag dom_id(step) do %>
+  <div class="text-sm text-gray-900 dark:text-white"><%= step.content %></div>
+  <%# Edit/Delete step — edit mode only %>
+  <div class="hidden mt-2 flex items-center gap-x-4" data-edit-mode-target="editOnlyItems">
+    <%= link_to "Edit", edit_recipe_step_path(recipe, step),
+                class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+    <%= button_to recipe_step_path(recipe, step), method: :delete,
+                  data: { turbo_confirm: "Delete this step?" },
+                  class: "text-sm font-medium text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400" do %>
+      Delete
+    <% end %>
   </div>
-  <div>
-    <strong class="block font-medium mb-1">Position:</strong>
-    <%= step.position %>
-  </div>
-</div>
+<% end %>

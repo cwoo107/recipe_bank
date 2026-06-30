@@ -43,26 +43,7 @@
 
   <%# ── Nutrition chart + Tags ──────────────────────────────────────────── %>
   <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
-    <div class="lg:col-span-2">
-      <% if @recipe.servings.present? %>
-        <div class="flex flex-col items-center justify-center" data-controller="chart">
-          <canvas
-            data-controller="chartjs"
-            data-chartjs-type-value="pie"
-            data-chartjs-data-value='<%= @recipe.macros_chart_data.to_json %>'
-            data-chartjs-options-value='<%= {
-                                              responsive: true,
-                                              maintainAspectRatio: true,
-                                              plugins: { legend: { display: true, position: "left" } }
-                                            }.to_json %>'
-            style="max-height: 250px; max-width: 600px">
-          </canvas>
-          <p class="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
-            <%= (@recipe.total_calories / @recipe.servings).to_i %> calories per serving — Makes <%= @recipe.servings %> <%= "serving".pluralize(@recipe.servings) %>
-          </p>
-        </div>
-      <% end %>
-    </div>
+    <%= render partial: 'macros_chart', locals: {recipe: @recipe} %>
 
     <div class="lg:col-span-1">
       <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
@@ -137,35 +118,9 @@
         <% if @recipe.recipe_ingredients.any? %>
           <div class="overflow-x-auto -mx-6 px-6">
             <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
-              <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
+              <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5" id="recipe_ingredients">
               <% @recipe.recipe_ingredients.each do |recipe_ingredient| %>
-                <tr id="recipe_ingredient_<%= recipe_ingredient.id %>">
-                  <td class="whitespace-nowrap py-4 text-sm font-medium dark:text-white p-2 rounded">
-                    <%= link_to recipe_ingredient.ingredient do %>
-                  <span class="text-sm font-medium text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]">
-                    <%= truncate(recipe_ingredient.ingredient.ingredient, length: 20) %>
-                  </span>
-                    <% end %>
-                  </td>
-                  <td class="whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
-                    <%= ingredient_family_tag(recipe_ingredient.ingredient.family) || "-" %>
-                  </td>
-                  <td class="whitespace-nowrap text-center px-2 text-sm text-gray-500 dark:text-gray-400">
-                <span data-serving-scaler-target="quantity"
-                      data-base-quantity="<%= recipe_ingredient.quantity %>">
-                  <%= display_quantity_with_unit(recipe_ingredient.quantity, recipe_ingredient.unit) %>
-                </span>
-                    <span class="text-xs text-gray-400 dark:text-gray-500"><%= recipe_ingredient.unit %></span>
-                  </td>
-                  <td class="relative whitespace-nowrap text-right text-sm font-medium hidden" data-edit-mode-target="editOnlyItems">
-                    <%= button_to recipe_recipe_ingredient_path(@recipe, recipe_ingredient),
-                                  method: :delete,
-                                  data: { turbo_confirm: "Remove this ingredient?" },
-                                  class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400" do %>
-                      <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" /></svg>
-                    <% end %>
-                  </td>
-                </tr>
+                <%= render "recipes/recipe_ingredient_row", recipe_ingredient: recipe_ingredient %>
               <% end %>
               </tbody>
             </table>
@@ -175,105 +130,14 @@
         <% end %>
 
 <%# Add ingredient form — edit mode only %>
-        <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10"
-             data-edit-mode-target="editOnlyItems"
-             data-controller="searchable-select"
-             data-searchable-select-placeholder-value="Search for an ingredient...">
-          <%= form_with model: [@recipe, @recipe.recipe_ingredients.build], class: "space-y-3" do |form| %>
-            <div>
-              <%= form.label :ingredient_id, "Ingredient", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
-              <%= form.select :ingredient_id,
-                              options_for_select(
-                                Ingredient.order(favorite: :desc, ingredient: :asc).map { |r|
-                                  [r.ingredient, r.id, { 'data-favorite' => r.favorite }]
-                                },
-                                form.object.ingredient_id
-                              ),
-                              { include_blank: true },
-                              class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                              data: {
-                                dynamic_filter_target: "field",
-                                searchable_select_target: "select",
-                                action: "change->dynamic-filter#updateValueField"
-                              } %>
-            </div>
+        <%= render partial: 'new_ingredient' %>
 
-            <div>
-              <%= form.label :quantity, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
-              <%= form.number_field :quantity,
-                                    step: 0.01,
-                                    placeholder: "2",
-                                    required: true,
-                                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-            </div>
-
-            <div>
-              <%= form.label :unit, class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
-              <%= form.text_field :unit,
-                                  placeholder: "cups",
-                                  required: true,
-                                  class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-            </div>
-
-            <%= form.submit "Add Ingredient",
-                            class: "w-full rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
-          <% end %>
-
-          <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-            Or <%= link_to "create a new ingredient", new_ingredient_path, class: "font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
-          </p>
-        </div>
       </div>
     </div>
 
     <%# Steps %>
-    <div class="lg:col-span-2">
-      <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Instructions</h2>
+    <%= render partial: 'recipe_steps', locals: { recipe: @recipe } %>
 
-        <% if @recipe.steps.any? %>
-          <ol class="mt-4 space-y-4" data-controller="sortable" data-sortable-url-value="<%= reorder_recipe_steps_path(@recipe) %>">
-            <% @recipe.steps.order(:position).each_with_index do |step, index| %>
-              <li class="flex gap-x-4" data-sortable-target="item" data-id="<%= step.id %>">
-                <%# Drag handle — edit mode only %>
-                <div class="hidden flex items-start pt-2" data-edit-mode-target="editOnlyItems">
-                  <button type="button" class="sortable-handle cursor-move text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-400">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="size-5"><path fill-rule="evenodd" d="M10 3a.75.75 0 0 1 .55.24l3.25 3.5a.75.75 0 1 1-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 0 1-1.1-1.02l3.25-3.5A.75.75 0 0 1 10 3Zm-3.76 9.2a.75.75 0 0 1 1.06.04l2.7 2.908 2.7-2.908a.75.75 0 1 1 1.1 1.02l-3.25 3.5a.75.75 0 0 1-1.1 0l-3.25-3.5a.75.75 0 0 1 .04-1.06Z" clip-rule="evenodd" /></svg>
-                  </button>
-                </div>
-                <div class="step-number flex size-10 shrink-0 items-center justify-center rounded-full bg-[#5f734c] text-base font-semibold text-white dark:bg-[#7a8f62]">
-                  <%= index + 1 %>
-                </div>
-                <div class="flex-1 min-w-0">
-                  <div class="text-sm text-gray-900 dark:text-white"><%= step.content %></div>
-                  <%# Edit/Delete step — edit mode only %>
-                  <div class="hidden mt-2 flex items-center gap-x-4" data-edit-mode-target="editOnlyItems">
-                    <%= link_to "Edit", edit_recipe_step_path(@recipe, step),
-                                class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
-                    <%= button_to recipe_step_path(@recipe, step), method: :delete,
-                                  data: { turbo_confirm: "Delete this step?" },
-                                  class: "text-sm font-medium text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400" do %>
-                      Delete
-                    <% end %>
-                  </div>
-                </div>
-              </li>
-            <% end %>
-          </ol>
-        <% else %>
-          <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No steps yet.</p>
-        <% end %>
-
-        <%# Add step — edit mode only %>
-        <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10" data-edit-mode-target="editOnlyItems">
-          <%= link_to new_recipe_step_path(@recipe),
-                      class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" do %>
-            <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
-            Add Step
-          <% end %>
-        </div>
-      </div>
-    </div>
   </div>
 
   <div class="mt-8">

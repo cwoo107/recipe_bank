@@ -1,4 +1,5 @@
 class StepsController < ApplicationController
+  include ActionView::RecordIdentifier
   before_action :set_recipe
   before_action :set_step, only: %i[ edit update destroy ]
 
@@ -13,7 +14,12 @@ class StepsController < ApplicationController
     @step = @recipe.steps.build(step_params)
 
     if @step.save
-      redirect_to @recipe, notice: "Step added successfully."
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace("recipe_steps", partial: "recipes/recipe_steps", locals: { recipe: @recipe })
+        end
+        format.html { redirect_to @recipe, notice: "Step added successfully." }
+      end
     else
       render :new, status: :unprocessable_entity
     end
@@ -21,7 +27,12 @@ class StepsController < ApplicationController
 
   def update
     if @step.update(step_params)
-      redirect_to @recipe, notice: "Step updated successfully."
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(dom_id(@step), partial: "steps/step", locals: { recipe: @recipe, step: @step })
+        end
+        format.html { redirect_to @recipe, notice: "Step updated successfully." }
+      end
     else
       render :edit, status: :unprocessable_entity
     end
@@ -29,7 +40,13 @@ class StepsController < ApplicationController
 
   def destroy
     @step.destroy
-    redirect_to @recipe, notice: "Step deleted."
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace("recipe_steps", partial: "recipes/recipe_steps", locals: { recipe: @recipe })
+      end
+      format.html { redirect_to @recipe, notice: "Step deleted." }
+    end
   end
 
   def reorder

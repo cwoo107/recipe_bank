@@ -13,4 +13,10 @@ export default class extends Controller {
             el.classList.toggle("hidden", !this.editingValue)
         })
     }
+
+    // Fires whenever a new editOnlyItems target is inserted into the DOM,
+    // including via Turbo Stream — keeps it in sync with current edit state.
+    editOnlyItemsTargetConnected(element) {
+        element.classList.toggle("hidden", !this.editingValue)
+    }
 }

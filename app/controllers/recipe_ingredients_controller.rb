@@ -5,7 +5,15 @@ class RecipeIngredientsController < ApplicationController
     @recipe_ingredient = @recipe.recipe_ingredients.build(recipe_ingredient_params)
 
     if @recipe_ingredient.save
-      redirect_to @recipe, notice: "Ingredient added successfully."
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: [
+            turbo_stream.append("recipe_ingredients", partial: "recipes/recipe_ingredient_row", locals: { recipe_ingredient: @recipe_ingredient }),
+            turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient"),
+            turbo_stream.replace("macros_chart", partial: "recipes/macros_chart", locals: { recipe: @recipe })
+          ]
+        end
+      end
     else
       redirect_to @recipe, alert: "Failed to add ingredient."
     end
@@ -17,7 +25,10 @@ class RecipeIngredientsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.remove("recipe_ingredient_#{@recipe_ingredient.id}")
+        render turbo_stream: [
+          turbo_stream.remove("recipe_ingredient_#{@recipe_ingredient.id}"),
+          turbo_stream.replace("macros_chart", partial: "recipes/macros_chart", locals: { recipe: @recipe })
+        ]
       end
       format.html { redirect_to @recipe, notice: "Ingredient removed." }
     end

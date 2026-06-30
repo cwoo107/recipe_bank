@@ -16,7 +16,9 @@
   </div>
 
   <div class="mt-8">
-    <%= form_with(model: [@recipe, @step], url: recipe_step_path(@recipe, @step), method: :patch, class: "space-y-6") do |form| %>
+    <%= turbo_frame_tag dom_id(@step) do %>
+
+  <%= form_with(model: [@recipe, @step], url: recipe_step_path(@recipe, @step), method: :patch, class: "space-y-6") do |form| %>
       <div>
         <%= form.label :content, "Instructions", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
         <div class="mt-2">
@@ -32,6 +34,8 @@
         <%= form.submit "Update Step",
                         class: "rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
       </div>
+      <% end %>
+
     <% end %>
   </div>
 </div>
