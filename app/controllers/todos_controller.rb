@@ -15,6 +15,12 @@ class TodosController < ApplicationController
   def create
     @todo = current_user.todos.new(todo_params)
     if @todo.save
+      # A brand-new todo created directly into "in_progress" or "done" never had
+      # a previous status, so we pass nil (treated as "not in_progress").
+      @todo.apply_status_side_effects!(nil)
+      refresh_schedule_and_chart
+      @todo.reload
+
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to todos_path }
@@ -27,7 +33,13 @@ class TodosController < ApplicationController
   def edit; end
 
   def update
+    previous_status = @todo.status
+
     if @todo.update(todo_params)
+      @todo.apply_status_side_effects!(previous_status) if @todo.status != previous_status
+      refresh_schedule_and_chart
+      @todo.reload
+
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to todos_path }
@@ -38,7 +50,12 @@ class TodosController < ApplicationController
   end
 
   def destroy
+    was_in_progress = @todo.status == "in_progress"
     @todo.destroy
+
+    # Removing an in-progress todo frees up the timeline, so the rest shift up.
+    refresh_schedule_and_chart if was_in_progress
+
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove("todo_#{@todo.id}") }
       format.html { redirect_to todos_path }
@@ -57,6 +74,10 @@ class TodosController < ApplicationController
                   .update_all(position: index + 1)
     end
 
+    # Position is the tie-breaker between equal-priority todos, so a reorder
+    # within "in_progress" can change the schedule. Broadcast handles the chart.
+    refresh_schedule_and_chart if status == "in_progress"
+
     head :ok
   end
 
@@ -67,7 +88,11 @@ class TodosController < ApplicationController
     new_status = params[:status]
     return head :bad_request unless Todo::STATUSES.include?(new_status)
 
+    previous_status = @todo.status
     @todo.move_to_column!(new_status, params[:position])
+    @todo.apply_status_side_effects!(previous_status)
+    refresh_schedule_and_chart
+    @todo.reload
 
     respond_to do |format|
       format.turbo_stream
@@ -82,6 +107,16 @@ class TodosController < ApplicationController
   end
 
   def todo_params
-    params.require(:todo).permit(:title, :description, :priority, :status)
+    params.require(:todo).permit(
+      :title, :description, :priority, :status,
+      :estimated_hours, :estimated_minutes
+    )
+  end
+
+  # Recompute the in-progress timeline, then push the refreshed Gantt chart to
+  # every open board via Turbo Streams.
+  def refresh_schedule_and_chart
+    Todo.reschedule_in_progress!(current_user)
+    Todo.broadcast_gantt(current_user)
   end
 end

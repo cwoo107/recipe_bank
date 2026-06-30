@@ -15,6 +15,9 @@
   }
 %>
 
+<%# Live updates for the Gantt chart (requires Action Cable / Turbo Streams) %>
+<%= turbo_stream_from current_user, "todos_gantt" %>
+
 <div class="w-full">
   <%# Page header %>
   <div class="sm:flex sm:items-center sm:justify-between mb-8">
@@ -108,4 +111,7 @@
       </div>
     <% end %>
   </div>
+
+  <%# Weekly schedule (Gantt) %>
+  <%= render "todos/gantt", user: current_user %>
 </div>

@@ -67,6 +67,28 @@
       <% end %>
     </div>
   </div>
+  <div class="mt-4">
+    <label class="block text-sm font-medium text-olive-800 dark:text-[#e8ede3]">
+      Estimated time to complete
+    </label>
+    <div class="mt-1 flex items-center gap-2">
+      <%= f.number_field :estimated_hours,
+                            in: 0..99, value: f.object.estimated_time_to_complete.to_i / 60,
+                            placeholder: "0",
+                            class: "w-20 rounded-md border-gray-300 dark:border-white/10 dark:bg-[#1a1f16] dark:text-white" %>
+      <span class="text-sm text-gray-500 dark:text-gray-400">h</span>
+
+      <%= f.number_field :estimated_minutes,
+                            in: 0..59, step: 5, value: f.object.estimated_time_to_complete.to_i % 60,
+                            placeholder: "0",
+                            class: "w-20 rounded-md border-gray-300 dark:border-white/10 dark:bg-[#1a1f16] dark:text-white" %>
+      <span class="text-sm text-gray-500 dark:text-gray-400">m</span>
+    </div>
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+      Each calendar day provides 30 minutes of work capacity.
+    </p>
+  </div>
+
   <script>
     (function() {
       var group = document.getElementById("<%= priority_group_id %>");

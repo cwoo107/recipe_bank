@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_27_212428) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_30_150105) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -256,15 +256,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_27_212428) do
   end
 
   create_table "todos", force: :cascade do |t|
+    t.integer "actual_time_to_complete"
+    t.boolean "completed", default: false, null: false
     t.datetime "created_at", null: false
     t.text "description"
+    t.datetime "end_date"
+    t.integer "estimated_time_to_complete"
     t.integer "position", default: 0, null: false
     t.integer "priority", null: false
+    t.datetime "start_date"
     t.string "status", default: "todo", null: false
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["user_id", "status", "position"], name: "index_todos_on_user_id_and_status_and_position"
+    t.index ["user_id", "status", "start_date"], name: "index_todos_on_user_id_and_status_and_start_date"
     t.index ["user_id", "status"], name: "index_todos_on_user_id_and_status"
     t.index ["user_id"], name: "index_todos_on_user_id"
   end

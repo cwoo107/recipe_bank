@@ -54,5 +54,16 @@
     <% if todo.description.present? %>
       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2"><%= todo.description %></p>
     <% end %>
+    <% if todo.start_date.present? && todo.end_date.present? %>
+      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <%= todo.start_date.strftime("%b %-d") %> – <%= todo.end_date.strftime("%b %-d") %>
+      </p>
+    <% end %>
+    <% if todo.completed? %>
+      <p class="text-xs text-gray-500 dark:text-gray-400">Took <%= todo.actual_hm %></p>
+    <% elsif todo.estimated_time_to_complete.to_i.positive? %>
+      <p class="text-xs text-gray-500 dark:text-gray-400">Est. <%= todo.estimated_hm %></p>
+    <% end %>
+
   </div>
 </div>
