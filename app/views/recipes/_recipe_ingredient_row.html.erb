@@ -12,8 +12,9 @@
   <td class="whitespace-nowrap text-center px-2 text-sm text-gray-500 dark:text-gray-400">
                 <span data-serving-scaler-target="quantity"
                       data-base-quantity="<%= recipe_ingredient.quantity %>">
-                  <%= display_quantity_with_unit(recipe_ingredient.quantity, recipe_ingredient.unit) %>
+                  <%= recipe_ingredient.quantity %>
                 </span>
+
     <span class="text-xs text-gray-400 dark:text-gray-500"><%= recipe_ingredient.unit %></span>
   </td>
   <td class="relative whitespace-nowrap text-right text-sm font-medium hidden" data-edit-mode-target="editOnlyItems">
