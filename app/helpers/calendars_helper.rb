@@ -46,7 +46,7 @@ module CalendarsHelper
 
   # Position an event chip within the week/day column grid.
   # Returns a style string with top % and height %.
-  def event_position_style(event, hour_height_rem: 3.5)
+  def event_position_style(event, hour_height_rem: 3.5, start_hour: 0, end_hour: 24)
     local_start = event.starts_at.in_time_zone(Time.zone)
     local_end   = event.ends_at.in_time_zone(Time.zone)
 
@@ -59,7 +59,16 @@ module CalendarsHelper
     # Minimum 15-minute visual height so short events are clickable
     end_minutes = [end_minutes, start_minutes + 15].max
 
-    top    = start_minutes * hour_height_rem / 60.0
+    window_start = start_hour * 60
+    window_end   = end_hour * 60
+
+    # No overlap with the visible window
+    return nil if end_minutes <= window_start || start_minutes >= window_end
+
+    start_minutes = start_minutes.clamp(window_start, window_end)
+    end_minutes   = end_minutes.clamp(window_start, window_end)
+
+    top    = (start_minutes - window_start) * hour_height_rem / 60.0
     height = (end_minutes - start_minutes) * hour_height_rem / 60.0
 
     "top: #{top.round(4)}rem; height: #{height.round(4)}rem;"

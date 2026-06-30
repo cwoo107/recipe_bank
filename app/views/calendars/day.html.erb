@@ -54,40 +54,50 @@
       <% end %>
 
       <%# Hourly timeline %>
+      <% day_start = 4 %>   <%# 4 AM %>
+      <% day_end   = 23 %>  <%# 11 PM %>
+      <% hour_h    = 3.5 %>
+      <% rows      = (day_end - day_start) + 1 %>
+      <% grid_h    = rows * hour_h %>
+
       <div class="rounded-lg border border-gray-200 dark:border-white/10
-                  bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+            bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
         <div class="relative overflow-y-auto" style="height: 640px;">
           <%# Hour grid %>
-          <div class="grid" style="grid-template-columns: 4.5rem 1fr; grid-template-rows: repeat(24, 3.5rem);">
-            <% 24.times do |hour| %>
-              <div class="border-t border-gray-100 dark:border-white/5 pr-3 text-right text-xs
-                          text-gray-400 dark:text-gray-500 -translate-y-2.5 pt-0.5 font-medium">
-                <%= hour == 0 ? "" : hour_label(hour) %>
+          <div class="grid" style="grid-template-columns: 4.5rem 1fr; grid-template-rows: repeat(<%= rows %>, <%= hour_h %>rem);">
+            <% rows.times do |i| %>
+              <% h = day_start + i %>
+              <div class="relative border-t border-gray-100 dark:border-white/5">
+          <span class="absolute top-0.5 right-3 text-xs font-medium text-gray-400 dark:text-gray-500">
+            <%= hour_label(h) %>
+          </span>
               </div>
               <div class="border-t border-gray-100 dark:border-white/5"></div>
             <% end %>
           </div>
 
           <%# Events overlay %>
-          <div class="absolute top-0 left-[4.5rem] right-0" style="height: <%= 24 * 3.5 %>rem;">
+          <div class="absolute top-0 left-[4.5rem] right-0" style="height: <%= grid_h %>rem;">
             <% @timed_events.each do |event| %>
+              <% style = event_position_style(event, hour_height_rem: hour_h, start_hour: day_start, end_hour: day_end + 1) %>
+              <% next if style.nil? %>
               <div data-controller="dialog event-stack"
                    data-action="click->dialog#backdropClose mouseenter->event-stack#lift mouseleave->event-stack#drop"
                    class="absolute left-2 right-2"
-                   style="<%= event_position_style(event, hour_height_rem: 3.5) %>">
+                   style="<%= style %>">
                 <dialog data-dialog-target="dialog"
                         class="dark:bg-[#1a1f16] w-11/12 sm:w-[480px] rounded-xl p-0 shadow-2xl backdrop:bg-black/50 overflow-hidden">
                   <%= turbo_frame_tag "calendar_event_#{event.id}", src: calendar_event_path(event), loading: "lazy" %>
                   <div class="px-6 py-4">
                     <button type="button" data-action="dialog#close"
                             class="rounded-lg px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20
-                                   text-sm font-medium text-gray-700 dark:text-white transition">Close</button>
+                             text-sm font-medium text-gray-700 dark:text-white transition">Close</button>
                   </div>
                 </dialog>
                 <button type="button"
                         data-action="dialog#open"
                         class="absolute inset-0 w-full text-left rounded-lg overflow-hidden px-3 py-2
-                               ring-1 ring-inset hover:ring-2 transition <%= event_chip_classes(event) %>">
+                         ring-1 ring-inset hover:ring-2 transition <%= event_chip_classes(event) %>">
                   <div class="font-semibold text-sm truncate"><%= event.title %></div>
                   <div class="text-xs opacity-75"><%= event.time_range %></div>
                   <% if event.location.present? %>
@@ -109,13 +119,16 @@
           <%# Current time line %>
           <% if @date == Time.zone.today %>
             <% now = Time.zone.now %>
-            <div class="absolute left-0 right-0 flex items-center pointer-events-none z-20"
-                 style="top: <%= ((now.hour * 60 + now.min) * 3.5 / 60.0).round(4) %>rem;">
-              <div class="w-[4.5rem] flex justify-end pr-1.5">
-                <div class="size-2.5 rounded-full bg-[#5f734c]"></div>
+            <% if now.hour >= day_start && now.hour <= day_end %>
+              <% now_top = ((now.hour * 60 + now.min) - day_start * 60) * hour_h / 60.0 %>
+              <div class="absolute left-0 right-0 flex items-center pointer-events-none z-20"
+                   style="top: <%= now_top.round(4) %>rem;">
+                <div class="w-[4.5rem] flex justify-end pr-1.5">
+                  <div class="size-2.5 rounded-full bg-[#5f734c]"></div>
+                </div>
+                <div class="flex-1 h-px bg-[#5f734c]"></div>
               </div>
-              <div class="flex-1 h-px bg-[#5f734c]"></div>
-            </div>
+            <% end %>
           <% end %>
         </div>
       </div>
