@@ -57,6 +57,6 @@ class CalendarSource < ApplicationRecord
   private
 
   def enqueue_initial_sync
-    CalendarSyncJob.perform_later(id)
+    CalendarSyncJob.perform_now(id)
   end
 end
