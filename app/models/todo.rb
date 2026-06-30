@@ -35,6 +35,15 @@ class Todo < ApplicationRecord
   scope :ordered,   -> { order(:position) }
   scope :by_status, ->(s) { where(status: s).ordered }
 
+  # Todos whose end_date lands inside the current (Mon–Sun) week. Used to keep
+  # the "done" column from accumulating stale, already-completed items — the
+  # week boundaries here match the Gantt's beginning_of_week anchor.
+  scope :ended_this_week, lambda {
+    week_start = Date.current.beginning_of_week.beginning_of_day
+    week_end   = Date.current.end_of_week.end_of_day
+    where(end_date: week_start..week_end)
+  }
+
   # ── Human-readable helpers ────────────────────────────────────────────
 
   PRIORITY_LABELS = {

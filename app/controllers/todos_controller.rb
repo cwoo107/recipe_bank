@@ -4,9 +4,13 @@ class TodosController < ApplicationController
 
   def index
     @todos_by_status = Todo::STATUSES.index_with do |status|
-      current_user.todos.by_status(status)
+      scope = current_user.todos.by_status(status)
+
+      scope = scope.ended_this_week if status == "done"
+      scope
     end
   end
+
 
   def new
     @todo = current_user.todos.new(status: params[:status] || "todo", priority: :medium)
