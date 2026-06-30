@@ -41,8 +41,14 @@ class IngredientsController < ApplicationController
 
     if @ingredient.save
       @recipe = Recipe.find(params[:recipe_id]) if params[:recipe_id].present?
-       render turbo_stream: turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient")
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: [turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient")]
+        end
+        format.html { redirect_to @ingredient, notice: "Ingredient was successfully created." }
+      end
     else
+
       render :new, status: :unprocessable_entity
     end
   end

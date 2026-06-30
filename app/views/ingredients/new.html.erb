@@ -15,8 +15,7 @@
       Add a new ingredient to your library.
     </p>
   </div>
-
-  <div class="mt-8">
+  <div class="mt-8" data-turbo="false" >
     <%= turbo_frame_tag "new_ingredient" do %>
       <h2 class="mt-4 text-lg font-semibold text-gray-900 dark:text-white">Create an ingredient</h2>
 
@@ -24,4 +23,6 @@
     <% end %>
 
   </div>
+
+
 </div>
