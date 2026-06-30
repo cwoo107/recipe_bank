@@ -20,7 +20,8 @@ class CalendarSource < ApplicationRecord
   validates :color,    presence: true, inclusion: { in: COLORS.keys }
   validates :ical_url, presence: true, if: -> { %w[ical apple].include?(provider) }
 
-  after_create :enqueue_initial_sync, if: :syncable?
+  after_create :enqueue_sync, if: :syncable?
+  after_update :enqueue_sync, if: -> { syncable? && saved_change_to_ical_url? }
 
   scope :visible,  -> { where(visible: true) }
   scope :ordered,  -> { order(:position) }
@@ -37,8 +38,9 @@ class CalendarSource < ApplicationRecord
     %w[ical apple].include?(provider)
   end
 
+  # Any source with a URL can sync via the iCal path, regardless of provider label
   def syncable?
-    ical_feed? && ical_url.present?
+    ical_url.present?
   end
 
   def token_expired?
@@ -56,7 +58,7 @@ class CalendarSource < ApplicationRecord
 
   private
 
-  def enqueue_initial_sync
-    CalendarSyncJob.perform_now(id)
+  def enqueue_sync
+    CalendarSyncJob.perform_later(id)
   end
 end
