@@ -4,7 +4,7 @@ module MealsHelper
     when "breakfast"
       {
         bg: "bg-seafoam-300",
-        hover: "hover:bg-seafoam-400",
+        hover: "hover:bg-seafoam-400 dark:hover:bg-seafoam-600",
         ring: "inset-ring-seafoam-600/20",
         dark_bg: "dark:bg-seafoam-800/20",
         dark_ring: "dark:inset-ring-seafoam-300/30",
@@ -14,7 +14,7 @@ module MealsHelper
     when "lunch"
       {
         bg: "bg-honey-300",
-        hover: "hover:bg-honey-400",
+        hover: "hover:bg-honey-400  dark:hover:bg-honey-600",
         ring: "inset-ring-honey-600/20",
         dark_bg: "dark:bg-honey-800/20",
         dark_ring: "dark:inset-ring-honey-300/30",
@@ -24,7 +24,7 @@ module MealsHelper
     when "dinner"
       {
         bg: "bg-mist-300",
-        hover: "hover:bg-mist-400",
+        hover: "hover:bg-mist-400 dark:hover:bg-mist-600",
         ring: "inset-ring-mist-600/20",
         dark_bg: "dark:bg-mist-800/20",
         dark_ring: "dark:inset-ring-mist-300/30",
@@ -34,7 +34,7 @@ module MealsHelper
     when "snack"
       {
         bg: "bg-mauve-300",
-        hover: "hover:bg-mauve-400",
+        hover: "hover:bg-mauve-400 dark:hover:bg-mauve-600",
         ring: "inset-ring-mauve-600/20",
         dark_bg: "dark:bg-mauve-800/20",
         dark_ring: "dark:inset-ring-mauve-300/30",
@@ -44,7 +44,7 @@ module MealsHelper
     when "dessert"
       {
         bg: "bg-dusty-rose-300",
-        hover: "hover:bg-dusty-rose-400",
+        hover: "hover:bg-dusty-rose-400 dark:hover:bg-dusty-rose-600",
         ring: "inset-ring-dusty-rose-600/20",
         dark_bg: "dark:bg-dusty-rose-800/20",
         dark_ring: "dark:inset-ring-dusty-rose-300/30",
@@ -54,7 +54,7 @@ module MealsHelper
     else
       {
         bg: "bg-honey-300",
-        hover: "hover:bg-honey-400",
+        hover: "hover:bg-honey-400 dark:hover:bg-honey-600",
         ring: "inset-ring-honey-600/20",
         dark_bg: "dark:bg-honey-800/20",
         dark_ring: "dark:inset-ring-honey-300/30",
