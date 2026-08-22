@@ -4,7 +4,8 @@
 <%
   page_title = content_for(:title) || "HomemakersHaven — Run your household from one place"
   page_description = content_for(:description) || "Meal planning, grocery lists, recipes, to-dos, and a shared calendar for the whole household — all in one place."
-  page_image = "#{request.base_url}/icon.png"
+  icon_version = File.mtime(Rails.public_path.join("icon.png")).to_i
+  page_image = "#{request.base_url}/icon.png?v=#{icon_version}"
 %>
   <title><%= page_title %></title>
   <meta name="description" content="<%= page_description %>">
