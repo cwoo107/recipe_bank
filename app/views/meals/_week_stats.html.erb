@@ -33,17 +33,18 @@
       <%# Toggle: total vs per serving %>
       <div class="inline-flex rounded-lg inset-ring inset-ring-gray-200 dark:inset-ring-white/10 p-0.5 gap-0.5">
         <button type="button"
-                data-action="click->week-stats-toggle#showTotal"
-                data-week-stats-toggle-target="totalBtn"
-                class="px-3 py-1.5 text-xs font-medium rounded-md bg-[#5f734c] text-white dark:bg-[#7a8f62] transition-colors">
-          Total
-        </button>
-        <button type="button"
                 data-action="click->week-stats-toggle#showPerServing"
                 data-week-stats-toggle-target="perServingBtn"
-                class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+                class="px-3 py-1.5 text-xs font-medium rounded-md bg-[#5f734c] text-white dark:bg-[#7a8f62] transition-colors">
           Daily avg
         </button>
+        <button type="button"
+                data-action="click->week-stats-toggle#showTotal"
+                data-week-stats-toggle-target="totalBtn"
+                class="px-3 py-1.5 text-xs font-medium rounded-md text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+          Total
+        </button>
+
       </div>
 
       <%# Macro pie chart %>
@@ -58,7 +59,7 @@
       </div>
 
       <%# Totals grid %>
-      <div data-week-stats-toggle-target="totalView">
+      <div data-week-stats-toggle-target="totalView" class="hidden">
         <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">Weekly totals</p>
         <div class="grid grid-cols-2 gap-3">
           <div class="rounded-lg bg-gray-50 dark:bg-white/5 px-4 py-3">
@@ -85,7 +86,7 @@
       </div>
 
       <%# Per-serving aggregate (hidden by default) %>
-      <div data-week-stats-toggle-target="perServingView" class="hidden">
+      <div data-week-stats-toggle-target="perServingView" >
         <p class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-3">Daily average</p>
         <p class="text-xs text-gray-400 dark:text-gray-500 mb-3">Average per day across the full week</p>
         <div class="grid grid-cols-2 gap-3">
