@@ -57,7 +57,8 @@
                   method: :patch,
                   class: "shrink-0 rounded-full size-3.5 ring-1 ring-offset-1 transition
                           #{source.visible ? source.color_classes[:dot] + ' ring-current' : 'bg-transparent ring-gray-300 dark:ring-gray-600'}",
-                  form: { "data-turbo-stream": "true" } do %>
+                  form: { "data-turbo-stream": "true" },
+                  aria: { label: "#{source.visible ? 'Hide' : 'Show'} #{source.name} calendar" } do %>
             <% end %>
 
             <div class="flex-1 min-w-0">
