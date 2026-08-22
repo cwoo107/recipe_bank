@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   before_action :set_user_timezone
   helper_method :current_household
+  layout :resolve_layout
 
   def require_ownership!(record, owner_method: :user)
     owner = record.public_send(owner_method)
@@ -17,6 +18,10 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def resolve_layout
+    devise_controller? ? "marketing" : "application"
+  end
 
   def set_user_timezone
     timezone = cookies[:browser_timezone]
