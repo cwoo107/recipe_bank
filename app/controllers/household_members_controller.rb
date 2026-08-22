@@ -1,70 +1,54 @@
 class HouseholdMembersController < ApplicationController
-  before_action :set_household_member, only: %i[ show edit update destroy ]
+  before_action :require_household!
+  before_action :require_household_admin!
+  before_action :set_member, only: %i[edit update destroy]
 
-  # GET /household_members or /household_members.json
-  def index
-    @household_members = HouseholdMember.all
-  end
-
-  # GET /household_members/1 or /household_members/1.json
-  def show
-  end
-
-  # GET /household_members/new
   def new
-    @household_member = HouseholdMember.new
+    @member = current_household.household_members.new
   end
 
-  # GET /household_members/1/edit
-  def edit
-  end
-
-  # POST /household_members or /household_members.json
   def create
-    @household_member = HouseholdMember.new(household_member_params)
+    @member = current_household.invite_member(**invite_params)
 
-    respond_to do |format|
-      if @household_member.save
-        format.html { redirect_to @household_member, notice: "Household member was successfully created." }
-        format.json { render :show, status: :created, location: @household_member }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @household_member.errors, status: :unprocessable_entity }
-      end
+    if @member.persisted?
+      redirect_to household_path
+    else
+      render :new, status: :unprocessable_entity
     end
   end
 
-  # PATCH/PUT /household_members/1 or /household_members/1.json
+  def edit; end
+
   def update
-    respond_to do |format|
-      if @household_member.update(household_member_params)
-        format.html { redirect_to @household_member, notice: "Household member was successfully updated.", status: :see_other }
-        format.json { render :show, status: :ok, location: @household_member }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @household_member.errors, status: :unprocessable_entity }
-      end
+    if @member.update(member_params)
+      redirect_to household_path, status: :see_other
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
-  # DELETE /household_members/1 or /household_members/1.json
   def destroy
-    @household_member.destroy!
+    user = @member.user
+    @member.destroy!
+    user&.destroy! # sub-user logins exist only for the household
 
-    respond_to do |format|
-      format.html { redirect_to household_members_path, notice: "Household member was successfully destroyed.", status: :see_other }
-      format.json { head :no_content }
-    end
+    redirect_to household_path, status: :see_other
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_household_member
-      @household_member = HouseholdMember.find(params.expect(:id))
-    end
 
-    # Only allow a list of trusted parameters through.
-    def household_member_params
-      params.expect(household_member: [ :household_id, :name, :child ])
-    end
+  def set_member
+    @member = current_household.household_members.find(params.expect(:id))
+  end
+
+  # :email isn't a HouseholdMember attribute — it's passed as a keyword to
+  # Household#invite_member, which builds the Devise user.
+  def invite_params
+    params.expect(household_member: [:name, :email, :role]).to_h.symbolize_keys
+  end
+
+  # Email/password changes belong to the member's own Devise account settings.
+  def member_params
+    params.expect(household_member: [:name, :role])
+  end
 end

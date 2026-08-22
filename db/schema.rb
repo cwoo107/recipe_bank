@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_30_150105) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -131,14 +131,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_30_150105) do
     t.datetime "created_at", null: false
     t.integer "household_id", null: false
     t.string "name"
+    t.integer "role", default: 1, null: false
     t.datetime "updated_at", null: false
+    t.integer "user_id"
     t.index ["household_id"], name: "index_household_members_on_household_id"
+    t.index ["user_id"], name: "index_household_members_on_user_id", unique: true
   end
 
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "family_name"
+    t.integer "owner_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["owner_id"], name: "index_households_on_owner_id"
   end
 
   create_table "ingredient_tags", force: :cascade do |t|
@@ -308,6 +313,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_30_150105) do
   add_foreign_key "grocery_lists", "ingredients"
   add_foreign_key "grocery_lists", "users"
   add_foreign_key "household_members", "households"
+  add_foreign_key "household_members", "users"
+  add_foreign_key "households", "users", column: "owner_id"
   add_foreign_key "ingredient_tags", "ingredients"
   add_foreign_key "ingredient_tags", "tags"
   add_foreign_key "ingredients", "users", column: "created_by_id"

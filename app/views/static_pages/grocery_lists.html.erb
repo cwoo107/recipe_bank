@@ -1,0 +1,19 @@
+<% content_for :title, "Grocery Lists — HomemakersHaven" %>
+<% content_for :description, "Auto-generate a grocery list from your meal plan, grouped by aisle with running totals." %>
+
+<%= render "static_pages/feature_hero",
+    eyebrow: "Grocery lists",
+    headline: "Your shopping list, built for you",
+    subheadline: "HomemakersHaven reads whatever's on the meal plan and generates a grocery list automatically — grouped by category, with quantities combined across every recipe that needs them.",
+    image: "marketing/grocery-list.png",
+    image_alt: "An auto-generated grocery list grouped by category in HomemakersHaven" %>
+
+<%= render "static_pages/detail_grid", items: [
+  { title: "One tap to generate", desc: "Auto-generate the list straight from this week's meal plan, with quantities combined across recipes." },
+  { title: "Grouped by category", desc: "Produce, dairy, protein, and pantry staples are grouped and filterable so shopping trips go faster." },
+  { title: "Track what's left to buy", desc: "Check items off as you shop and see an estimated subtotal for the whole trip." },
+] %>
+
+<%= render "static_pages/cta_band",
+    headline: "Stop copying ingredients onto sticky notes",
+    subheadline: "Plan the week once and let the grocery list build itself." %>

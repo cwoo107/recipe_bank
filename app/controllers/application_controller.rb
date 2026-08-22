@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   before_action :set_user_timezone
+  helper_method :current_household
 
   def require_ownership!(record, owner_method: :user)
     owner = record.public_send(owner_method)
@@ -24,4 +25,21 @@ class ApplicationController < ActionController::Base
       Time.zone = ActiveSupport::TimeZone[timezone] || ActiveSupport::TimeZone.find_tzinfo(timezone) rescue Time.zone
     end
   end
+
+  def current_household
+    @current_household ||= current_user&.household
+  end
+
+  def require_household!
+    return if current_household
+
+    redirect_to new_household_path, alert: "Set up your household first."
+  end
+
+  def require_household_admin!
+    return if current_household&.admin?(current_user)
+
+    redirect_to root_path, alert: "You don't have permission to manage this household."
+  end
+
 end

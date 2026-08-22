@@ -1,0 +1,19 @@
+<% content_for :title, "Shared Calendar — HomemakersHaven" %>
+<% content_for :description, "Sync every family calendar into one shared view — month, week, or day." %>
+
+<%= render "static_pages/feature_hero",
+    eyebrow: "Shared calendar",
+    headline: "The whole family's schedule, in one view",
+    subheadline: "Sync in calendars from Google, Outlook, and Microsoft 365 alongside your household calendar, and see everyone's commitments together — by month, week, or day.",
+    image: "marketing/calendar.png",
+    image_alt: "A month view calendar with multiple synced family calendars in HomemakersHaven" %>
+
+<%= render "static_pages/detail_grid", items: [
+  { title: "Sync existing calendars", desc: "Connect Google Calendar, Outlook, and Microsoft 365 and keep everything up to date automatically." },
+  { title: "Color-coded by source", desc: "Each connected calendar gets its own color, so it's clear at a glance whose event is whose." },
+  { title: "Month, week, or day", desc: "Switch views depending on whether you're planning the month ahead or just checking what's happening today." },
+] %>
+
+<%= render "static_pages/cta_band",
+    headline: "Stop missing what's on everyone else's calendar",
+    subheadline: "Sync every family calendar into one shared view." %>

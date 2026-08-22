@@ -1,0 +1,19 @@
+<% content_for :title, "To-Do Lists — HomemakersHaven" %>
+<% content_for :description, "A shared to-do board for the household, with priorities and a timeline view of what's due when." %>
+
+<%= render "static_pages/feature_hero",
+    eyebrow: "To-do lists",
+    headline: "One list for everything the household needs to get done",
+    subheadline: "Track chores, errands, and appointments on a shared board with priorities — and see them laid out on a timeline so you know what's coming up this week.",
+    image: "marketing/todo-list.png",
+    image_alt: "A to-do board with To Do, In Progress, and Done columns and a weekly timeline in HomemakersHaven" %>
+
+<%= render "static_pages/detail_grid", items: [
+  { title: "Organize by status", desc: "Move tasks between To Do, In Progress, and Done as the household works through them." },
+  { title: "Set a priority", desc: "Mark tasks Low, Medium, High, or Urgent so it's obvious what needs attention first." },
+  { title: "See the week at a glance", desc: "A built-in timeline lays out estimated durations across the week so nothing gets double-booked." },
+] %>
+
+<%= render "static_pages/cta_band",
+    headline: "Get the whole household on the same to-do list",
+    subheadline: "Chores, errands, and appointments — all in one shared board." %>

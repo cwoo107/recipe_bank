@@ -1,0 +1,56 @@
+<nav class="sticky top-0 z-40 bg-[#faf9f7]/90 backdrop-blur supports-backdrop-blur:bg-[#faf9f7]/60 border-b border-black/5 dark:bg-[#1a1f16]/90 dark:border-white/10" data-controller="mobile-menu">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-16 items-center justify-between">
+      <%= link_to root_path, class: "flex items-center gap-2 shrink-0" do %>
+        <span class="text-2xl" style="font-family: 'Instrument Serif', serif;">
+          <span class="text-[#5f734c] font-bold">Homemakers<span class="text-olive-800 dark:text-olive-50">Haven</span></span>
+        </span>
+      <% end %>
+
+      <div class="hidden lg:flex lg:items-center lg:gap-x-7">
+        <%= link_to "Meal planning", feature_meal_planning_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+        <%= link_to "Grocery lists", feature_grocery_lists_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+        <%= link_to "Recipes", feature_recipes_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+        <%= link_to "To-do lists", feature_todos_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+        <%= link_to "Shared calendar", feature_calendar_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+        <%= link_to "Pricing", pricing_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <% if user_signed_in? %>
+          <%= link_to "Go to dashboard", meals_path, class: "hidden sm:inline-flex items-center rounded-md bg-[#5f734c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+        <% else %>
+          <%= link_to "Sign in", new_user_session_path, class: "hidden sm:inline-flex text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+          <%= link_to "Get started", new_user_registration_path, class: "hidden sm:inline-flex items-center rounded-md bg-[#5f734c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+        <% end %>
+
+        <button type="button" data-action="click->mobile-menu#toggle"
+                class="lg:hidden inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/10">
+          <span class="sr-only">Open main menu</span>
+          <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden lg:hidden border-t border-black/5 dark:border-white/10" data-mobile-menu-target="menu">
+    <div class="space-y-1 px-4 py-4">
+      <%= link_to "Meal planning", feature_meal_planning_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <%= link_to "Grocery lists", feature_grocery_lists_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <%= link_to "Recipes", feature_recipes_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <%= link_to "To-do lists", feature_todos_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <%= link_to "Shared calendar", feature_calendar_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <%= link_to "Pricing", pricing_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <div class="mt-4 border-t border-black/5 dark:border-white/10 pt-4 space-y-2">
+        <% if user_signed_in? %>
+          <%= link_to "Go to dashboard", meals_path, class: "block rounded-lg bg-[#5f734c] px-3 py-2 text-center text-base font-semibold text-white" %>
+        <% else %>
+          <%= link_to "Sign in", new_user_session_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+          <%= link_to "Get started", new_user_registration_path, class: "block rounded-lg bg-[#5f734c] px-3 py-2 text-center text-base font-semibold text-white" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</nav>

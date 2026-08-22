@@ -1,32 +1,50 @@
-<%= form_with(model: household_member, class: "contents") do |form| %>
-  <% if household_member.errors.any? %>
-    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
-      <h2><%= pluralize(household_member.errors.count, "error") %> prohibited this household_member from being saved:</h2>
+<%# locals: (member:) %>
+<%= form_with model: member,
+      url: member.persisted? ? household_member_path(member) : household_members_path,
+      class: "space-y-5" do |f| %>
 
-      <ul class="list-disc ml-6">
-        <% household_member.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+  <% if member.errors.any? %>
+    <div class="rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3">
+      <p class="text-sm font-medium text-dusty-rose-800">
+        <%= pluralize(member.errors.count, "thing") %> to fix:
+      </p>
+      <ul class="mt-1 list-inside list-disc text-sm text-dusty-rose-700">
+        <% member.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <div class="my-5">
-    <%= form.label :household_id %>
-    <%= form.text_field :household_id, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": household_member.errors[:household_id].none?, "border-red-400 focus:outline-red-600": household_member.errors[:household_id].any?}] %>
+  <div>
+    <%= f.label :name, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= f.text_field :name,
+          class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
   </div>
 
-  <div class="my-5">
-    <%= form.label :name %>
-    <%= form.text_field :name, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": household_member.errors[:name].none?, "border-red-400 focus:outline-red-600": household_member.errors[:name].any?}] %>
+  <% unless member.persisted? %>
+    <div>
+      <%= f.label :email, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+      <%= f.email_field :email,
+            placeholder: "you@example.com",
+            class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+      <p class="mt-1.5 text-xs text-olive-400">They'll receive an email to set their own password.</p>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :role, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= f.select :role,
+          HouseholdMember.roles.keys.map { |r| [r.humanize, r] },
+          {},
+          class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+    <p class="mt-1.5 text-xs text-olive-400">Admins can manage the household and its members.</p>
   </div>
 
-  <div class="my-5 flex items-center gap-2">
-    <%= form.label :child %>
-    <%= form.checkbox :child, class: ["block shadow-sm rounded-md border order-first h-5 w-5", {"border-gray-400 focus:outline-blue-600": household_member.errors[:child].none?, "border-red-400 focus:outline-red-600": household_member.errors[:child].any?}] %>
-  </div>
-
-  <div class="inline">
-    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  <div class="flex items-center gap-3 pt-2">
+    <%= f.submit member.persisted? ? "Save changes" : "Send invite",
+          class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
+    <%= link_to "Cancel", household_path,
+          class: "rounded-lg px-6 py-2.5 bg-white dark:bg-white/5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 font-medium transition" %>
   </div>
 <% end %>

@@ -1,22 +1,23 @@
-<%= form_with(model: household, class: "contents") do |form| %>
-  <% if household.errors.any? %>
-    <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
-      <h2><%= pluralize(household.errors.count, "error") %> prohibited this household from being saved:</h2>
+<%# locals: (household:) %>
+<%= form_with model: household, url: household_path, method: household.persisted? ? :patch : :post, class: "space-y-5" do |f| %>
 
-      <ul class="list-disc ml-6">
-        <% household.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+  <% if household.errors.any? %>
+    <div class="rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3">
+      <ul class="list-inside list-disc text-sm text-dusty-rose-700">
+        <% household.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <div class="my-5">
-    <%= form.label :family_name %>
-    <%= form.text_field :family_name, class: ["block shadow-sm rounded-md border px-3 py-2 mt-2 w-full", {"border-gray-400 focus:outline-blue-600": household.errors[:family_name].none?, "border-red-400 focus:outline-red-600": household.errors[:family_name].any?}] %>
+  <div>
+    <%= f.label :family_name, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= f.text_field :family_name, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", placeholder: "e.g. Anderson" %>
+    <p class="mt-1.5 text-xs text-olive-400">Shown as "The <%= household.family_name.presence || "Anderson" %> household".</p>
   </div>
 
-  <div class="inline">
-    <%= form.submit class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white inline-block font-medium cursor-pointer" %>
+  <div class="pt-2">
+    <%= f.submit household.persisted? ? "Save changes" : "Create household", class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
   </div>
 <% end %>

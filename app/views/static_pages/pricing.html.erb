@@ -1,0 +1,74 @@
+<% content_for :title, "Pricing — HomemakersHaven" %>
+<% content_for :description, "One household plan, billed monthly at $5 or annually at $3.50/month." %>
+
+<section class="mx-auto max-w-4xl px-4 pt-16 pb-8 text-center sm:px-6 lg:px-8">
+  <h1 class="text-5xl sm:text-6xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">
+    Simple, honest pricing
+  </h1>
+  <p class="mx-auto mt-6 max-w-xl text-lg text-gray-600 dark:text-gray-300">
+    One plan for the whole household. Every feature included, however many people you invite.
+  </p>
+</section>
+
+<section class="mx-auto max-w-4xl px-4 pb-24 sm:px-6 lg:px-8">
+  <div class="grid grid-cols-1 gap-8 sm:grid-cols-2">
+    <div class="rounded-2xl border border-black/5 bg-white p-8 dark:bg-white/5 dark:border-white/10">
+      <h2 class="text-lg font-semibold text-olive-900 dark:text-white">Monthly</h2>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Pay as you go</p>
+      <p class="mt-6 flex items-baseline gap-1">
+        <span class="text-5xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">$5</span>
+        <span class="text-base text-gray-500 dark:text-gray-400">/ month</span>
+      </p>
+      <%= link_to "Get started", new_user_registration_path, class: "mt-8 block w-full rounded-md px-4 py-2.5 text-center text-sm font-semibold text-[#5f734c] ring-1 ring-inset ring-[#5f734c] hover:bg-sage-50 dark:hover:bg-white/5" %>
+      <ul class="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
+        <% ["Unlimited meal plans", "Auto-generated grocery lists", "Unlimited recipes & imports", "Shared to-do lists", "Shared household calendar", "Invite your whole household"].each do |item| %>
+          <li class="flex gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="mt-0.5 size-4 shrink-0 text-[#5f734c]"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" /></svg>
+            <%= item %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="relative rounded-2xl border-2 border-[#5f734c] bg-white p-8 dark:bg-white/5">
+      <span class="absolute -top-3 left-8 rounded-full bg-[#5f734c] px-3 py-1 text-xs font-semibold text-white">Save 30%</span>
+      <h2 class="text-lg font-semibold text-olive-900 dark:text-white">Annual</h2>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Billed $42 once a year</p>
+      <p class="mt-6 flex items-baseline gap-1">
+        <span class="text-5xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">$3.50</span>
+        <span class="text-base text-gray-500 dark:text-gray-400">/ month</span>
+      </p>
+      <%= link_to "Get started", new_user_registration_path, class: "mt-8 block w-full rounded-md bg-[#5f734c] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#4b5a3d]" %>
+      <ul class="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
+        <% ["Everything in Monthly", "Two months free compared to monthly billing", "Lock in your rate for a full year"].each do |item| %>
+          <li class="flex gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="mt-0.5 size-4 shrink-0 text-[#5f734c]"><path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" /></svg>
+            <%= item %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  </div>
+
+  <div class="mx-auto mt-16 max-w-2xl">
+    <h2 class="text-center text-2xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">Questions</h2>
+    <dl class="mt-8 space-y-8">
+      <div>
+        <dt class="font-semibold text-gray-900 dark:text-white">Does one plan cover my whole household?</dt>
+        <dd class="mt-2 text-sm text-gray-600 dark:text-gray-300">Yes. Invite everyone in your household and they share the same meal plan, grocery list, recipe bank, to-dos, and calendar — there's no per-person charge.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-gray-900 dark:text-white">Can I switch between monthly and annual?</dt>
+        <dd class="mt-2 text-sm text-gray-600 dark:text-gray-300">Yes, you can switch plans at any time from your account settings.</dd>
+      </div>
+      <div>
+        <dt class="font-semibold text-gray-900 dark:text-white">Can I cancel anytime?</dt>
+        <dd class="mt-2 text-sm text-gray-600 dark:text-gray-300">Yes, there's no long-term commitment on either plan.</dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<%= render "static_pages/cta_band",
+    headline: "Pick a plan and set up your first meal plan today",
+    subheadline: "Every feature is included from day one." %>

@@ -49,11 +49,12 @@
     <orderEntry type="library" scope="PROVIDED" name="bigdecimal (v4.0.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bindex (v0.8.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bootsnap (v1.20.1, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="brakeman (v7.1.2, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="TEST" name="brakeman (v7.1.2, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="builder (v3.3.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bundler (v4.0.3, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="bundler-audit (v0.9.3, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="capybara (v3.40.0, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="TEST" name="bundler-audit (v0.9.3, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="TEST" name="capybara (v3.40.0, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="childprocess (v5.1.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="concurrent-ruby (v1.3.6, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="connection_pool (v3.0.2, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="crass (v1.0.6, rbenv: 4.0.0) [gem]" level="application" />
@@ -83,6 +84,8 @@
     <orderEntry type="library" scope="PROVIDED" name="json (v2.18.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="kamal (v2.10.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="language_server-protocol (v3.17.0.5, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="launchy (v3.1.1, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="letter_opener (v1.10.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="lint_roller (v1.1.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="logger (v1.7.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="loofah (v2.25.0, rbenv: 4.0.0) [gem]" level="application" />
@@ -136,7 +139,7 @@
     <orderEntry type="library" scope="PROVIDED" name="rubocop-ast (v1.49.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rubocop-performance (v1.26.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rubocop-rails (v2.34.3, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="rubocop-rails-omakase (v1.1.0, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="TEST" name="rubocop-rails-omakase (v1.1.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="ruby-progressbar (v1.13.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="ruby-vips (v2.3.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rubyzip (v3.2.2, rbenv: 4.0.0) [gem]" level="application" />
@@ -145,7 +148,7 @@
     <orderEntry type="library" scope="PROVIDED" name="solid_cable (v3.0.12, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="solid_cache (v1.0.10, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="solid_queue (v1.2.4, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="sqlite3 (v2.9.0, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="TEST" name="sqlite3 (v2.9.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sshkit (v1.25.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="stimulus-rails (v1.3.4, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="stringio (v3.2.0, rbenv: 4.0.0) [gem]" level="application" />

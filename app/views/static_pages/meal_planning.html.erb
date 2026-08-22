@@ -1,0 +1,19 @@
+<% content_for :title, "Meal Planning — HomemakersHaven" %>
+<% content_for :description, "Plan breakfast, lunch, and dinner for the week and see nutrition and cost per serving as you go." %>
+
+<%= render "static_pages/feature_hero",
+    eyebrow: "Meal planning",
+    headline: "Plan the whole week in minutes",
+    subheadline: "Drop recipes into a weekly grid for breakfast, lunch, and dinner, plus snacks and desserts. See servings, calories, and cost per serving update as you build the plan.",
+    image: "marketing/meal-planning.png",
+    image_alt: "A week of meals laid out in the HomemakersHaven meal planner" %>
+
+<%= render "static_pages/detail_grid", items: [
+  { title: "Pull straight from your recipe bank", desc: "Add any saved recipe to a day and meal slot — no retyping ingredients or instructions." },
+  { title: "See the real cost", desc: "Every meal shows calories, macros, and an estimated cost per serving, so you know what the week will actually cost." },
+  { title: "Flip between weeks", desc: "Move forward or back a week to plan ahead or review what you already cooked." },
+] %>
+
+<%= render "static_pages/cta_band",
+    headline: "Plan next week's meals in one sitting",
+    subheadline: "Then let HomemakersHaven build the grocery list for you." %>

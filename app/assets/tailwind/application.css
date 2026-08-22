@@ -1,1 +1,311 @@
 @import "tailwindcss";
+
+@theme {
+  --font-display: 'Instrument Serif', serif;
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --color-sage-50: #f6f8f4;
+  --color-sage-100: #e8ede3;
+  --color-sage-200: #d4ddc9;
+  --color-sage-300: #b5c4a3;
+  --color-sage-400: #95a97d;
+  --color-sage-500: #7a8f62;
+  --color-sage-600: #5f734c;
+  --color-sage-700: #4b5a3d;
+  --color-sage-800: #3e4a33;
+  --color-sage-900: #363f2d;
+
+  --color-olive-50: oklch(98.8% 0.003 106.5);
+  --color-olive-100: oklch(96.6% 0.005 106.5);
+  --color-olive-200: oklch(93% 0.007 106.5);
+  --color-olive-300: oklch(88% 0.011 106.6);
+  --color-olive-400: oklch(73.7% 0.021 106.9);
+  --color-olive-500: oklch(58% 0.031 107.3);
+  --color-olive-600: oklch(46.6% 0.025 107.3);
+  --color-olive-700: oklch(39.4% 0.023 107.4);
+  --color-olive-800: oklch(28.6% 0.016 107.4);
+  --color-olive-900: oklch(22.8% 0.013 107.4);
+  --color-olive-950: oklch(15.3% 0.006 107.1);
+
+  --color-mauve-50: oklch(98.5% 0 0);
+  --color-mauve-100: oklch(96% 0.003 325.6);
+  --color-mauve-200: oklch(92.2% 0.005 325.62);
+  --color-mauve-300: oklch(86.5% 0.012 325.68);
+  --color-mauve-400: oklch(71.1% 0.019 323.02);
+  --color-mauve-500: oklch(54.2% 0.034 322.5);
+  --color-mauve-600: oklch(43.5% 0.029 321.78);
+  --color-mauve-700: oklch(36.4% 0.029 323.89);
+  --color-mauve-800: oklch(26.3% 0.024 320.12);
+  --color-mauve-900: oklch(21.2% 0.019 322.12);
+  --color-mauve-950: oklch(14.5% 0.008 326);
+
+  --color-mist-50: oklch(98.7% 0.002 197.1);
+  --color-mist-100: oklch(96.3% 0.002 197.1);
+  --color-mist-200: oklch(92.5% 0.005 214.3);
+  --color-mist-300: oklch(87.2% 0.007 219.6);
+  --color-mist-400: oklch(72.3% 0.014 214.4);
+  --color-mist-500: oklch(56% 0.021 213.5);
+  --color-mist-600: oklch(45% 0.017 213.2);
+  --color-mist-700: oklch(37.8% 0.015 216);
+  --color-mist-800: oklch(27.5% 0.011 216.9);
+  --color-mist-900: oklch(21.8% 0.008 223.9);
+  --color-mist-950: oklch(14.8% 0.004 228.8);
+
+  --color-taupe-50: oklch(98.6% 0.002 67.8);
+  --color-taupe-100: oklch(96% 0.002 17.2);
+  --color-taupe-200: oklch(92.2% 0.005 34.3);
+  --color-taupe-300: oklch(86.8% 0.007 39.5);
+  --color-taupe-400: oklch(71.4% 0.014 41.2);
+  --color-taupe-500: oklch(54.7% 0.021 43.1);
+  --color-taupe-600: oklch(43.8% 0.017 39.3);
+  --color-taupe-700: oklch(36.7% 0.016 35.7);
+  --color-taupe-800: oklch(26.8% 0.011 36.5);
+  --color-taupe-900: oklch(21.4% 0.009 43.1);
+  --color-taupe-950: oklch(14.7% 0.004 49.3);
+
+  --color-honey-50: oklch(98% 0.01 95);
+  --color-honey-100: oklch(95% 0.02 95);
+  --color-honey-200: oklch(92% 0.04 95);
+  --color-honey-300: oklch(88% 0.06 95);
+  --color-honey-400: oklch(85% 0.08 95);
+  --color-honey-500: oklch(78% 0.09 93);
+  --color-honey-600: oklch(60% 0.09 92);
+  --color-honey-700: oklch(60% 0.08 90);
+  --color-honey-800: oklch(45% 0.06 88);
+  --color-honey-900: oklch(35% 0.04 85);
+  --color-honey-950: oklch(25% 0.02 85);
+
+  --color-terracotta-50: oklch(98% 0.01 45);
+  --color-terracotta-100: oklch(95% 0.02 45);
+  --color-terracotta-200: oklch(90% 0.03 45);
+  --color-terracotta-300: oklch(82% 0.05 45);
+  --color-terracotta-400: oklch(75% 0.06 45);
+  --color-terracotta-500: oklch(68% 0.07 43);
+  --color-terracotta-600: oklch(50% 0.07 42);
+  --color-terracotta-700: oklch(50% 0.06 40);
+  --color-terracotta-800: oklch(40% 0.05 38);
+  --color-terracotta-900: oklch(30% 0.03 35);
+  --color-terracotta-950: oklch(22% 0.02 35);
+
+  --color-dusty-rose-50: oklch(98% 0.01 15);
+  --color-dusty-rose-100: oklch(95% 0.02 15);
+  --color-dusty-rose-200: oklch(90% 0.03 15);
+  --color-dusty-rose-300: oklch(80% 0.04 15);
+  --color-dusty-rose-400: oklch(70% 0.05 15);
+  --color-dusty-rose-500: oklch(62% 0.06 13);
+  --color-dusty-rose-600: oklch(55% 0.06 12);
+  --color-dusty-rose-700: oklch(45% 0.05 10);
+  --color-dusty-rose-800: oklch(35% 0.04 10);
+  --color-dusty-rose-900: oklch(28% 0.03 10);
+  --color-dusty-rose-950: oklch(20% 0.02 10);
+
+  --color-seafoam-50: oklch(98% 0.01 180);
+  --color-seafoam-100: oklch(95% 0.02 180);
+  --color-seafoam-200: oklch(90% 0.03 182);
+  --color-seafoam-300: oklch(82% 0.04 182);
+  --color-seafoam-400: oklch(75% 0.04 180);
+  --color-seafoam-500: oklch(68% 0.05 183);
+  --color-seafoam-600: oklch(60% 0.05 185);
+  --color-seafoam-700: oklch(50% 0.04 188);
+  --color-seafoam-800: oklch(40% 0.03 190);
+  --color-seafoam-900: oklch(30% 0.02 192);
+  --color-seafoam-950: oklch(22% 0.01 195);
+}
+
+:root {
+  --ivory: #faf9f7;
+  --ivory-dark: #f5f3f0;
+  --color-primary: var(--color-sage-600);
+  --color-primary-hover: var(--color-sage-700);
+  --color-primary-light: var(--color-sage-100);
+  --color-background: var(--ivory);
+  --color-surface: #ffffff;
+}
+
+@layer base {
+  body {
+    @apply bg-[var(--ivory)] text-gray-900 antialiased;
+    font-family: 'Inter var', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+
+  h1 {
+    font-family: 'Instrument Serif', serif !important;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 600;
+    color: var(--color-olive-800);
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+    color: var(--color-olive-800);
+  }
+
+  h4 {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+    font-weight: 600;
+    color: var(--color-olive-800);
+  }
+
+  h5 {
+    font-size: 1rem;
+    line-height: 1.5rem;
+    font-weight: 600;
+    color: var(--color-olive-800);
+  }
+
+  h6 {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    color: var(--color-olive-800);
+  }
+
+  html.dark h2,
+  html.dark h3,
+  html.dark h4,
+  html.dark h5,
+  html.dark h6 {
+    color: var(--color-olive-50);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: var(--color-olive-100);
+    scroll-padding-top: 0;
+  }
+
+  html.dark {
+    background-color: var(--color-olive-950);
+  }
+}
+
+@layer components {
+  /* Primary sage green button */
+  .btn-primary {
+    @apply inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg
+    text-white bg-sage-600 hover:bg-sage-700
+    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500
+    transition-all duration-150 shadow-sm hover:shadow;
+  }
+
+  /* Secondary button */
+  .btn-secondary {
+    @apply inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-lg
+    text-gray-700 bg-white hover:bg-gray-50
+    focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sage-500
+    transition-all duration-150 shadow-sm;
+  }
+
+  /* Small button variant */
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  /* Card component */
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden;
+  }
+
+  /* Form input */
+  .form-input {
+    @apply block w-full rounded-lg border-gray-300 shadow-sm
+    focus:border-sage-500 focus:ring-sage-500
+    transition-colors duration-150;
+  }
+
+  /* Form label */
+  .form-label {
+    @apply block text-sm font-medium text-gray-700 mb-1.5;
+  }
+
+  /* Badge/Tag component */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  /* Drag handle */
+  .drag-handle {
+    @apply cursor-move text-gray-400 hover:text-gray-600 transition-colors;
+  }
+
+  /* Transition classes for Turbo */
+  .turbo-progress-bar {
+    @apply bg-sage-600;
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Drag and drop styles */
+.sortable-ghost {
+  @apply opacity-50 bg-sage-100;
+}
+
+.sortable-drag {
+  @apply opacity-90 shadow-lg;
+}
+
+.sortable-chosen {
+  @apply ring-2 ring-sage-400;
+}
+
+/* Rich text editor styles */
+.trix-content {
+  @apply max-w-none leading-relaxed text-gray-800;
+}
+
+.trix-content h1 {
+  @apply text-2xl mb-4;
+}
+
+.trix-content p {
+  @apply mb-4;
+}
+
+.trix-content ul {
+  @apply list-disc pl-6 mb-4;
+}
+
+.trix-content ol {
+  @apply list-decimal pl-6 mb-4;
+}
+
+/* Loading states */
+.loading {
+  @apply opacity-60 pointer-events-none;
+}
+
+/* Hover lift effect */
+.hover-lift {
+  @apply transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md;
+}
+
+/* Focus-visible styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-offset-2 ring-sage-500;
+}

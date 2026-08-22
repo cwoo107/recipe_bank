@@ -1,18 +1,25 @@
-<% content_for :title, "Showing household" %>
+<% content_for :title, "Household" %>
 
-<div class="md:w-2/3 w-full">
-  <% if notice.present? %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
+<div class="mx-auto max-w-2xl">
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400">Household</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900">
+        The <%= @household.family_name %> household
+      </h1>
+    </div>
+    <% if @household.admin?(current_user) %>
+      <%= link_to "Settings", edit_household_path,
+            class: "rounded-lg px-4 py-2.5 bg-white dark:bg-white/5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 font-medium transition" %>
+    <% end %>
+  </div>
+
+  <%= turbo_frame_tag "household_members" do %>
+    <%= render "household_members/list" %>
   <% end %>
 
-  <h1 class="font-bold text-4xl">The <%= @household.family_name %> Household</h1>
-
-  <% if @household.household_members.any? %>
-    <%= render @household.household_members %>
-  <% end %>
-
-
-  <%= link_to "Edit this household", edit_household_path(@household), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-  <%= link_to "Back to households", households_path, class: "w-full sm:w-auto text-center mt-2 sm:mt-0 sm:ml-2 rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-  <%= button_to "Destroy this household", @household, method: :delete, form_class: "sm:inline-block mt-2 sm:mt-0 sm:ml-2", class: "w-full rounded-md px-3.5 py-2.5 text-white bg-rose-600 hover:bg-rose-500 font-medium cursor-pointer", data: { turbo_confirm: "Are you sure?" } %>
+  <p class="mt-4 text-sm text-olive-500">
+    Members sign in with their own email and password. Admins have the same level of
+    control as the owner.
+  </p>
 </div>

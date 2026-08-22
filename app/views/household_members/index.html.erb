@@ -1,29 +1,54 @@
-<% content_for :title, "Household members" %>
+<div class="mx-auto max-w-2xl">
 
-<div class="w-full">
-  <% if notice.present? %>
-    <p class="py-2 px-3 bg-green-50 mb-5 text-green-500 font-medium rounded-md inline-block" id="notice"><%= notice %></p>
-  <% end %>
-
-  <div class="flex justify-between items-center">
-    <h1 class="font-bold text-4xl">Household members</h1>
-    <%= link_to "New household member", new_household_member_path, class: "rounded-md px-3.5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white block font-medium" %>
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400">Household</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900">
+        The <%= current_household.family_name %> household
+      </h1>
+    </div>
+    <%= link_to "Add member", new_household_member_path, class: "btn-primary" %>
   </div>
 
-  <div id="household_members" class="min-w-full divide-y divide-gray-200 space-y-5">
-    <% if @household_members.any? %>
-      <% @household_members.each do |household_member| %>
-        <div class="flex flex-col sm:flex-row justify-between items-center pb-5 sm:pb-0">
-          <%= render household_member %>
-          <div class="w-full sm:w-auto flex flex-col sm:flex-row space-x-2 space-y-2">
-            <%= link_to "Show", household_member, class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-            <%= link_to "Edit", edit_household_member_path(household_member), class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-gray-100 hover:bg-gray-50 inline-block font-medium" %>
-            <%= button_to "Destroy", household_member, method: :delete, class: "w-full sm:w-auto rounded-md px-3.5 py-2.5 text-white bg-red-600 hover:bg-red-500 font-medium cursor-pointer", data: { turbo_confirm: "Are you sure?" } %>
-          </div>
+  <div class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
+
+    <ul class="divide-y divide-sage-100">
+      <li class="flex items-center justify-between px-5 py-4">
+        <div>
+          <p class="font-medium text-sage-900"><%= current_household.owner.email %></p>
+          <span class="badge mt-1 bg-sage-100 text-sage-700">Owner</span>
         </div>
+      </li>
+
+      <% @members.each do |member| %>
+        <li class="flex items-center justify-between px-5 py-4">
+          <div>
+            <p class="font-medium text-sage-900"><%= member.name %></p>
+            <div class="mt-1 flex items-center gap-2">
+              <% if member.admin? %>
+                <span class="badge bg-honey-100 text-honey-800">Admin</span>
+              <% else %>
+                <span class="badge bg-mist-100 text-mist-700">Limited</span>
+              <% end %>
+              <% if member.user %>
+                <span class="text-xs text-olive-400"><%= member.user.email %></span>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <%= link_to "Edit", edit_household_member_path(member), class: "btn-secondary btn-sm" %>
+            <%= button_to "Remove", household_member_path(member), method: :delete,
+                  data: { turbo_confirm: "Remove #{member.name} and delete their login?" },
+                  class: "btn-sm border border-transparent font-medium text-dusty-rose-600 hover:bg-dusty-rose-50" %>
+          </div>
+        </li>
       <% end %>
-    <% else %>
-      <p class="text-center my-10">No household members found.</p>
-    <% end %>
+    </ul>
   </div>
+
+  <p class="mt-4 text-sm text-olive-500">
+    Members sign in with their own email and password. Admins have the same level of
+    control as the owner.
+  </p>
 </div>

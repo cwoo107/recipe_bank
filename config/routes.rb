@@ -1,7 +1,14 @@
 Rails.application.routes.draw do
   devise_for :users
 
-  root 'meals#index'
+  root 'static_pages#home'
+
+  get 'pricing', to: 'static_pages#pricing'
+  get 'features/meal-planning', to: 'static_pages#meal_planning', as: :feature_meal_planning
+  get 'features/grocery-lists', to: 'static_pages#grocery_lists', as: :feature_grocery_lists
+  get 'features/recipes',       to: 'static_pages#recipes',       as: :feature_recipes
+  get 'features/todos',         to: 'static_pages#todos',         as: :feature_todos
+  get 'features/calendar',      to: 'static_pages#calendar',      as: :feature_calendar
 
   get 'grocery_list', to: 'grocery_lists#index', as: 'grocery_lists'
   resources :grocery_lists, except: :index do
@@ -11,8 +18,9 @@ Rails.application.routes.draw do
   end
 
   resources :meals
-  resources :household_members
-  resources :households
+  resource  :household                           # singular resource — index doesn't exist for these
+  resources :household_members, except: :show   # scoped by current_household, not URL
+
   resources :recipe_imports, only: [:new, :create, :show] do
     collection do
       post :create_from_file

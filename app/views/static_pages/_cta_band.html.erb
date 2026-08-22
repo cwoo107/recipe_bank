@@ -1,0 +1,12 @@
+<section class="bg-[#3e4a33] dark:bg-[#12160e]">
+  <div class="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
+    <h2 class="text-3xl sm:text-4xl text-white" style="font-family: 'Instrument Serif', serif;"><%= headline %></h2>
+    <% if defined?(subheadline) && subheadline.present? %>
+      <p class="mx-auto mt-4 max-w-xl text-base text-sage-100"><%= subheadline %></p>
+    <% end %>
+    <div class="mt-8 flex items-center justify-center gap-4">
+      <%= link_to "Get started", new_user_registration_path, class: "inline-flex items-center rounded-md bg-white px-5 py-3 text-sm font-semibold text-[#3e4a33] hover:bg-sage-50" %>
+      <%= link_to "See pricing", pricing_path, class: "inline-flex items-center rounded-md px-5 py-3 text-sm font-semibold text-white ring-1 ring-inset ring-white/30 hover:bg-white/10" %>
+    </div>
+  </div>
+</section>

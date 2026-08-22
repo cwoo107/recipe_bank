@@ -1,4 +1,5 @@
 class User < ApplicationRecord
+  include HouseholdAccountable
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
 
@@ -23,3 +24,6 @@ class User < ApplicationRecord
     user_favorites.exists?(recipe: recipe)
   end
 end
+
+
+

@@ -1,70 +1,61 @@
+# Each user has exactly one household, so this is now a singular resource:
+# /household instead of /households/:id. No more Household.all or find(params[:id]).
 class HouseholdsController < ApplicationController
-  before_action :set_household, only: %i[ show edit update destroy ]
+  before_action :require_household!,       only: %i[show edit update destroy]
+  before_action :set_household,            only: %i[show edit update destroy]
+  before_action :require_household_admin!, only: %i[edit update]
+  before_action :require_owner!,           only: :destroy
 
-  # GET /households or /households.json
-  def index
-    @households = Household.includes(:household_members).all
-  end
-
-  # GET /households/1 or /households/1.json
   def show
+    @members = @household.household_members.includes(:user).order(:name)
   end
 
-  # GET /households/new
   def new
-    @household = Household.new
+    redirect_to household_path and return if current_household
+
+    @household = current_user.build_owned_household
   end
 
-  # GET /households/1/edit
-  def edit
-  end
-
-  # POST /households or /households.json
   def create
-    @household = Household.new(household_params)
+    redirect_to household_path and return if current_household
 
-    respond_to do |format|
-      if @household.save
-        format.html { redirect_to @household, notice: "Household was successfully created." }
-        format.json { render :show, status: :created, location: @household }
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @household.errors, status: :unprocessable_entity }
-      end
+    @household = current_user.build_owned_household(household_params)
+
+    if @household.save
+      redirect_to household_path, notice: "Household created."
+    else
+      render :new, status: :unprocessable_entity
     end
   end
 
-  # PATCH/PUT /households/1 or /households/1.json
+  def edit; end
+
   def update
-    respond_to do |format|
-      if @household.update(household_params)
-        format.html { redirect_to @household, notice: "Household was successfully updated.", status: :see_other }
-        format.json { render :show, status: :ok, location: @household }
-      else
-        format.html { render :edit, status: :unprocessable_entity }
-        format.json { render json: @household.errors, status: :unprocessable_entity }
-      end
+    if @household.update(household_params)
+      redirect_to household_path, notice: "Household updated.", status: :see_other
+    else
+      render :edit, status: :unprocessable_entity
     end
   end
 
-  # DELETE /households/1 or /households/1.json
   def destroy
     @household.destroy!
-
-    respond_to do |format|
-      format.html { redirect_to households_path, notice: "Household was successfully destroyed.", status: :see_other }
-      format.json { head :no_content }
-    end
+    redirect_to root_path, notice: "Household deleted.", status: :see_other
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_household
-      @household = Household.find(params.expect(:id))
-    end
 
-    # Only allow a list of trusted parameters through.
-    def household_params
-      params.expect(household: [ :family_name ])
-    end
+  def set_household
+    @household = current_household
+  end
+
+  def require_owner!
+    return if @household.owner?(current_user)
+
+    redirect_to household_path, alert: "Only the account owner can do that."
+  end
+
+  def household_params
+    params.expect(household: [:family_name])
+  end
 end
