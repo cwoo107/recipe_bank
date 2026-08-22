@@ -1,12 +1,16 @@
 <% content_for :title, "Pricing — HomemakersHaven" %>
-<% content_for :description, "One household plan, billed monthly at $5 or annually at $3.50/month." %>
+<% content_for :description, "One household plan, billed monthly at $5 or annually at $3.50/month. Try it free for your first month." %>
 
 <section class="mx-auto max-w-4xl px-4 pt-16 pb-8 text-center sm:px-6 lg:px-8">
-  <h1 class="text-5xl sm:text-6xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">
+  <span class="inline-flex items-center rounded-full bg-sage-100 px-3 py-1 text-xs font-medium text-sage-800 dark:bg-white/10 dark:text-sage-100">
+    Your first month is free
+  </span>
+  <h1 class="mt-6 text-5xl sm:text-6xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">
     Simple, honest pricing
   </h1>
   <p class="mx-auto mt-6 max-w-xl text-lg text-gray-600 dark:text-gray-300">
     One plan for the whole household. Every feature included, however many people you invite.
+    Try it free for 30 days — cancel anytime before the trial ends and you won't be charged.
   </p>
 </section>
 
@@ -19,7 +23,8 @@
         <span class="text-5xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">$5</span>
         <span class="text-base text-gray-500 dark:text-gray-400">/ month</span>
       </p>
-      <%= link_to "Get started", new_user_registration_path, class: "mt-8 block w-full rounded-md px-4 py-2.5 text-center text-sm font-semibold text-[#5f734c] ring-1 ring-inset ring-[#5f734c] hover:bg-sage-50 dark:hover:bg-white/5" %>
+      <p class="mt-1 text-sm font-medium text-[#5f734c] dark:text-[#95a97d]">Free for your first month</p>
+      <%= link_to "Start free trial", new_user_registration_path, class: "mt-8 block w-full rounded-md px-4 py-2.5 text-center text-sm font-semibold text-[#5f734c] ring-1 ring-inset ring-[#5f734c] hover:bg-sage-50 dark:hover:bg-white/5" %>
       <ul class="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
         <% ["Unlimited meal plans", "Auto-generated grocery lists", "Unlimited recipes & imports", "Shared to-do lists", "Shared household calendar", "Invite your whole household"].each do |item| %>
           <li class="flex gap-2">
@@ -38,7 +43,8 @@
         <span class="text-5xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">$4.33</span>
         <span class="text-base text-gray-500 dark:text-gray-400">/ month</span>
       </p>
-      <%= link_to "Get started", new_user_registration_path, class: "mt-8 block w-full rounded-md bg-[#5f734c] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#4b5a3d]" %>
+      <p class="mt-1 text-sm font-medium text-[#5f734c] dark:text-[#95a97d]">Free for your first month</p>
+      <%= link_to "Start free trial", new_user_registration_path, class: "mt-8 block w-full rounded-md bg-[#5f734c] px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#4b5a3d]" %>
       <ul class="mt-8 space-y-3 text-sm text-gray-600 dark:text-gray-300">
         <% ["Everything in Monthly", "Two months free compared to monthly billing", "Lock in your rate for a full year"].each do |item| %>
           <li class="flex gap-2">
@@ -53,6 +59,10 @@
   <div class="mx-auto mt-16 max-w-2xl">
     <h2 class="text-center text-2xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">Questions</h2>
     <dl class="mt-8 space-y-8">
+      <div>
+        <dt class="font-semibold text-gray-900 dark:text-white">Is there a free trial?</dt>
+        <dd class="mt-2 text-sm text-gray-600 dark:text-gray-300">Yes. Every new household gets a full month free on either plan. Cancel anytime during the trial and you won't be charged.</dd>
+      </div>
       <div>
         <dt class="font-semibold text-gray-900 dark:text-white">Does one plan cover my whole household?</dt>
         <dd class="mt-2 text-sm text-gray-600 dark:text-gray-300">Yes. Invite everyone in your household and they share the same meal plan, grocery list, recipe bank, to-dos, and calendar — there's no per-person charge.</dd>
@@ -71,4 +81,4 @@
 
 <%= render "static_pages/cta_band",
     headline: "Pick a plan and set up your first meal plan today",
-    subheadline: "Every feature is included from day one." %>
+    subheadline: "Your first month is free — every feature is included from day one." %>

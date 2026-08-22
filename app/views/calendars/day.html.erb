@@ -6,8 +6,8 @@
     <div>
       <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
         <span style="font-family: 'Instrument Serif', serif;">
-          <span class="text-[#5f734c]"><%= @date.strftime("%A") %></span>
-          <span class="text-olive-800 dark:text-[#e8ede3]">, <%= @date.strftime("%B %-d") %></span>
+          <span class="text-[#5f734c]"><%= @date.strftime("%A") %>,</span>
+          <span class="text-olive-800 dark:text-[#e8ede3]">&nbsp;<%= @date.strftime("%B %-d") %></span>
         </span>
       </h1>
       <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
