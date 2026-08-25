@@ -18,10 +18,6 @@ class IngredientMatcher
     partial = partial_match(search_name)
     return { match: partial, confidence: 0.95, method: 'partial' } if partial
 
-    # Try family match
-    family = family_match(search_name)
-    return { match: family, confidence: 0.85, method: 'family' } if family
-
     # Try fuzzy match
     fuzzy = fuzzy_match(search_name)
     if fuzzy
@@ -38,6 +34,21 @@ class IngredientMatcher
       method: 'none',
       suggested_name: original_name
     }
+  end
+
+  # Ranks existing ingredients by similarity to `search_name` and returns the
+  # top `limit` names. Used to give the AI ingredient-resolution step a
+  # relevant shortlist to choose from, instead of an arbitrary sample of the
+  # whole table that may not contain the real match once it grows past a
+  # small handful of rows.
+  def candidates_for(search_name, limit: 10)
+    scored = @ingredients.filter_map do |ing|
+      next if ing.ingredient.blank?
+
+      [ing.ingredient, calculate_confidence(search_name, ing.ingredient)]
+    end
+
+    scored.sort_by { |(_name, confidence)| -confidence }.first(limit).map(&:first)
   end
 
   private
@@ -58,14 +69,6 @@ class IngredientMatcher
       # Check both directions
       search_name.include?(ingredient_normalized) ||
         ingredient_normalized.include?(search_name)
-    end
-  end
-
-  def family_match(search_name)
-    # Look for family names in the search term
-    @ingredients.find do |ing|
-      next unless ing.family
-      search_name.include?(normalize(ing.family))
     end
   end
 
@@ -115,12 +118,10 @@ class IngredientMatcher
     d[m][n]
   end
 
+  # Delegates to IngredientParser's canonical normalizer so a stored
+  # ingredient name and a freshly-parsed one are always compared on the same
+  # terms — see IngredientParser.normalize_for_search.
   def normalize(str)
-    return '' unless str
-    str.to_s.downcase
-       .gsub(/\b(large|small|medium|fresh|frozen|dried|organic|whole|sliced|diced|chopped|minced|shredded|grated)\b/, '') # Remove descriptors
-       .gsub(/[^a-z\s]/, '')
-       .gsub(/\s+/, ' ')
-       .strip
+    IngredientParser.normalize_for_search(str)
   end
 end

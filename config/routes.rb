@@ -3,6 +3,12 @@ Rails.application.routes.draw do
 
   root 'static_pages#home'
 
+  get "dashboard", to: "dashboard#show", as: :dashboard
+
+  get   "plan-week",          to: "plan_week#start", as: :plan_week
+  get   "plan-week/:section", to: "plan_week#show",  as: :plan_week_step
+  patch "plan-week/:section", to: "plan_week#update"
+
   get 'pricing', to: 'static_pages#pricing'
   get 'features/meal-planning', to: 'static_pages#meal_planning', as: :feature_meal_planning
   get 'features/grocery-lists', to: 'static_pages#grocery_lists', as: :feature_grocery_lists
@@ -11,11 +17,15 @@ Rails.application.routes.draw do
   get 'features/calendar',      to: 'static_pages#calendar',      as: :feature_calendar
 
   get 'grocery_list', to: 'grocery_lists#index', as: 'grocery_lists'
-  resources :grocery_lists, except: :index do
+  # `create`'s default path helper (grocery_lists_path) would collide with the
+  # `grocery_lists` alias claimed above for the custom index route, so create
+  # gets its own explicit name instead.
+  resources :grocery_lists, except: [:index, :create] do
     collection do
       post :generate
     end
   end
+  post 'grocery_lists', to: 'grocery_lists#create', as: :create_grocery_list
 
   resources :meals
   resource  :household                           # singular resource — index doesn't exist for these

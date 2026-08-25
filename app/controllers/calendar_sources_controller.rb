@@ -3,15 +3,16 @@ class CalendarSourcesController < ApplicationController
   before_action :set_source, only: [:edit, :update, :destroy, :toggle_visible, :sync]
 
   def index
-    @sources = current_user.calendar_sources.ordered
+    @sources = current_household.calendar_sources.ordered
   end
 
   def new
-    @source = current_user.calendar_sources.build
+    @source = current_household.calendar_sources.build
   end
 
   def create
-    @source = current_user.calendar_sources.build(source_params)
+    @source = current_household.calendar_sources.build(source_params)
+    @source.user = current_user
     if @source.save
       redirect_to calendars_path, notice: "#{@source.name} connected."
     else
@@ -47,7 +48,7 @@ class CalendarSourcesController < ApplicationController
 
   def reorder
     params[:order].each_with_index do |id, index|
-      current_user.calendar_sources.where(id: id).update_all(position: index)
+      current_household.calendar_sources.where(id: id).update_all(position: index)
     end
     head :ok
   end
@@ -64,7 +65,7 @@ class CalendarSourcesController < ApplicationController
   private
 
   def set_source
-    @source = current_user.calendar_sources.find(params[:id])
+    @source = current_household.calendar_sources.find(params[:id])
   end
 
   def source_params

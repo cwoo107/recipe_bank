@@ -1,4 +1,4 @@
-<%= form_with(model: grocery_list, class: "contents") do |form| %>
+<%= form_with(model: grocery_list, url: grocery_list.persisted? ? grocery_list_path(grocery_list) : create_grocery_list_path, class: "contents") do |form| %>
   <% if grocery_list.errors.any? %>
     <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
       <h2><%= pluralize(grocery_list.errors.count, "error") %> prohibited this grocery_list from being saved:</h2>

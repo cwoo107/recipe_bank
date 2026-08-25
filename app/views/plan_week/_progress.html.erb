@@ -1,0 +1,62 @@
+<%#
+  locals: sections (Array<Dashboard::Section>), current_key (String)
+%>
+<nav aria-label="Progress" class="mb-6">
+  <ol role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200 md:flex md:divide-y-0 dark:divide-white/10 dark:border-white/10">
+    <% sections.each_with_index do |section, index| %>
+      <%
+        state = if section.status == "done"
+                  :done
+                elsif section.status == "skipped"
+                  :skipped
+                elsif section.key == current_key
+                  :current
+                else
+                  :upcoming
+                end
+      %>
+      <li class="relative md:flex md:flex-1">
+        <%= link_to plan_week_step_path(section: section.key),
+                    "aria-current": state == :current ? "step" : nil,
+                    class: "group flex w-full items-center" do %>
+          <span class="flex items-center px-6 py-4 text-sm font-medium">
+            <% case state
+               when :done %>
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#5f734c] group-hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:group-hover:bg-[#5f734c]">
+                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-6 text-white">
+                  <path d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" />
+                </svg>
+              </span>
+              <span class="ml-4 text-sm font-medium text-gray-900 dark:text-white"><%= section.label %></span>
+            <% when :skipped %>
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 group-hover:border-gray-400 dark:border-white/15 dark:group-hover:border-white/25">
+                <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-4 text-gray-400 dark:text-gray-500">
+                  <path d="M4.25 12a.75.75 0 0 1 .75-.75h14a.75.75 0 0 1 0 1.5H5a.75.75 0 0 1-.75-.75Z" />
+                </svg>
+              </span>
+              <span class="ml-4 text-sm font-medium text-gray-500 dark:text-gray-400"><%= section.label %> <span class="italic">(skipped)</span></span>
+            <% when :current %>
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-[#5f734c] dark:border-[#7a8f62]">
+                <span class="text-[#5f734c] dark:text-[#7a8f62]"><%= format("%02d", index + 1) %></span>
+              </span>
+              <span class="ml-4 text-sm font-medium text-[#5f734c] dark:text-[#7a8f62]"><%= section.label %></span>
+            <% when :upcoming %>
+              <span class="flex size-10 shrink-0 items-center justify-center rounded-full border-2 border-gray-300 group-hover:border-gray-400 dark:border-white/15 dark:group-hover:border-white/25">
+                <span class="text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"><%= format("%02d", index + 1) %></span>
+              </span>
+              <span class="ml-4 text-sm font-medium text-gray-500 group-hover:text-gray-900 dark:text-gray-400 dark:group-hover:text-white"><%= section.label %></span>
+            <% end %>
+          </span>
+        <% end %>
+
+        <% if index < sections.size - 1 %>
+          <div aria-hidden="true" class="absolute top-0 right-0 hidden h-full w-5 md:block">
+            <svg viewBox="0 0 22 80" fill="none" preserveAspectRatio="none" class="size-full text-gray-200 dark:text-white/10">
+              <path d="M0 -2L20 40L0 82" stroke="currentcolor" vector-effect="non-scaling-stroke" stroke-linejoin="round" />
+            </svg>
+          </div>
+        <% end %>
+      </li>
+    <% end %>
+  </ol>
+</nav>

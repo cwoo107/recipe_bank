@@ -1,0 +1,40 @@
+<% content_for :title, "Dashboard" %>
+
+<div class="w-full">
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">This<span class="text-olive-800 dark:text-[#e8ede3]">Week</span></span>
+      </h1>
+      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+        Week of <%= @week_start.strftime("%b %-d, %Y") %>
+      </p>
+    </div>
+
+    <% unless @nothing_planned %>
+      <div class="mt-4 sm:ml-16 sm:mt-0">
+        <%= link_to "Plan your week", plan_week_path,
+                    class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @nothing_planned %>
+    <div class="mb-8 rounded-lg bg-[#3f4d34] dark:bg-[#2a3322] px-6 py-8 sm:px-10 sm:py-10 text-center">
+      <h2 class="text-3xl text-white" style="font-family: 'Instrument Serif', serif;">Nothing planned for this week yet</h2>
+      <p class="mt-2 text-sm text-[#d7e0cd]">Walk through meals, to-dos, groceries, and your calendar in a few minutes.</p>
+      <%= link_to "Plan your week", plan_week_path,
+                  class: "mt-6 inline-flex items-center gap-x-2 rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-[#3f4d34] shadow-xs hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" %>
+    </div>
+  <% elsif @everything_done %>
+    <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
+      This week is fully planned. <%= link_to "Reopen the plan", plan_week_path, class: "text-[#5f734c] dark:text-[#7a8f62] font-medium hover:underline" %> to make a change.
+    </p>
+  <% end %>
+
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <% @sections.each do |section| %>
+      <%= render "dashboard/section_card", section: section %>
+    <% end %>
+  </div>
+</div>

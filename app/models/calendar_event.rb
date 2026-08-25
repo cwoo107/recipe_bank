@@ -1,6 +1,7 @@
 class CalendarEvent < ApplicationRecord
   belongs_to :calendar_source
   belongs_to :user
+  belongs_to :household
 
   STATUSES = %w[confirmed tentative cancelled].freeze
 

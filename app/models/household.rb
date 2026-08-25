@@ -4,7 +4,19 @@ class Household < ApplicationRecord
   has_many :household_members, dependent: :destroy
   has_many :members, through: :household_members, source: :user
 
+  has_many :meals,            dependent: :destroy
+  has_many :todos,            dependent: :destroy
+  has_many :grocery_lists,    dependent: :destroy
+  has_many :calendar_sources, dependent: :destroy
+  has_many :calendar_events,  dependent: :destroy
+  has_many :weekly_plans,     dependent: :destroy
+
   validates :family_name, presence: true
+
+  def self.default_family_name_for(user)
+    handle = user.email.to_s.split("@").first.presence || "New"
+    "#{handle.titleize}'s Household"
+  end
 
   def owner?(user)
     owner_id == user&.id
@@ -31,7 +43,7 @@ class Household < ApplicationRecord
     member = household_members.new(name:, role:)
 
     transaction do
-      user = User.new(email:, password: SecureRandom.base58(24))
+      user = User.new(email:, password: SecureRandom.base58(24), skip_household_provisioning: true)
       user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
       user.save!
 

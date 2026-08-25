@@ -2,10 +2,13 @@
 
 one:
   household: one
-  name: MyString
+  user: two # bob — logged-in member of household one, alongside owner alice
+  name: "Bob"
+  role: 1
   child: false
 
 two:
   household: two
-  name: MyString
-  child: false
+  name: "Kid"
+  child: true
+  role: 1

@@ -4,7 +4,7 @@ class MealsController < ApplicationController
   def index
     @date = week_start_from_params
 
-    all_meals = current_user.meals
+    all_meals = current_household.meals
                             .where("date >= ?", @date)
                             .where("date < ?", @date + 7)
                             .includes(recipe: { recipe_ingredients: :ingredient })
@@ -32,7 +32,8 @@ class MealsController < ApplicationController
   end
 
   def create
-    @meal = current_user.meals.build(meal_params)
+    @meal = current_household.meals.build(meal_params)
+    @meal.user = current_user
 
     if @meal.extra_meal? && @meal.date.blank?
       @meal.date = Time.zone.today.beginning_of_week
@@ -66,8 +67,9 @@ class MealsController < ApplicationController
 
   def destroy
     week_start = @meal.date.beginning_of_week
+    household = @meal.household
     @meal.destroy!
-    @meal.broadcast_remove_to("meals")
+    @meal.broadcast_remove_to(household, "meals")
 
     respond_to do |format|
       format.html { redirect_to meals_path(date: week_start), notice: "Meal was successfully removed." }
@@ -78,7 +80,7 @@ class MealsController < ApplicationController
   private
 
   def set_meal
-    @meal = current_user.meals.find(params.expect(:id))
+    @meal = current_household.meals.find(params.expect(:id))
   end
 
   def week_start_from_params

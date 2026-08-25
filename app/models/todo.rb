@@ -1,7 +1,8 @@
 class Todo < ApplicationRecord
   belongs_to :user
+  belongs_to :household
 
-  acts_as_list scope: [ :user_id, :status ]
+  acts_as_list scope: [ :household_id, :status ]
 
   STATUSES   = %w[todo in_progress done].freeze
   PRIORITIES = { low: 1, medium: 2, high: 3, urgent: 4 }.freeze
@@ -131,11 +132,11 @@ class Todo < ApplicationRecord
   # a long-running task still reports the right actual time. Everything else
   # is (re)packed by priority starting from today — which is what pushes a
   # low-priority task later when an urgent one is dropped in.
-  def self.reschedule_in_progress!(user)
+  def self.reschedule_in_progress!(household)
     today = Date.current
 
     transaction do
-      todos = user.todos.where(status: "in_progress").to_a
+      todos = household.todos.where(status: "in_progress").to_a
       in_flight, queued = todos.partition { |t| t.start_date.present? && t.start_date.to_date < today }
 
       # In-flight: freeze the start, refresh the end from the estimate.
@@ -176,7 +177,7 @@ class Todo < ApplicationRecord
   # Always spans the current week (Mon..Sun). Excludes "todo". Offsets are in
   # day-units measured from the start of the week and clamped to [0, 7], so
   # the controller never needs a date adapter.
-  def self.gantt_data(user)
+  def self.gantt_data(household)
     week_start = Date.current.beginning_of_week # Monday
     days = (0..6).map do |i|
       d = week_start + i
@@ -185,7 +186,7 @@ class Todo < ApplicationRecord
 
     today_offset = ((Time.current - week_start.to_time) / 1.day.to_i).round(3).clamp(0, 7)
 
-    rows = user.todos
+    rows = household.todos
                .where(status: %w[in_progress done])
                .where.not(start_date: nil).where.not(end_date: nil)
                .order(:start_date, :end_date, :id)
@@ -231,12 +232,12 @@ class Todo < ApplicationRecord
   end
 
   # ── Live chart updates over Turbo Streams ─────────────────────────────
-  def self.broadcast_gantt(user)
+  def self.broadcast_gantt(household)
     Turbo::StreamsChannel.broadcast_replace_to(
-      user, "todos_gantt",
+      household, "todos_gantt",
       target:  "gantt_chart",
       partial: "todos/gantt",
-      locals:  { user: user }
+      locals:  { household: household }
     )
   end
 

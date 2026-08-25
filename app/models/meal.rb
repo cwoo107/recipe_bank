@@ -1,6 +1,7 @@
 class Meal < ApplicationRecord
   belongs_to :recipe
   belongs_to :user
+  belongs_to :household
 
   CALENDAR_TYPES = %w[breakfast lunch dinner].freeze
   EXTRA_TYPES    = %w[snack dessert].freeze

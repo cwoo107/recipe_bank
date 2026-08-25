@@ -1,0 +1,13 @@
+<%# locals: section (Dashboard::TodosSection) %>
+<% if section.empty? %>
+  <p class="text-sm text-gray-600 dark:text-gray-400">Nothing scheduled into this week yet. Take a look at the board and make sure priorities are set for what's coming up.</p>
+<% else %>
+  <p class="text-base font-medium text-gray-900 dark:text-white"><%= section.summary_line %></p>
+<% end %>
+
+<div class="mt-6 flex flex-wrap gap-3">
+  <%= link_to "Review to-dos", todos_path,
+              class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+  <%= button_to "Looks good", plan_week_step_path(section: section.key), method: :patch, params: { status: "done" },
+                class: "inline-flex items-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+</div>

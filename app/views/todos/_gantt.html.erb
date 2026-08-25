@@ -1,11 +1,11 @@
 <%#
   Renders the weekly Gantt chart. Used in two places:
-    1. Inline in index.html.erb            -> render "todos/gantt", user: current_user
-    2. Broadcast from Todo.broadcast_gantt -> locals: { user: user }
+    1. Inline in index.html.erb            -> render "todos/gantt", household: current_household
+    2. Broadcast from Todo.broadcast_gantt -> locals: { household: household }
   The root element id MUST stay "gantt_chart" so the Turbo Stream replace targets it.
 %>
-<% user ||= current_user %>
-<% gantt        = Todo.gantt_data(user) %>
+<% household ||= current_household %>
+<% gantt        = Todo.gantt_data(household) %>
 <% chart_height = [ gantt[:rows].size * 34 + 16, 120 ].max %>
 
 <div id="gantt_chart"

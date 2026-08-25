@@ -1,0 +1,27 @@
+<%#
+  Sticky "continue planning" bar, shown from anywhere in the app while a
+  weekly plan is in progress (WeeklyPlan#currently_planning). Suppressed on
+  the wizard itself and the dashboard — see ApplicationController#active_weekly_plan.
+%>
+<% if (plan = active_weekly_plan) %>
+  <% active_key   = plan.active_key %>
+  <% active_label = Dashboard.section_class(active_key)::LABEL %>
+  <% next_key     = plan.next_key_after(active_key) %>
+  <% next_label   = next_key && Dashboard.section_class(next_key)::LABEL %>
+
+  <div class="fixed bottom-4 right-4 z-40 w-[calc(100%-2rem)] max-w-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1f16] shadow-lg p-3">
+    <p class="mb-2 px-1 text-xs text-gray-500 dark:text-gray-400">
+      Planning your week —
+      <%= link_to active_label, plan_week_step_path(section: active_key), class: "font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
+    </p>
+    <div class="flex items-center gap-2">
+      <%= button_to next_label ? "Continue to #{next_label}" : "Finish planning",
+                    plan_week_step_path(section: active_key), method: :patch, params: { status: "done" },
+                    form_class: "flex-1",
+                    class: "w-full inline-flex items-center justify-center rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+      <%= button_to "Skip",
+                    plan_week_step_path(section: active_key), method: :patch, params: { status: "skipped" },
+                    class: "inline-flex items-center justify-center rounded-md bg-white px-3.5 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+    </div>
+  </div>
+<% end %>

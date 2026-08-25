@@ -4,7 +4,7 @@ class TodosController < ApplicationController
 
   def index
     @todos_by_status = Todo::STATUSES.index_with do |status|
-      scope = current_user.todos.by_status(status)
+      scope = current_household.todos.by_status(status)
 
       scope = scope.ended_this_week if status == "done"
       scope
@@ -13,11 +13,12 @@ class TodosController < ApplicationController
 
 
   def new
-    @todo = current_user.todos.new(status: params[:status] || "todo", priority: :medium)
+    @todo = current_household.todos.new(status: params[:status] || "todo", priority: :medium, user: current_user)
   end
 
   def create
-    @todo = current_user.todos.new(todo_params)
+    @todo = current_household.todos.new(todo_params)
+    @todo.user = current_user
     if @todo.save
       # A brand-new todo created directly into "in_progress" or "done" never had
       # a previous status, so we pass nil (treated as "not in_progress").
@@ -73,7 +74,7 @@ class TodosController < ApplicationController
     return head :bad_request unless Todo::STATUSES.include?(status)
 
     Array(params[:order]).each_with_index do |id, index|
-      current_user.todos
+      current_household.todos
                   .where(status: status, id: id)
                   .update_all(position: index + 1)
     end
@@ -107,7 +108,7 @@ class TodosController < ApplicationController
   private
 
   def set_todo
-    @todo = current_user.todos.find(params[:id])
+    @todo = current_household.todos.find(params[:id])
   end
 
   def todo_params
@@ -120,7 +121,7 @@ class TodosController < ApplicationController
   # Recompute the in-progress timeline, then push the refreshed Gantt chart to
   # every open board via Turbo Streams.
   def refresh_schedule_and_chart
-    Todo.reschedule_in_progress!(current_user)
-    Todo.broadcast_gantt(current_user)
+    Todo.reschedule_in_progress!(current_household)
+    Todo.broadcast_gantt(current_household)
   end
 end

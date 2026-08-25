@@ -12,7 +12,7 @@ class GroceryListsController < ApplicationController
       { color: 'mist',       label: 'Spices' }
     ]
 
-    @grocery_lists = current_user.grocery_lists
+    @grocery_lists = current_household.grocery_lists
                                  .where("week_of >= ?", @date)
                                  .where("week_of < ?", @date + 7)
                                  .includes(:ingredient)
@@ -25,12 +25,12 @@ class GroceryListsController < ApplicationController
   end
 
   def generate
-    meals = current_user.meals
+    meals = current_household.meals
                         .where("date >= ?", @date)
                         .where("date < ?", @date + 7)
                         .includes(recipe: { recipe_ingredients: { ingredient: :nutrition_fact } })
 
-    current_user.grocery_lists
+    current_household.grocery_lists
                 .where("week_of >= ?", @date)
                 .where("week_of < ?", @date + 7)
                 .destroy_all
@@ -67,7 +67,8 @@ class GroceryListsController < ApplicationController
     end
 
     ingredient_data.each do |ingredient_id, data|
-      current_user.grocery_lists.create!(
+      current_household.grocery_lists.create!(
+        user: current_user,
         ingredient_id: ingredient_id,
         units: data[:units],
         meal_ids: data[:meal_ids].uniq,
@@ -86,12 +87,13 @@ class GroceryListsController < ApplicationController
   def edit; end
 
   def create
-    @grocery_list = current_user.grocery_lists.build(grocery_list_params)
+    @grocery_list = current_household.grocery_lists.build(grocery_list_params)
+    @grocery_list.user = current_user
 
     respond_to do |format|
       if @grocery_list.save
         @grocery_list.broadcast_append_to(
-          "grocery_lists",
+          current_household, "grocery_lists",
           target: "grocery_lists",
           partial: "grocery_lists/grocery_list",
           locals: { grocery_list: @grocery_list }
@@ -143,7 +145,7 @@ class GroceryListsController < ApplicationController
   private
 
   def set_grocery_list
-    @grocery_list = current_user.grocery_lists.find(params.expect(:id))
+    @grocery_list = current_household.grocery_lists.find(params.expect(:id))
     @units = @grocery_list.units
   end
 

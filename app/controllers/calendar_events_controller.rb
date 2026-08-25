@@ -7,18 +7,18 @@ class CalendarEventsController < ApplicationController
   end
 
   def new
-    @event = current_user.calendar_events.build(
+    @event = current_household.calendar_events.build(
       starts_at: parse_datetime(params[:starts_at]) || Time.zone.now.beginning_of_hour + 1.hour,
       ends_at:   parse_datetime(params[:ends_at])   || Time.zone.now.beginning_of_hour + 2.hours,
       all_day:   params[:all_day] == "true",
-      calendar_source_id: params[:calendar_source_id] || current_user.calendar_sources.first&.id
+      calendar_source_id: params[:calendar_source_id] || current_household.calendar_sources.first&.id
     )
-    @sources = current_user.calendar_sources.ordered
+    @sources = current_household.calendar_sources.ordered
   end
 
   def create
-    @event = current_user.calendar_events.build(event_params)
-    @sources = current_user.calendar_sources.ordered
+    @event = current_household.calendar_events.build(event_params)
+    @sources = current_household.calendar_sources.ordered
     if @event.save
       respond_to do |format|
         format.turbo_stream
@@ -30,11 +30,11 @@ class CalendarEventsController < ApplicationController
   end
 
   def edit
-    @sources = current_user.calendar_sources.ordered
+    @sources = current_household.calendar_sources.ordered
   end
 
   def update
-    @sources = current_user.calendar_sources.ordered
+    @sources = current_household.calendar_sources.ordered
     if @event.update(event_params)
       respond_to do |format|
         format.turbo_stream
@@ -57,7 +57,7 @@ class CalendarEventsController < ApplicationController
   private
 
   def set_event
-    @event = current_user.calendar_events.find(params[:id])
+    @event = current_household.calendar_events.find(params[:id])
   end
 
   def event_params

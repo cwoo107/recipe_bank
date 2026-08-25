@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_155809) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -56,6 +56,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.text "description"
     t.datetime "ends_at", null: false
     t.string "external_uid"
+    t.integer "household_id", null: false
     t.string "location"
     t.string "recurrence_rule"
     t.datetime "starts_at", null: false
@@ -68,6 +69,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.index ["calendar_source_id"], name: "index_calendar_events_on_calendar_source_id"
     t.index ["ends_at"], name: "index_calendar_events_on_ends_at"
     t.index ["external_uid"], name: "index_calendar_events_on_external_uid"
+    t.index ["household_id", "starts_at"], name: "index_calendar_events_on_household_id_and_starts_at"
+    t.index ["household_id"], name: "index_calendar_events_on_household_id"
     t.index ["starts_at"], name: "index_calendar_events_on_starts_at"
     t.index ["user_id", "starts_at"], name: "index_calendar_events_on_user_id_and_starts_at"
     t.index ["user_id"], name: "index_calendar_events_on_user_id"
@@ -78,6 +81,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.string "color", default: "olive", null: false
     t.datetime "created_at", null: false
     t.string "external_id"
+    t.integer "household_id", null: false
     t.string "ical_url"
     t.datetime "last_synced_at"
     t.string "name", null: false
@@ -89,6 +93,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.boolean "visible", default: true, null: false
+    t.index ["household_id", "position"], name: "index_calendar_sources_on_household_id_and_position"
+    t.index ["household_id"], name: "index_calendar_sources_on_household_id"
     t.index ["provider"], name: "index_calendar_sources_on_provider"
     t.index ["user_id", "position"], name: "index_calendar_sources_on_user_id_and_position"
     t.index ["user_id"], name: "index_calendar_sources_on_user_id"
@@ -115,6 +121,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
   create_table "grocery_lists", force: :cascade do |t|
     t.boolean "checked"
     t.datetime "created_at", null: false
+    t.integer "household_id", null: false
     t.integer "ingredient_id", null: false
     t.boolean "manually_adjusted"
     t.text "meal_ids"
@@ -122,6 +129,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.date "week_of"
+    t.index ["household_id"], name: "index_grocery_lists_on_household_id"
     t.index ["ingredient_id"], name: "index_grocery_lists_on_ingredient_id"
     t.index ["user_id"], name: "index_grocery_lists_on_user_id"
   end
@@ -172,11 +180,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
   create_table "meals", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date"
+    t.integer "household_id", null: false
     t.string "meal_name"
     t.integer "recipe_id", null: false
     t.integer "servings"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.index ["household_id"], name: "index_meals_on_household_id"
     t.index ["recipe_id"], name: "index_meals_on_recipe_id"
     t.index ["user_id"], name: "index_meals_on_user_id"
   end
@@ -267,6 +277,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.text "description"
     t.datetime "end_date"
     t.integer "estimated_time_to_complete"
+    t.integer "household_id", null: false
     t.integer "position", default: 0, null: false
     t.integer "priority", null: false
     t.datetime "start_date"
@@ -274,6 +285,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["household_id", "status", "position"], name: "index_todos_on_household_id_and_status_and_position"
+    t.index ["household_id", "status", "start_date"], name: "index_todos_on_household_id_and_status_and_start_date"
+    t.index ["household_id", "status"], name: "index_todos_on_household_id_and_status"
+    t.index ["household_id"], name: "index_todos_on_household_id"
     t.index ["user_id", "status", "position"], name: "index_todos_on_user_id_and_status_and_position"
     t.index ["user_id", "status", "start_date"], name: "index_todos_on_user_id_and_status_and_start_date"
     t.index ["user_id", "status"], name: "index_todos_on_user_id_and_status"
@@ -302,14 +317,40 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  create_table "weekly_plan_sections", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.string "status", default: "not_started", null: false
+    t.datetime "status_changed_at"
+    t.datetime "updated_at", null: false
+    t.integer "updated_by_id"
+    t.integer "weekly_plan_id", null: false
+    t.index ["updated_by_id"], name: "index_weekly_plan_sections_on_updated_by_id"
+    t.index ["weekly_plan_id", "key"], name: "index_weekly_plan_sections_on_weekly_plan_id_and_key", unique: true
+    t.index ["weekly_plan_id"], name: "index_weekly_plan_sections_on_weekly_plan_id"
+  end
+
+  create_table "weekly_plans", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "currently_planning", default: false, null: false
+    t.integer "household_id", null: false
+    t.datetime "updated_at", null: false
+    t.date "week_start", null: false
+    t.index ["household_id", "week_start"], name: "index_weekly_plans_on_household_id_and_week_start", unique: true
+    t.index ["household_id"], name: "index_weekly_plans_on_household_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "calendar_events", "calendar_sources"
+  add_foreign_key "calendar_events", "households"
   add_foreign_key "calendar_events", "users"
+  add_foreign_key "calendar_sources", "households"
   add_foreign_key "calendar_sources", "users"
   add_foreign_key "collection_recipes", "collections"
   add_foreign_key "collection_recipes", "recipes"
   add_foreign_key "collections", "users"
+  add_foreign_key "grocery_lists", "households"
   add_foreign_key "grocery_lists", "ingredients"
   add_foreign_key "grocery_lists", "users"
   add_foreign_key "household_members", "households"
@@ -318,6 +359,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
   add_foreign_key "ingredient_tags", "ingredients"
   add_foreign_key "ingredient_tags", "tags"
   add_foreign_key "ingredients", "users", column: "created_by_id"
+  add_foreign_key "meals", "households"
   add_foreign_key "meals", "recipes"
   add_foreign_key "meals", "users"
   add_foreign_key "nutrition_facts", "ingredients"
@@ -329,7 +371,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_190043) do
   add_foreign_key "recipes", "users"
   add_foreign_key "steps", "recipes"
   add_foreign_key "tags", "users"
+  add_foreign_key "todos", "households"
   add_foreign_key "todos", "users"
   add_foreign_key "user_favorites", "recipes"
   add_foreign_key "user_favorites", "users"
+  add_foreign_key "weekly_plan_sections", "users", column: "updated_by_id"
+  add_foreign_key "weekly_plan_sections", "weekly_plans"
+  add_foreign_key "weekly_plans", "households"
 end

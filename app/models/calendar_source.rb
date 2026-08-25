@@ -1,5 +1,5 @@
 class CalendarSource < ApplicationRecord
-  acts_as_list scope: :user
+  acts_as_list scope: :household
 
   PROVIDERS = %w[google apple outlook ical].freeze
 
@@ -13,6 +13,7 @@ class CalendarSource < ApplicationRecord
   }.freeze
 
   belongs_to :user
+  belongs_to :household
   has_many :calendar_events, dependent: :destroy
 
   validates :name,     presence: true, length: { maximum: 100 }

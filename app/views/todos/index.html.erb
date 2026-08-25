@@ -16,7 +16,7 @@
 %>
 
 <%# Live updates for the Gantt chart (requires Action Cable / Turbo Streams) %>
-<%= turbo_stream_from current_user, "todos_gantt" %>
+<%= turbo_stream_from current_household, "todos_gantt" %>
 
 <div class="w-full">
   <%# Page header %>
@@ -28,7 +28,7 @@
         </span>
       </h1>
       <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
-        <%= current_user.todos.count %> task<%= current_user.todos.count == 1 ? "" : "s" %> across all columns
+        <%= current_household.todos.count %> task<%= current_household.todos.count == 1 ? "" : "s" %> across all columns
       </p>
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0">
@@ -113,5 +113,5 @@
   </div>
 
   <%# Weekly schedule (Gantt) %>
-  <%= render "todos/gantt", user: current_user %>
+  <%= render "todos/gantt", household: current_household %>
 </div>

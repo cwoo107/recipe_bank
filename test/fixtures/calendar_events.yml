@@ -1,11 +1,19 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-# This model initially had no columns defined. If you add columns to the
-# model remove the "{}" from the fixture names and add the columns immediately
-# below each fixture, per the syntax in the comments below
-#
-one: {}
-# column: value
-#
-two: {}
-# column: value
+one:
+  calendar_source: one
+  household: one
+  user: one # alice
+  title: "Dentist appointment"
+  starts_at: 2026-02-10 09:00:00
+  ends_at: 2026-02-10 10:00:00
+  status: confirmed
+
+two:
+  calendar_source: two
+  household: two
+  user: three # carol
+  title: "Team meeting"
+  starts_at: 2026-02-10 13:00:00
+  ends_at: 2026-02-10 14:00:00
+  status: confirmed

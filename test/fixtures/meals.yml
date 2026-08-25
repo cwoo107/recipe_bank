@@ -2,10 +2,16 @@
 
 one:
   recipe: one
-  meal_name: MyString
+  household: one
+  user: one # alice
+  meal_name: Dinner
   date: 2026-01-07
+  servings: 4
 
 two:
   recipe: two
-  meal_name: MyString
+  household: two
+  user: three # carol
+  meal_name: Dinner
   date: 2026-01-07
+  servings: 4

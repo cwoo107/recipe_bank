@@ -3,7 +3,7 @@
     <div class="flex h-16 justify-between">
       <div class="flex">
         <div class="flex shrink-0 items-center">
-          <%= link_to meals_path, class: "flex items-center gap-2" do %>
+          <%= link_to dashboard_path, class: "flex items-center gap-2" do %>
             <span class="text-2xl dark:text-white">
               <span class="text-[#5f734c] font-bold" style="font-family: 'Instrument Serif', serif;">Homemakers<span class="text-olive-800">Haven</span></span>
             </span>
@@ -11,6 +11,8 @@
         </div>
 
         <div class="hidden sm:ml-8 sm:flex sm:gap-x-4">
+          <%= link_to "Dashboard", dashboard_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(dashboard_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "Meal Planning", meals_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(meals_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "Shopping List", grocery_lists_path,
@@ -80,6 +82,8 @@
   <%# Mobile menu panel %>
   <div class="hidden" data-mobile-menu-target="menu">
     <div class="space-y-1 pb-3 pt-2">
+      <%= link_to "Dashboard", dashboard_path,
+                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(dashboard_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "Meal Planning", meals_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(meals_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "Shopping List", grocery_lists_path,

@@ -83,6 +83,7 @@ class CalendarSyncJob < ApplicationJob
 
         attrs = {
           user_id:         source.user_id,
+          household_id:    source.household_id,
           title:           vevent.summary.to_s.strip.presence || "(No title)",
           description:     vevent.description.to_s.strip.presence,
           location:        vevent.location.to_s.strip.presence,

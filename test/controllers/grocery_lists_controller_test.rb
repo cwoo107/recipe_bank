@@ -2,7 +2,8 @@ require "test_helper"
 
 class GroceryListsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @grocery_list = grocery_lists(:one)
+    @grocery_list = grocery_lists(:one) # belongs to household :one (alice + bob)
+    sign_in users(:one) # alice
   end
 
   test "should get index" do
@@ -17,9 +18,10 @@ class GroceryListsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create grocery_list" do
     assert_difference("GroceryList.count") do
-      post grocery_lists_url, params: { grocery_list: { checked: @grocery_list.checked, ingredient_id: @grocery_list.ingredient_id, manually_adjusted: @grocery_list.manually_adjusted, meal_id: @grocery_list.meal_id, units: @grocery_list.units, week_of: @grocery_list.week_of } }
+      post create_grocery_list_url, params: { grocery_list: { checked: @grocery_list.checked, ingredient_id: @grocery_list.ingredient_id, manually_adjusted: @grocery_list.manually_adjusted, units: @grocery_list.units, week_of: @grocery_list.week_of } }
     end
 
+    assert_equal households(:one), GroceryList.last.household
     assert_redirected_to grocery_list_url(GroceryList.last)
   end
 
@@ -34,7 +36,7 @@ class GroceryListsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update grocery_list" do
-    patch grocery_list_url(@grocery_list), params: { grocery_list: { checked: @grocery_list.checked, ingredient_id: @grocery_list.ingredient_id, manually_adjusted: @grocery_list.manually_adjusted, meal_id: @grocery_list.meal_id, units: @grocery_list.units, week_of: @grocery_list.week_of } }
+    patch grocery_list_url(@grocery_list), params: { grocery_list: { checked: @grocery_list.checked, ingredient_id: @grocery_list.ingredient_id, manually_adjusted: @grocery_list.manually_adjusted, units: @grocery_list.units, week_of: @grocery_list.week_of } }
     assert_redirected_to grocery_list_url(@grocery_list)
   end
 
@@ -44,5 +46,19 @@ class GroceryListsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to grocery_lists_url
+  end
+
+  test "another member of the same household can see the grocery list" do
+    sign_in users(:two) # bob, also in household :one
+
+    get grocery_list_url(@grocery_list)
+    assert_response :success
+  end
+
+  test "a user in a different household cannot see the grocery list" do
+    sign_in users(:three) # carol, household :two
+
+    get grocery_list_url(@grocery_list)
+    assert_response :not_found
   end
 end

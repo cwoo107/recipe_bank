@@ -1,0 +1,33 @@
+<% content_for :title, "Plan Your Week — #{@dashboard_section.label}" %>
+
+<div class="w-full max-w-6xl mx-auto">
+  <%= render "plan_week/progress", sections: @sections, current_key: @dashboard_section.key %>
+
+  <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+    <div class="flex items-center gap-2.5 px-4 py-3 border-b border-gray-200 dark:border-white/10">
+      <%= render "dashboard/icon", name: @dashboard_section.icon_name %>
+      <h1 class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">
+        <%= @dashboard_section.label %>
+      </h1>
+    </div>
+
+    <div class="p-4 sm:p-6">
+      <%= render "plan_week/#{@dashboard_section.key}_step", section: @dashboard_section %>
+    </div>
+  </div>
+
+  <div class="mt-4 flex items-center justify-between gap-3">
+    <% if @previous_key %>
+      <%= link_to plan_week_step_path(section: @previous_key),
+                  class: "text-sm font-medium text-gray-500 hover:text-[#5f734c] dark:text-gray-400 dark:hover:text-[#7a8f62]" do %>
+        ← Back
+      <% end %>
+    <% else %>
+      <%= link_to "← Back to dashboard", dashboard_path, class: "text-sm font-medium text-gray-500 hover:text-[#5f734c] dark:text-gray-400 dark:hover:text-[#7a8f62]" %>
+    <% end %>
+
+    <%= button_to "Skip this step", plan_week_step_path(section: @dashboard_section.key),
+                  method: :patch, params: { status: "skipped" },
+                  class: "text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-transparent p-0 border-0" %>
+  </div>
+</div>

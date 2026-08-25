@@ -110,10 +110,14 @@ class OllamaAssistant
     end
   end
 
-  def resolve_ingredients(unmatched_ingredients, existing_ingredients_sample)
-    Rails.logger.info "=== RESOLVING #{unmatched_ingredients.length} UNMATCHED INGREDIENTS ==="
+  # unmatched_with_candidates: array of { ingredient: <parsed ingredient hash>,
+  # candidates: [<existing ingredient name>, ...] }, one candidate shortlist
+  # per ingredient (see IngredientMatcher#candidates_for) rather than a single
+  # sample shared across all of them.
+  def resolve_ingredients(unmatched_with_candidates)
+    Rails.logger.info "=== RESOLVING #{unmatched_with_candidates.length} UNMATCHED INGREDIENTS ==="
 
-    prompt = build_prompt(unmatched_ingredients, existing_ingredients_sample)
+    prompt = build_prompt(unmatched_with_candidates)
 
     begin
       response = self.class.post('/api/generate', {
@@ -135,17 +139,7 @@ class OllamaAssistant
 
         if parsed.empty? || !parsed.is_a?(Array)
           Rails.logger.warn "Ollama returned invalid resolution data, using fallback"
-          return unmatched_ingredients.map do |ing|
-            {
-              'original' => ing[:original],
-              'action' => 'create',
-              'match_id' => nil,
-              'name' => ing[:name],
-              'quantity' => ing[:quantity],
-              'unit' => ing[:unit],
-              'family' => guess_family_programmatically(ing[:name])
-            }
-          end
+          return fallback_resolution(unmatched_with_candidates)
         end
 
         return parsed
@@ -155,17 +149,7 @@ class OllamaAssistant
     rescue => e
       Rails.logger.error("Ollama resolution error: #{e.class} - #{e.message}")
 
-      return unmatched_ingredients.map do |ing|
-        {
-          'original' => ing[:original],
-          'action' => 'create',
-          'match_id' => nil,
-          'name' => ing[:name],
-          'quantity' => ing[:quantity],
-          'unit' => ing[:unit],
-          'family' => guess_family_programmatically(ing[:name])
-        }
-      end
+      return fallback_resolution(unmatched_with_candidates)
     end
   end
 
@@ -243,16 +227,22 @@ class OllamaAssistant
     PROMPT
   end
 
-  def build_prompt(unmatched, existing_sample)
+  def build_prompt(unmatched_with_candidates)
+    items = unmatched_with_candidates.map do |entry|
+      candidates_text = entry[:candidates].any? ? entry[:candidates].join(', ') : '(no similar ingredients found)'
+      "- Ingredient: \"#{entry[:ingredient][:original]}\"\n  Candidates: #{candidates_text}"
+    end.join("\n")
+
     <<~PROMPT
       You are helping match recipe ingredients to a database and classify them into families.
-      
-      Unmatched ingredients from recipe:
-      #{unmatched.map { |i| "- #{i[:original]}" }.join("\n")}
-      
-      Sample of existing ingredients in database:
-      #{existing_sample.join(", ")}
-      
+
+      For each ingredient below, decide whether it is the same as one of ITS OWN
+      candidate existing ingredients, or should be created as new. Only return
+      "match" with a match_name that is exactly one of that ingredient's own
+      listed candidates — never invent a match_name that isn't listed there.
+
+      #{items}
+
       Available families:
       - protein: meat, poultry, fish, eggs, tofu, beans, legumes
       - produce: fruits, vegetables, fresh herbs
@@ -260,16 +250,13 @@ class OllamaAssistant
       - grain: bread, pasta, rice, flour, oats, cereal
       - fat: cooking oils, butter, lard, shortening
       - spices: dried herbs, spices, seasonings, salt, pepper
-      
-      For each unmatched ingredient, decide if it should match an existing ingredient or be created as new.
-      Also assign the appropriate family.
-      
+
       Respond with ONLY valid JSON array (no markdown, no explanation):
       [
         {
           "original": "ingredient text from recipe",
           "action": "match" or "create",
-          "match_name": "name of existing ingredient if match, else null",
+          "match_name": "one of that ingredient's candidates if match, else null",
           "name": "clean ingredient name",
           "quantity": number,
           "unit": "standardized unit or null",
@@ -277,6 +264,21 @@ class OllamaAssistant
         }
       ]
     PROMPT
+  end
+
+  def fallback_resolution(unmatched_with_candidates)
+    unmatched_with_candidates.map do |entry|
+      ing = entry[:ingredient]
+      {
+        'original' => ing[:original],
+        'action' => 'create',
+        'match_id' => nil,
+        'name' => ing[:name],
+        'quantity' => ing[:quantity],
+        'unit' => ing[:unit],
+        'family' => guess_family_programmatically(ing[:name])
+      }
+    end
   end
 
   def parse_response(response_text)

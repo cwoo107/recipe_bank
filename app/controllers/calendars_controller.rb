@@ -44,12 +44,12 @@ class CalendarsController < ApplicationController
   private
 
   def set_view_params
-    @sources    = current_user.calendar_sources.ordered
+    @sources    = current_household.calendar_sources.ordered
     @today      = Time.zone.today   # available in all views for the switcher
   end
 
   def load_events(from, to)
-    @events = current_user.calendar_events
+    @events = current_household.calendar_events
                           .visible
                           .in_range(from, to)
                           .includes(:calendar_source)

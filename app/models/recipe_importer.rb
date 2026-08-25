@@ -158,6 +158,7 @@ class RecipeImporter
 
   def classify_and_resolve_ingredients(matched_results)
     ai = OllamaAssistant.new(model: 'llama2')
+    matcher = IngredientMatcher.new
 
     # Get all ingredients that need families (both matched and unmatched)
     all_ingredients = matched_results.map { |r| r[:parsed] }
@@ -182,10 +183,22 @@ class RecipeImporter
     unmatched = matched_results.select { |r| r[:confidence] < 0.7 }
     if unmatched.any?
       Rails.logger.info "=== Resolving #{unmatched.length} unmatched ingredients with AI ==="
-      unmatched_parsed = unmatched.map { |r| r[:parsed] }
-      existing_sample = Ingredient.limit(50).pluck(:ingredient)
 
-      ai_resolutions = ai.resolve_ingredients(unmatched_parsed, existing_sample)
+      # Give the AI a relevant shortlist per ingredient (via the same
+      # fuzzy/Levenshtein ranking IngredientMatcher already uses) instead of
+      # one arbitrary sample shared across all of them.
+      unmatched_with_candidates = unmatched.map do |r|
+        {
+          ingredient: r[:parsed],
+          candidates: matcher.candidates_for(r[:parsed][:search_name], limit: 10)
+        }
+      end
+
+      ai_resolutions = ai.resolve_ingredients(unmatched_with_candidates)
+
+      candidates_by_original = unmatched_with_candidates.each_with_object({}) do |entry, memo|
+        memo[entry[:ingredient][:original]] = entry[:candidates]
+      end
 
       # Update matched_results with AI suggestions
       ai_resolutions.each do |resolution|
@@ -193,11 +206,17 @@ class RecipeImporter
         next unless result
 
         if resolution['action'] == 'match' && resolution['match_name']
-          ingredient = Ingredient.find_by('LOWER(ingredient) = ?', resolution['match_name'].downcase)
-          if ingredient
-            result[:match] = ingredient
-            result[:confidence] = 0.75
-            result[:method] = 'ai_match'
+          allowed_candidates = candidates_by_original[resolution['original']] || []
+
+          if allowed_candidates.any? { |candidate| candidate.casecmp?(resolution['match_name']) }
+            ingredient = Ingredient.find_by('LOWER(ingredient) = ?', resolution['match_name'].downcase)
+            if ingredient
+              result[:match] = ingredient
+              result[:confidence] = 0.75
+              result[:method] = 'ai_match'
+            end
+          else
+            Rails.logger.warn "AI suggested match_name #{resolution['match_name'].inspect} for #{resolution['original'].inspect} that wasn't in its candidate list — ignoring"
           end
         end
 
