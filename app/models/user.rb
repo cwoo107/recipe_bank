@@ -27,6 +27,11 @@ class User < ApplicationRecord
   # (set right after this record saves) — skip provisioning an owned
   # household for them.
   attribute :skip_household_provisioning, :boolean, default: false
+
+  # Collected on the sign-up form so a new owner can name their household
+  # instead of getting the generic default. Not a column — never persisted.
+  attribute :household_family_name, :string
+
   after_create :provision_household, unless: :skip_household_provisioning
 
   def favorited?(recipe)
@@ -41,6 +46,6 @@ class User < ApplicationRecord
   def provision_household
     return if household.present?
 
-    create_owned_household!(family_name: Household.default_family_name_for(self))
+    create_owned_household!(family_name: household_family_name.presence || Household.default_family_name_for(self))
   end
 end

@@ -48,6 +48,8 @@
                 <p class="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
                 <p class="text-sm font-medium text-gray-900 dark:text-white truncate"><%= current_user.email %></p>
               </div>
+              <%= link_to "Manage Household", household_path,
+                          class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
               <%= link_to "Account settings", edit_user_registration_path,
                           class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
               <%= button_to "Sign out", destroy_user_session_path, method: :delete,
@@ -95,7 +97,6 @@
       <%= link_to "Calendar", calendars_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(calendars_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
 
-
     </div>
 
     <% if user_signed_in? %>
@@ -104,6 +105,8 @@
           <p class="text-xs text-gray-500 dark:text-gray-400">Signed in as</p>
           <p class="text-sm font-medium text-gray-900 dark:text-white truncate"><%= current_user.email %></p>
         </div>
+        <%= link_to "Manage Household", household_path,
+                    class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
         <%= link_to "Account settings", edit_user_registration_path,
                     class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
         <%= button_to "Sign out", destroy_user_session_path, method: :delete,

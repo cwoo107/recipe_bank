@@ -1,6 +1,7 @@
 class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   before_action :set_user_timezone
+  before_action :configure_permitted_parameters, if: :devise_controller?
   helper_method :current_household, :active_weekly_plan
   layout :resolve_layout
 
@@ -21,6 +22,10 @@ class ApplicationController < ActionController::Base
 
   def resolve_layout
     devise_controller? ? "marketing" : "application"
+  end
+
+  def configure_permitted_parameters
+    devise_parameter_sanitizer.permit(:sign_up, keys: [:household_family_name])
   end
 
   def set_user_timezone
