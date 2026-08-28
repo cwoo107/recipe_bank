@@ -78,6 +78,13 @@ class RecurringMeal < ApplicationRecord
     end
   end
 
+  # Meals this rule generated that are still attached (not individually
+  # detached) and dated today or later — what "remove upcoming meals too"
+  # on delete would actually clear.
+  def upcoming_meals
+    meals.where("date >= ?", Date.current)
+  end
+
   def date_range_description
     if end_date.nil?
       "Starting #{start_date.strftime('%b %d')} · ongoing"

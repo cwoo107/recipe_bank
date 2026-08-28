@@ -8,7 +8,11 @@ one:
   pattern_type: days_of_week
   days_of_week: "[0]"
   start_date: 2026-01-01
-  end_date:
+  # Bounded on purpose (not ongoing): an open-ended rule would keep matching
+  # whatever the real "current week" is whenever tests run, silently
+  # generating a phantom meal that pollutes unrelated tests (e.g. dashboard
+  # summary counts) touching household :one's meals for "today".
+  end_date: 2026-01-31
 
 two:
   household: two

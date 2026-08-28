@@ -17,8 +17,17 @@ class RecurringMealsController < ApplicationController
   end
 
   def destroy
+    remove_upcoming = params[:remove_upcoming] == "1"
+    removed_count = remove_upcoming ? @recurring_meal.upcoming_meals.destroy_all.size : 0
+
     @recurring_meal.destroy!
-    redirect_to recurring_meals_path, notice: "Recurring meal removed. Meals it already created were left on the calendar."
+
+    notice = if remove_upcoming
+      "Recurring meal removed, along with #{helpers.pluralize(removed_count, 'upcoming meal')}."
+    else
+      "Recurring meal removed. Meals it already created were left on the calendar."
+    end
+    redirect_to recurring_meals_path, notice: notice
   end
 
   private

@@ -18,9 +18,40 @@
             </div>
             <div class="flex items-center gap-3 shrink-0">
               <%= link_to "Edit", edit_recurring_meal_path(rule), class: "text-sm text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
-              <%= button_to "Remove", recurring_meal_path(rule), method: :delete,
-                            data: { turbo_confirm: "Remove this recurring meal? Meals already on the calendar will be kept." },
-                            class: "text-sm text-dusty-rose-600 hover:text-dusty-rose-800 dark:text-dusty-rose-400" %>
+
+              <div data-controller="dialog" data-action="click->dialog#backdropClose">
+                <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-96 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+                  <h3 class="text-base font-semibold text-gray-900 dark:text-white">Remove recurring meal?</h3>
+                  <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+                    <%= rule.meal_name %> · <%= rule.recipe.title %> — <%= rule.description.downcase %>
+                  </p>
+                  <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+                    <% upcoming_count = rule.upcoming_meals.count %>
+                    <% if upcoming_count.positive? %>
+                      This series has <%= pluralize(upcoming_count, "upcoming meal") %> already on the calendar. Keep them, or remove them along with the series?
+                    <% else %>
+                      This series has no upcoming meals on the calendar yet.
+                    <% end %>
+                  </p>
+
+                  <div class="mt-5 flex flex-col gap-2">
+                    <%= button_to "Keep upcoming meals", recurring_meal_path(rule), method: :delete,
+                                  params: { remove_upcoming: "0" },
+                                  class: "w-full rounded-lg px-4 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white text-sm font-medium cursor-pointer transition" %>
+                    <%= button_to "Remove upcoming meals too", recurring_meal_path(rule), method: :delete,
+                                  params: { remove_upcoming: "1" },
+                                  class: "w-full rounded-lg px-4 py-2.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 text-white text-sm font-medium cursor-pointer transition" %>
+                    <button type="button" data-action="dialog#close"
+                            class="w-full rounded-lg px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white text-sm font-medium transition">
+                      Cancel
+                    </button>
+                  </div>
+                </dialog>
+
+                <button type="button" data-action="dialog#open" class="text-sm text-dusty-rose-600 hover:text-dusty-rose-800 dark:text-dusty-rose-400">
+                  Remove
+                </button>
+              </div>
             </div>
           </li>
         <% end %>

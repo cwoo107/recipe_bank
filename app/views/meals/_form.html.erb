@@ -16,15 +16,34 @@
        data-searchable-select-placeholder-value="Search for a recipe...">
 
     <%# Source tabs: search everything, or narrow to one collection first %>
-    <div class="flex gap-2 mb-3">
-      <button type="button" data-searchable-select-target="searchTab" data-action="searchable-select#showSearch"
-              class="px-3 py-1.5 text-sm font-medium rounded-md border-b-2 border-[#5f734c] text-[#5f734c] dark:border-[#7a8f62] dark:text-[#7a8f62]">
-        Search
-      </button>
-      <button type="button" data-searchable-select-target="collectionTab" data-action="searchable-select#showCollection"
-              class="px-3 py-1.5 text-sm font-medium rounded-md border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
-        From a collection
-      </button>
+    <div class="mb-3">
+      <div class="grid grid-cols-1 sm:hidden">
+        <select aria-label="Select a recipe source"
+                data-searchable-select-target="sourceSelect"
+                data-action="change->searchable-select#sourceSelectChanged"
+                class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-gray-100 dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-[#7a8f62]">
+          <option value="search">Search for a Recipe</option>
+          <option value="collection">Add Recipe from a Collection</option>
+        </select>
+        <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end fill-gray-500 dark:fill-gray-400">
+          <path clip-rule="evenodd" fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" />
+        </svg>
+      </div>
+      <div class="hidden sm:block">
+        <div class="border-b border-gray-200 dark:border-white/10">
+          <nav aria-label="Recipe source tabs" class="-mb-px flex space-x-8">
+            <button type="button" data-searchable-select-target="searchTab" data-action="searchable-select#showSearch"
+                    aria-current="page"
+                    class="border-b-2 border-[#5f734c] px-1 py-4 text-sm font-medium whitespace-nowrap text-[#5f734c] dark:border-[#7a8f62] dark:text-[#7a8f62]">
+              Search for a Recipe
+            </button>
+            <button type="button" data-searchable-select-target="collectionTab" data-action="searchable-select#showCollection"
+                    class="border-b-2 border-transparent px-1 py-4 text-sm font-medium whitespace-nowrap text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200">
+              Add Recipe from a Collection
+            </button>
+          </nav>
+        </div>
+      </div>
     </div>
 
     <%# Tag filter %>

@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
     static targets = ["select", "searchInput", "dropdown", "option",
-                       "searchTab", "collectionTab", "collectionPicker", "tagChip"]
+                       "searchTab", "collectionTab", "sourceSelect", "collectionPicker", "tagChip"]
     static values = {
         placeholder: { type: String, default: "Search..." }
     }
@@ -117,6 +117,7 @@ export default class extends Controller {
         this.source = "search"
         if (this.hasCollectionPickerTarget) this.collectionPickerTarget.classList.add('hidden')
         this.setActiveTab(this.searchTabTarget, this.collectionTabTarget)
+        if (this.hasSourceSelectTarget) this.sourceSelectTarget.value = "search"
         this.applyFilters()
     }
 
@@ -124,7 +125,17 @@ export default class extends Controller {
         this.source = "collection"
         if (this.hasCollectionPickerTarget) this.collectionPickerTarget.classList.remove('hidden')
         this.setActiveTab(this.collectionTabTarget, this.searchTabTarget)
+        if (this.hasSourceSelectTarget) this.sourceSelectTarget.value = "collection"
         this.applyFilters()
+    }
+
+    // Mirrors the mobile <select> fallback shown below the sm breakpoint.
+    sourceSelectChanged(event) {
+        if (event.target.value === "collection") {
+            this.showCollection()
+        } else {
+            this.showSearch()
+        }
     }
 
     collectionChanged(event) {
@@ -162,10 +173,14 @@ export default class extends Controller {
 
     setActiveTab(active, inactive) {
         active.classList.add('border-[#5f734c]', 'text-[#5f734c]', 'dark:border-[#7a8f62]', 'dark:text-[#7a8f62]')
-        active.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400')
+        active.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700',
+                                 'dark:text-gray-400', 'dark:hover:border-white/20', 'dark:hover:text-gray-200')
+        active.setAttribute('aria-current', 'page')
 
         inactive.classList.remove('border-[#5f734c]', 'text-[#5f734c]', 'dark:border-[#7a8f62]', 'dark:text-[#7a8f62]')
-        inactive.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400')
+        inactive.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700',
+                                'dark:text-gray-400', 'dark:hover:border-white/20', 'dark:hover:text-gray-200')
+        inactive.removeAttribute('aria-current')
     }
 
     showDropdown() {

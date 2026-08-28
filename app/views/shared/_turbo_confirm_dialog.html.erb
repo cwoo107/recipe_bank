@@ -1,0 +1,20 @@
+<%# Single app-wide replacement for the browser's native confirm() popup.
+    Wires into every existing data-turbo-confirm="..." button/link automatically —
+    see app/javascript/controllers/turbo_confirm_controller.js. %>
+<dialog data-controller="turbo-confirm"
+        data-action="cancel->turbo-confirm#handleCancel click->turbo-confirm#backdropClick"
+        class="dark:bg-[#1a1f16] w-11/12 sm:w-96 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+  <h3 class="text-base font-semibold text-gray-900 dark:text-white">Please confirm</h3>
+  <p data-turbo-confirm-target="message" class="mt-2 text-sm text-gray-600 dark:text-gray-300"></p>
+
+  <div class="mt-5 flex flex-col gap-2">
+    <button type="button" data-action="click->turbo-confirm#accept" autofocus
+            class="w-full rounded-lg px-4 py-2.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 text-white text-sm font-medium cursor-pointer transition">
+      Confirm
+    </button>
+    <button type="button" data-action="click->turbo-confirm#cancel"
+            class="w-full rounded-lg px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white text-sm font-medium transition">
+      Cancel
+    </button>
+  </div>
+</dialog>
