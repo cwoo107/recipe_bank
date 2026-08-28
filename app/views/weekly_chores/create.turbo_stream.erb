@@ -1,0 +1,19 @@
+<%= turbo_stream.remove "due_chore_#{@weekly_chore.chore_id}" %>
+
+<% if params[:source] == "drag" %>
+  <%# JS drag flow already created a "pending_weekly_chore_N" placeholder in
+      the desktop grid — swap it for the real, saved card. %>
+  <%= turbo_stream.replace "pending_weekly_chore_#{@weekly_chore.chore_id}" do %>
+    <%= render "weekly_chore", weekly_chore: @weekly_chore %>
+  <% end %>
+<% else %>
+  <%# Plain "Add to this week" click — append into whichever day got picked,
+      in both the desktop grid and the mobile accordion. %>
+  <% day = @weekly_chore.scheduled_date.iso8601 %>
+  <%= turbo_stream.append "weekly_chores_day_desktop_#{day}" do %>
+    <%= render "weekly_chore", weekly_chore: @weekly_chore %>
+  <% end %>
+  <%= turbo_stream.append "weekly_chores_day_mobile_#{day}" do %>
+    <%= render "weekly_chore", weekly_chore: @weekly_chore %>
+  <% end %>
+<% end %>

@@ -1,0 +1,51 @@
+<%# locals: (weekly_chore:) %>
+<% chore = weekly_chore.chore %>
+<div id="weekly_chore_<%= weekly_chore.id %>"
+     data-weekly-chore-id="<%= weekly_chore.id %>"
+     data-controller="chore-item"
+     class="chore-card weekly-chore-<%= weekly_chore.id %> group relative rounded-md bg-white dark:bg-[#242b1e] border border-gray-200 dark:border-white/10 p-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+
+  <%# Drag handle (invisible but full-width, class used by chore_board_controller.js) %>
+  <div class="sortable-handle absolute inset-0 rounded-md cursor-grab active:cursor-grabbing" aria-hidden="true"></div>
+
+  <%# Only the checkbox and action buttons opt back into pointer events — the
+      rest of the card (including the name/assignee text) stays part of the
+      drag-handle hit area underneath, matching todos/_todo.html.erb. %>
+  <div class="relative z-10 pointer-events-none flex flex-col gap-1">
+    <div class="flex items-start gap-1.5 min-w-0">
+      <%= form_with model: weekly_chore, url: weekly_chore_path(weekly_chore), method: :patch,
+            class: "pointer-events-auto mt-0.5 shrink-0", data: { chore_item_target: "form", format: :turbo_stream } do |f| %>
+        <%= f.check_box :completed,
+              data: { action: "change->chore-item#toggleCheck" },
+              style: "accent-color: #5f734c;",
+              class: "size-4 rounded border-gray-300 focus:ring-[#5f734c] dark:border-gray-600" %>
+      <% end %>
+      <div class="min-w-0 flex-1">
+        <p class="text-xs font-medium text-gray-900 dark:text-white leading-snug <%= 'line-through opacity-50' if weekly_chore.completed? %>">
+          <%= chore.name %>
+        </p>
+        <% if weekly_chore.assignee %>
+          <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate"><%= weekly_chore.assignee.name %></p>
+        <% end %>
+        <div class="mt-1">
+          <%= render "chores/frequency_pill", chore: chore, small: true %>
+        </div>
+      </div>
+    </div>
+
+    <%# Bottom-right so the name/assignee/pill above have the full card
+        width to themselves. %>
+    <div class="pointer-events-auto flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+      <%= render "weekly_chores/chore_details_dialog", chore: chore %>
+
+      <%= button_to weekly_chore_path(weekly_chore), method: :delete,
+            class: "text-gray-400 hover:text-dusty-rose-600 dark:hover:text-dusty-rose-400 transition-colors",
+            data: { turbo: true },
+            aria: { label: "Remove #{chore.name} from this week" } do %>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="size-3.5" aria-hidden="true">
+          <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
+        </svg>
+      <% end %>
+    </div>
+  </div>
+</div>

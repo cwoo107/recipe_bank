@@ -1,0 +1,25 @@
+<%# locals: (chore:, week_start:) %>
+<div id="due_chore_<%= chore.id %>"
+     data-chore-id="<%= chore.id %>"
+     class="chore-card group relative flex flex-wrap items-center justify-between gap-3 px-4 py-3 cursor-grab active:cursor-grabbing">
+
+  <%# Drag handle (invisible but full-width, class used by chore_board_controller.js) %>
+  <div class="sortable-handle absolute inset-0 cursor-grab active:cursor-grabbing" aria-hidden="true"></div>
+
+  <div class="relative z-10 pointer-events-none min-w-0">
+    <div class="flex items-center gap-2 flex-wrap">
+      <p class="text-sm font-medium text-gray-900 dark:text-white"><%= chore.name %></p>
+      <%= render "chores/frequency_pill", chore: chore %>
+    </div>
+    <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+      <%= chore.assignee&.name || "Unassigned" %>
+    </p>
+  </div>
+
+  <div class="relative z-10 pointer-events-auto flex items-center gap-2 shrink-0">
+    <%= render "weekly_chores/chore_details_dialog", chore: chore %>
+    <%= button_to "Add to this week", weekly_chores_path(chore_id: chore.id, week_start: week_start),
+          method: :post,
+          class: "inline-flex items-center rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20 cursor-pointer" %>
+  </div>
+</div>

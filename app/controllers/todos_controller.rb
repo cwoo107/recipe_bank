@@ -22,8 +22,8 @@ class TodosController < ApplicationController
     if @todo.save
       # A brand-new todo created directly into "in_progress" or "done" never had
       # a previous status, so we pass nil (treated as "not in_progress").
-      @todo.apply_status_side_effects!(nil)
-      refresh_schedule_and_chart
+      reschedule_from = @todo.apply_status_side_effects!(nil)
+      refresh_schedule_and_chart(reschedule_from)
       @todo.reload
 
       respond_to do |format|
@@ -41,8 +41,8 @@ class TodosController < ApplicationController
     previous_status = @todo.status
 
     if @todo.update(todo_params)
-      @todo.apply_status_side_effects!(previous_status) if @todo.status != previous_status
-      refresh_schedule_and_chart
+      reschedule_from = @todo.status != previous_status ? @todo.apply_status_side_effects!(previous_status) : Date.current
+      refresh_schedule_and_chart(reschedule_from)
       @todo.reload
 
       respond_to do |format|
@@ -95,8 +95,8 @@ class TodosController < ApplicationController
 
     previous_status = @todo.status
     @todo.move_to_column!(new_status, params[:position])
-    @todo.apply_status_side_effects!(previous_status)
-    refresh_schedule_and_chart
+    reschedule_from = @todo.apply_status_side_effects!(previous_status)
+    refresh_schedule_and_chart(reschedule_from)
     @todo.reload
 
     respond_to do |format|
@@ -119,9 +119,12 @@ class TodosController < ApplicationController
   end
 
   # Recompute the in-progress timeline, then push the refreshed Gantt chart to
-  # every open board via Turbo Streams.
-  def refresh_schedule_and_chart
-    Todo.reschedule_in_progress!(current_household)
+  # every open board via Turbo Streams. `reschedule_from` is the cursor date
+  # to pack the queue from; pass `false` (as `apply_status_side_effects!` can)
+  # to skip repacking entirely — e.g. completing a todo that was already at
+  # the front of the queue shouldn't move anyone else's start date.
+  def refresh_schedule_and_chart(reschedule_from = Date.current)
+    Todo.reschedule_in_progress!(current_household, from: reschedule_from) if reschedule_from
     Todo.broadcast_gantt(current_household)
   end
 end

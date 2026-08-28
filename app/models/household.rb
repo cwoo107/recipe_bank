@@ -14,6 +14,7 @@ class Household < ApplicationRecord
   has_many :weekly_plans,     dependent: :destroy
 
   validates :family_name, presence: true
+  validates :minutes_per_day, presence: true, numericality: { only_integer: true, greater_than: 0 }
 
   def self.default_family_name_for(user)
     handle = user.email.to_s.split("@").first.presence || "New"

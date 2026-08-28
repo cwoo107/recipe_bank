@@ -7,9 +7,6 @@ class Todo < ApplicationRecord
   STATUSES   = %w[todo in_progress done].freeze
   PRIORITIES = { low: 1, medium: 2, high: 3, urgent: 4 }.freeze
 
-  # Scheduling model: every calendar day provides this many minutes of capacity.
-  MINUTES_PER_DAY = 30
-
   # Canvas (Chart.js) colours, pulled from the Design Guide palette.
   PRIORITY_CHART_COLORS = {
     "low"    => "#95a97d", # seafoam / sage
@@ -90,14 +87,34 @@ class Todo < ApplicationRecord
   # Apply the field side-effects of a status change. Call AFTER the status
   # itself has been set/saved. `previous_status` lets us tell
   # "in_progress -> done" apart from "todo -> done".
+  #
+  # Returns the cursor date that `reschedule_in_progress!` should pack the
+  # rest of the household's queue from, or `false` if no one else's schedule
+  # needs to move at all. Callers should feed this straight into
+  # `reschedule_in_progress!(household, from: ...)` (skipping the call
+  # entirely when it's `false`).
   def apply_status_side_effects!(previous_status)
+    reschedule_from = Date.current
+
     case status
     when "done"
       self.completed = true
-      self.end_date  = Time.current
 
       if previous_status == "in_progress" && start_date.present?
-        # Worked across N calendar days -> N * 30 minutes.
+        if start_date.to_date > Date.current
+          # Completed ahead of its scheduled slot — it jumped the queue, so
+          # it now occupies today instead of its original future start date,
+          # and whatever was queued behind it shifts up to fill in after it.
+          self.start_date = Date.current.beginning_of_day
+          self.end_date   = Date.current.end_of_day
+          reschedule_from = Date.current + 1
+        else
+          # Already at (or before) the front of the queue — completing it
+          # right on schedule doesn't free up or disturb anyone else's slot.
+          reschedule_from = false
+        end
+
+        # Worked across N calendar days -> N * household.minutes_per_day.
         self.actual_time_to_complete = inclusive_minutes_between(start_date, end_date)
       else
         # Straight from "todo" (or no recorded start): trust the estimate and
@@ -119,21 +136,26 @@ class Todo < ApplicationRecord
     end
 
     save!
+    reschedule_from
   end
 
   # ── The scheduler ─────────────────────────────────────────────────────
   #
   # Lays out every "in_progress" todo for a user along a timeline where each
-  # calendar day = MINUTES_PER_DAY of capacity. Higher priority is scheduled
-  # first; ties fall back to the user's kanban order (position), then id.
+  # calendar day = household.minutes_per_day of capacity. Higher priority is
+  # scheduled first; ties fall back to the user's kanban order (position),
+  # then id.
   #
   # Todos that have already started in the past (start_date < today) are
   # treated as "in flight" and keep their original start_date, so completing
   # a long-running task still reports the right actual time. Everything else
-  # is (re)packed by priority starting from today — which is what pushes a
-  # low-priority task later when an urgent one is dropped in.
-  def self.reschedule_in_progress!(household)
-    today = Date.current
+  # is (re)packed by priority starting from `from` (today by default) — which
+  # is what pushes a low-priority task later when an urgent one is dropped
+  # in, or later still when a same-day slot was already spent on a todo that
+  # jumped the queue (see `apply_status_side_effects!`).
+  def self.reschedule_in_progress!(household, from: Date.current)
+    today          = Date.current
+    minutes_per_day = household.minutes_per_day
 
     transaction do
       todos = household.todos.where(status: "in_progress").to_a
@@ -141,16 +163,16 @@ class Todo < ApplicationRecord
 
       # In-flight: freeze the start, refresh the end from the estimate.
       in_flight.each do |t|
-        days = days_for_minutes(t.estimated_time_to_complete)
+        days = days_for_minutes(t.estimated_time_to_complete, minutes_per_day)
         end_day = t.start_date.to_date + (days - 1)
         t.update_columns(end_date: end_day.end_of_day, completed: false, updated_at: Time.current)
       end
 
-      # Queued: pack by priority from today forward.
+      # Queued: pack by priority starting from the given cursor.
       ordered = queued.sort_by { |t| [ -priority_rank(t), t.position.to_i, t.id ] }
-      cursor  = today
+      cursor  = from
       ordered.each do |t|
-        days      = days_for_minutes(t.estimated_time_to_complete)
+        days      = days_for_minutes(t.estimated_time_to_complete, minutes_per_day)
         start_day = cursor
         end_day   = cursor + (days - 1)
         t.update_columns(
@@ -168,8 +190,8 @@ class Todo < ApplicationRecord
     PRIORITIES.fetch(todo.priority&.to_sym, 0)
   end
 
-  def self.days_for_minutes(minutes)
-    [ (minutes.to_f / MINUTES_PER_DAY).ceil, 1 ].max
+  def self.days_for_minutes(minutes, minutes_per_day)
+    [ (minutes.to_f / minutes_per_day).ceil, 1 ].max
   end
 
   # ── Gantt data (consumed by gantt_controller.js) ──────────────────────
@@ -255,11 +277,11 @@ class Todo < ApplicationRecord
     return 0 if start_at.blank? || end_at.blank?
     days = (end_at.to_date - start_at.to_date).to_i + 1
     days = 1 if days < 1
-    days * MINUTES_PER_DAY
+    days * household.minutes_per_day
   end
 
   def reverse_start_from(end_at, minutes)
-    days = self.class.days_for_minutes(minutes)
+    days = self.class.days_for_minutes(minutes, household.minutes_per_day)
     (end_at.to_date - (days - 1)).beginning_of_day
   end
 end

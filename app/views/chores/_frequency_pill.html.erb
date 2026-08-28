@@ -1,0 +1,4 @@
+<%# locals: (chore:, small: false) %>
+<span class="inline-flex items-center rounded-full font-medium <%= small ? "px-1.5 py-0.5 text-[9px]" : "px-2 py-0.5 text-xs" %> <%= chore.frequency_pill_classes %>">
+  <%= small ? chore.frequency_short_label : chore.frequency_label %>
+</span>

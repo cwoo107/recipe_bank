@@ -1,0 +1,55 @@
+<%# locals: (weekly_chores:, week_start:) %>
+<%
+  grouped = weekly_chores.group_by(&:scheduled_date)
+  days    = (0..6).map { |i| week_start + i }
+%>
+<div class="sm:hidden p-3 space-y-3">
+  <% days.each do |day| %>
+    <% is_today   = day == Date.current %>
+    <% day_chores = grouped[day] || [] %>
+
+    <div data-controller="accordion"
+         data-accordion-open-value="<%= is_today %>"
+         class="rounded-lg border overflow-hidden
+                <%= is_today ? 'border-[#5f734c] dark:border-[#7a8f62]' : 'border-gray-200 dark:border-white/10' %>
+                bg-[var(--ivory)] dark:bg-[#1a1f16]">
+
+      <button type="button"
+              data-accordion-target="trigger"
+              data-action="click->accordion#toggle"
+              class="w-full flex items-center gap-3 px-4 py-3 border-b text-left
+                     <%= is_today ? 'bg-[#5f734c] dark:bg-[#7a8f62] border-[#4b5a3d] dark:border-[#5f734c]' : 'border-gray-200 dark:border-white/10' %>">
+        <div class="flex-1 <%= is_today ? 'text-white' : 'text-gray-900 dark:text-white' %>">
+          <span class="text-lg font-semibold" style="font-family: 'Instrument Serif', serif">
+            <%= day.strftime("%A") %>
+          </span>
+          <span class="ml-2 text-sm <%= is_today ? 'text-white/80' : 'text-gray-500 dark:text-gray-400' %>">
+            <%= day.strftime("%b %d") %>
+          </span>
+          <% if day_chores.any? %>
+            <span class="ml-2 text-xs <%= is_today ? 'text-white/70' : 'text-gray-400 dark:text-gray-500' %>">
+              · <%= day_chores.count %> chore<%= day_chores.count == 1 ? "" : "s" %>
+            </span>
+          <% else %>
+            <span class="ml-2 text-xs <%= is_today ? 'text-white/60' : 'text-gray-400 dark:text-gray-500' %>">· No chores</span>
+          <% end %>
+        </div>
+
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"
+             class="size-5 shrink-0 transition-transform duration-200
+                    <%= is_today ? 'text-white/80' : 'text-gray-400 dark:text-gray-500' %>
+                    [[aria-expanded=true]_&]:rotate-180">
+          <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+        </svg>
+      </button>
+
+      <div data-accordion-target="content" class="accordion-content">
+        <div id="weekly_chores_day_mobile_<%= day.iso8601 %>" class="flex flex-col gap-2 p-3 <%= day_chores.empty? ? 'min-h-10' : '' %>">
+          <% day_chores.each do |weekly_chore| %>
+            <%= render "weekly_chores/weekly_chore", weekly_chore: weekly_chore %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>

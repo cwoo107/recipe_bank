@@ -1,0 +1,9 @@
+<% content_for :title, "New Chore" %>
+
+<div class="w-full max-w-2xl mx-auto">
+  <h1 class="text-3xl text-olive-800 dark:text-[#e8ede3] mb-6" style="font-family: 'Instrument Serif', serif;">New chore</h1>
+
+  <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] p-4 sm:p-6">
+    <%= render "form", chore: @chore %>
+  </div>
+</div>

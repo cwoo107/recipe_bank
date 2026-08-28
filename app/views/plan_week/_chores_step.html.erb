@@ -1,0 +1,41 @@
+<%# locals: section (Dashboard::ChoresSection) %>
+<% if section.empty? %>
+  <p class="text-sm text-gray-600 dark:text-gray-400">Nothing on this week's chore list yet. Add anything that's due below, or manage your recurring chores.</p>
+<% else %>
+  <p class="text-base font-medium text-gray-900 dark:text-white"><%= section.summary_line %></p>
+<% end %>
+
+<div data-controller="chore-board"
+     data-chore-board-week-start-value="<%= section.week_start.iso8601 %>"
+     data-chore-board-create-url-value="<%= weekly_chores_path %>"
+     data-chore-board-reorder-url-value="<%= reorder_weekly_chores_path %>">
+
+  <div class="mt-4">
+    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Due soon</h3>
+    <div id="due_chores" data-chore-board-target="dueList" class="rounded-lg border border-gray-200 dark:border-white/10 divide-y divide-gray-200 dark:divide-white/10 overflow-hidden">
+      <% if section.due_chores.empty? %>
+        <p id="no_due_chores_message" class="px-4 py-3 text-sm text-gray-400 dark:text-gray-600 italic">Nothing due right now.</p>
+      <% else %>
+        <% section.due_chores.each do |chore| %>
+          <%= render "weekly_chores/due_chore", chore: chore, week_start: section.week_start %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">This week</h3>
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-2 hidden sm:block">Drag a chore onto a day to schedule it.</p>
+    <div class="rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden">
+      <%= render "weekly_chores/board", weekly_chores: section.chores_this_week, week_start: section.week_start %>
+      <%= render "weekly_chores/mobile_board", weekly_chores: section.chores_this_week, week_start: section.week_start %>
+    </div>
+  </div>
+</div>
+
+<div class="mt-6 flex flex-wrap gap-3">
+  <%= link_to "Go to Chore Chart", weekly_chores_path(date: section.week_start),
+              class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+  <%= button_to "Continue", plan_week_step_path(section: section.key), method: :patch, params: { status: "done" },
+                class: "inline-flex items-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+</div>

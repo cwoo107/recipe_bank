@@ -1,0 +1,65 @@
+<% content_for :title, "Chore Chart" %>
+
+<div class="w-full">
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">Chore<span class="text-olive-800 dark:text-[#e8ede3]">Chart</span></span>
+      </h1>
+      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+        <%= @chores.count %> recurring chore<%= @chores.count == 1 ? "" : "s" %> · <%= link_to "This week's list", weekly_chores_path, class: "text-[#5f734c] dark:text-[#7a8f62] font-medium hover:underline" %>
+      </p>
+    </div>
+    <div class="mt-4 sm:ml-16 sm:mt-0">
+      <%= link_to new_chore_path,
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+          <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+        </svg>
+        New chore
+      <% end %>
+    </div>
+  </div>
+
+  <% if @chores.empty? %>
+    <div class="rounded-lg border border-dashed border-gray-300 dark:border-white/15 p-8 text-center">
+      <p class="text-sm text-gray-500 dark:text-gray-400 italic">No chores yet. Add the recurring chores your household needs to keep up with.</p>
+    </div>
+  <% else %>
+    <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] divide-y divide-gray-200 dark:divide-white/10 overflow-hidden">
+      <% @chores.each do |chore| %>
+        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <p class="text-base font-medium text-gray-900 dark:text-white"><%= chore.name %></p>
+              <%= render "chores/frequency_pill", chore: chore %>
+              <% if chore.due? %>
+                <span class="inline-flex items-center rounded-full bg-honey-100 px-2 py-0.5 text-xs font-medium text-honey-800 dark:bg-honey-900/30 dark:text-honey-300">
+                  Due
+                </span>
+              <% end %>
+            </div>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              <%= chore.assignee&.name || "Unassigned" %>
+              <% if chore.last_completed_at %>
+                · Last done <%= chore.last_completed_at.to_date.strftime("%b %-d") %>
+              <% else %>
+                · Never completed
+              <% end %>
+            </p>
+            <% if chore.description.present? %>
+              <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"><%= chore.description %></p>
+            <% end %>
+          </div>
+
+          <div class="flex items-center gap-3 shrink-0">
+            <%= link_to "Edit", edit_chore_path(chore), class: "text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
+            <%= button_to "Delete", chore_path(chore), method: :delete,
+                  class: "text-sm font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer",
+                  data: { turbo_confirm: "Delete \"#{chore.name}\"? This also removes it from any weekly lists." } %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

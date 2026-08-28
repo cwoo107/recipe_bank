@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_25_222026) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_000000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -165,6 +165,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_222026) do
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "family_name"
+    t.integer "minutes_per_day", default: 30, null: false
     t.integer "owner_id", null: false
     t.datetime "updated_at", null: false
     t.index ["owner_id"], name: "index_households_on_owner_id"

@@ -56,6 +56,6 @@ class HouseholdsController < ApplicationController
   end
 
   def household_params
-    params.expect(household: [:family_name])
+    params.expect(household: [:family_name, :minutes_per_day])
   end
 end

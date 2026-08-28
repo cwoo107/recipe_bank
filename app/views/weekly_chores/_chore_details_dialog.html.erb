@@ -1,0 +1,24 @@
+<%# locals: (chore:) — "view details / edit" dialog, triggered from a board
+    card. Lazy-loads chores/edit.html.erb's form into a turbo_frame; saving
+    redirects back to the current page (return_to) instead of Manage Chores. %>
+<div data-controller="dialog" data-action="click->dialog#backdropClose" class="contents">
+  <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+    <h3 class="mb-4 text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">
+      Chore details
+    </h3>
+    <%= turbo_frame_tag "edit_chore_#{chore.id}", src: edit_chore_path(chore, return_to: request.fullpath) do %><% end %>
+    <div class="mt-4">
+      <button type="button" data-action="dialog#close" autofocus
+              class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+        Close
+      </button>
+    </div>
+  </dialog>
+  <button type="button" data-action="dialog#open"
+          class="pointer-events-auto shrink-0 text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition-colors"
+          aria-label="View details for <%= chore.name %>">
+    <svg viewBox="0 0 16 16" fill="currentColor" class="size-5" aria-hidden="true">
+      <path d="M13.488 2.513a1.75 1.75 0 0 0-2.475 0L6.75 6.774a2.75 2.75 0 0 0-.596.892l-.83 2.495a.75.75 0 0 0 .945.944l2.495-.83a2.75 2.75 0 0 0 .892-.596l4.262-4.262a1.75 1.75 0 0 0 0-2.474Zm-1.414 1.06a.25.25 0 0 1 .354 0l.499.499a.25.25 0 0 1 0 .354l-.934.933-1.233-1.232.934-.933Zm-2.42 2.42 1.233 1.233-2.847 2.847a1.25 1.25 0 0 1-.405.27L6.38 10.75l.407-1.454a1.25 1.25 0 0 1 .27-.405l2.596-2.598Z" />
+    </svg>
+  </button>
+</div>

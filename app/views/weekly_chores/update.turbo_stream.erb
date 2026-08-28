@@ -1,0 +1,7 @@
+<%# replace_all (not replace): the same weekly chore renders once in the
+    desktop grid and once in the mobile accordion — both need to reflect the
+    change, matching meals/create.turbo_stream.erb's dual desktop/mobile
+    update pattern. %>
+<%= turbo_stream.replace_all ".weekly-chore-#{@weekly_chore.id}" do %>
+  <%= render "weekly_chore", weekly_chore: @weekly_chore %>
+<% end %>

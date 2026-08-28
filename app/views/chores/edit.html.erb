@@ -1,0 +1,14 @@
+<% content_for :title, "Edit Chore" %>
+
+<div class="w-full max-w-2xl mx-auto">
+  <h1 class="text-3xl text-olive-800 dark:text-[#e8ede3] mb-6" style="font-family: 'Instrument Serif', serif;">Edit chore</h1>
+
+  <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] p-4 sm:p-6">
+    <%# Wrapped in a turbo_frame so the same edit page can also be lazy-loaded
+        into the "view chore" dialog from a board card — see
+        weekly_chores/_chore_details_dialog.html.erb. %>
+    <%= turbo_frame_tag "edit_chore_#{@chore.id}" do %>
+      <%= render "form", chore: @chore %>
+    <% end %>
+  </div>
+</div>

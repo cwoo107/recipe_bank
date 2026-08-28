@@ -1,0 +1,71 @@
+<% content_for :title, "Chore Chart" %>
+
+<div class="w-full">
+  <div class="sm:flex sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">Chore<span class="text-olive-800 dark:text-[#e8ede3]">Chart</span></span>
+      </h1>
+      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+        Week of <%= @week_start.strftime("%b %-d, %Y") %> ·
+        <%= link_to "Manage chores", chores_path, class: "text-[#5f734c] dark:text-[#7a8f62] font-medium hover:underline" %>
+      </p>
+    </div>
+  </div>
+
+  <div class="mt-8 mb-8">
+    <div class="flex items-center justify-between mb-4 gap-2">
+      <%= link_to weekly_chores_path(date: @week_start - 1.week),
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        <span class="hidden sm:inline">Previous Week</span>
+        <span class="sm:hidden">Prev</span>
+      <% end %>
+
+      <span class="text-sm font-medium text-gray-700 dark:text-gray-300 sm:hidden">
+        <%= @week_start.strftime("%b %d") %> – <%= (@week_start + 6.days).strftime("%b %d") %>
+      </span>
+
+      <%= link_to weekly_chores_path(date: @week_start + 1.week),
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+        <span class="hidden sm:inline">Next Week</span>
+        <span class="sm:hidden">Next</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+        </svg>
+      <% end %>
+    </div>
+  </div>
+
+  <div data-controller="chore-board"
+       data-chore-board-week-start-value="<%= @week_start.iso8601 %>"
+       data-chore-board-create-url-value="<%= weekly_chores_path %>"
+       data-chore-board-reorder-url-value="<%= reorder_weekly_chores_path %>">
+
+    <section class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-200 dark:border-white/10">
+        <h2 class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">Due soon</h2>
+      </div>
+      <div id="due_chores" data-chore-board-target="dueList" class="divide-y divide-gray-200 dark:divide-white/10">
+        <% if @due_chores.empty? %>
+          <p id="no_due_chores_message" class="px-4 py-4 text-sm text-gray-400 dark:text-gray-600 italic">Nothing due right now.</p>
+        <% else %>
+          <% @due_chores.each do |chore| %>
+            <%= render "due_chore", chore: chore, week_start: @week_start %>
+          <% end %>
+        <% end %>
+      </div>
+    </section>
+
+    <section class="mt-6 rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-200 dark:border-white/10">
+        <h2 class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">This week</h2>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 hidden sm:block">Drag a chore onto a day to schedule it.</p>
+      </div>
+      <%= render "weekly_chores/board", weekly_chores: @weekly_chores, week_start: @week_start %>
+      <%= render "weekly_chores/mobile_board", weekly_chores: @weekly_chores, week_start: @week_start %>
+    </section>
+  </div>
+</div>
