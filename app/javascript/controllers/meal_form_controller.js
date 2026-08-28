@@ -13,7 +13,8 @@ import { Controller } from "@hotwired/stimulus"
 const EXTRA_TYPES = ["snack", "dessert"]
 
 export default class extends Controller {
-    static targets = ["dateSection", "dateInput", "servingsInput", "recipeServingsHint"]
+    static targets = ["dateSection", "dateInput", "servingsInput", "recipeServingsHint",
+                       "recurringSection", "recurringCheckbox", "recurringFields"]
 
     connect() {
         // Reflect any pre-selected meal type on load (e.g. edit form)
@@ -61,6 +62,18 @@ export default class extends Controller {
         this.syncDateVisibility()
     }
 
+    // Triggered by the "Make this a recurring meal" checkbox
+    recurringToggled() {
+        const recurring = this.recurringCheckboxTarget.checked
+        this.recurringFieldsTarget.classList.toggle("hidden", !recurring)
+
+        // The recurrence fields have their own "Starts" date, so the plain
+        // date field is redundant (and would otherwise fight it for the
+        // single meal[date] param) while recurring is on.
+        this.dateSectionTarget.classList.toggle("hidden", recurring)
+        this.dateInputTarget.required = !recurring
+    }
+
     // ── private ──────────────────────────────────────────────────────────────
 
     syncDateVisibility() {
@@ -75,9 +88,22 @@ export default class extends Controller {
             // the controller will supply the week's Monday.
             this.dateInputTarget.required = false
             this.dateInputTarget.value = ""
+
+            // Recurring meals only make sense for date-scheduled meal types.
+            if (this.hasRecurringSectionTarget) {
+                this.recurringSectionTarget.classList.add("hidden")
+                this.recurringCheckboxTarget.checked = false
+                this.recurringFieldsTarget.classList.add("hidden")
+            }
         } else {
-            this.dateSectionTarget.classList.remove("hidden")
-            this.dateInputTarget.required = true
+            if (this.hasRecurringSectionTarget) {
+                this.recurringSectionTarget.classList.remove("hidden")
+            }
+
+            if (!this.hasRecurringCheckboxTarget || !this.recurringCheckboxTarget.checked) {
+                this.dateSectionTarget.classList.remove("hidden")
+                this.dateInputTarget.required = true
+            }
         }
     }
 }

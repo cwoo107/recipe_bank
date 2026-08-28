@@ -3,6 +3,7 @@ class MealsController < ApplicationController
 
   def index
     @date = week_start_from_params
+    RecurringMeal.materialize_household_week!(current_household, @date)
 
     all_meals = current_household.meals
                             .where("date >= ?", @date)
@@ -32,30 +33,20 @@ class MealsController < ApplicationController
   end
 
   def create
-    @meal = current_household.meals.build(meal_params)
-    @meal.user = current_user
-
-    if @meal.extra_meal? && @meal.date.blank?
-      @meal.date = Time.zone.today.beginning_of_week
-    end
-
-    @date = @meal.date.beginning_of_week
-
-    respond_to do |format|
-      if @meal.save
-        format.html { redirect_to meals_path, notice: "Meal was successfully added." }
-        format.json { render :show, status: :created, location: @meal }
-        format.turbo_stream
-      else
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: @meal.errors, status: :unprocessable_entity }
-      end
+    if recurring_requested?
+      create_recurring_meal
+    else
+      create_single_meal
     end
   end
 
   def update
     respond_to do |format|
-      if @meal.update(meal_params)
+      # Editing a meal that a recurring rule generated detaches it — the
+      # rule keeps generating the other days normally, this one becomes a
+      # standalone meal (see RecurringMeal#materialize_week!, which never
+      # regenerates a date once its occurrence tombstone exists).
+      if @meal.update(meal_params.merge(recurring_meal_id: nil))
         format.html { redirect_to @meal, notice: "Meal was successfully updated.", status: :see_other }
         format.json { render :show, status: :ok, location: @meal }
       else
@@ -78,6 +69,67 @@ class MealsController < ApplicationController
   end
 
   private
+
+  def create_single_meal
+    @meal = current_household.meals.build(meal_params)
+    @meal.user = current_user
+
+    if @meal.extra_meal? && @meal.date.blank?
+      @meal.date = Time.zone.today.beginning_of_week
+    end
+
+    @date = @meal.date.beginning_of_week
+
+    respond_to do |format|
+      if @meal.save
+        format.html { redirect_to meals_path, notice: "Meal was successfully added." }
+        format.json { render :show, status: :created, location: @meal }
+        format.turbo_stream
+      else
+        format.html { render :new, status: :unprocessable_entity }
+        format.json { render json: @meal.errors, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def create_recurring_meal
+    recurring = recurring_creation_params[:recurring] || {}
+
+    @recurring_meal = current_household.recurring_meals.build(
+      user: current_user,
+      recipe_id: recurring_creation_params[:recipe_id],
+      meal_name: recurring_creation_params[:meal_name],
+      servings: recurring_creation_params[:servings].presence,
+      pattern_type: recurring[:pattern_type],
+      interval_days: recurring[:interval_days],
+      days_of_week: recurring[:days_of_week],
+      start_date: recurring[:start_date],
+      end_type: recurring[:end_type],
+      end_date: recurring[:end_date]
+    )
+    @date = (@recurring_meal.start_date || Time.zone.today).beginning_of_week
+
+    respond_to do |format|
+      if @recurring_meal.save
+        @created_meals = @recurring_meal.materialize_week!(@date)
+        format.html { redirect_to meals_path(date: @date), notice: "Recurring meal added." }
+        format.turbo_stream { render "meals/create_recurring" }
+      else
+        @meal = Meal.new(recurring_creation_params.slice(:recipe_id, :meal_name, :servings))
+        format.html { render :new, status: :unprocessable_entity }
+      end
+    end
+  end
+
+  def recurring_requested?
+    params.dig(:meal, :recurring, :enabled) == "1"
+  end
+
+  def recurring_creation_params
+    params.expect(meal: [:recipe_id, :meal_name, :servings,
+                          recurring: [:pattern_type, :interval_days, :start_date, :end_type, :end_date,
+                                      days_of_week: []]])
+  end
 
   def set_meal
     @meal = current_household.meals.find(params.expect(:id))

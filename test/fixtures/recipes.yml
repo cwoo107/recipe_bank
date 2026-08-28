@@ -3,7 +3,9 @@
 one:
   title: MyString
   description: MyText
+  servings: 4
 
 two:
   title: MyString
   description: MyText
+  servings: 4

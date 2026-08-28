@@ -33,6 +33,23 @@
           Week stats
         </button>
       </div>
+
+      <div data-controller="dialog" data-action="click->dialog#backdropClose">
+        <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-2/3 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+          <%= turbo_frame_tag "recurring_meals_list", src: recurring_meals_path, loading: "lazy" do %>
+          <% end %>
+          <div class="mt-4">
+            <button type="button" data-action="dialog#close" class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">Close</button>
+          </div>
+        </dialog>
+
+        <button type="button" data-action="dialog#open" class="inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+          Manage recurring meals
+        </button>
+      </div>
     </div>
   </div>
 

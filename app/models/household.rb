@@ -5,6 +5,7 @@ class Household < ApplicationRecord
   has_many :members, through: :household_members, source: :user
 
   has_many :meals,            dependent: :destroy
+  has_many :recurring_meals,  dependent: :destroy
   has_many :todos,            dependent: :destroy
   has_many :chores,           dependent: :destroy
   has_many :weekly_chores,    dependent: :destroy

@@ -1,0 +1,50 @@
+<%= form_with model: recurring_meal, url: recurring_meal_path(recurring_meal), method: :patch, class: "space-y-6" do %>
+  <% if recurring_meal.errors.any? %>
+    <div class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 font-medium rounded-lg border border-red-200 dark:border-red-800">
+      <h2 class="font-semibold mb-2"><%= pluralize(recurring_meal.errors.count, "error") %> prohibited this recurring meal from being saved:</h2>
+      <ul class="list-disc ml-5 space-y-1 text-sm">
+        <% recurring_meal.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= label_tag "recurring_meal[recipe_id]", "Recipe", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= select_tag "recurring_meal[recipe_id]",
+                    options_for_select(
+                      Recipe.visible_to(current_user).order(title: :asc).pluck(:title, :id),
+                      recurring_meal.recipe_id
+                    ),
+                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+  </div>
+
+  <div>
+    <span class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Meal</span>
+    <div class="flex flex-wrap gap-2">
+      <% RecurringMeal::MEAL_NAMES.each do |type| %>
+        <label class="meal-type-pill">
+          <%= radio_button_tag "recurring_meal[meal_name]", type.capitalize, recurring_meal.meal_name&.downcase == type, class: "sr-only peer" %>
+          <span class="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium cursor-pointer border border-gray-300 dark:border-white/15 text-gray-600 dark:text-gray-300 bg-white dark:bg-white/5 transition-all duration-150 peer-checked:bg-[#5f734c] peer-checked:border-[#5f734c] peer-checked:text-white dark:peer-checked:bg-[#7a8f62] dark:peer-checked:border-[#7a8f62] dark:peer-checked:text-white hover:border-[#5f734c]/50 dark:hover:border-[#7a8f62]/50 hover:text-[#5f734c] dark:hover:text-[#7a8f62] peer-checked:hover:text-white">
+            <%= type.capitalize %>
+          </span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <div>
+    <%= label_tag "recurring_meal[servings]", "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= number_field_tag "recurring_meal[servings]", recurring_meal.servings, min: 1, placeholder: recurring_meal.recipe&.servings,
+                          class: "block w-32 rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+  </div>
+
+  <%= render "shared/recurrence_fields", prefix: "recurring_meal", recurring_meal: recurring_meal %>
+
+  <div class="flex gap-3 pt-4">
+    <%= submit_tag "Update recurring meal",
+          class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
+    <%= link_to "Cancel", recurring_meals_path, class: "rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition" %>
+  </div>
+<% end %>

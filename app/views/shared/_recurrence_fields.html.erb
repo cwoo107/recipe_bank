@@ -1,0 +1,100 @@
+<%# Locals:
+      prefix:         param name prefix, e.g. "meal[recurring]" or "recurring_meal"
+      recurring_meal: a RecurringMeal (new or persisted) supplying prefilled values
+%>
+<%
+  end_type = recurring_meal.end_type ||
+             if recurring_meal.persisted?
+               recurring_meal.end_date.nil? ? "ongoing" : "date"
+             else
+               "week" # sensible default for a brand new rule: don't silently go ongoing
+             end
+  is_weekday_pattern = recurring_meal.pattern_type == "days_of_week"
+  pill_span_class = <<~CLASSES.squish
+    flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium cursor-pointer
+    border border-gray-300 dark:border-white/15
+    text-gray-600 dark:text-gray-300
+    bg-white dark:bg-white/5
+    transition-all duration-150
+    peer-checked:bg-[#5f734c] peer-checked:border-[#5f734c] peer-checked:text-white
+    dark:peer-checked:bg-[#7a8f62] dark:peer-checked:border-[#7a8f62] dark:peer-checked:text-white
+    hover:border-[#5f734c]/50 dark:hover:border-[#7a8f62]/50
+    hover:text-[#5f734c] dark:hover:text-[#7a8f62]
+    peer-checked:hover:text-white
+  CLASSES
+%>
+
+<div data-controller="recurrence-pattern" class="space-y-4">
+  <%# Repeat pattern %>
+  <div>
+    <span class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Repeat</span>
+    <div class="flex flex-wrap gap-2 mb-3">
+      <label class="meal-type-pill">
+        <%= radio_button_tag "#{prefix}[pattern_type]", "interval",
+                              !is_weekday_pattern,
+                              class: "sr-only peer",
+                              data: { action: "change->recurrence-pattern#patternTypeChanged" } %>
+        <span class="<%= pill_span_class %>">Every few days</span>
+      </label>
+      <label class="meal-type-pill">
+        <%= radio_button_tag "#{prefix}[pattern_type]", "days_of_week",
+                              is_weekday_pattern,
+                              class: "sr-only peer",
+                              data: { action: "change->recurrence-pattern#patternTypeChanged" } %>
+        <span class="<%= pill_span_class %>">Specific weekdays</span>
+      </label>
+    </div>
+
+    <div data-recurrence-pattern-target="intervalFields" class="flex items-center gap-2 <%= 'hidden' if is_weekday_pattern %>">
+      <span class="text-sm text-gray-700 dark:text-gray-300">Every</span>
+      <%= number_field_tag "#{prefix}[interval_days]", recurring_meal.interval_days || 1,
+                            min: 1,
+                            class: "w-20 rounded-lg bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+      <span class="text-sm text-gray-700 dark:text-gray-300">day(s)</span>
+    </div>
+
+    <div data-recurrence-pattern-target="weekdayFields" class="flex flex-wrap gap-2 <%= 'hidden' unless is_weekday_pattern %>">
+      <% %w[Sun Mon Tue Wed Thu Fri Sat].each_with_index do |label, wday| %>
+        <label class="meal-type-pill">
+          <%= check_box_tag "#{prefix}[days_of_week][]", wday,
+                             recurring_meal.days_of_week&.include?(wday),
+                             class: "sr-only peer" %>
+          <span class="<%= pill_span_class %>"><%= label %></span>
+        </label>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Start date %>
+  <div>
+    <%= label_tag "#{prefix}[start_date]", "Starts", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= date_field_tag "#{prefix}[start_date]", recurring_meal.start_date || Date.today,
+                        required: true,
+                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+  </div>
+
+  <%# End condition %>
+  <div>
+    <span class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Ends</span>
+    <div class="flex flex-col gap-1.5">
+      <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <%= radio_button_tag "#{prefix}[end_type]", "week", end_type == "week",
+                              data: { action: "change->recurrence-pattern#endTypeChanged" } %>
+        End of this week
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <%= radio_button_tag "#{prefix}[end_type]", "ongoing", end_type == "ongoing",
+                              data: { action: "change->recurrence-pattern#endTypeChanged" } %>
+        No end date
+      </label>
+      <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <%= radio_button_tag "#{prefix}[end_type]", "date", end_type == "date",
+                              data: { action: "change->recurrence-pattern#endTypeChanged" } %>
+        On a specific date
+      </label>
+    </div>
+    <%= date_field_tag "#{prefix}[end_date]", recurring_meal.end_date,
+                        data: { recurrence_pattern_target: "endDateField" },
+                        class: "mt-2 #{'hidden' unless end_type == 'date'} block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+  </div>
+</div>

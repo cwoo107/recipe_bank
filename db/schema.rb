@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_28_122912) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -200,11 +200,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_000000) do
     t.integer "household_id", null: false
     t.string "meal_name"
     t.integer "recipe_id", null: false
+    t.integer "recurring_meal_id"
     t.integer "servings"
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.index ["household_id"], name: "index_meals_on_household_id"
     t.index ["recipe_id"], name: "index_meals_on_recipe_id"
+    t.index ["recurring_meal_id"], name: "index_meals_on_recurring_meal_id"
     t.index ["user_id"], name: "index_meals_on_user_id"
   end
 
@@ -268,6 +270,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_000000) do
     t.index ["user_id", "visibility"], name: "index_recipes_on_user_id_and_visibility"
     t.index ["user_id"], name: "index_recipes_on_user_id"
     t.index ["visibility"], name: "index_recipes_on_visibility"
+  end
+
+  create_table "recurring_meal_occurrences", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "date", null: false
+    t.integer "meal_id"
+    t.integer "recurring_meal_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["meal_id"], name: "index_recurring_meal_occurrences_on_meal_id"
+    t.index ["recurring_meal_id", "date"], name: "index_recurring_meal_occurrences_on_recurring_meal_id_and_date", unique: true
+    t.index ["recurring_meal_id"], name: "index_recurring_meal_occurrences_on_recurring_meal_id"
+  end
+
+  create_table "recurring_meals", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "days_of_week"
+    t.date "end_date"
+    t.integer "household_id", null: false
+    t.integer "interval_days"
+    t.string "meal_name", null: false
+    t.string "pattern_type", default: "interval", null: false
+    t.integer "recipe_id", null: false
+    t.integer "servings"
+    t.date "start_date", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["household_id"], name: "index_recurring_meals_on_household_id"
+    t.index ["recipe_id"], name: "index_recurring_meals_on_recipe_id"
+    t.index ["user_id"], name: "index_recurring_meals_on_user_id"
   end
 
   create_table "steps", force: :cascade do |t|
@@ -401,6 +432,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_000000) do
   add_foreign_key "ingredients", "users", column: "created_by_id"
   add_foreign_key "meals", "households"
   add_foreign_key "meals", "recipes"
+  add_foreign_key "meals", "recurring_meals"
   add_foreign_key "meals", "users"
   add_foreign_key "nutrition_facts", "ingredients"
   add_foreign_key "recipe_import_jobs", "users"
@@ -409,6 +441,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_000000) do
   add_foreign_key "recipe_tags", "recipes"
   add_foreign_key "recipe_tags", "tags"
   add_foreign_key "recipes", "users"
+  add_foreign_key "recurring_meal_occurrences", "meals"
+  add_foreign_key "recurring_meal_occurrences", "recurring_meals"
+  add_foreign_key "recurring_meals", "households"
+  add_foreign_key "recurring_meals", "recipes"
+  add_foreign_key "recurring_meals", "users"
   add_foreign_key "steps", "recipes"
   add_foreign_key "tags", "users"
   add_foreign_key "todos", "households"

@@ -1,0 +1,32 @@
+<%= turbo_frame_tag "recurring_meals_list" do %>
+  <div class="space-y-4">
+    <h2 class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif">
+      Recurring meals
+    </h2>
+
+    <% if @recurring_meals.any? %>
+      <ul class="divide-y divide-gray-200 dark:divide-white/10 rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden">
+        <% @recurring_meals.each do |rule| %>
+          <li class="flex items-center justify-between gap-4 p-4 bg-[var(--ivory)] dark:bg-[#1a1f16]">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                <%= rule.meal_name %> · <%= rule.recipe.title %>
+              </p>
+              <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <%= rule.description %> · <%= rule.date_range_description %>
+              </p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <%= link_to "Edit", edit_recurring_meal_path(rule), class: "text-sm text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
+              <%= button_to "Remove", recurring_meal_path(rule), method: :delete,
+                            data: { turbo_confirm: "Remove this recurring meal? Meals already on the calendar will be kept." },
+                            class: "text-sm text-dusty-rose-600 hover:text-dusty-rose-800 dark:text-dusty-rose-400" %>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="text-sm text-gray-400 dark:text-gray-500 italic py-4">No recurring meals yet.</p>
+    <% end %>
+  </div>
+<% end %>

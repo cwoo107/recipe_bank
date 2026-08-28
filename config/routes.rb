@@ -28,6 +28,7 @@ Rails.application.routes.draw do
   post 'grocery_lists', to: 'grocery_lists#create', as: :create_grocery_list
 
   resources :meals
+  resources :recurring_meals, only: [:index, :edit, :update, :destroy]
   resource  :household                           # singular resource — index doesn't exist for these
   resources :household_members, except: :show   # scoped by current_household, not URL
 

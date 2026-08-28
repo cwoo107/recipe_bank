@@ -1,4 +1,4 @@
-<%= form_with(model: meal, class: "space-y-6") do |form| %>
+<%= form_with(model: meal, class: "space-y-6", data: { controller: "meal-form" }) do |form| %>
   <% if meal.errors.any? %>
     <div id="error_explanation" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 font-medium rounded-lg border border-red-200 dark:border-red-800">
       <h2 class="font-semibold mb-2"><%= pluralize(meal.errors.count, "error") %> prohibited this meal from being saved:</h2>
@@ -11,40 +11,83 @@
   <% end %>
 
   <%# Recipe selector + Servings %>
-  <div class="mb-4 flex items-end gap-3"
+  <div class="mb-4"
        data-controller="searchable-select"
        data-searchable-select-placeholder-value="Search for a recipe...">
 
-    <div class="flex-[4]">
-      <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-      <%= form.select :recipe_id,
-                      options_for_select(
-                        Recipe.visible_to(current_user).order(title: :asc).map { |r|
-                          [r.title, r.id, { 'data-favorite' => current_user.favorited?(r), 'data-servings' => r.servings }]
-                        },
-                        meal.recipe_id
-                      ),
-                      { include_blank: true },
-                      class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                      data: { dynamic_filter_target: "field", searchable_select_target: "select", action: "change->dynamic-filter#updateValueField change->meal-form#recipeChanged" } %>
+    <%# Source tabs: search everything, or narrow to one collection first %>
+    <div class="flex gap-2 mb-3">
+      <button type="button" data-searchable-select-target="searchTab" data-action="searchable-select#showSearch"
+              class="px-3 py-1.5 text-sm font-medium rounded-md border-b-2 border-[#5f734c] text-[#5f734c] dark:border-[#7a8f62] dark:text-[#7a8f62]">
+        Search
+      </button>
+      <button type="button" data-searchable-select-target="collectionTab" data-action="searchable-select#showCollection"
+              class="px-3 py-1.5 text-sm font-medium rounded-md border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300">
+        From a collection
+      </button>
     </div>
 
-    <div class="flex-[1]" data-meal-form-target="servingsField">
-      <%= form.label :servings, "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-      <%= form.number_field :servings,
-                            min: 1,
-                            value: meal.servings,
-                            placeholder: "4",
-                            class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                            data: { meal_form_target: "servingsInput" } %>
+    <%# Tag filter %>
+    <% recipe_tags = Tag.for_user(current_user) %>
+    <% if recipe_tags.any? %>
+      <div class="flex flex-wrap gap-1.5 mb-3">
+        <% recipe_tags.each do |tag| %>
+          <button type="button"
+                  data-searchable-select-target="tagChip"
+                  data-action="click->searchable-select#toggleTag"
+                  data-tag-id="<%= tag.id %>"
+                  class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10 transition opacity-60"
+                  style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
+            <%= tag.tag %>
+          </button>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# Collection picker — only shown in the "From a collection" tab %>
+    <div data-searchable-select-target="collectionPicker" class="hidden mb-3">
+      <%= select_tag :meal_source_collection_id,
+                      options_for_select([["Choose a collection...", ""]] + Collection.visible_to(current_user).order(:title).pluck(:title, :id)),
+                      data: { action: "change->searchable-select#collectionChanged" },
+                      class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
     </div>
 
+    <div class="flex items-end gap-3">
+      <div class="flex-[4]">
+        <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+        <%= form.select :recipe_id,
+                        options_for_select(
+                          Recipe.visible_to(current_user).includes(:tags, :collection_recipes).order(title: :asc).map { |r|
+                            [r.title, r.id, {
+                              'data-favorite'       => current_user.favorited?(r),
+                              'data-servings'       => r.servings,
+                              'data-tag-ids'        => r.tags.map(&:id).join(','),
+                              'data-collection-ids' => r.collection_recipes.map(&:collection_id).join(',')
+                            }]
+                          },
+                          meal.recipe_id
+                        ),
+                        { include_blank: true },
+                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                        data: { dynamic_filter_target: "field", searchable_select_target: "select", action: "change->dynamic-filter#updateValueField change->meal-form#recipeChanged" } %>
+      </div>
+
+      <div class="flex-[1]" data-meal-form-target="servingsField">
+        <%= form.label :servings, "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+        <%= form.number_field :servings,
+                              min: 1,
+                              value: meal.servings,
+                              placeholder: "4",
+                              class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                              data: { meal_form_target: "servingsInput" } %>
+      </div>
+    </div>
   </div>
 
   <%# Meal type %>
   <div>
     <%= form.label :meal_name, "Meal", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <div class="flex flex-wrap gap-2" data-controller="meal-form">
+    <div class="flex flex-wrap gap-2">
       <% [
            ["Breakfast", "Breakfast"],
            ["Lunch",     "Lunch"],
@@ -94,6 +137,23 @@
       <p class="mt-1 text-sm text-red-600 dark:text-red-400"><%= meal.errors[:date].first %></p>
     <% end %>
   </div>
+
+  <%# Recurring meal — new meals only; hidden entirely for Snack/Dessert (see syncDateVisibility) %>
+  <% unless meal.persisted? %>
+    <div data-meal-form-target="recurringSection" class="border-t border-gray-200 dark:border-white/10 pt-4">
+      <label class="inline-flex items-center gap-2 cursor-pointer">
+        <%= check_box_tag "meal[recurring][enabled]", "1", false,
+                          data: { meal_form_target: "recurringCheckbox", action: "change->meal-form#recurringToggled" },
+                          class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
+        <span class="text-sm font-medium text-gray-900 dark:text-white">Make this a recurring meal</span>
+      </label>
+
+      <div data-meal-form-target="recurringFields" class="hidden mt-4 pl-4 border-l-2 border-[#5f734c]/30 dark:border-[#7a8f62]/30">
+        <%= render "shared/recurrence_fields", prefix: "meal[recurring]",
+                                                recurring_meal: RecurringMeal.new(start_date: meal.date || Date.today) %>
+      </div>
+    </div>
+  <% end %>
 
   <div class="flex gap-3 pt-4">
     <%= form.submit meal.persisted? ? "Update Meal" : "Add Meal",

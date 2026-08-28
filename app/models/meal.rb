@@ -2,6 +2,9 @@ class Meal < ApplicationRecord
   belongs_to :recipe
   belongs_to :user
   belongs_to :household
+  belongs_to :recurring_meal, optional: true
+
+  has_one :recurring_meal_occurrence, dependent: :nullify
 
   CALENDAR_TYPES = %w[breakfast lunch dinner].freeze
   EXTRA_TYPES    = %w[snack dessert].freeze

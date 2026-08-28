@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-    static targets = ["select", "searchInput", "dropdown", "option"]
+    static targets = ["select", "searchInput", "dropdown", "option",
+                       "searchTab", "collectionTab", "collectionPicker", "tagChip"]
     static values = {
         placeholder: { type: String, default: "Search..." }
     }
@@ -9,10 +10,14 @@ export default class extends Controller {
     connect() {
         this.originalSelect = this.selectTarget
         this.selectedValue = this.originalSelect.value
+        this.selectedTagIds = new Set()
+        this.source = "search"
         this.options = Array.from(this.originalSelect.options).map(opt => ({
             value: opt.value,
             text: opt.text,
-            isFavorite: opt.dataset.favorite === 'true'
+            isFavorite: opt.dataset.favorite === 'true',
+            tagIds: opt.dataset.tagIds || "",
+            collectionIds: opt.dataset.collectionIds || ""
         }))
 
         this.buildCustomSelect()
@@ -60,6 +65,8 @@ export default class extends Controller {
 
             optionDiv.dataset.value = opt.value
             optionDiv.dataset.favorite = opt.isFavorite
+            optionDiv.dataset.tagIds = opt.tagIds
+            optionDiv.dataset.collectionIds = opt.collectionIds
             optionDiv.dataset.searchableSelectTarget = 'option'
             optionDiv.dataset.action = 'click->searchable-select#selectOption'
 
@@ -84,19 +91,81 @@ export default class extends Controller {
         document.addEventListener('click', this.handleClickOutside.bind(this))
     }
 
-    filterOptions(event) {
-        const searchTerm = event.target.value.toLowerCase()
+    filterOptions() {
+        this.applyFilters()
+    }
+
+    // Toggles a tag chip on/off (multi-select, OR'd together) and re-filters.
+    toggleTag(event) {
+        const chip = event.currentTarget
+        const tagId = chip.dataset.tagId
+
+        if (this.selectedTagIds.has(tagId)) {
+            this.selectedTagIds.delete(tagId)
+            chip.classList.add('opacity-60')
+            chip.classList.remove('ring-1', 'ring-current')
+        } else {
+            this.selectedTagIds.add(tagId)
+            chip.classList.remove('opacity-60')
+            chip.classList.add('ring-1', 'ring-current')
+        }
+
+        this.applyFilters()
+    }
+
+    showSearch() {
+        this.source = "search"
+        if (this.hasCollectionPickerTarget) this.collectionPickerTarget.classList.add('hidden')
+        this.setActiveTab(this.searchTabTarget, this.collectionTabTarget)
+        this.applyFilters()
+    }
+
+    showCollection() {
+        this.source = "collection"
+        if (this.hasCollectionPickerTarget) this.collectionPickerTarget.classList.remove('hidden')
+        this.setActiveTab(this.collectionTabTarget, this.searchTabTarget)
+        this.applyFilters()
+    }
+
+    collectionChanged(event) {
+        this.selectedCollectionId = event.target.value
+        this.applyFilters()
+    }
+
+    // Combines the typed search term with the tag/collection filters above —
+    // an option must satisfy all three (text match, any selected tag,
+    // and — in "collection" mode — membership in the chosen collection).
+    applyFilters() {
+        const term = this.hasSearchInputTarget ? this.searchInputTarget.value.toLowerCase() : ""
 
         this.optionTargets.forEach(option => {
             const text = option.textContent.toLowerCase()
-            if (text.includes(searchTerm)) {
-                option.classList.remove('hidden')
-            } else {
-                option.classList.add('hidden')
+            const matchesText = !term || text.includes(term)
+
+            let matchesTags = true
+            if (this.selectedTagIds.size > 0) {
+                const tagIds = (option.dataset.tagIds || "").split(",")
+                matchesTags = tagIds.some(id => this.selectedTagIds.has(id))
             }
+
+            let matchesCollection = true
+            if (this.source === "collection") {
+                const collectionIds = (option.dataset.collectionIds || "").split(",")
+                matchesCollection = !!this.selectedCollectionId && collectionIds.includes(this.selectedCollectionId)
+            }
+
+            option.classList.toggle('hidden', !(matchesText && matchesTags && matchesCollection))
         })
 
         this.showDropdown()
+    }
+
+    setActiveTab(active, inactive) {
+        active.classList.add('border-[#5f734c]', 'text-[#5f734c]', 'dark:border-[#7a8f62]', 'dark:text-[#7a8f62]')
+        active.classList.remove('border-transparent', 'text-gray-500', 'dark:text-gray-400')
+
+        inactive.classList.remove('border-[#5f734c]', 'text-[#5f734c]', 'dark:border-[#7a8f62]', 'dark:text-[#7a8f62]')
+        inactive.classList.add('border-transparent', 'text-gray-500', 'dark:text-gray-400')
     }
 
     showDropdown() {

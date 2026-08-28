@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  household: one
+  user: one # alice
+  recipe: one
+  meal_name: Dinner
+  pattern_type: days_of_week
+  days_of_week: "[0]"
+  start_date: 2026-01-01
+  end_date:
+
+two:
+  household: two
+  user: three # carol
+  recipe: two
+  meal_name: Breakfast
+  pattern_type: interval
+  interval_days: 1
+  start_date: 2026-01-01
+  end_date: 2026-01-07

@@ -7,6 +7,8 @@ module Dashboard
     DAYS_IN_WEEK = 7
 
     def meals_this_week
+      RecurringMeal.materialize_household_week!(household, week_start)
+
       @meals_this_week ||= household.meals
                                      .where(date: week_range)
                                      .includes(:recipe)
