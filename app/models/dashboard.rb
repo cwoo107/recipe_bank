@@ -7,6 +7,7 @@ module Dashboard
     [
       Dashboard::MealsSection,
       Dashboard::GroceriesSection,
+      Dashboard::ChoresSection,
       Dashboard::TodosSection,
       Dashboard::CalendarSection
     ]

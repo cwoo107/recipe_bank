@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_25_155809) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_25_222026) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -98,6 +98,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_155809) do
     t.index ["provider"], name: "index_calendar_sources_on_provider"
     t.index ["user_id", "position"], name: "index_calendar_sources_on_user_id_and_position"
     t.index ["user_id"], name: "index_calendar_sources_on_user_id"
+  end
+
+  create_table "chores", force: :cascade do |t|
+    t.integer "assignee_id"
+    t.datetime "created_at", null: false
+    t.integer "default_weekday"
+    t.date "default_weekday_started_on"
+    t.text "description"
+    t.string "frequency", default: "weekly", null: false
+    t.integer "household_id", null: false
+    t.datetime "last_completed_at"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["assignee_id"], name: "index_chores_on_assignee_id"
+    t.index ["household_id", "name"], name: "index_chores_on_household_id_and_name"
+    t.index ["household_id"], name: "index_chores_on_household_id"
   end
 
   create_table "collection_recipes", force: :cascade do |t|
@@ -317,6 +333,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_155809) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  create_table "weekly_chores", force: :cascade do |t|
+    t.integer "assignee_id"
+    t.integer "chore_id", null: false
+    t.boolean "completed", default: false, null: false
+    t.datetime "completed_at"
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.integer "position", default: 0, null: false
+    t.date "scheduled_date"
+    t.datetime "updated_at", null: false
+    t.date "week_start", null: false
+    t.index ["assignee_id"], name: "index_weekly_chores_on_assignee_id"
+    t.index ["chore_id", "week_start"], name: "index_weekly_chores_on_chore_id_and_week_start", unique: true
+    t.index ["chore_id"], name: "index_weekly_chores_on_chore_id"
+    t.index ["household_id", "week_start", "scheduled_date"], name: "idx_on_household_id_week_start_scheduled_date_a8aa11feb7"
+    t.index ["household_id", "week_start"], name: "index_weekly_chores_on_household_id_and_week_start"
+    t.index ["household_id"], name: "index_weekly_chores_on_household_id"
+  end
+
   create_table "weekly_plan_sections", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "key", null: false
@@ -334,6 +369,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_155809) do
     t.datetime "created_at", null: false
     t.boolean "currently_planning", default: false, null: false
     t.integer "household_id", null: false
+    t.datetime "planning_completed_at"
+    t.datetime "planning_started_at"
     t.datetime "updated_at", null: false
     t.date "week_start", null: false
     t.index ["household_id", "week_start"], name: "index_weekly_plans_on_household_id_and_week_start", unique: true
@@ -347,6 +384,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_155809) do
   add_foreign_key "calendar_events", "users"
   add_foreign_key "calendar_sources", "households"
   add_foreign_key "calendar_sources", "users"
+  add_foreign_key "chores", "household_members", column: "assignee_id"
+  add_foreign_key "chores", "households"
   add_foreign_key "collection_recipes", "collections"
   add_foreign_key "collection_recipes", "recipes"
   add_foreign_key "collections", "users"
@@ -375,6 +414,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_25_155809) do
   add_foreign_key "todos", "users"
   add_foreign_key "user_favorites", "recipes"
   add_foreign_key "user_favorites", "users"
+  add_foreign_key "weekly_chores", "chores"
+  add_foreign_key "weekly_chores", "household_members", column: "assignee_id"
+  add_foreign_key "weekly_chores", "households"
   add_foreign_key "weekly_plan_sections", "users", column: "updated_by_id"
   add_foreign_key "weekly_plan_sections", "weekly_plans"
   add_foreign_key "weekly_plans", "households"

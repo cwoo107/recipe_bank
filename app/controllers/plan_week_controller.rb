@@ -28,8 +28,8 @@ class PlanWeekController < ApplicationController
     if next_key
       redirect_to plan_week_step_path(section: next_key)
     else
-      @weekly_plan.update!(currently_planning: false)
-      redirect_to dashboard_path, notice: "Weekly plan updated."
+      @weekly_plan.update!(currently_planning: false, planning_completed_at: Time.current)
+      redirect_to dashboard_path, notice: completion_notice
     end
   end
 
@@ -38,7 +38,17 @@ class PlanWeekController < ApplicationController
   def set_week_context
     @week_start  = Date.current.beginning_of_week
     @weekly_plan = WeeklyPlan.current_for(current_household, week_start: @week_start)
-    @weekly_plan.update!(currently_planning: true) unless @weekly_plan.currently_planning?
+    unless @weekly_plan.currently_planning?
+      @weekly_plan.update!(currently_planning: true, planning_started_at: Time.current)
+    end
+  end
+
+  def completion_notice
+    return "Weekly plan updated." unless @weekly_plan.planning_started_at
+
+    minutes = ((Time.current - @weekly_plan.planning_started_at) / 60.0).round
+    unit = minutes == 1 ? "minute" : "minutes"
+    "Congrats! It just took you #{minutes} #{unit} to plan your week."
   end
 
   def sections

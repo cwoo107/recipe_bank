@@ -46,7 +46,7 @@ class WeeklyPlanTest < ActiveSupport::TestCase
 
   test "active_key falls back to the first section once everything is done or skipped" do
     plan = WeeklyPlan.current_for(households(:one))
-    %w[meals todos groceries calendar].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    %w[meals todos groceries chores calendar].each { |k| plan.section(k).mark!("done", by: users(:one)) }
 
     assert_equal "meals", plan.reload.active_key
   end
@@ -55,7 +55,7 @@ class WeeklyPlanTest < ActiveSupport::TestCase
     plan = WeeklyPlan.current_for(households(:one))
     plan.section("groceries").mark!("skipped", by: users(:one))
 
-    assert_equal "todos", plan.reload.next_key_after("meals")
+    assert_equal "chores", plan.reload.next_key_after("meals")
   end
 
   test "next_key_after returns nil after the last section" do

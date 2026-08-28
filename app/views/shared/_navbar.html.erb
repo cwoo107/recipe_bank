@@ -1,11 +1,11 @@
 <nav class="bg-white shadow-sm dark:bg-[#1a1f16]" data-controller="mobile-menu">
-  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto  px-4 sm:px-6 lg:px-8">
     <div class="flex h-16 justify-between">
       <div class="flex">
         <div class="flex shrink-0 items-center">
           <%= link_to dashboard_path, class: "flex items-center gap-2" do %>
             <span class="text-2xl dark:text-white">
-              <span class="text-[#5f734c] font-bold" style="font-family: 'Instrument Serif', serif;">Homemakers<span class="text-olive-800">Haven</span></span>
+              <span class="text-[#5f734c] font-bold" style="font-family: 'Instrument Serif', serif;">Homemakers<span class="text-olive-800 dark:text-[#e8ede3]">Haven</span></span>
             </span>
           <% end %>
         </div>
@@ -19,6 +19,8 @@
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(grocery_lists_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "Recipe Bank", recipes_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(recipes_path) || current_page?(ingredients_path) || current_page?(collections_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
+          <%= link_to "Chore Chart", weekly_chores_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(weekly_chores_path) || current_page?(chores_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "ToDo List", todos_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(todos_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "Calendar", calendars_path,
@@ -92,6 +94,8 @@
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(grocery_lists_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "Recipe Bank", recipes_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(recipes_path) || current_page?(ingredients_path) || current_page?(collections_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
+      <%= link_to "Chore Chart", weekly_chores_path,
+                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(weekly_chores_path) || current_page?(chores_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "ToDo List", todos_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(todos_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "Calendar", calendars_path,

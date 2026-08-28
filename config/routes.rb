@@ -78,6 +78,16 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :chores
+  resources :weekly_chores, only: [ :index, :create, :update, :destroy ] do
+    collection do
+      post :reorder
+    end
+    member do
+      post :move
+    end
+  end
+
   resources :calendar_sources do
     member do
       patch :toggle_visible

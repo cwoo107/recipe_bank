@@ -2,6 +2,10 @@ class HouseholdMember < ApplicationRecord
   belongs_to :household
   belongs_to :user, optional: true # passive members (e.g. children) have no login
 
+  # Deleting a member shouldn't be blocked by (or leave dangling) chore assignments.
+  has_many :chores,        foreign_key: :assignee_id, dependent: :nullify, inverse_of: :assignee
+  has_many :weekly_chores, foreign_key: :assignee_id, dependent: :nullify, inverse_of: :assignee
+
   # admin  => same level of control as the owner
   # limited => can view/use household data, cannot manage the household or members
   enum :role, { admin: 0, limited: 1 }, default: :limited, validate: true

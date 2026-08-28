@@ -16,12 +16,12 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
     plan.section("groceries").mark!("skipped", by: users(:one))
 
     get plan_week_url
-    assert_redirected_to plan_week_step_url(section: "todos")
+    assert_redirected_to plan_week_step_url(section: "chores")
   end
 
   test "reopening a fully completed week is never blocked" do
     plan = WeeklyPlan.current_for(households(:one))
-    %w[meals todos groceries calendar].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    %w[meals todos groceries chores calendar].each { |k| plan.section(k).mark!("done", by: users(:one)) }
 
     get plan_week_url
     assert_redirected_to plan_week_step_url(section: "meals")
@@ -60,6 +60,12 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Plan meals"
   end
 
+  test "chores step lists chores that are due and not yet on this week's list" do
+    get plan_week_step_url(section: "chores")
+    assert_response :success
+    assert_select "button", text: "Add to this week"
+  end
+
   test "visiting any step marks the plan as currently planning" do
     plan = WeeklyPlan.current_for(households(:one))
     refute plan.currently_planning?
@@ -75,5 +81,24 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
 
     patch plan_week_step_url(section: "calendar"), params: { status: "done" }
     refute plan.reload.currently_planning?
+  end
+
+  test "starting the wizard stamps planning_started_at" do
+    plan = WeeklyPlan.current_for(households(:one))
+    assert_nil plan.planning_started_at
+
+    get plan_week_step_url(section: "meals")
+    assert_not_nil plan.reload.planning_started_at
+  end
+
+  test "finishing the wizard stamps planning_completed_at and flashes elapsed time" do
+    plan = WeeklyPlan.current_for(households(:one))
+    plan.update!(currently_planning: true, planning_started_at: 3.minutes.ago)
+    %w[meals todos groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+
+    patch plan_week_step_url(section: "calendar"), params: { status: "done" }
+
+    assert_not_nil plan.reload.planning_completed_at
+    assert_match(/Congrats! It just took you 3 minutes to plan your week\./, flash[:notice])
   end
 end
