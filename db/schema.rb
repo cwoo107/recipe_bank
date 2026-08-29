@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_28_122912) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_29_130500) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -301,6 +301,33 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_122912) do
     t.index ["user_id"], name: "index_recurring_meals_on_user_id"
   end
 
+  create_table "restock_categories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id", "position"], name: "index_restock_categories_on_household_id_and_position"
+  end
+
+  create_table "restock_items", force: :cascade do |t|
+    t.string "brand"
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.datetime "last_date_checked_restocked"
+    t.datetime "last_date_checked_stocked"
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.boolean "restock", default: false, null: false
+    t.integer "restock_category_id", null: false
+    t.boolean "stocked", default: false, null: false
+    t.string "store"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["restock_category_id", "position"], name: "index_restock_items_on_restock_category_id_and_position"
+    t.index ["restock_category_id"], name: "index_restock_items_on_restock_category_id"
+  end
+
   create_table "steps", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "position"
@@ -446,6 +473,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_28_122912) do
   add_foreign_key "recurring_meals", "households"
   add_foreign_key "recurring_meals", "recipes"
   add_foreign_key "recurring_meals", "users"
+  add_foreign_key "restock_categories", "households"
+  add_foreign_key "restock_items", "households"
+  add_foreign_key "restock_items", "restock_categories"
+  add_foreign_key "restock_items", "users"
   add_foreign_key "steps", "recipes"
   add_foreign_key "tags", "users"
   add_foreign_key "todos", "households"

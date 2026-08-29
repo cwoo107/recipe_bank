@@ -10,8 +10,17 @@ class Ingredient < ApplicationRecord
 
   validates :ingredient, presence: true
 
+  before_validation :capitalize_ingredient
+
   def editable_by?(user)
     return false unless user
     created_by_id.nil? || created_by_id == user.id
+  end
+
+  private
+
+  def capitalize_ingredient
+    return if ingredient.blank?
+    self.ingredient = ingredient.strip.capitalize
   end
 end

@@ -1,0 +1,10 @@
+<%= turbo_frame_tag "new_restock_item" do %>
+  <%= render "form", restock_item: @restock_item %>
+<% end %>
+
+<%# Also render in per-list turbo frames if restock_category_id param present %>
+<% if params[:restock_category_id].present? %>
+  <%= turbo_frame_tag "new_restock_item_#{params[:restock_category_id]}" do %>
+    <%= render "form", restock_item: @restock_item %>
+  <% end %>
+<% end %>

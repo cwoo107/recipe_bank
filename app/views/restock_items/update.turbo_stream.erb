@@ -1,0 +1,4 @@
+<%# Replace the card in-place %>
+<%= turbo_stream.replace "restock_item_#{@restock_item.id}" do %>
+  <%= render "restock_items/restock_item", item: @restock_item %>
+<% end %>

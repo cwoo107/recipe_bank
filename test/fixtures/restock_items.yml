@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: "Toilet paper"
+  brand: "Charmin"
+  store: "Costco"
+  restock_category: bathrooms_one
+  position: 1
+  household: one
+  user: one # alice
+
+two:
+  name: "Flour"
+  restock_category: pantry_two
+  position: 1
+  household: two
+  user: three # carol

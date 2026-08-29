@@ -97,7 +97,9 @@
              class="flex flex-col gap-2 p-3 min-h-40 flex-1"
              data-controller="kanban"
              data-kanban-url-value="<%= reorder_todos_path %>"
-             data-status="<%= status %>">
+             data-kanban-move-url-value="<%= move_todo_path(":id") %>"
+             data-column="<%= status %>"
+             data-empty-text="No tasks here yet">
           <% todos.each do |todo| %>
             <%= render "todos/todo", todo: todo, priority_config: priority_config %>
           <% end %>

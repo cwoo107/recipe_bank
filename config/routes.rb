@@ -79,6 +79,19 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :restock_items do
+    collection do
+      post :reorder
+    end
+    member do
+      post  :move
+      patch :mark_stocked
+      patch :mark_restock
+    end
+  end
+
+  resources :restock_categories, only: [ :new, :create, :edit, :update, :destroy ]
+
   resources :chores
   resources :weekly_chores, only: [ :index, :create, :update, :destroy ] do
     collection do

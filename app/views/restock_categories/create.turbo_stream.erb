@@ -1,0 +1,4 @@
+<%# Insert the new list right before the "Add a restock category" tile %>
+<%= turbo_stream.before "add_restock_category_tile" do %>
+  <%= render "restock_items/column", category: @restock_category %>
+<% end %>

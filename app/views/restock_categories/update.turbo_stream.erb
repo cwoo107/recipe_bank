@@ -1,0 +1,4 @@
+<%# Rename in place, leaving the list's items untouched %>
+<%= turbo_stream.replace "restock_category_name_#{@restock_category.id}" do %>
+  <%= render "restock_items/category_name", category: @restock_category %>
+<% end %>

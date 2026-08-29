@@ -1,0 +1,67 @@
+<% content_for :title, "Restock Checklist" %>
+
+<div class="w-full">
+  <%# Page header %>
+  <div class="sm:flex sm:items-center sm:justify-between mb-8">
+    <div>
+      <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">
+          Restock<span class="text-olive-800 dark:text-[#e8ede3]">Checklist</span>
+        </span>
+      </h1>
+      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+        <%= current_household.restock_items.count %> item<%= current_household.restock_items.count == 1 ? "" : "s" %> to keep stocked
+      </p>
+    </div>
+    <div class="mt-4 sm:ml-16 sm:mt-0">
+      <div data-controller="dialog" data-action="click->dialog#backdropClose">
+        <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+          <%= turbo_frame_tag "new_restock_item", src: new_restock_item_path do %><% end %>
+          <div class="mt-4">
+            <button type="button" data-action="dialog#close" autofocus
+                    class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+              Close
+            </button>
+          </div>
+        </dialog>
+        <button type="button" data-action="dialog#open"
+                class="inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]">
+          <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+          </svg>
+          Add an item
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Restock lists %>
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <% @categories.each do |category| %>
+      <%= render "restock_items/column", category: category %>
+    <% end %>
+
+    <%# Add a restock category — takes the grid slot the Misc Supplies default used to occupy %>
+    <div id="add_restock_category_tile"
+         class="flex items-center justify-center min-h-40 rounded-lg border-2 border-dashed border-gray-200 dark:border-white/10">
+      <div data-controller="dialog" data-action="click->dialog#backdropClose">
+        <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+          <%= turbo_frame_tag "new_restock_category", src: new_restock_category_path do %><% end %>
+          <div class="mt-4">
+            <button type="button" data-action="dialog#close" autofocus
+                    class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+              Close
+            </button>
+          </div>
+        </dialog>
+        <button type="button" data-action="dialog#open"
+                class="flex flex-col items-center gap-2 p-6 text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition-colors">
+          <svg viewBox="0 0 20 20" fill="currentColor" class="size-8" aria-hidden="true">
+            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+          </svg>
+          <span class="text-sm font-medium">Add a restock category</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

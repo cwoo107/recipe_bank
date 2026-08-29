@@ -24,7 +24,7 @@ class IngredientMatcherTest < ActiveSupport::TestCase
     result = IngredientMatcher.new.find_or_suggest(parsed("2 lbs chicken breast"))
 
     assert_equal "exact", result[:method]
-    assert_equal "Boneless Chicken Breast", result[:match].ingredient
+    assert_equal "Boneless chicken breast", result[:match].ingredient
   end
 
   test "partial match still works once both sides are normalized the same way" do

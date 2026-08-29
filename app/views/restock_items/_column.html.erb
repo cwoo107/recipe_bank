@@ -1,0 +1,86 @@
+<%# locals: (category:) %>
+
+<div id="restock_category_<%= category.id %>"
+     class="flex flex-col rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+  <%# List header %>
+  <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 dark:border-white/10">
+    <div class="flex items-center gap-2 min-w-0">
+      <%= render "restock_items/category_name", category: category %>
+      <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 shrink-0">
+        <%= category.restock_items.count %>
+      </span>
+    </div>
+
+    <div class="flex items-center gap-1 shrink-0">
+      <%# Rename list %>
+      <div data-controller="dialog" data-action="click->dialog#backdropClose">
+        <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+          <%= turbo_frame_tag "edit_restock_category_#{category.id}", src: edit_restock_category_path(category) do %><% end %>
+          <div class="mt-4">
+            <button type="button" data-action="dialog#close"
+                    class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+              Close
+            </button>
+          </div>
+        </dialog>
+        <button type="button" data-action="dialog#open"
+                class="rounded-md p-1 text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition-colors"
+                aria-label="Rename <%= category.name %>">
+          <svg viewBox="0 0 16 16" fill="currentColor" class="size-5">
+            <path d="M13.488 2.513a1.75 1.75 0 0 0-2.475 0L6.75 6.774a2.75 2.75 0 0 0-.596.892l-.83 2.495a.75.75 0 0 0 .945.944l2.495-.83a2.75 2.75 0 0 0 .892-.596l4.262-4.262a1.75 1.75 0 0 0 0-2.474Zm-1.414 1.06a.25.25 0 0 1 .354 0l.499.499a.25.25 0 0 1 0 .354l-.934.933-1.233-1.232.934-.933Zm-2.42 2.42 1.233 1.233-2.847 2.847a1.25 1.25 0 0 1-.405.27L6.38 10.75l.407-1.454a1.25 1.25 0 0 1 .27-.405l2.596-2.598Z" />
+          </svg>
+        </button>
+      </div>
+
+      <%# Delete list %>
+      <%= button_to restock_category_path(category), method: :delete,
+            class: "rounded p-1 text-gray-400 hover:text-dusty-rose-600 dark:hover:text-dusty-rose-400 transition-colors",
+            aria: { label: "Delete #{category.name}" },
+            data: { turbo_confirm: "Delete \"#{category.name}\" and its #{pluralize(category.restock_items.count, 'item')}?" } do %>
+        <svg viewBox="0 0 16 16" fill="currentColor" class="size-5">
+          <path d="M5.75 3a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5h-3A.75.75 0 0 1 5.75 3ZM3 4.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5H3A.75.75 0 0 1 3 4.25Zm1.5 1.5.652 6.515A1.75 1.75 0 0 0 6.897 14h2.206a1.75 1.75 0 0 0 1.745-1.735L11.5 5.75h-7Z" />
+        </svg>
+      <% end %>
+
+      <%# Quick add for this list %>
+      <div data-controller="dialog" data-action="click->dialog#backdropClose">
+        <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+          <%= turbo_frame_tag "new_restock_item_#{category.id}", src: new_restock_item_path(restock_category_id: category.id) do %><% end %>
+          <div class="mt-4">
+            <button type="button" data-action="dialog#close"
+                    class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+              Close
+            </button>
+          </div>
+        </dialog>
+        <button type="button" data-action="dialog#open"
+                class="rounded-md p-1 text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition-colors"
+                aria-label="Add item to <%= category.name %>">
+          <svg viewBox="0 0 20 20" fill="currentColor" class="size-4">
+            <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <%# Sortable card list %>
+  <div id="restock_items_<%= category.id %>"
+       class="flex flex-col gap-2 p-3 min-h-40 flex-1"
+       data-controller="kanban"
+       data-kanban-url-value="<%= reorder_restock_items_path %>"
+       data-kanban-move-url-value="<%= move_restock_item_path(":id") %>"
+       data-kanban-param-value="restock_category_id"
+       data-column="<%= category.id %>"
+       data-empty-text="Nothing to restock here">
+    <% category.restock_items.ordered.each do |item| %>
+      <%= render "restock_items/restock_item", item: item %>
+    <% end %>
+
+    <% if category.restock_items.empty? %>
+      <div data-placeholder class="flex-1 flex items-center justify-center min-h-20 rounded-md border-2 border-dashed border-gray-200 dark:border-white/10">
+        <p class="text-sm text-gray-400 dark:text-gray-600 italic">Nothing to restock here</p>
+      </div>
+    <% end %>
+  </div>
+</div>

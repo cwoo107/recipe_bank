@@ -1,0 +1,16 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+bathrooms_one:
+  name: "Bathrooms"
+  position: 1
+  household: one
+
+kitchen_one:
+  name: "Kitchen"
+  position: 2
+  household: one
+
+pantry_two:
+  name: "Pantry"
+  position: 1
+  household: two

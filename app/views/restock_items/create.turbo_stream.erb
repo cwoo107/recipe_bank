@@ -1,0 +1,4 @@
+<%# Prepend the new card into the correct list %>
+<%= turbo_stream.prepend "restock_items_#{@restock_item.restock_category_id}" do %>
+  <%= render "restock_items/restock_item", item: @restock_item %>
+<% end %>

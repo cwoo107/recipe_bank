@@ -7,6 +7,8 @@ class Household < ApplicationRecord
   has_many :meals,            dependent: :destroy
   has_many :recurring_meals,  dependent: :destroy
   has_many :todos,            dependent: :destroy
+  has_many :restock_items,    dependent: :destroy
+  has_many :restock_categories, dependent: :destroy
   has_many :chores,           dependent: :destroy
   has_many :weekly_chores,    dependent: :destroy
   has_many :grocery_lists,    dependent: :destroy
@@ -16,6 +18,8 @@ class Household < ApplicationRecord
 
   validates :family_name, presence: true
   validates :minutes_per_day, presence: true, numericality: { only_integer: true, greater_than: 0 }
+
+  after_create :seed_default_restock_categories
 
   def self.default_family_name_for(user)
     handle = user.email.to_s.split("@").first.presence || "New"
@@ -61,5 +65,13 @@ class Household < ApplicationRecord
   rescue ActiveRecord::RecordInvalid => e
     member.errors.merge!(e.record.errors) unless e.record.equal?(member)
     member
+  end
+
+  private
+
+  def seed_default_restock_categories
+    RestockCategory::DEFAULT_NAMES.each_with_index do |name, index|
+      restock_categories.create!(name: name, position: index + 1)
+    end
   end
 end

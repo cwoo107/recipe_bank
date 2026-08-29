@@ -1,12 +1,11 @@
-<%# locals: (todo:, priority_config:) %>
-<% pri = priority_config[todo.priority] %>
+<%# locals: (item:) %>
 
-<div id="todo_<%= todo.id %>"
-     data-id="<%= todo.id %>"
+<div id="restock_item_<%= item.id %>"
+     data-id="<%= item.id %>"
      data-sortable-target="item"
      class="group relative rounded-lg bg-white dark:bg-[#242b1e] border border-gray-200 dark:border-white/10 p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
 
-  <%# Drag handle (invisible but full-width, class used by sortable_controller) %>
+  <%# Drag handle (invisible but full-width) %>
   <div class="sortable-handle absolute inset-0 rounded-lg cursor-grab active:cursor-grabbing" aria-hidden="true"></div>
 
   <div class="relative z-10 pointer-events-none">
@@ -17,7 +16,7 @@
       <%# Edit %>
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
         <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
-          <%= turbo_frame_tag "edit_todo_#{todo.id}", src: edit_todo_path(todo) do %><% end %>
+          <%= turbo_frame_tag "edit_restock_item_#{item.id}", src: edit_restock_item_path(item) do %><% end %>
           <div class="mt-4">
             <button type="button" data-action="dialog#close"
                     class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
@@ -27,47 +26,60 @@
         </dialog>
         <button type="button" data-action="dialog#open"
                 class="rounded p-1 text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition-colors"
-                aria-label="Edit task">
+                aria-label="Edit item">
           <svg viewBox="0 0 16 16" fill="currentColor" class="size-5">
             <path d="M13.488 2.513a1.75 1.75 0 0 0-2.475 0L6.75 6.774a2.75 2.75 0 0 0-.596.892l-.83 2.495a.75.75 0 0 0 .945.944l2.495-.83a2.75 2.75 0 0 0 .892-.596l4.262-4.262a1.75 1.75 0 0 0 0-2.474Zm-1.414 1.06a.25.25 0 0 1 .354 0l.499.499a.25.25 0 0 1 0 .354l-.934.933-1.233-1.232.934-.933Zm-2.42 2.42 1.233 1.233-2.847 2.847a1.25 1.25 0 0 1-.405.27L6.38 10.75l.407-1.454a1.25 1.25 0 0 1 .27-.405l2.596-2.598Z" />
           </svg>
         </button>
       </div>
       <%# Delete %>
-      <%= button_to todo_path(todo), method: :delete,
+      <%= button_to restock_item_path(item), method: :delete,
             class: "rounded p-1 text-gray-400 hover:text-dusty-rose-600 dark:hover:text-dusty-rose-400 transition-colors",
-            aria: { label: "Delete task" },
-            data: { turbo_confirm: "Delete \"#{todo.title}\"?" } do %>
+            aria: { label: "Delete item" },
+            data: { turbo_confirm: "Delete \"#{item.name}\"?" } do %>
         <svg viewBox="0 0 16 16" fill="currentColor" class="size-5">
           <path d="M5.75 3a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 0 1.5h-3A.75.75 0 0 1 5.75 3ZM3 4.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5H3A.75.75 0 0 1 3 4.25Zm1.5 1.5.652 6.515A1.75 1.75 0 0 0 6.897 14h2.206a1.75 1.75 0 0 0 1.745-1.735L11.5 5.75h-7Z" />
         </svg>
       <% end %>
     </div>
 
-    <%# Title %>
-    <p class="pr-16 text-sm font-semibold text-gray-900 dark:text-white leading-snug"><%= todo.title %></p>
+    <p class="pr-16 text-sm font-semibold text-gray-900 dark:text-white leading-snug"><%= item.name %></p>
 
-    <%# Priority badge %>
-    <div class="mt-1">
-      <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= pri[:classes] %>">
-        <%= pri[:label] %>
-      </span>
+    <div>
+      <% if item.stocked_badge? %>
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-sage-100 text-sage-800 dark:bg-sage-900/30 dark:text-sage-300">
+          Stocked
+        </span>
+      <% elsif item.restock_badge? %>
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-dusty-rose-100 text-dusty-rose-800 dark:bg-dusty-rose-900/30 dark:text-dusty-rose-300">
+          Restock
+        </span>
+      <% else %>
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-honey-100 text-honey-800 dark:bg-honey-900/30 dark:text-honey-300">
+          Needs Check
+        </span>
+      <% end %>
     </div>
 
-    <%# Description (truncated) %>
-    <% if todo.description.present? %>
-      <p class="mt-1 text-xs text-gray-500 dark:text-gray-400 line-clamp-2"><%= todo.description %></p>
-    <% end %>
-    <% if todo.start_date.present? && todo.end_date.present? %>
+    <% if item.brand.present? || item.store.present? %>
       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        <%= todo.start_date.strftime("%b %-d") %> – <%= todo.end_date.strftime("%b %-d") %>
+        <%= [ item.brand, item.store ].select(&:present?).join(" · ") %>
       </p>
     <% end %>
-    <% if todo.completed? %>
-      <p class="text-xs text-gray-500 dark:text-gray-400">Took <%= todo.actual_hm %></p>
-    <% elsif todo.estimated_time_to_complete.to_i.positive? %>
-      <p class="text-xs text-gray-500 dark:text-gray-400">Est. <%= todo.estimated_hm %></p>
-    <% end %>
 
+    <%# Stocked / Restock check-in — hidden once checked for the week; still
+        available from the edit form so the user can change their mind. %>
+    <% unless item.checked_this_week? %>
+      <div class="pointer-events-auto mt-3 flex items-center gap-2">
+        <%= button_to mark_stocked_restock_item_path(item), method: :patch, form_class: "flex-1",
+              class: "w-full rounded-lg px-4 py-1.5 bg-sage-600 hover:bg-sage-700 text-white text-sm font-medium cursor-pointer transition" do %>
+          Stocked
+        <% end %>
+        <%= button_to mark_restock_restock_item_path(item), method: :patch, form_class: "flex-1",
+              class: "w-full rounded-lg px-4 py-1.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 text-white text-sm font-medium cursor-pointer transition" do %>
+          Restock
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </div>

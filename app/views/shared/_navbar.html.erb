@@ -23,6 +23,8 @@
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(weekly_chores_path) || current_page?(chores_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "ToDo List", todos_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(todos_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
+          <%= link_to "Restock Checklist", restock_items_path,
+                      class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(restock_items_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
           <%= link_to "Calendar", calendars_path,
                       class: "inline-flex items-center px-3 py-2 text-sm font-medium #{current_page?(calendars_path) ? 'text-[#5f734c] border-b-2 border-[#5f734c]' : 'text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]'}" %>
 
@@ -98,6 +100,8 @@
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(weekly_chores_path) || current_page?(chores_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "ToDo List", todos_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(todos_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
+      <%= link_to "Restock Checklist", restock_items_path,
+                  class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(restock_items_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
       <%= link_to "Calendar", calendars_path,
                   class: "block border-l-4 py-2 pl-3 pr-4 text-base font-medium #{current_page?(calendars_path) ? 'border-[#5f734c] bg-[#f6f8f4] text-[#5f734c]' : 'border-transparent text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300'}" %>
 
