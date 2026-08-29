@@ -4,7 +4,9 @@
 <%= render "static_pages/feature_hero",
     eyebrow: "Recipe bank",
     headline: "Every recipe you love, in one bank",
-    subheadline: "Ingredients, instructions, tags, and nutrition — organized and searchable, so you're never digging through bookmarks or a stack of index cards to find dinner.",
+    subheadline: "Keep all of your family’s favorite recipes in one place, organized into collections however you like. With nutrition facts and estimated costs built into every recipe, you can stay on track with your nutrition and budget goals—without the mental overwhelm.
+
+  Stop reinventing the wheel every week or endlessly digging through Pinterest trying to find that recipe you saved months ago.",
     image: "marketing/recipe-detail.webp",
     image_alt: "A recipe page in HomemakersHaven showing ingredients, instructions, and nutrition" %>
 
@@ -18,44 +20,51 @@
     </p>
   </div>
 
-  <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2">
-    <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
-      <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Write it from scratch</h3>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Type up your own recipe with ingredients, step-by-step instructions, tags, and serving size.</p>
+  <div class="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2 lg:items-center">
+    <div class="flex flex-col gap-4">
+      <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
+        <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Write it from scratch</h3>
+        <!--<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Type up your own recipe with ingredients, step-by-step instructions, tags, and serving size.</p>-->
+      </div>
+      <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
+        <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Import from a URL</h3>
+<!--      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Paste a link to a recipe blog and HomemakersHaven fetches the page and pulls out the title, ingredients, and instructions.</p>-->
+      </div>
+      <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
+        <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Upload a document</h3>
+<!--      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Have a recipe saved as a PDF or Word doc? Upload the file and it gets parsed into the same structured format.</p>-->
+      </div>
+      <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
+        <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Snap a photo</h3>
+<!--      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Take a picture of a handwritten card or a cookbook page from your phone and let HomemakersHaven read it.</p>-->
+      </div>
     </div>
-    <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
-      <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Import from a URL</h3>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Paste a link to a recipe blog and HomemakersHaven fetches the page and pulls out the title, ingredients, and instructions.</p>
-    </div>
-    <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
-      <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Upload a document</h3>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Have a recipe saved as a PDF or Word doc? Upload the file and it gets parsed into the same structured format.</p>
-    </div>
-    <div class="rounded-2xl border border-black/5 bg-white p-6 dark:bg-white/5 dark:border-white/10">
-      <h3 class="text-lg font-semibold text-olive-900 dark:text-white">Snap a photo</h3>
-      <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">Take a picture of a handwritten card or a cookbook page from your phone and let HomemakersHaven read it.</p>
+    <div>
+      <div class="rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
+        <%= image_tag "marketing/recipe-import.webp", alt: "Adding a recipe to HomemakersHaven", class: "w-full h-auto rounded-xl", loading: "lazy" %>
+      </div>
     </div>
   </div>
 </section>
 
 <section class="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
   <div class="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-    <div>
-      <span class="text-xs font-semibold uppercase tracking-wide text-[#5f734c] dark:text-[#95a97d]">Import, matched automatically</span>
-      <h2 class="mt-2 text-3xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">
-        Ingredients get matched, not just copied
-      </h2>
-      <p class="mt-4 text-base text-gray-600 dark:text-gray-300">
-        When a recipe is imported, its ingredients are matched against your existing ingredient list and
-        classified so nutrition and grocery totals stay accurate — not just a wall of unstructured text.
-      </p>
-    </div>
-    <div class="rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
-      <%= image_tag "marketing/recipe-import.webp", alt: "Importing a recipe from a URL in HomemakersHaven", class: "w-full h-auto rounded-xl", loading: "lazy" %>
-    </div>
+<!--    <div>-->
+<!--      <span class="text-xs font-semibold uppercase tracking-wide text-[#5f734c] dark:text-[#95a97d]">Import, matched automatically</span>-->
+<!--      <h2 class="mt-2 text-3xl text-olive-900 dark:text-white" style="font-family: 'Instrument Serif', serif;">-->
+<!--        Ingredients get matched, not just copied-->
+<!--      </h2>-->
+<!--      <p class="mt-4 text-base text-gray-600 dark:text-gray-300">-->
+<!--        When a recipe is imported, its ingredients are matched against your existing ingredient list and-->
+<!--        classified so nutrition and grocery totals stay accurate — not just a wall of unstructured text.-->
+<!--      </p>-->
+<!--    </div>-->
+<!--    <div class="rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">-->
+      <%#= image_tag "marketing/recipe-import.webp", alt: "Importing a recipe from a URL in HomemakersHaven", class: "w-full h-auto rounded-xl", loading: "lazy" %>
+<!--    </div>-->
   </div>
 </section>
 
 <%= render "static_pages/cta_band",
     headline: "Bring your recipes over in minutes",
-    subheadline: "However they're scattered today, they'll end up in one searchable bank." %>
+    subheadline: "However your recipes are scattered today, they'll end up in your own searchable and customizable bank." %>
