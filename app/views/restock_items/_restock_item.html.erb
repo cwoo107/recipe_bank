@@ -43,7 +43,7 @@
       <% end %>
     </div>
 
-    <p class="pr-16 text-sm font-semibold text-gray-900 dark:text-white leading-snug"><%= item.name %></p>
+    <p class="pr-16  font-semibold text-gray-900 dark:text-white leading-snug"><%= item.name %></p>
 
     <div>
       <% if item.stocked_badge? %>
@@ -72,11 +72,11 @@
     <% unless item.checked_this_week? %>
       <div class="pointer-events-auto mt-3 flex items-center gap-2">
         <%= button_to mark_stocked_restock_item_path(item), method: :patch, form_class: "flex-1",
-              class: "w-full rounded-lg px-4 py-1.5 bg-sage-600 hover:bg-sage-700 text-white text-sm font-medium cursor-pointer transition" do %>
+              class: "w-full rounded-lg px-4 py-1.5 bg-sage-600 hover:bg-sage-700 text-white text-xs font-medium cursor-pointer transition" do %>
           Stocked
         <% end %>
         <%= button_to mark_restock_restock_item_path(item), method: :patch, form_class: "flex-1",
-              class: "w-full rounded-lg px-4 py-1.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 text-white text-sm font-medium cursor-pointer transition" do %>
+              class: "w-full rounded-lg px-4 py-1.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 text-white text-xs font-medium cursor-pointer transition" do %>
           Restock
         <% end %>
       </div>
