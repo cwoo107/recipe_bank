@@ -1,0 +1,5 @@
+# Recurring jobs, loaded into sidekiq-cron by config/initializers/sidekiq.rb.
+# Cron times are UTC.
+sync_all_calendars:
+  cron: "0 4 * * *"
+  class: "SyncAllCalendarsJob"
