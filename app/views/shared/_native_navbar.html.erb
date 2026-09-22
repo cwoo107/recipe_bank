@@ -1,0 +1,21 @@
+<%#
+  Native chrome for the app: gives every pushed screen a title and an
+  automatic back button (see https://rubynative.com/docs/back-buttons), plus
+  a trailing "More" menu for the sections that don't fit in the 5-tab bar
+  (config/ruby_native.yml) or the household/account settings that used to
+  live in the web navbar's user dropdown, which native_app? hides entirely.
+%>
+<%= native_navbar_tag(content_for(:title) || "RecipeBank") do |navbar| %>
+  <% navbar.button "More", icon: "ellipsis", icons: { android: "more_horiz" } do |menu| %>
+    <% menu.item "Chore Chart", href: weekly_chores_path, icon: "list.bullet.clipboard", icons: { android: "assignment" } %>
+    <% menu.item "To-Do List", href: todos_path, icon: "checklist", icons: { android: "task_alt" } %>
+    <% menu.item "Restock Checklist", href: restock_items_path, icon: "cart.badge.plus", icons: { android: "inventory_2" } %>
+    <% menu.item "Manage Household", href: household_path, icon: "person.2", icons: { android: "group" } %>
+    <% menu.item "Account Settings", href: edit_user_registration_path, icon: "gearshape", icons: { android: "settings" } %>
+    <% menu.item "Sign Out", click: "#native-sign-out", icon: "rectangle.portrait.and.arrow.right", icons: { android: "logout" }, destructive: true %>
+  <% end %>
+<% end %>
+
+<%# Real sign-out control the menu item above clicks — DELETE isn't a plain
+    link, and the web navbar it used to live in is skipped for native_app?. %>
+<%= button_to "Sign out", destroy_user_session_path, method: :delete, id: "native-sign-out", class: "hidden" %>

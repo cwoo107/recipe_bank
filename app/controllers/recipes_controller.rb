@@ -1,10 +1,19 @@
 class RecipesController < ApplicationController
-  before_action :set_recipe,        only: %i[show edit update destroy toggle_favorite]
-  before_action :require_ownership!, only: %i[edit update destroy]
+  before_action :set_recipe,        only: %i[show edit update destroy toggle_favorite toggle_visibility]
+  before_action :require_ownership!, only: %i[edit update destroy toggle_visibility]
+
+  # Sizes the visibility toggle can round-trip — it posts its own size back so
+  # the replacement matches wherever it was rendered, and that lands in a CSS
+  # class, so only these are accepted.
+  ICON_SIZES = %w[size-4 size-5 size-6 size-7].freeze
+
+  # The two lists behind the Recipes tab: what the household has, and the
+  # public pool they can pull from.
+  SCOPES = %w[household public].freeze
 
   def index
-    @recipes = Recipe.visible_to(current_user)
-                     .includes(:tags, :recipe_ingredients, :steps, :user_favorites)
+    @scope   = SCOPES.include?(params[:scope]) ? params[:scope] : "household"
+    @recipes = scoped_recipes.includes(:tags, :recipe_ingredients, :steps, :user_favorites)
 
     if params[:filter].present?
       tag = Tag.find_by(id: params[:filter])
@@ -16,9 +25,17 @@ class RecipesController < ApplicationController
     end
 
     @recipes = apply_sort(@recipes)
+
+    # Lets the browse list show "Saved" instead of offering a second copy.
+    @saved_source_ids = saved_source_ids_for(@recipes) if @scope == "public"
   end
 
   def show
+    # Only relevant for recipes from outside the household — drives the
+    # "Save to Our Recipes" button vs. a link to the copy they already have.
+    unless @recipe.owned_by_household?(current_household)
+      @saved_copy = Recipe.for_household(current_household).find_by(source_recipe: @recipe)
+    end
   end
 
   def new
@@ -39,16 +56,73 @@ class RecipesController < ApplicationController
   end
 
   def update
-    if @recipe.update(recipe_params)
-      redirect_to @recipe, notice: "Recipe was successfully updated.", status: :see_other
-    else
-      render :edit, status: :unprocessable_entity
+    saved = @recipe.update(recipe_params)
+
+    respond_to do |format|
+      # The show page's inline title/description fields post to .turbo_stream
+      # and get just the read-only halves back, so the form they're still
+      # typing in isn't yanked out from under them.
+      format.turbo_stream do
+        if saved
+          render turbo_stream: [
+            turbo_stream.replace("recipe_title", partial: "recipes/title", locals: { recipe: @recipe }),
+            turbo_stream.replace("recipe_description", partial: "recipes/description", locals: { recipe: @recipe })
+          ]
+        else
+          render turbo_stream: turbo_stream.replace("recipe_heading", partial: "recipes/heading", locals: { recipe: @recipe }),
+                 status: :unprocessable_entity
+        end
+      end
+
+      format.html do
+        if saved
+          redirect_to @recipe, notice: "Recipe was successfully updated.", status: :see_other
+        else
+          render :edit, status: :unprocessable_entity
+        end
+      end
     end
   end
 
   def destroy
     @recipe.destroy!
     redirect_to recipes_path, notice: "Recipe was successfully deleted.", status: :see_other
+  end
+
+  # Copies a public recipe into the household (it becomes the current user's,
+  # which is what makes it show up under "Our Recipes").
+  def save_to_household
+    source = Recipe.publicly_visible.find(params.expect(:id))
+
+    if source.owned_by_household?(current_household)
+      return redirect_back fallback_location: recipes_path(scope: "public"),
+                           notice: "That recipe is already one of yours."
+    end
+
+    existing = Recipe.for_household(current_household).find_by(source_recipe: source)
+    if existing
+      return redirect_to existing, notice: "Your household already saved this recipe."
+    end
+
+    copy = source.duplicate_for(current_user)
+    redirect_to copy, notice: "Saved to your recipes."
+  end
+
+  # Flips the recipe between public and private in place, the same way the
+  # favourite star toggles.
+  def toggle_visibility
+    @recipe.update!(visibility: @recipe.public? ? "private" : "public")
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          "visibility_button_#{@recipe.id}",
+          partial: "recipes/visibility_icon",
+          locals: { recipe: @recipe, size: icon_size }
+        )
+      end
+      format.html { redirect_to @recipe }
+    end
   end
 
   def toggle_favorite
@@ -75,7 +149,26 @@ class RecipesController < ApplicationController
   private
 
   def set_recipe
-    @recipe = Recipe.visible_to(current_user).find(params.expect(:id))
+    @recipe = Recipe.browsable_by_household(current_household).find(params.expect(:id))
+  end
+
+  def icon_size
+    ICON_SIZES.include?(params[:size]) ? params[:size] : "size-5"
+  end
+
+  def scoped_recipes
+    if @scope == "public"
+      Recipe.public_beyond_household(current_household)
+    else
+      Recipe.for_household(current_household)
+    end
+  end
+
+  def saved_source_ids_for(recipes)
+    Recipe.for_household(current_household)
+          .where(source_recipe_id: recipes.map(&:id))
+          .pluck(:source_recipe_id)
+          .to_set
   end
 
   def require_ownership!

@@ -36,10 +36,13 @@ Rails.application.routes.draw do
     collection do
       post :create_from_file
     end
+    member do
+      post :confirm_ingredients
+    end
   end
 
   resources :recipes do
-    resources :recipe_ingredients, only: [:create, :destroy]
+    resources :recipe_ingredients, only: [:create, :update, :destroy]
     resources :recipe_tags, only: [:create, :destroy]
     resources :steps do
       collection do
@@ -48,7 +51,9 @@ Rails.application.routes.draw do
     end
     member do
       patch :toggle_favorite
+      patch :toggle_visibility
       get :import
+      post :save_to_household
     end
   end
 

@@ -34,6 +34,20 @@ module RecipeIngredientsHelper
     'pieces' => 'pieces'
   }.freeze
 
+  # Grouped options for the unit picker. Whatever the row already stores is
+  # kept as its own option when it isn't one of the canonical units — older
+  # free-text units ("tablespoons") must not be silently rewritten just
+  # because someone opened the row in edit mode.
+  def unit_options_for_select(current)
+    groups = RecipeIngredient::UNIT_GROUPS.transform_values { |units| units.map { |u| [u, u] } }
+
+    if current.present? && RecipeIngredient::UNITS.exclude?(current)
+      groups = { "Current" => [[current, current]] }.merge(groups)
+    end
+
+    grouped_options_for_select(groups, current)
+  end
+
   def display_unit(unit)
     return '' if unit.blank?
 

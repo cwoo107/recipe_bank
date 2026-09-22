@@ -185,6 +185,17 @@
   html.dark {
     background-color: var(--color-olive-950);
   }
+
+  /* Inside the native app shell, WKWebView zooms the whole page in when a
+     text input's computed font-size is under 16px on focus (same rule iOS
+     Safari itself uses). There's no browser chrome to zoom back out with in
+     the app, so it reads as the app getting stuck — force 16px there only,
+     leaving the web font sizes untouched everywhere else. */
+  [data-native-app] input,
+  [data-native-app] textarea,
+  [data-native-app] select {
+    font-size: 16px;
+  }
 }
 
 @layer components {

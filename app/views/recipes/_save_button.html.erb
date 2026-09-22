@@ -1,0 +1,19 @@
+<%# Locals: recipe (required), saved (required) — the "copy this into our recipes" affordance %>
+<% if saved %>
+  <span class="inline-flex items-center gap-x-1 text-sm font-medium text-gray-500 dark:text-gray-400" title="Already in your recipes">
+    <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
+      <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+    </svg>
+    Saved
+  </span>
+<% else %>
+  <%= button_to save_to_household_recipe_path(recipe),
+                method: :post,
+                class: "inline-flex items-center gap-x-1 rounded-md bg-[#5f734c] px-2.5 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]",
+                title: "Save a copy to your household's recipes" do %>
+    <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-4" aria-hidden="true">
+      <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+    </svg>
+    Save
+  <% end %>
+<% end %>

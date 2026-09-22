@@ -105,6 +105,7 @@ GEM
       xpath (~> 3.2)
     childprocess (5.1.0)
       logger (~> 1.5)
+    chunky_png (1.4.0)
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
     crass (1.0.6)
@@ -170,6 +171,8 @@ GEM
       actionview (>= 7.0.0)
       activesupport (>= 7.0.0)
     json (2.18.0)
+    jwt (3.2.0)
+      base64
     kamal (2.10.1)
       activesupport (>= 7.0)
       base64 (~> 0.2)
@@ -313,6 +316,10 @@ GEM
       actionpack (>= 7.0)
       railties (>= 7.0)
     rexml (3.4.4)
+    rqrcode (3.2.0)
+      chunky_png (~> 1.0)
+      rqrcode_core (~> 2.0)
+    rqrcode_core (2.1.0)
     rubocop (1.82.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -345,6 +352,10 @@ GEM
     ruby-vips (2.3.0)
       ffi (~> 1.12)
       logger
+    ruby_native (0.15.3)
+      jwt (>= 2.0, < 4)
+      rails (>= 7.1)
+      rqrcode (~> 3.0)
     rubyzip (3.2.2)
     securerandom (0.4.1)
     selenium-webdriver (4.39.0)
@@ -467,6 +478,7 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 8.1.1)
   rubocop-rails-omakase
+  ruby_native (~> 0.15.3)
   selenium-webdriver
   sidekiq
   sidekiq-cron
@@ -507,6 +519,7 @@ CHECKSUMS
   bundler-audit (0.9.3) sha256=81c8766c71e47d0d28a0f98c7eed028539f21a6ea3cd8f685eb6f42333c9b4e9
   capybara (3.40.0) sha256=42dba720578ea1ca65fd7a41d163dd368502c191804558f6e0f71b391054aeef
   childprocess (5.1.0) sha256=9a8d484be2fd4096a0e90a0cd3e449a05bc3aa33f8ac9e4d6dcef6ac1455b6ec
+  chunky_png (1.4.0) sha256=89d5b31b55c0cf4da3cf89a2b4ebc3178d8abe8cbaf116a1dba95668502fdcfe
   concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
   crass (1.0.6) sha256=dc516022a56e7b3b156099abc81b6d2b08ea1ed12676ac7a5657617f012bd45d
@@ -541,6 +554,7 @@ CHECKSUMS
   irb (1.16.0) sha256=2abe56c9ac947cdcb2f150572904ba798c1e93c890c256f8429981a7675b0806
   jbuilder (2.14.1) sha256=4eb26376ff60ef100cb4fd6fd7533cd271f9998327e86adf20fd8c0e69fabb42
   json (2.18.0) sha256=b10506aee4183f5cf49e0efc48073d7b75843ce3782c68dbeb763351c08fd505
+  jwt (3.2.0) sha256=5419b1fe37b1da0982bd07051f573a8b8789ab724c2aa7e785e4784a3ed217d7
   kamal (2.10.1) sha256=53b7ecb4c33dd83b1aedfc7aacd1c059f835993258a552d70d584c6ce32b6340
   language_server-protocol (3.17.0.5) sha256=fd1e39a51a28bf3eec959379985a72e296e9f9acfce46f6a79d31ca8760803cc
   launchy (3.1.1) sha256=72b847b5cc961589dde2c395af0108c86ff0119f42d4648d25b5440ebb10059e
@@ -601,6 +615,8 @@ CHECKSUMS
   reline (0.6.3) sha256=1198b04973565b36ec0f11542ab3f5cfeeec34823f4e54cebde90968092b1835
   responders (3.2.0) sha256=89c2d6ac0ae16f6458a11524cae4a8efdceba1a3baea164d28ee9046bd3df55a
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
+  rqrcode (3.2.0) sha256=64c1494ca6bb67d731330f38b50e3fd09eeab4f5dcd04b608e21218d1d0b9542
+  rqrcode_core (2.1.0) sha256=f303b85df89c1b8fc5ee8dc19808c9dc4330e6329b660d99d4a8cbb36ca13051
   rubocop (1.82.1) sha256=09f1a6a654a960eda767aebea33e47603080f8e9c9a3f019bf9b94c9cab5e273
   rubocop-ast (1.49.0) sha256=49c3676d3123a0923d333e20c6c2dbaaae2d2287b475273fddee0c61da9f71fd
   rubocop-performance (1.26.1) sha256=cd19b936ff196df85829d264b522fd4f98b6c89ad271fa52744a8c11b8f71834
@@ -608,6 +624,7 @@ CHECKSUMS
   rubocop-rails-omakase (1.1.0) sha256=2af73ac8ee5852de2919abbd2618af9c15c19b512c4cfc1f9a5d3b6ef009109d
   ruby-progressbar (1.13.0) sha256=80fc9c47a9b640d6834e0dc7b3c94c9df37f08cb072b7761e4a71e22cff29b33
   ruby-vips (2.3.0) sha256=e685ec02c13969912debbd98019e50492e12989282da5f37d05f5471442f5374
+  ruby_native (0.15.3) sha256=bd0f90076825214089a111a0ca206a632f7a02791d909b96be8e72887a2e9e9a
   rubyzip (3.2.2) sha256=c0ed99385f0625415c8f05bcae33fe649ed2952894a95ff8b08f26ca57ea5b3c
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   selenium-webdriver (4.39.0) sha256=984a1e63d39472eaf286bac3c6f1822fa7eea6eed9c07a66ce7b3bc5417ba826

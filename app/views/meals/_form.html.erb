@@ -11,6 +11,12 @@
   <% end %>
 
   <%# Recipe selector + Servings %>
+  <%# The pool is our household's recipes; public ones are rendered too but
+      stay hidden until the "browse public" toggle is on. %>
+  <% household_user_ids = current_household.users.pluck(:id).to_set %>
+  <% selectable_recipes  = Recipe.browsable_by_household(current_household)
+                                 .includes(:tags, :collection_recipes).order(title: :asc) %>
+  <% editing_public_recipe = meal.recipe.present? && !household_user_ids.include?(meal.recipe.user_id) %>
   <div class="mb-4"
        data-controller="searchable-select"
        data-searchable-select-placeholder-value="Search for a recipe...">
@@ -46,6 +52,15 @@
       </div>
     </div>
 
+    <%# Recipe pool toggle — household-only unless they ask for more %>
+    <label class="mb-3 inline-flex items-center gap-2 cursor-pointer">
+      <%= check_box_tag "meal_include_public_recipes", "1", editing_public_recipe,
+                        data: { searchable_select_target: "publicToggle",
+                                action: "change->searchable-select#togglePublic" },
+                        class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
+      <span class="text-sm text-gray-600 dark:text-gray-300">Also browse public recipes</span>
+    </label>
+
     <%# Tag filter %>
     <% recipe_tags = Tag.for_user(current_user) %>
     <% if recipe_tags.any? %>
@@ -76,9 +91,10 @@
         <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
         <%= form.select :recipe_id,
                         options_for_select(
-                          Recipe.visible_to(current_user).includes(:tags, :collection_recipes).order(title: :asc).map { |r|
+                          selectable_recipes.map { |r|
                             [r.title, r.id, {
                               'data-favorite'       => current_user.favorited?(r),
+                              'data-public'         => !household_user_ids.include?(r.user_id),
                               'data-servings'       => r.servings,
                               'data-tag-ids'        => r.tags.map(&:id).join(','),
                               'data-collection-ids' => r.collection_recipes.map(&:collection_id).join(',')

@@ -1,0 +1,9 @@
+<%# Locals: recipe (required) — empty when there's no description, but always
+    present so an inline edit has something to replace. %>
+<div id="recipe_description">
+  <% if recipe.description.present? %>
+    <p data-edit-mode-target="viewOnlyItems" class="mt-2 text-base text-gray-700 dark:text-gray-300">
+      <%= recipe.description %>
+    </p>
+  <% end %>
+</div>

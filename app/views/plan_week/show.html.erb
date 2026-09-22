@@ -1,5 +1,7 @@
 <% content_for :title, "Plan Your Week — #{@dashboard_section.label}" %>
 
+<%= native_form_tag %>
+
 <div class="w-full max-w-6xl mx-auto">
   <%= render "plan_week/progress", sections: @sections, current_key: @dashboard_section.key %>
 

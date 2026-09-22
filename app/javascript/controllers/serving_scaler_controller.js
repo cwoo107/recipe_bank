@@ -9,6 +9,15 @@ export default class extends Controller {
         this.current   = this.baseValue
     }
 
+    // A row re-rendered mid-scale (e.g. after an inline quantity edit) comes
+    // back at its base quantity — rescale it so the column stays consistent.
+    quantityTargetConnected(element) {
+        if (!this.current || this.current === this.baseValue) return
+
+        const base = parseFloat(element.dataset.baseQuantity)
+        element.textContent = this.formatQuantity(base * (this.current / this.baseValue))
+    }
+
     increment() {
         this.current += 1
         this.update()

@@ -1,0 +1,191 @@
+# Ruby Native reads this file on launch to configure the native app.
+# Edit and relaunch the native app to see changes.
+
+# Configure how the app launches and navigates between pages.
+# https://rubynative.com/docs/advanced-mode
+app:
+  # Navigation mode. Options:
+  #   normal   - no screen transitions (default)
+  #   advanced - Hotwire Native navigator with native transitions
+  mode: advanced
+
+  # First URL shown when the app launches.
+  # Default: the first tab's path.
+  entry_path: /dashboard
+
+# Configure the app's colors, theme, and orientation.
+# https://rubynative.com/docs/appearance
+appearance:
+  # Color of interactive elements (links, buttons, tab selection).
+  # Accepts a hex string, or { light:, dark: } for dark mode support.
+  tint_color: "#5f734c"
+
+  # Color shown briefly during launch and as the safe-area fill.
+  # Accepts a hex string, or { light:, dark: } for dark mode support.
+  background_color:
+    light: "#faf9f7"
+    dark: "#1a1f16"
+
+  # Light/dark theme. Options:
+  #   auto  - follows system setting (default)
+  #   light - force light mode
+  #   dark  - force dark mode
+  # theme: auto
+
+  # Enable device rotation.
+  # Default: false (portrait-only).
+  # landscape: true
+
+  # Brand the navigation bar across the whole app: a centered logo in place of
+  # the page title, plus your own bar colors.
+  # https://rubynative.com/docs/appearance#navbar-branding
+  # navbar:
+  #   # Centered logo, shown instead of the page title. Set this to an image URL.
+  #   # For a local asset, point it at image_url wrapped in ERB so the URL is
+  #   # fingerprinted (the app re-downloads only when the image changes). The
+  #   # docs page above has the exact snippet to copy.
+  #   logo: "https://cdn.example.com/logo.png"
+  #
+  #   # Bar background color.
+  #   # Accepts a hex string, or { light:, dark: } for dark mode support.
+  #   background_color: "#3B3F54"
+  #
+  #   # Title and bar-button color.
+  #   # Accepts a hex string, or { light:, dark: } for dark mode support.
+  #   foreground_color: "#FFFFFF"
+  #
+  #   # Status bar content, to match your bar. Options: light (white) or dark.
+  #   # Omit to let the system decide.
+  #   status_bar: light
+
+  # On Android, the bars are a neutral gray, light or dark to match the theme,
+  # with tint_color on the selected tab, matching iOS. Override either bar
+  # here; iOS keeps the system Liquid Glass bars. (The floating action button
+  # is colored per page from native_fab_tag instead.)
+  # https://rubynative.com/docs/appearance#android-chrome-colors
+  # android:
+  #   navbar:
+  #     # Each accepts a hex string, or { light:, dark: } for dark mode support.
+  #     background_color: "#1E293B"
+  #     # Title and icon color. Defaults to black or white, picked for contrast.
+  #     foreground_color: "#FFFFFF"
+  #   tab_bar:
+  #     background_color: "#1E293B"
+  #     # Icon and label color. Defaults to the theme's, with tint_color on the
+  #     # selected tab. Set this and unselected tabs dim to 60% of it.
+  #     foreground_color: "#FFFFFF"
+
+  # Show a launch splash while the first screen loads. It holds your launch icon
+  # and background_color in frame, with a spinner, until the web content paints.
+  # Off by default; set enabled: true to turn it on.
+  # https://rubynative.com/docs/appearance#splash-screen
+  # splash:
+  #   enabled: true
+  #
+  #   # Spinner color. Accepts a hex string, or { light:, dark: } for dark mode.
+  #   # Defaults to a contrast-aware pick from your background_color.
+  #   spinner_color: "#007AFF"
+  #
+  #   # Status bar content over the splash. Options: light (white) or dark.
+  #   # Defaults to a contrast-aware pick from your background_color.
+  #   status_bar: dark
+
+# Configure the native tab bar on the bottom of the screen.
+# https://rubynative.com/docs/tabs
+tabs:
+  # Icons are SF Symbols on iOS and Material Icons on Android.
+  # https://rubynative.com/docs/icons
+  # auto_route: false on every tab below is deliberate. The default
+  # (path-prefix matching) switches tabs for *any* link that lands under a
+  # tab's path — and /recipes, /meals, /grocery_list, /calendar cover most
+  # of the app's real content (recipe detail pages, meal detail pages,
+  # individual grocery lists, calendar_sources/calendar_events also match
+  # /calendar since matching is a bare string prefix, not a path segment).
+  # That turned nearly every in-app link into a lateral tab switch instead
+  # of a push within the current tab — no transition, and it silently
+  # stacks screens on whichever tab you land on, so "back" never goes where
+  # you expect. With auto_route: false, only tapping a tab icon switches
+  # tabs; every other link/form pushes normally in the current tab's stack.
+  - title: Dashboard
+    path: /dashboard
+    icon: house
+    auto_route: false
+  - title: Meals
+    path: /meals
+    icon: fork.knife
+    auto_route: false
+  - title: Shopping
+    path: /grocery_list
+    icon: cart
+    auto_route: false
+  - title: Recipes
+    path: /recipes
+    icon: book
+    auto_route: false
+  - title: Calendar
+    path: /calendar
+    icon: calendar
+    auto_route: false
+
+  # Per-tab options (add to any tab above):
+  #
+  #   # Localize this tab's title. Put the copy in your app's own locale files
+  #   # under `ruby_native.tabs.<key>.title`, the same way the error screen uses
+  #   # `ruby_native.errors.*`, and the device's language picks the translation:
+  #   #
+  #   #   # config/locales/it.yml
+  #   #   it:
+  #   #     ruby_native:
+  #   #       tabs:
+  #   #         home:
+  #   #           title: Casa
+  #   #
+  #   # `title:` above stays the fallback for a language you have not
+  #   # translated. Once every tab has a key you can drop `title:` entirely and
+  #   # keep all of your copy in the locale files.
+  #   # https://rubynative.com/docs/tabs#localization
+  #   key: home
+  #
+  #   # Load this tab on launch instead of lazily.
+  #   # Default: false.
+  #   eager: true
+  #
+  #   # Show a search field in the navigation bar.
+  #   # Default: false.
+  #   search: true
+  #
+  #   # Allow this tab to show a notification badge.
+  #   # Default: false.
+  #   badge: true
+  #
+  #   # Routes that switch to this tab. Options:
+  #   #   false           - never auto-switch
+  #   #   [/orders/, /a/] - switch when visiting these path prefixes
+  #   # Default: routes matching the tab's path prefix.
+  #   auto_route: [/orders/]
+
+# Link your domain to the app to share passwords from your site. Also,
+# tapping a link to your site opens in the app instead of the browser.
+# https://rubynative.com/docs/linked-domains
+# ios:
+#   bundle_id: com.example.myapp
+#   team_id: ABCD123456
+# android:
+#   package: com.example.myapp
+#   # Play Console -> Setup -> App integrity -> App signing key certificate.
+#   cert_fingerprint: "AA:BB:CC:..."
+
+# Link only these path prefixes instead of the whole domain. Links outside
+# them keep opening in the browser. Applies to iOS on your next deploy and
+# to Android on your next build.
+# linked_paths:
+#   - /pair/
+
+# Enable OAuth. Each path triggers a native ASWebAuthenticationSession
+# on iOS instead of an in-app web view. List only the authorize path for each
+# provider, not its callback; the callback is handled automatically.
+# https://rubynative.com/docs/oauth
+# auth:
+#   oauth_paths:
+#     - /auth/google
+#     - /auth/github

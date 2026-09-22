@@ -2,17 +2,7 @@
 
   <%# ── Header ──────────────────────────────────────────────────────────── %>
   <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-    <div class="min-w-0 flex-1">
-      <div class="flex items-center gap-x-3">
-        <%= render 'recipes/favorite_button', recipe: @recipe %>
-        <h1 class="text-3xl sm:text-5xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">
-          <%= @recipe.title %>
-        </h1><%= render 'recipes/visibility_icon', recipe: @recipe, size: 'size-5' %>
-      </div>
-      <% if @recipe.description.present? %>
-        <p class="mt-2 text-base text-gray-700 dark:text-gray-300"><%= @recipe.description %></p>
-      <% end %>
-    </div>
+    <%= render "recipes/heading", recipe: @recipe %>
 
     <% if @recipe.owned_by?(current_user) %>
       <div class="flex shrink-0 gap-x-3">
@@ -37,6 +27,18 @@
             Delete
           <% end %>
         </div>
+      </div>
+    <% elsif !@recipe.owned_by_household?(current_household) %>
+      <%# Someone else's public recipe — offer to copy it into the household %>
+      <div class="flex shrink-0 items-center gap-x-3">
+        <% if @saved_copy %>
+          <%= link_to "Open your copy", @saved_copy,
+                      class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+        <% else %>
+          <%= button_to "Save to Our Recipes", save_to_household_recipe_path(@recipe),
+                        method: :post,
+                        class: "rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+        <% end %>
       </div>
     <% end %>
   </div>

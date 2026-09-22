@@ -5,7 +5,8 @@ module RecipeImportsHelper
 
     # Get the order of statuses
     status_order = [:pending, :fetching_html, :parsing_recipe, :matching_ingredients,
-                    :resolving_with_ai, :creating_recipe, :completed, :failed]
+                    :awaiting_confirmation, :resolving_with_ai, :creating_recipe,
+                    :completed, :failed]
 
     current_index = status_order.index(current_status) || 0
     step_index = status_order.index(step_status) || 0

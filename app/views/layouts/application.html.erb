@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <title><%= content_for(:title) || "RecipeBank" %></title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="application-name" content="RecipeBank">
   <meta name="mobile-web-app-capable" content="yes">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <%= stylesheet_link_tag :ruby_native %>
 
   <%= yield :head %>
 
@@ -28,11 +29,13 @@
 </head>
 
 <body class="min-h-screen bg-[#faf9f7] dark:bg-[#1a1f16] antialiased" data-controller="timezone">
-<%= render 'shared/navbar' %>
+<%= native_tabs_tag if user_signed_in? %>
+<%= render 'shared/native_navbar' if user_signed_in? %>
+<%= render 'shared/navbar' unless native_app? %>
 
 <div id="flash"></div>
 <%= render 'shared/flash' if notice.present? || alert.present? %>
-<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 native-inset">
   <%= yield %>
 </main>
 <%= render 'shared/plan_week_bar' %>

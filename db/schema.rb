@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_29_130500) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -263,10 +263,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_29_130500) do
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "servings"
+    t.integer "source_recipe_id"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.string "visibility", default: "public", null: false
+    t.index ["source_recipe_id"], name: "index_recipes_on_source_recipe_id"
     t.index ["user_id", "visibility"], name: "index_recipes_on_user_id_and_visibility"
     t.index ["user_id"], name: "index_recipes_on_user_id"
     t.index ["visibility"], name: "index_recipes_on_visibility"
@@ -467,6 +469,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_29_130500) do
   add_foreign_key "recipe_ingredients", "recipes"
   add_foreign_key "recipe_tags", "recipes"
   add_foreign_key "recipe_tags", "tags"
+  add_foreign_key "recipes", "recipes", column: "source_recipe_id"
   add_foreign_key "recipes", "users"
   add_foreign_key "recurring_meal_occurrences", "meals"
   add_foreign_key "recurring_meal_occurrences", "recurring_meals"

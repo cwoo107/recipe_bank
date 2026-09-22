@@ -87,3 +87,5 @@ gem 'selenium-webdriver'
 gem 'devise'
 gem 'icalendar'
 # gem 'microsoft_graph'
+
+gem "ruby_native", "~> 0.15.3"

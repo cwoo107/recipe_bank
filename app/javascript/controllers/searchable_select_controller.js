@@ -2,7 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
     static targets = ["select", "searchInput", "dropdown", "option",
-                       "searchTab", "collectionTab", "sourceSelect", "collectionPicker", "tagChip"]
+                       "searchTab", "collectionTab", "sourceSelect", "collectionPicker", "tagChip",
+                       "publicToggle"]
     static values = {
         placeholder: { type: String, default: "Search..." }
     }
@@ -12,10 +13,13 @@ export default class extends Controller {
         this.selectedValue = this.originalSelect.value
         this.selectedTagIds = new Set()
         this.source = "search"
+        // Recipes outside the household are rendered but hidden until asked for.
+        this.includePublic = this.hasPublicToggleTarget ? this.publicToggleTarget.checked : true
         this.options = Array.from(this.originalSelect.options).map(opt => ({
             value: opt.value,
             text: opt.text,
             isFavorite: opt.dataset.favorite === 'true',
+            isPublic: opt.dataset.public === 'true',
             tagIds: opt.dataset.tagIds || "",
             collectionIds: opt.dataset.collectionIds || ""
         }))
@@ -59,12 +63,23 @@ export default class extends Controller {
                 optionDiv.appendChild(star)
             }
 
+            // Badge goes before the text so selectOption's `span:last-child`
+            // lookup still finds the recipe title.
+            if (opt.isPublic) {
+                const badge = document.createElement('span')
+                badge.className = 'shrink-0 rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-white/10 dark:text-gray-400'
+                badge.textContent = 'Public'
+                optionDiv.appendChild(badge)
+            }
+
             const textSpan = document.createElement('span')
             textSpan.textContent = opt.text
             optionDiv.appendChild(textSpan)
 
             optionDiv.dataset.value = opt.value
+            optionDiv.dataset.title = opt.text
             optionDiv.dataset.favorite = opt.isFavorite
+            optionDiv.dataset.public = opt.isPublic
             optionDiv.dataset.tagIds = opt.tagIds
             optionDiv.dataset.collectionIds = opt.collectionIds
             optionDiv.dataset.searchableSelectTarget = 'option'
@@ -138,19 +153,26 @@ export default class extends Controller {
         }
     }
 
+    // Widens the pool from "our household's recipes" to include public ones.
+    togglePublic(event) {
+        this.includePublic = event.target.checked
+        this.applyFilters()
+    }
+
     collectionChanged(event) {
         this.selectedCollectionId = event.target.value
         this.applyFilters()
     }
 
-    // Combines the typed search term with the tag/collection filters above —
-    // an option must satisfy all three (text match, any selected tag,
-    // and — in "collection" mode — membership in the chosen collection).
+    // Combines the typed search term with the pool/tag/collection filters above —
+    // an option must satisfy all of them (text match, in the active recipe pool,
+    // any selected tag, and — in "collection" mode — membership in the chosen
+    // collection).
     applyFilters() {
         const term = this.hasSearchInputTarget ? this.searchInputTarget.value.toLowerCase() : ""
 
         this.optionTargets.forEach(option => {
-            const text = option.textContent.toLowerCase()
+            const text = (option.dataset.title || option.textContent).toLowerCase()
             const matchesText = !term || text.includes(term)
 
             let matchesTags = true
@@ -165,7 +187,12 @@ export default class extends Controller {
                 matchesCollection = !!this.selectedCollectionId && collectionIds.includes(this.selectedCollectionId)
             }
 
-            option.classList.toggle('hidden', !(matchesText && matchesTags && matchesCollection))
+            // Keep the current selection visible even if it's outside the pool.
+            const matchesPool = this.includePublic ||
+                                option.dataset.public !== 'true' ||
+                                option.dataset.value === this.originalSelect.value
+
+            option.classList.toggle('hidden', !(matchesText && matchesTags && matchesCollection && matchesPool))
         })
 
         this.showDropdown()

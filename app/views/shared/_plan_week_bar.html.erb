@@ -9,7 +9,7 @@
   <% next_key     = plan.next_key_after(active_key) %>
   <% next_label   = next_key && Dashboard.section_class(next_key)::LABEL %>
 
-  <div class="fixed bottom-4 right-4 z-40 w-[calc(100%-2rem)] max-w-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1f16] shadow-lg p-3">
+  <div class="fixed bottom-[calc(1rem+var(--ruby-native-safe-area-bottom))] right-4 z-40 w-[calc(100%-2rem)] max-w-xs rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1a1f16] shadow-lg p-3">
     <p class="mb-2 px-1 text-xs text-gray-500 dark:text-gray-400">
       Planning your week —
       <%= link_to active_label, plan_week_step_path(section: active_key), class: "font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>

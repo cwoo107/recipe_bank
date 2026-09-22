@@ -1,0 +1,42 @@
+<%# Locals: recipe (required). Title and description read as text normally and
+    as fields in edit mode; saving swaps only the read-only halves back so the
+    form the user is still typing in is left alone. %>
+<div class="min-w-0 flex-1" id="recipe_heading">
+  <div class="flex items-center gap-x-3">
+    <%= render 'recipes/favorite_button', recipe: recipe %>
+    <%= render "recipes/title", recipe: recipe %><%= render 'recipes/visibility_icon', recipe: recipe, size: 'size-5' %>
+  </div>
+
+  <%= render "recipes/description", recipe: recipe %>
+
+  <% if recipe.owned_by?(current_user) %>
+    <%# Editable title/description — edit mode only %>
+    <div class="hidden mt-2" data-edit-mode-target="editOnlyItems">
+      <% if recipe.errors.any? %>
+        <p class="mb-2 text-sm text-dusty-rose-600 dark:text-dusty-rose-400">
+          <%= recipe.errors.full_messages.to_sentence %>
+        </p>
+      <% end %>
+
+      <%# Posts to .turbo_stream so the full edit page's form, which shares
+          this action, keeps its plain redirect. %>
+      <%= form_with model: recipe,
+                    url: recipe_path(recipe, format: :turbo_stream),
+                    class: "space-y-2",
+                    data: { controller: "auto-submit" } do |form| %>
+        <%= form.label :title, class: "sr-only" %>
+        <%= form.text_field :title,
+                            required: true,
+                            placeholder: "Recipe title",
+                            class: "block w-full rounded-lg bg-white px-3 py-2 text-2xl font-bold text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]",
+                            data: { action: "change->auto-submit#submit" } %>
+        <%= form.label :description, class: "sr-only" %>
+        <%= form.text_area :description,
+                           rows: 3,
+                           placeholder: "Add a description...",
+                           class: "block w-full rounded-lg bg-white px-3 py-2 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]",
+                           data: { action: "change->auto-submit#submit" } %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

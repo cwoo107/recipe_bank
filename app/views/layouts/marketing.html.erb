@@ -22,12 +22,13 @@
   <meta name="twitter:description" content="<%= page_description %>">
   <meta name="twitter:image" content="<%= page_image %>">
 
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="application-name" content="HomemakersHaven">
   <meta name="mobile-web-app-capable" content="yes">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <%= stylesheet_link_tag :ruby_native %>
 
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="icon" href="/icon.svg" type="image/svg+xml">
@@ -44,7 +45,11 @@
 </head>
 
 <body class="min-h-screen bg-[#faf9f7] dark:bg-[#1a1f16] antialiased">
-<%= render 'static_pages/navbar' %>
+<% if devise_controller? %>
+  <%= native_form_tag %>
+  <%= native_navbar_tag(content_for(:title) || "HomemakersHaven") %>
+<% end %>
+<%= render 'static_pages/navbar' unless native_app? %>
 
 <div id="flash"></div>
 <%= render 'shared/flash' if notice.present? || alert.present? %>

@@ -6,16 +6,40 @@
                   </span>
     <% end %>
   </td>
-  <td class="whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400">
+  <%# Family pill steps aside in edit mode so the amount form gets the width %>
+  <td class="whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400"
+      data-edit-mode-target="viewOnlyItems">
     <%= ingredient_family_tag(recipe_ingredient.ingredient.family) || "-" %>
   </td>
   <td class="whitespace-nowrap text-center px-2 text-sm text-gray-500 dark:text-gray-400">
-                <span data-serving-scaler-target="quantity"
-                      data-base-quantity="<%= recipe_ingredient.quantity %>">
-                  <%= recipe_ingredient.quantity %>
-                </span>
+    <%# Read-only amount — hidden while editing %>
+    <span data-edit-mode-target="viewOnlyItems">
+      <span data-serving-scaler-target="quantity"
+            data-base-quantity="<%= recipe_ingredient.quantity %>">
+        <%= recipe_ingredient.quantity %>
+      </span>
+      <span class="text-xs text-gray-400 dark:text-gray-500"><%= recipe_ingredient.unit %></span>
+    </span>
 
-    <span class="text-xs text-gray-400 dark:text-gray-500"><%= recipe_ingredient.unit %></span>
+    <%# Editable amount — saves as soon as either field changes %>
+    <div class="hidden" data-edit-mode-target="editOnlyItems">
+      <%= form_with model: [@recipe, recipe_ingredient],
+                    class: "flex items-center justify-center gap-1",
+                    data: { controller: "auto-submit" } do |form| %>
+        <%= form.number_field :quantity,
+                              step: 0.01,
+                              min: 0,
+                              class: "w-16 rounded-md bg-white px-2 py-1 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]",
+                              aria: { label: "Quantity of #{recipe_ingredient.ingredient.ingredient}" },
+                              data: { action: "change->auto-submit#submit" } %>
+        <%= form.select :unit,
+                        unit_options_for_select(recipe_ingredient.unit),
+                        { include_blank: "—" },
+                        class: "w-24 rounded-md bg-white px-2 py-1 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-[#7a8f62]",
+                        aria: { label: "Unit for #{recipe_ingredient.ingredient.ingredient}" },
+                        data: { action: "change->auto-submit#submit" } %>
+      <% end %>
+    </div>
   </td>
   <td class="relative whitespace-nowrap text-right text-sm font-medium hidden" data-edit-mode-target="editOnlyItems">
     <%= button_to recipe_recipe_ingredient_path(@recipe, recipe_ingredient),

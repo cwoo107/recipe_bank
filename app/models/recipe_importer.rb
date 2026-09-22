@@ -25,29 +25,10 @@ class RecipeImporter
       sleep 0.5
       validate_scraped_data(scraped_data)
 
-      # Step 3: Match ingredients
-      @job.update_progress(:matching_ingredients, 0, scraped_data[:ingredients].length)
-      matched_results = match_ingredients(scraped_data[:ingredients])
-      @job.update!(matched_ingredients: matched_results)
-
-      # Step 4: Resolve with AI (for matching AND family classification)
-      @job.update_progress(:resolving_with_ai, 0, matched_results.length)
-      classify_and_resolve_ingredients(matched_results)
-
-      # Step 5: Create recipe in database
-      @job.update_progress(:creating_recipe)
-      sleep 0.5
-      recipe = create_recipe(scraped_data, matched_results)
-
-      # Done!
-      @job.update!(
-        status: :completed,
-        recipe_id: recipe.id,
-        progress: 100,
-        current_step: 'Import completed!'
-      )
-
-      recipe
+      # Step 3: Match ingredients, then hand over to the user. The rest of
+      # the pipeline runs in #resume_after_confirmation once they've
+      # confirmed which matches to keep.
+      match_ingredients_and_pause(scraped_data)
     rescue => e
       Rails.logger.error "=== IMPORT ERROR ==="
       Rails.logger.error e.message
@@ -88,25 +69,7 @@ class RecipeImporter
       sleep 0.3
       validate_scraped_data(scraped_data)
 
-      @job.update_progress(:matching_ingredients, 0, scraped_data[:ingredients].length)
-      matched_results = match_ingredients(scraped_data[:ingredients])
-      @job.update!(matched_ingredients: matched_results)
-
-      @job.update_progress(:resolving_with_ai, 0, matched_results.length)
-      classify_and_resolve_ingredients(matched_results)
-
-      @job.update_progress(:creating_recipe)
-      sleep 0.3
-      recipe = create_recipe(scraped_data, matched_results)
-
-      @job.update!(
-        status: :completed,
-        recipe_id: recipe.id,
-        progress: 100,
-        current_step: 'Import completed!'
-      )
-
-      recipe
+      match_ingredients_and_pause(scraped_data)
     rescue => e
       Rails.logger.error "=== FILE IMPORT ERROR ==="
       Rails.logger.error e.message
@@ -121,8 +84,100 @@ class RecipeImporter
     end
   end
 
+  # Picks the import back up once the user has confirmed their ingredient
+  # matches. Everything needed is on the job already (scraped_data and the
+  # confirmed matched_ingredients), so this works from a fresh request —
+  # no re-fetch or re-upload.
+  def resume_after_confirmation
+    scraped_data    = @job.scraped_data.deep_symbolize_keys
+    matched_results = self.class.deserialize_results(@job.matched_ingredients)
+
+    # Step 4: Families for everything, nutrition estimates for the new ones.
+    # Matching is settled by now — the user decided — so nothing here
+    # re-points an ingredient at a different match.
+    @job.update_progress(:resolving_with_ai, 0, matched_results.length)
+    classify_and_estimate_nutrition(matched_results)
+
+    # Step 5: Create recipe in database
+    @job.update_progress(:creating_recipe)
+    sleep 0.3
+    recipe = create_recipe(scraped_data, matched_results)
+
+    @job.update!(
+      status: :completed,
+      recipe_id: recipe.id,
+      progress: 100,
+      current_step: 'Import completed!'
+    )
+
+    recipe
+  rescue => e
+    Rails.logger.error "=== IMPORT RESUME ERROR ==="
+    Rails.logger.error e.message
+    Rails.logger.error e.backtrace.join("\n")
+
+    @job.update!(
+      status: :failed,
+      error_message: e.message,
+      current_step: "Error: #{e.message}"
+    )
+    raise
+  end
+
+  # The match rows are persisted across the confirmation pause, so they have
+  # to survive a JSON round trip. Ingredients are stored by id and re-looked
+  # up rather than serialized whole.
+  def self.deserialize_results(raw)
+    rows = Array(raw).select { |row| row.is_a?(Hash) }
+    by_id = Ingredient.where(id: rows.filter_map { |row| row['match_id'] }).index_by(&:id)
+
+    rows.map do |row|
+      {
+        parsed:     (row['parsed'] || {}).symbolize_keys,
+        match:      by_id[row['match_id']],
+        confidence: row['confidence'] || 0.0,
+        method:     row['method'],
+        confirmed:  row['confirmed'],
+        family:     row['family'],
+        nutrition:  row['nutrition']
+      }
+    end
+  end
 
   private
+
+  # Steps 3a/3b: fuzzy match, then let the AI take a pass at whatever came
+  # back weak — so the confirmation screen shows our best proposal rather
+  # than one the AI would have quietly overruled afterwards.
+  def match_ingredients_and_pause(scraped_data)
+    @job.update_progress(:matching_ingredients, 0, scraped_data[:ingredients].length)
+    matched_results = match_ingredients(scraped_data[:ingredients])
+    resolve_matches_with_ai(matched_results)
+
+    @job.update!(
+      matched_ingredients: serialize_results(matched_results),
+      status:              :awaiting_confirmation,
+      progress:            scraped_data[:ingredients].length,
+      current_step:        'Confirm ingredient matches'
+    )
+
+    matched_results
+  end
+
+  def serialize_results(results)
+    results.map do |result|
+      {
+        'parsed'     => result[:parsed].stringify_keys,
+        'match_id'   => result[:match]&.id,
+        'match_name' => result[:match]&.ingredient,
+        'confidence' => result[:confidence],
+        'method'     => result[:method],
+        'confirmed'  => result[:confirmed],
+        'family'     => result[:family],
+        'nutrition'  => result[:nutrition]
+      }
+    end
+  end
 
   def validate_scraped_data(data)
     errors = []
@@ -156,28 +211,12 @@ class RecipeImporter
     end
   end
 
-  def classify_and_resolve_ingredients(matched_results)
+  # Gives the AI a shot at the ingredients fuzzy matching couldn't place, so
+  # the user confirms the strongest proposal we can make. Runs before the
+  # confirmation gate — afterwards the user's decisions are final.
+  def resolve_matches_with_ai(matched_results)
     ai = OllamaAssistant.new(model: 'llama2')
     matcher = IngredientMatcher.new
-
-    # Get all ingredients that need families (both matched and unmatched)
-    all_ingredients = matched_results.map { |r| r[:parsed] }
-
-    # Classify families for ALL ingredients
-    Rails.logger.info "=== Classifying families for #{all_ingredients.length} ingredients ==="
-    family_classifications = ai.classify_ingredient_families(all_ingredients)
-
-    # Apply family classifications
-    matched_results.each do |result|
-      classification = family_classifications.find { |c| c['name'] == result[:parsed][:name] }
-      if classification
-        result[:family] = classification['family']
-      else
-        # Use programmatic fallback if AI didn't classify
-        result[:family] = ai.send(:guess_family_programmatically, result[:parsed][:name])
-      end
-      Rails.logger.info "Ingredient: #{result[:parsed][:name]} -> Family: #{result[:family]}, Match: #{result[:match]&.ingredient || 'NEW'}"
-    end
 
     # Handle unmatched ingredients (low confidence)
     unmatched = matched_results.select { |r| r[:confidence] < 0.7 }
@@ -223,6 +262,34 @@ class RecipeImporter
         # Use AI's family suggestion if available
         result[:family] = resolution['family'] if resolution['family']
       end
+    end
+  end
+
+  # Post-confirmation work: every ingredient needs a family, and the ones the
+  # user left unconfirmed are about to be created, so they need nutrition too.
+  def classify_and_estimate_nutrition(matched_results)
+    ai = OllamaAssistant.new(model: 'llama2')
+
+    # Get all ingredients that need families (both matched and unmatched)
+    all_ingredients = matched_results.map { |r| r[:parsed] }
+
+    # Classify families for ALL ingredients
+    Rails.logger.info "=== Classifying families for #{all_ingredients.length} ingredients ==="
+    family_classifications = ai.classify_ingredient_families(all_ingredients)
+
+    # Apply family classifications — without clobbering a family the AI
+    # resolution step already picked during matching.
+    matched_results.each do |result|
+      next if result[:family].present?
+
+      classification = family_classifications.find { |c| c['name'] == result[:parsed][:name] }
+      if classification
+        result[:family] = classification['family']
+      else
+        # Use programmatic fallback if AI didn't classify
+        result[:family] = ai.send(:guess_family_programmatically, result[:parsed][:name])
+      end
+      Rails.logger.info "Ingredient: #{result[:parsed][:name]} -> Family: #{result[:family]}, Match: #{result[:match]&.ingredient || 'NEW'}"
     end
 
     # Estimate nutrition facts for NEW ingredients only (ones without a match)
