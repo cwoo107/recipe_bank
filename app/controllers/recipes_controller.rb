@@ -89,6 +89,16 @@ class RecipesController < ApplicationController
     redirect_to recipes_path, notice: "Recipe was successfully deleted.", status: :see_other
   end
 
+  # Forks one of the household's own recipes so a variant can be built from it
+  # — a beef version of the chicken bowls — without retyping the whole thing.
+  # Public recipes from elsewhere go through #save_to_household instead.
+  def duplicate
+    source = Recipe.for_household(current_household).find(params.expect(:id))
+    copy   = source.duplicate_for(current_user, title: source.copy_title_for(current_user))
+
+    redirect_to copy, notice: "Copied \"#{source.title}\". Make it your own."
+  end
+
   # Copies a public recipe into the household (it becomes the current user's,
   # which is what makes it show up under "Our Recipes").
   def save_to_household

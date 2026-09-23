@@ -1,0 +1,24 @@
+<%# Locals: recipe (required), style (optional: :button or :link).
+    Forks one of our own recipes so a variant can be built from it. %>
+<% style = local_assigns[:style] || :button %>
+<% classes = if style == :link
+     "text-sm text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]"
+   else
+     "inline-flex items-center gap-x-1.5 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
+   end %>
+
+<%= button_to duplicate_recipe_path(recipe),
+              method: :post,
+              class: classes,
+              title: "Create an editable copy of this recipe",
+              aria: { label: "Make a copy of #{recipe.title}" } do %>
+  <% if style == :button %>
+    <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+      <path d="M7 3.5A1.5 1.5 0 0 1 8.5 2h3.879a1.5 1.5 0 0 1 1.06.44l3.122 3.12A1.5 1.5 0 0 1 17 6.622V12.5a1.5 1.5 0 0 1-1.5 1.5h-1v-3.379a3 3 0 0 0-.879-2.121L10.5 5.379A3 3 0 0 0 8.379 4.5H7v-1Z" />
+      <path d="M4.5 6A1.5 1.5 0 0 0 3 7.5v9A1.5 1.5 0 0 0 4.5 18h7a1.5 1.5 0 0 0 1.5-1.5v-5.879a1.5 1.5 0 0 0-.44-1.06L9.44 6.439A1.5 1.5 0 0 0 8.378 6H4.5Z" />
+    </svg>
+    Copy
+  <% else %>
+    Copy
+  <% end %>
+<% end %>

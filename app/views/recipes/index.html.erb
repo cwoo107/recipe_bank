@@ -139,6 +139,7 @@
                     <%= render 'recipes/save_button', recipe: recipe, saved: @saved_source_ids.include?(recipe.id) %>
                   <% else %>
                     <%= render 'collections/collection_button', recipe: recipe %>
+                    <%= render 'recipes/duplicate_button', recipe: recipe, style: :link %>
                     <% if recipe.owned_by?(current_user) %>
                       <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
                       <%= button_to "Delete", recipe_path(recipe), method: :delete,
@@ -226,6 +227,7 @@
                       <%= render 'recipes/save_button', recipe: recipe, saved: @saved_source_ids.include?(recipe.id) %>
                     <% else %>
                       <%= render 'collections/collection_button', recipe: recipe %>
+                      <%= render 'recipes/duplicate_button', recipe: recipe, style: :link %>
                       <% if recipe.owned_by?(current_user) %>
                         <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
                         <span class="text-gray-300 dark:text-gray-600"> | </span>

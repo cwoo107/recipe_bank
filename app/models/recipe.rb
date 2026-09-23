@@ -18,6 +18,8 @@ class Recipe < ApplicationRecord
 
   VISIBILITY = %w[public private].freeze
 
+  COPY_SUFFIX = / \(copy(?: \d+)?\)\z/
+
   validates :title,      presence: true
   validates :visibility, inclusion: { in: VISIBILITY }
   validates :servings,   numericality: { greater_than: 0 }, allow_nil: true
@@ -71,11 +73,28 @@ class Recipe < ApplicationRecord
     household.present? && household.users.exists?(id: user_id)
   end
 
+  # A free name for a variant of this recipe in `user`'s collection:
+  # "Teriyaki Bowls" → "Teriyaki Bowls (copy)", then "(copy 2)", "(copy 3)".
+  # Copying a copy re-uses the original stem rather than stacking suffixes.
+  def copy_title_for(user)
+    base  = title.to_s.sub(COPY_SUFFIX, "")
+    taken = user.recipes.pluck(:title).to_set
+
+    candidate = "#{base} (copy)"
+    counter   = 2
+    while taken.include?(candidate)
+      candidate = "#{base} (copy #{counter})"
+      counter  += 1
+    end
+
+    candidate
+  end
+
   # Deep-copies the recipe into `user`'s collection: ingredients are shared
   # records so they're just re-pointed, steps carry their rich text over, and
   # tags are mirrored into the saving user's own tag list (tags are personal).
   # The copy starts private — it's theirs to share or not.
-  def duplicate_for(user)
+  def duplicate_for(user, title: self.title)
     copy = Recipe.new(
       user:           user,
       source_recipe:  self,

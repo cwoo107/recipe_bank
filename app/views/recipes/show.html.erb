@@ -6,6 +6,8 @@
 
     <% if @recipe.owned_by?(current_user) %>
       <div class="flex shrink-0 gap-x-3">
+        <%= render "recipes/duplicate_button", recipe: @recipe %>
+
         <%# Edit Mode toggle — same style as original Edit button %>
         <button type="button"
                 data-action="click->edit-mode#toggle"
@@ -28,7 +30,11 @@
           <% end %>
         </div>
       </div>
-    <% elsif !@recipe.owned_by_household?(current_household) %>
+    <% elsif @recipe.owned_by_household?(current_household) %>
+      <div class="flex shrink-0 gap-x-3">
+        <%= render "recipes/duplicate_button", recipe: @recipe %>
+      </div>
+    <% else %>
       <%# Someone else's public recipe — offer to copy it into the household %>
       <div class="flex shrink-0 items-center gap-x-3">
         <% if @saved_copy %>

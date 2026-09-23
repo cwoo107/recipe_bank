@@ -54,6 +54,7 @@ Rails.application.routes.draw do
       patch :toggle_visibility
       get :import
       post :save_to_household
+      post :duplicate
     end
   end
 
