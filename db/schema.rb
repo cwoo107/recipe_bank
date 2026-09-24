@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -223,6 +223,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_120000) do
     t.index ["ingredient_id"], name: "index_nutrition_facts_on_ingredient_id"
   end
 
+  create_table "recipe_components", force: :cascade do |t|
+    t.integer "component_recipe_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "instruction_position"
+    t.float "multiplier", default: 1.0, null: false
+    t.integer "parent_recipe_id", null: false
+    t.integer "position"
+    t.datetime "updated_at", null: false
+    t.index ["component_recipe_id"], name: "index_recipe_components_on_component_recipe_id"
+    t.index ["parent_recipe_id", "component_recipe_id"], name: "index_recipe_components_uniqueness", unique: true
+    t.index ["parent_recipe_id", "instruction_position"], name: "index_recipe_components_on_parent_and_instruction_position"
+    t.index ["parent_recipe_id"], name: "index_recipe_components_on_parent_recipe_id"
+  end
+
   create_table "recipe_import_jobs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "current_step"
@@ -332,9 +346,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_120000) do
 
   create_table "steps", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.integer "instruction_position"
     t.integer "position"
     t.integer "recipe_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["recipe_id", "instruction_position"], name: "index_steps_on_recipe_id_and_instruction_position"
     t.index ["recipe_id"], name: "index_steps_on_recipe_id"
   end
 
@@ -464,6 +480,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_120000) do
   add_foreign_key "meals", "recurring_meals"
   add_foreign_key "meals", "users"
   add_foreign_key "nutrition_facts", "ingredients"
+  add_foreign_key "recipe_components", "recipes", column: "component_recipe_id"
+  add_foreign_key "recipe_components", "recipes", column: "parent_recipe_id"
   add_foreign_key "recipe_import_jobs", "users"
   add_foreign_key "recipe_ingredients", "ingredients"
   add_foreign_key "recipe_ingredients", "recipes"

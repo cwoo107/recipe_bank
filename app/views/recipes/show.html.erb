@@ -145,6 +145,9 @@
 <%# Add ingredient form — edit mode only %>
         <%= render partial: 'new_ingredient' %>
 
+        <%# Add another recipe as an ingredient — edit mode only %>
+        <%= render "recipes/new_component", recipe: @recipe %>
+
       </div>
     </div>
 

@@ -11,6 +11,11 @@ class Step < ApplicationRecord
   private
 
   def set_position
-    self.position ||= recipe.steps.maximum(:position).to_i + 1 if recipe
+    return unless recipe
+
+    self.position ||= recipe.steps.maximum(:position).to_i + 1
+    # Lands at the end of the merged instruction list, past any component
+    # recipes already sitting in it.
+    self.instruction_position ||= recipe.next_instruction_position
   end
 end

@@ -43,6 +43,7 @@ Rails.application.routes.draw do
 
   resources :recipes do
     resources :recipe_ingredients, only: [:create, :update, :destroy]
+    resources :recipe_components, only: [:create, :update, :destroy]
     resources :recipe_tags, only: [:create, :destroy]
     resources :steps do
       collection do
@@ -55,6 +56,7 @@ Rails.application.routes.draw do
       get :import
       post :save_to_household
       post :duplicate
+      post :reorder_instructions
     end
   end
 

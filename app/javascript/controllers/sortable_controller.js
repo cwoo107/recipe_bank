@@ -22,12 +22,15 @@ export default class extends Controller {
     // Get the new order of IDs
     const order = this.itemTargets.map(item => item.dataset.id)
 
-    // Send to server
+    // Send to server. The CSRF meta tag is absent when forgery protection is
+    // off, and reading .content off null threw the whole handler away.
+    const token = document.querySelector("meta[name='csrf-token']")?.content
+
     fetch(this.urlValue, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
+        ...(token ? { "X-CSRF-Token": token } : {})
       },
       body: JSON.stringify({ order: order })
     })

@@ -1,7 +1,11 @@
 <%# Locals: recipe (required).
-    Replaced wholesale when a line is added: the <tbody> only exists once the
-    recipe has ingredients, so appending a row can't work for the first one. %>
+    The recipe's own ingredients, then a section per component recipe it
+    pulls in. Replaced wholesale when anything is added: the <tbody> only
+    exists once there are ingredients, so appending a row can't work for the
+    first one. %>
 <div id="recipe_ingredients_section">
+  <% sections = recipe.sections %>
+
   <% if recipe.recipe_ingredients.any? %>
     <div class="overflow-x-auto -mx-6 px-6">
       <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
@@ -12,7 +16,11 @@
         </tbody>
       </table>
     </div>
-  <% else %>
+  <% elsif sections.one? %>
     <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No ingredients yet.</p>
+  <% end %>
+
+  <% sections.reject(&:root?).each do |section| %>
+    <%= render "recipes/component_ingredients", recipe: recipe, section: section %>
   <% end %>
 </div>

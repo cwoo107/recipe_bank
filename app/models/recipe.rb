@@ -16,6 +16,16 @@ class Recipe < ApplicationRecord
   has_many :collection_recipes
   has_many :collections, through: :collection_recipes
 
+  # Recipes used as ingredients of this one (the sauce on the chicken), and
+  # the reverse — every recipe built on this one.
+  has_many :recipe_components, -> { order(:instruction_position, :position) },
+           foreign_key: :parent_recipe_id, dependent: :destroy, inverse_of: :parent_recipe
+  has_many :component_recipes, through: :recipe_components, source: :component_recipe
+
+  has_many :component_usages, class_name: "RecipeComponent",
+           foreign_key: :component_recipe_id, dependent: :destroy, inverse_of: :component_recipe
+  has_many :used_by_recipes, through: :component_usages, source: :parent_recipe
+
   VISIBILITY = %w[public private].freeze
 
   COPY_SUFFIX = / \(copy(?: \d+)?\)\z/
@@ -116,35 +126,120 @@ class Recipe < ApplicationRecord
       end
 
       tags.each { |tag| copy.tags << tag.mirror_for(user) }
+
+      recipe_components.each do |component|
+        copy.recipe_components.create!(component_recipe_id: component.component_recipe_id,
+                                       multiplier: component.multiplier,
+                                       position: component.position)
+      end
     end
 
     copy
   end
 
+  # ── Components ────────────────────────────────────────────────────────────
+
+  # One recipe's contribution to another: which recipe, and how much of a
+  # batch of it is called for once the whole chain is multiplied out.
+  Section = Struct.new(:recipe, :multiplier, :depth, :component, keyword_init: true) do
+    # The recipe this one hangs off, and whether that's the page we're on —
+    # only a direct component can be adjusted or removed from here.
+    def via = component&.parent_recipe
+    def directly_on?(other) = component&.parent_recipe_id == other&.id
+
+    def own_ingredients
+      recipe.recipe_ingredients.map { |ri| ScaledIngredient.new(recipe_ingredient: ri, multiplier: multiplier) }
+    end
+
+    def own_steps = recipe.steps.to_a
+    def root?     = depth.zero?
+    def any?      = recipe.recipe_ingredients.any? || recipe.steps.any?
+  end
+
+  # A recipe line seen through a chain of component multipliers. Quantity is
+  # the only thing that changes — it's still the component's own line.
+  ScaledIngredient = Struct.new(:recipe_ingredient, :multiplier, keyword_init: true) do
+    def ingredient    = recipe_ingredient.ingredient
+    def ingredient_id = recipe_ingredient.ingredient_id
+    def unit          = recipe_ingredient.unit
+    def quantity      = recipe_ingredient.quantity.to_f * multiplier
+    def scaled?       = multiplier != 1.0
+  end
+
+  # This recipe followed by everything it pulls in, depth-first, with each
+  # one's multiplier already folded in. `seen` guards against a loop in
+  # existing data — RecipeComponent rejects new ones, but resolving must
+  # terminate regardless of what's already in the table.
+  def sections(multiplier: 1.0, depth: 0, seen: Set.new, component: nil)
+    return [] if seen.include?(id)
+
+    seen = seen + [id]
+    own  = Section.new(recipe: self, multiplier: multiplier, depth: depth, component: component)
+
+    own_and_nested = recipe_components.includes(:component_recipe).flat_map do |nested|
+      nested.component_recipe.sections(
+        multiplier: multiplier * nested.multiplier.to_f,
+        depth:      depth + 1,
+        seen:       seen,
+        component:  nested
+      )
+    end
+
+    [own] + own_and_nested
+  end
+
+  # Every ingredient line this recipe needs, its own and its components',
+  # scaled. This is what nutrition, grocery lists and meal costs count.
+  def all_ingredients
+    sections.flat_map(&:own_ingredients)
+  end
+
+  def components? = recipe_components.any?
+
+  # The instruction list: this recipe's own steps and its component recipes,
+  # in one order the user controls by dragging. A component sits in the list
+  # as a single entry that expands to its own sub-steps.
+  def instruction_items
+    items = steps.to_a + recipe_components.includes(:component_recipe).to_a
+
+    items.sort_by do |item|
+      [item.instruction_position || Float::INFINITY, item.class.name, item.id || 0]
+    end
+  end
+
+  def next_instruction_position
+    [steps.maximum(:instruction_position),
+     recipe_components.maximum(:instruction_position)].compact.max.to_i + 1
+  end
+
+  # Is `other` anywhere in this recipe's component tree? Used to reject a
+  # component that would close a loop.
+  def depends_on?(other, seen = Set.new)
+    return false if other.blank? || seen.include?(id)
+
+    seen << id
+    recipe_components.includes(:component_recipe).any? do |component|
+      component.component_recipe_id == other.id ||
+        component.component_recipe.depends_on?(other, seen)
+    end
+  end
+
   # ── Macros ────────────────────────────────────────────────────────────────
 
   def total_protein
-    recipe_ingredients.includes(ingredient: :nutrition_fact).sum do |ri|
-      calculate_macro_for_ingredient(ri, :protein)
-    end
+    all_ingredients.sum { |line| calculate_macro_for_ingredient(line, :protein) }
   end
 
   def total_carbs
-    recipe_ingredients.includes(ingredient: :nutrition_fact).sum do |ri|
-      calculate_macro_for_ingredient(ri, :total_carb)
-    end
+    all_ingredients.sum { |line| calculate_macro_for_ingredient(line, :total_carb) }
   end
 
   def total_fat
-    recipe_ingredients.includes(ingredient: :nutrition_fact).sum do |ri|
-      calculate_macro_for_ingredient(ri, :total_fat)
-    end
+    all_ingredients.sum { |line| calculate_macro_for_ingredient(line, :total_fat) }
   end
 
   def total_calories
-    recipe_ingredients.includes(ingredient: :nutrition_fact).sum do |ri|
-      calculate_macro_for_ingredient(ri, :calories)
-    end
+    all_ingredients.sum { |line| calculate_macro_for_ingredient(line, :calories) }
   end
 
   def protein_per_serving
@@ -189,16 +284,18 @@ class Recipe < ApplicationRecord
 
   private
 
-  def calculate_macro_for_ingredient(recipe_ingredient, macro_field)
-    ingredient     = recipe_ingredient.ingredient
-    nutrition_fact = ingredient.nutrition_fact
+  # `line` is a ScaledIngredient — its quantity already carries the component
+  # multipliers, so nothing here needs to know how deep it came from.
+  def calculate_macro_for_ingredient(line, macro_field)
+    ingredient     = line.ingredient
+    nutrition_fact = ingredient&.nutrition_fact
     return 0 unless nutrition_fact
 
     macro_per_serving  = nutrition_fact.send(macro_field) || 0
     serving_size_grams = convert_to_grams(nutrition_fact.serving_size, nutrition_fact.serving_unit)
     return 0 if serving_size_grams.zero?
 
-    ingredient_grams = convert_to_grams(recipe_ingredient.quantity, recipe_ingredient.unit)
+    ingredient_grams = convert_to_grams(line.quantity, line.unit)
     (ingredient_grams / serving_size_grams) * macro_per_serving
   end
 

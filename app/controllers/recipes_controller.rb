@@ -135,6 +135,24 @@ class RecipesController < ApplicationController
     end
   end
 
+  # Drag-and-drop over the instruction list, which mixes this recipe's own
+  # steps with the component recipes sitting in it. Items arrive as
+  # "step-12" / "component-4" because ids alone wouldn't say which is which.
+  def reorder_instructions
+    recipe = current_user.recipes.find(params[:id])
+
+    Array(params[:order]).each_with_index do |token, index|
+      type, id = token.to_s.split("-", 2)
+
+      case type
+      when "step"      then recipe.steps.where(id: id).update_all(instruction_position: index + 1)
+      when "component" then recipe.recipe_components.where(id: id).update_all(instruction_position: index + 1)
+      end
+    end
+
+    head :ok
+  end
+
   def toggle_favorite
     favorite = current_user.user_favorites.find_by(recipe: @recipe)
 

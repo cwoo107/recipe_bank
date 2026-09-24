@@ -53,10 +53,12 @@ class Meal < ApplicationRecord
   def calendar_meal? = CALENDAR_TYPES.include?(meal_name.downcase)
   def extra_meal?    = EXTRA_TYPES.include?(meal_name.downcase)
 
+  # Counts component recipes too — all_ingredients already folds in their
+  # batch multipliers, and the meal's own servings multiplier sits on top.
   def total_cost
-    recipe.recipe_ingredients.includes(:ingredient).sum do |ri|
-      ingredient = ri.ingredient
-      next 0 unless ingredient.unit_price.present? && ingredient.unit_servings.present? && ingredient.unit_servings > 0
+    recipe.all_ingredients.sum do |line|
+      ingredient = line.ingredient
+      next 0 unless ingredient&.unit_price.present? && ingredient.unit_servings.present? && ingredient.unit_servings > 0
 
       fraction_of_unit = 1.0 / ingredient.unit_servings
       ingredient.unit_price * fraction_of_unit * servings_multiplier

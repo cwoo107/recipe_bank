@@ -40,12 +40,16 @@ class GroceryListsController < ApplicationController
     meals.each do |meal|
       multiplier = meal.servings_multiplier
 
-      meal.recipe.recipe_ingredients.each do |recipe_ingredient|
-        ingredient_id    = recipe_ingredient.ingredient_id
-        ingredient       = recipe_ingredient.ingredient
-        scaled_quantity  = recipe_ingredient.quantity.to_f * multiplier
+      # all_ingredients covers component recipes as well — a meal built on the
+      # chicken still needs the sauce's lemons on the list.
+      meal.recipe.all_ingredients.each do |line|
+        ingredient_id    = line.ingredient_id
+        ingredient       = line.ingredient
+        next unless ingredient
 
-        servings_needed = calculate_servings_needed_for(scaled_quantity, recipe_ingredient.unit, ingredient)
+        scaled_quantity  = line.quantity * multiplier
+
+        servings_needed = calculate_servings_needed_for(scaled_quantity, line.unit, ingredient)
 
         units_needed = if ingredient.unit_servings.present? && ingredient.unit_servings > 0
                          (servings_needed / ingredient.unit_servings.to_f).ceil
