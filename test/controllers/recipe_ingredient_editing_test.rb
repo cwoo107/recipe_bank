@@ -73,6 +73,21 @@ class RecipeIngredientEditingTest < ActionDispatch::IntegrationTest
     assert_nil @recipe.recipe_ingredients.order(:id).last.unit.presence
   end
 
+  test "the first ingredient added to an empty recipe actually appears" do
+    empty = @user.recipes.create!(title: "Blank", visibility: "private", servings: 2)
+
+    post recipe_recipe_ingredients_url(empty),
+         params: { recipe_ingredient: { ingredient_id: @breast.id, quantity: 1, unit: "lb" } },
+         as: :turbo_stream
+
+    assert_response :success
+    # The <tbody> only exists once there are ingredients, so the whole section
+    # is replaced rather than appended to.
+    assert_match 'target="recipe_ingredients_section"', response.body
+    assert_match "Chicken breast", response.body
+    assert_no_match "No ingredients yet", response.body
+  end
+
   test "someone else's recipe can't have its ingredients edited" do
     sign_in users(:three)
 

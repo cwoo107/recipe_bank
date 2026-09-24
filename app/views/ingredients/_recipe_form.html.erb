@@ -1,0 +1,77 @@
+<%# Locals: ingredient, recipe, recipe_ingredient (all required).
+    The compact form used when an ingredient is being created from inside a
+    recipe: just what's needed to put a line on that recipe. Cost, serving
+    size and nutrition are filled in afterwards by the enrichment job. %>
+<%= form_with model: ingredient, class: "space-y-6" do |form| %>
+  <%= hidden_field_tag :recipe_id, recipe.id %>
+
+  <% if ingredient.errors.any? || recipe_ingredient.errors.any? %>
+    <div class="rounded-md bg-red-50 p-4 dark:bg-red-500/10">
+      <h3 class="text-sm font-medium text-red-800 dark:text-red-400">
+        This ingredient couldn't be added:
+      </h3>
+      <ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-red-700 dark:text-red-300">
+        <% (ingredient.errors.full_messages + recipe_ingredient.errors.full_messages).each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :ingredient, "Ingredient", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+    <div class="mt-2">
+      <%= form.text_field :ingredient,
+                          required: true,
+                          autofocus: true,
+                          placeholder: "e.g., All-purpose flour",
+                          class: "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
+    </div>
+  </div>
+
+  <div>
+    <%= form.label :family, "Category", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+    <div class="mt-2">
+      <%= ingredient_family_select(form) %>
+    </div>
+    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+      Leave it blank and we'll work it out for you.
+    </p>
+  </div>
+
+  <%# The recipe line itself — how much of it this recipe calls for %>
+  <%= fields_for :recipe_ingredient, recipe_ingredient do |line| %>
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div>
+        <%= line.label :quantity, "Amount", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+        <div class="mt-2">
+          <%= line.number_field :quantity,
+                                step: 0.01,
+                                min: 0,
+                                required: true,
+                                placeholder: "2",
+                                class: "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
+        </div>
+      </div>
+
+      <div>
+        <%= line.label :unit, "Unit (optional)", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+        <div class="mt-2">
+          <%= line.select :unit,
+                          unit_options_for_select(recipe_ingredient.unit),
+                          { include_blank: "No unit" },
+                          class: "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-[#7a8f62]" %>
+        </div>
+      </div>
+    </div>
+  <% end %>
+
+
+
+  <div class="flex items-center justify-end gap-x-3 border-t border-gray-900/10 pt-6 dark:border-white/10">
+    <%= link_to "Cancel", recipe_path(recipe),
+                class: "rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+    <%= form.submit "Create and add Ingredient",
+                    class: "rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+  </div>
+<% end %>

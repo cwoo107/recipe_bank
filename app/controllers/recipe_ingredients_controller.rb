@@ -8,7 +8,7 @@ class RecipeIngredientsController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.append("recipe_ingredients", partial: "recipes/recipe_ingredient_row", locals: { recipe_ingredient: @recipe_ingredient }),
+            turbo_stream.replace("recipe_ingredients_section", partial: "recipes/recipe_ingredients", locals: { recipe: @recipe }),
             turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient"),
             turbo_stream.replace("macros_chart", partial: "recipes/macros_chart", locals: { recipe: @recipe })
           ]
@@ -31,7 +31,7 @@ class RecipeIngredientsController < ApplicationController
           render turbo_stream: [
             turbo_stream.replace("recipe_ingredient_#{@recipe_ingredient.id}",
                                  partial: "recipes/recipe_ingredient_row",
-                                 locals: { recipe_ingredient: @recipe_ingredient }),
+                                 locals: { recipe_ingredient: @recipe_ingredient, recipe: @recipe }),
             turbo_stream.replace("macros_chart", partial: "recipes/macros_chart", locals: { recipe: @recipe })
           ]
         end

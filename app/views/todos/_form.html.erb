@@ -1,7 +1,12 @@
 <%# locals: (todo:) %>
 
+<%# A new-task form is left standing by the create stream, so it blanks
+    itself once saved — the dialog stays up for the next task in a row,
+    without the last one still sitting in the fields. %>
 <%= form_with model: todo,
-      data: { controller: "dialog", action: "submit->dialog#close" } do |f| %>
+      data: { controller: "dialog-form",
+              dialog_form_clear_on_success_value: todo.new_record?,
+              action: "turbo:submit-end->dialog-form#submitEnd" } do |f| %>
 
   <div class="mb-5">
     <h3 class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]"

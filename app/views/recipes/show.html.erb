@@ -1,3 +1,6 @@
+<%# Ingredient enrichment lands here once the AI estimates come back %>
+<%= turbo_stream_from @recipe %>
+
 <div class="mx-auto max-w-7xl" data-controller="edit-mode">
 
   <%# ── Header ──────────────────────────────────────────────────────────── %>
@@ -6,18 +9,31 @@
 
     <% if @recipe.owned_by?(current_user) %>
       <div class="flex shrink-0 gap-x-3">
-        <%= render "recipes/duplicate_button", recipe: @recipe %>
+        <%# Copy steps aside while editing — it's not what you're here for %>
+        <div data-edit-mode-target="viewOnlyItems">
+          <%= render "recipes/duplicate_button", recipe: @recipe %>
+        </div>
 
-        <%# Edit Mode toggle — same style as original Edit button %>
+        <%# Edit mode toggle. Both labels ship with the button and the target
+            toggling picks one — no display utility on the spans themselves,
+            since `hidden` and e.g. `inline-flex` would fight over display. %>
         <button type="button"
                 data-action="click->edit-mode#toggle"
                 data-edit-mode-target="editButton"
                 class="rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20">
-          <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5 inline-block" aria-hidden="true">
-            <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
-            <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
-          </svg>
-          Edit
+          <span data-edit-mode-target="viewOnlyItems">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5 inline-block" aria-hidden="true">
+              <path d="m5.433 13.917 1.262-3.155A4 4 0 0 1 7.58 9.42l6.92-6.918a2.121 2.121 0 0 1 3 3l-6.92 6.918c-.383.383-.84.685-1.343.886l-3.154 1.262a.5.5 0 0 1-.65-.65Z" />
+              <path d="M3.5 5.75c0-.69.56-1.25 1.25-1.25H10A.75.75 0 0 0 10 3H4.75A2.75 2.75 0 0 0 2 5.75v9.5A2.75 2.75 0 0 0 4.75 18h9.5A2.75 2.75 0 0 0 17 15.25V10a.75.75 0 0 0-1.5 0v5.25c0 .69-.56 1.25-1.25 1.25h-9.5c-.69 0-1.25-.56-1.25-1.25v-9.5Z" />
+            </svg>
+            Edit
+          </span>
+          <span class="hidden" data-edit-mode-target="editOnlyItems">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5 inline-block" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clip-rule="evenodd" />
+            </svg>
+            Save edits
+          </span>
         </button>
 
         <%# Delete — edit mode only %>
@@ -124,19 +140,7 @@
           <% end %>
         </div>
 
-        <% if @recipe.recipe_ingredients.any? %>
-          <div class="overflow-x-auto -mx-6 px-6">
-            <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
-              <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5" id="recipe_ingredients">
-              <% @recipe.recipe_ingredients.each do |recipe_ingredient| %>
-                <%= render "recipes/recipe_ingredient_row", recipe_ingredient: recipe_ingredient %>
-              <% end %>
-              </tbody>
-            </table>
-          </div>
-        <% else %>
-          <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No ingredients yet.</p>
-        <% end %>
+        <%= render "recipes/recipe_ingredients", recipe: @recipe %>
 
 <%# Add ingredient form — edit mode only %>
         <%= render partial: 'new_ingredient' %>

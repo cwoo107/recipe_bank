@@ -1,0 +1,18 @@
+<%# Locals: recipe (required).
+    Replaced wholesale when a line is added: the <tbody> only exists once the
+    recipe has ingredients, so appending a row can't work for the first one. %>
+<div id="recipe_ingredients_section">
+  <% if recipe.recipe_ingredients.any? %>
+    <div class="overflow-x-auto -mx-6 px-6">
+      <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
+        <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5" id="recipe_ingredients">
+        <% recipe.recipe_ingredients.each do |recipe_ingredient| %>
+          <%= render "recipes/recipe_ingredient_row", recipe_ingredient: recipe_ingredient, recipe: recipe %>
+        <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="mt-4 text-sm text-gray-500 dark:text-gray-400">No ingredients yet.</p>
+  <% end %>
+</div>

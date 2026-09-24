@@ -30,6 +30,10 @@ class IngredientsController < ApplicationController
 
   def new
     @ingredient = Ingredient.new
+    @recipe     = recipe_from_params
+
+    # Coming from a recipe, the form also collects the line for that recipe.
+    @recipe_ingredient = @recipe.recipe_ingredients.build if @recipe
   end
 
   def edit
@@ -38,9 +42,13 @@ class IngredientsController < ApplicationController
   def create
     @ingredient = Ingredient.new(ingredient_params)
     @ingredient.created_by = current_user
+    @recipe = recipe_from_params
+
+    return create_and_add_to_recipe if @recipe
 
     if @ingredient.save
-      @recipe = Recipe.find(params[:recipe_id]) if params[:recipe_id].present?
+      enrich_later(@ingredient)
+
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient")]
@@ -48,7 +56,6 @@ class IngredientsController < ApplicationController
         format.html { redirect_to @ingredient, notice: "Ingredient was successfully created." }
       end
     else
-
       render :new, status: :unprocessable_entity
     end
   end
@@ -78,6 +85,64 @@ class IngredientsController < ApplicationController
   end
 
   private
+
+  # "Create and add Ingredient": the ingredient and its line on the recipe are
+  # saved together, then the slow parts (cost, serving size, nutrition) are
+  # estimated in the background so the user isn't left waiting on the AI.
+  def create_and_add_to_recipe
+    @recipe_ingredient = @recipe.recipe_ingredients.build(
+      recipe_ingredient_params.merge(ingredient: @ingredient)
+    )
+
+    saved = ActiveRecord::Base.transaction do
+      @ingredient.save && @recipe_ingredient.save
+    rescue ActiveRecord::RecordInvalid
+      false
+    end
+
+    unless saved
+      return render :new, status: :unprocessable_entity
+    end
+
+    enrich_later(@ingredient)
+
+    respond_to do |format|
+      # Submitted from the recipe page, where this form was loaded into the
+      # "new_ingredient" frame: stream the new line in and hand the frame back
+      # to the ingredient picker, rather than navigating away.
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace("recipe_ingredients_section",
+                               partial: "recipes/recipe_ingredients", locals: { recipe: @recipe }),
+          turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient"),
+          turbo_stream.replace("macros_chart",
+                               partial: "recipes/macros_chart", locals: { recipe: @recipe })
+        ]
+      end
+      format.html do
+        redirect_to @recipe,
+                    notice: "Added #{@ingredient.ingredient}. We're estimating its cost and nutrition now."
+      end
+    end
+  end
+
+  # Only the owner can add ingredients to a recipe, matching what the recipe
+  # page actually offers.
+  def recipe_from_params
+    return nil if params[:recipe_id].blank?
+
+    current_user.recipes.find(params[:recipe_id])
+  end
+
+  def recipe_ingredient_params
+    return {} if params[:recipe_ingredient].blank?
+
+    params.expect(recipe_ingredient: [:quantity, :unit])
+  end
+
+  def enrich_later(ingredient)
+    IngredientEnrichmentJob.perform_later(ingredient.id)
+  end
 
   def set_ingredient
     @ingredient = Ingredient.find(params.expect(:id))

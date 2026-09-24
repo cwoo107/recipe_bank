@@ -1,3 +1,6 @@
+<%# Locals: recipe_ingredient (required), recipe (required). The recipe
+    arrives as a local rather than an ivar so the enrichment job can
+    re-render this row in a broadcast, where there is no request. %>
 <tr id="recipe_ingredient_<%= recipe_ingredient.id %>">
   <td class="whitespace-nowrap py-4 text-sm font-medium dark:text-white p-2 rounded">
     <%= link_to recipe_ingredient.ingredient do %>
@@ -23,7 +26,7 @@
 
     <%# Editable amount — saves as soon as either field changes %>
     <div class="hidden" data-edit-mode-target="editOnlyItems">
-      <%= form_with model: [@recipe, recipe_ingredient],
+      <%= form_with model: [recipe, recipe_ingredient],
                     class: "flex items-center justify-center gap-1",
                     data: { controller: "auto-submit" } do |form| %>
         <%= form.number_field :quantity,
@@ -42,7 +45,7 @@
     </div>
   </td>
   <td class="relative whitespace-nowrap text-right text-sm font-medium hidden" data-edit-mode-target="editOnlyItems">
-    <%= button_to recipe_recipe_ingredient_path(@recipe, recipe_ingredient),
+    <%= button_to recipe_recipe_ingredient_path(recipe, recipe_ingredient),
                   method: :delete,
                   data: { turbo_confirm: "Remove this ingredient?" },
                   class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400",

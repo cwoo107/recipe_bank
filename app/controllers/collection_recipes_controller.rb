@@ -8,8 +8,8 @@ class CollectionRecipesController < ApplicationController
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: [
-            turbo_stream.replace(
-              "collection_button_#{@recipe.id}",
+            turbo_stream.replace_all(
+              collection_button_selector(@recipe),
               partial: "collections/collection_button",
               locals: { recipe: @recipe }
             ),
@@ -34,9 +34,9 @@ class CollectionRecipesController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: [
-          # On recipes index — update the collection button state
-          turbo_stream.replace(
-            "collection_button_#{@recipe.id}",
+          # On recipes index — update every copy of the collection button
+          turbo_stream.replace_all(
+            collection_button_selector(@recipe),
             partial: "collections/collection_button",
             locals: { recipe: @recipe }
           ),
@@ -54,6 +54,12 @@ class CollectionRecipesController < ApplicationController
   end
 
   private
+
+  # The index renders the button once per layout (mobile cards, desktop
+  # table), so both have to be refreshed.
+  def collection_button_selector(recipe)
+    "[data-collection-button-recipe='#{recipe.id}']"
+  end
 
   def set_collection_and_recipe
     @collection = current_user.collections.find(params[:collection_recipe][:collection_id])
