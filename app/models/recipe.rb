@@ -10,10 +10,11 @@ class Recipe < ApplicationRecord
   has_many :recipe_tags, dependent: :destroy
   has_many :tags, through: :recipe_tags
   has_many :steps, -> { order(position: :asc) }, dependent: :destroy
-  has_many :meals
+  has_many :meals, dependent: :destroy
+  has_many :recurring_meals, dependent: :destroy
   has_many :user_favorites, dependent: :destroy
   has_many :favorited_by, through: :user_favorites, source: :user
-  has_many :collection_recipes
+  has_many :collection_recipes, dependent: :destroy
   has_many :collections, through: :collection_recipes
 
   # Recipes used as ingredients of this one (the sauce on the chicken), and
@@ -242,24 +243,26 @@ class Recipe < ApplicationRecord
     all_ingredients.sum { |line| calculate_macro_for_ingredient(line, :calories) }
   end
 
+  # Servings is optional (imports often leave it blank), so a recipe without
+  # one counts as a single serving rather than having no nutrition at all.
+  def nutrition_servings
+    servings.to_i.positive? ? servings : 1
+  end
+
   def protein_per_serving
-    return 0 if servings.nil? || servings.zero?
-    (total_protein / servings).round(1)
+    (total_protein / nutrition_servings).round(1)
   end
 
   def carbs_per_serving
-    return 0 if servings.nil? || servings.zero?
-    (total_carbs / servings).round(1)
+    (total_carbs / nutrition_servings).round(1)
   end
 
   def fat_per_serving
-    return 0 if servings.nil? || servings.zero?
-    (total_fat / servings).round(1)
+    (total_fat / nutrition_servings).round(1)
   end
 
   def calories_per_serving
-    return 0 if servings.nil? || servings.zero?
-    (total_calories / servings).round(0)
+    (total_calories / nutrition_servings).round(0)
   end
 
   def macros_chart_data

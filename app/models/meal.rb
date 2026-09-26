@@ -13,8 +13,10 @@ class Meal < ApplicationRecord
   validates :meal_name, inclusion: { in: ALL_TYPES.map(&:capitalize) + ALL_TYPES }
   validates :date, presence: true
 
+  # Falls back to the recipe's servings, then to 1 — recipes may leave
+  # servings blank, and every per-serving figure below divides by this.
   def servings
-    super || recipe&.servings
+    super || recipe&.servings || 1
   end
 
   def servings_multiplier
@@ -66,7 +68,7 @@ class Meal < ApplicationRecord
   end
 
   def cost_per_serving
-    return 0 if servings.nil? || servings.zero?
+    return 0 if servings.zero?
     total_cost / servings
   end
 end
