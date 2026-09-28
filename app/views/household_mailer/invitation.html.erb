@@ -1,0 +1,14 @@
+<% content_for :preheader, "Set a password to start using HomemakersHaven with #{@household.display_name}." %>
+<%= email_heading "You're invited, #{email_name_for(@user)}" %>
+
+<%= email_paragraph do %>
+  You've been added to <strong><%= @household.display_name %></strong> on HomemakersHaven.
+<% end %>
+
+<%= email_paragraph "Choose a password to sign in with #{@user.email}:" %>
+
+<%= email_button "Set my password", @url %>
+
+<%= email_note do %>
+  This link works for <%= distance_of_time_in_words(@expires_in) %>. If it runs out, use “Forgot your password?” on the <%= link_to "sign-in page", new_user_session_url, style: "color:#{EmailHelper::SAGE};" %> with this email address to get a new one.
+<% end %>

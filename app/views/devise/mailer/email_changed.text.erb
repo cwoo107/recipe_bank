@@ -1,0 +1,8 @@
+<% new_email = @resource.try(:unconfirmed_email?) ? @resource.unconfirmed_email : @resource.email %>
+Your email is changing
+
+Hi <%= email_name_for(@resource) %>,
+
+The sign-in email for your account <%= @resource.try(:unconfirmed_email?) ? "is being changed" : "was changed" %> to <%= new_email %>.
+
+If you didn't make this change, contact your household's admin.

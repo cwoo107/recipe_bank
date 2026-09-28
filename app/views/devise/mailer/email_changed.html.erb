@@ -1,7 +1,10 @@
-<p>Hello <%= @email %>!</p>
+<% new_email = @resource.try(:unconfirmed_email?) ? @resource.unconfirmed_email : @resource.email %>
+<% content_for :preheader, "Your HomemakersHaven sign-in email is changing." %>
+<%= email_heading "Your email is changing" %>
 
-<% if @resource.try(:unconfirmed_email?) %>
-  <p>We're contacting you to notify you that your email is being changed to <%= @resource.unconfirmed_email %>.</p>
-<% else %>
-  <p>We're contacting you to notify you that your email has been changed to <%= @resource.email %>.</p>
+<%= email_paragraph "Hi #{email_name_for(@resource)}," %>
+<%= email_paragraph do %>
+  The sign-in email for your account <%= @resource.try(:unconfirmed_email?) ? "is being changed" : "was changed" %> to <strong><%= new_email %></strong>.
 <% end %>
+
+<%= email_note "If you didn't make this change, contact your household's admin." %>

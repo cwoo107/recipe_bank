@@ -1,0 +1,8 @@
+You're invited, <%= email_name_for(@user) %>
+
+You've been added to <%= @household.display_name %> on HomemakersHaven.
+
+Choose a password to sign in with <%= @user.email %>:
+<%= @url %>
+
+This link works for <%= distance_of_time_in_words(@expires_in) %>. If it runs out, use "Forgot your password?" on the sign-in page (<%= new_user_session_url %>) with this email address to get a new one.

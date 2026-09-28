@@ -34,6 +34,14 @@ class User < ApplicationRecord
 
   after_create :provision_household, unless: :skip_household_provisioning
 
+  # Invites a new household sub-user: like a password reset, but with a
+  # welcome email (HouseholdMailer#invitation) instead of "someone asked to
+  # change your password".
+  def send_household_invitation(household:)
+    token = set_reset_password_token
+    HouseholdMailer.invitation(self, token, household:).deliver_now
+  end
+
   def favorited?(recipe)
     user_favorites.exists?(recipe: recipe)
   end

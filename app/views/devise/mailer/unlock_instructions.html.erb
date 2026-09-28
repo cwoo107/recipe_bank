@@ -1,7 +1,7 @@
-<p>Hello <%= @resource.email %>!</p>
+<% content_for :preheader, "Your account was locked after too many sign-in attempts." %>
+<%= email_heading "Your account is locked" %>
 
-<p>Your account has been locked due to an excessive number of unsuccessful sign in attempts.</p>
+<%= email_paragraph "Hi #{email_name_for(@resource)}," %>
+<%= email_paragraph "Your account was locked after too many unsuccessful sign-in attempts. Unlock it here:" %>
 
-<p>Click the link below to unlock your account:</p>
-
-<p><%= link_to 'Unlock my account', unlock_url(@resource, unlock_token: @token) %></p>
+<%= email_button "Unlock my account", unlock_url(@resource, unlock_token: @token) %>

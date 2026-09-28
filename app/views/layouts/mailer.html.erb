@@ -2,12 +2,46 @@
 <html lang="en">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <style>
-      /* Email styles need to be inline */
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light only">
+    <title><%= message.subject %></title>
+    <%# Clients that allow web fonts get the app's type; the rest fall back
+        to Georgia / system sans (see EmailHelper). %>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   </head>
 
-  <body>
-    <%= yield %>
+  <body style="margin:0;padding:0;background:#faf9f7;">
+    <%# Hidden preview line shown next to the subject in the inbox. %>
+    <% if content_for?(:preheader) %>
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;"><%= yield :preheader %></div>
+    <% end %>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#faf9f7;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:560px;">
+            <%# Brand, as in the app's nav bar %>
+            <tr>
+              <td style="padding:0 4px 20px;font-family:<%= EmailHelper::SERIF %>;font-size:26px;line-height:1;">
+                <span style="color:<%= EmailHelper::SAGE %>;">Homemakers</span><span style="color:<%= EmailHelper::INK %>;">Haven</span>
+              </td>
+            </tr>
+
+            <%# Card %>
+            <tr>
+              <td style="background:#ffffff;border:1px solid <%= EmailHelper::SAGE_LIGHT %>;border-radius:12px;padding:32px 32px 20px;">
+                <%= yield %>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:20px 4px 0;font-family:<%= EmailHelper::SANS %>;font-size:12px;line-height:1.5;color:<%= EmailHelper::MUTED %>;">
+                HomemakersHaven
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>

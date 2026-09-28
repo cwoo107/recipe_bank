@@ -54,6 +54,12 @@ class Household < ApplicationRecord
     (0..6).map { |i| (week_start_day + i) % 7 }
   end
 
+  # "The Anderson household" — or the name as-is when it already says
+  # household (the signup default is "Alice's Household").
+  def display_name
+    family_name.to_s.match?(/household\z/i) ? family_name : "the #{family_name} household"
+  end
+
   # The owner's own member row — every household has one (created alongside
   # the household), so the owner can be assigned meals, to-dos and chores.
   def owner_member
@@ -136,7 +142,7 @@ class Household < ApplicationRecord
       member.user = user
       member.save!
 
-      user.send_reset_password_instructions
+      user.send_household_invitation(household: self)
     end
 
     member
@@ -156,7 +162,7 @@ class Household < ApplicationRecord
       user.save!
       member.update!(user: user)
     end
-    user.send_reset_password_instructions
+    user.send_household_invitation(household: self)
     true
   rescue ActiveRecord::RecordInvalid => e
     member.errors.merge!(e.record.errors) unless e.record.equal?(member)

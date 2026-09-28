@@ -1,5 +1,6 @@
-<p>Welcome <%= @email %>!</p>
+<% content_for :preheader, "Confirm your email to finish setting up HomemakersHaven." %>
+<%= email_heading "Confirm your email" %>
 
-<p>You can confirm your account email through the link below:</p>
+<%= email_paragraph "Welcome to HomemakersHaven! Confirm #{@email} to finish setting up your account." %>
 
-<p><%= link_to 'Confirm my account', confirmation_url(@resource, confirmation_token: @token) %></p>
+<%= email_button "Confirm my email", confirmation_url(@resource, confirmation_token: @token) %>
