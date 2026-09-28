@@ -14,12 +14,19 @@ class CalendarSource < ApplicationRecord
 
   belongs_to :user
   belongs_to :household
+
+  # Secret iCal addresses work like passwords (anyone with the link sees the
+  # calendar), so they're encrypted at rest — as are the OAuth token columns,
+  # kept for a future account sign-in.
+  encrypts :ical_url, :access_token, :refresh_token
   has_many :calendar_events, dependent: :destroy
 
   validates :name,     presence: true, length: { maximum: 100 }
   validates :provider, presence: true, inclusion: { in: PROVIDERS }
   validates :color,    presence: true, inclusion: { in: COLORS.keys }
-  validates :ical_url, presence: true, if: -> { %w[ical apple].include?(provider) }
+  # Every provider syncs from its calendar's iCal/ICS link (the form explains
+  # where each one keeps it) — there's no account sign-in.
+  validates :ical_url, presence: true
 
   after_create :enqueue_sync, if: :syncable?
   after_update :enqueue_sync, if: -> { syncable? && saved_change_to_ical_url? }
@@ -31,21 +38,9 @@ class CalendarSource < ApplicationRecord
     COLORS.fetch(color, COLORS["olive"])
   end
 
-  def needs_oauth?
-    %w[google outlook].include?(provider)
-  end
-
-  def ical_feed?
-    %w[ical apple].include?(provider)
-  end
-
   # Any source with a URL can sync via the iCal path, regardless of provider label
   def syncable?
     ical_url.present?
-  end
-
-  def token_expired?
-    token_expires_at.present? && token_expires_at < Time.current
   end
 
   def provider_label

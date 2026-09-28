@@ -1,218 +1,206 @@
 require "net/http"
 require "uri"
+require "icalendar"
+require "icalendar/recurrence"
+require "icalendar/tzinfo"
 
-# CalendarSyncJob fetches and upserts events for a single CalendarSource.
+# Pulls one CalendarSource's iCal/ICS feed and brings its events in line with
+# it, within SYNC_WINDOW_PAST..SYNC_WINDOW_FUTURE. Every provider works this
+# way (Google's secret iCal address, Outlook's published ICS link, Apple and
+# webcal feeds) — there's no account sign-in.
 #
-# Gem requirements:
-#   gem 'icalendar'   # parse .ics feeds (covers iCal, Apple, Google public calendars)
+# Runs in the household's time zone, so all-day events and "floating" times
+# (no zone in the feed) land on the right day.
 #
-# For Google / Outlook OAuth sync, see the stubbed methods at the bottom.
-# Both providers also expose an iCal/ICS export URL which is the easiest path.
-
+# Recurring events are expanded into one CalendarEvent per occurrence, keyed
+# "<UID>::<original start>" so edits to a single occurrence in the feed
+# (RECURRENCE-ID) replace it, cancelled ones disappear, and EXDATEs are
+# skipped. One-off events are keyed by their UID alone.
 class CalendarSyncJob < ApplicationJob
   queue_as :default
 
   SYNC_WINDOW_PAST   = 3.months
   SYNC_WINDOW_FUTURE = 12.months
 
+  # A feed that couldn't be fetched or read — recorded on the source and
+  # shown in the calendar sidebar rather than retried as a crash.
+  class FeedError < StandardError; end
+
   def perform(source_id)
     source = CalendarSource.find_by(id: source_id)
-    return unless source
+    return unless source&.syncable?
 
-    if source.ical_url.present?
-      sync_ical(source)
-    else
-      case source.provider
-      when "google"
-        sync_google(source)
-      when "outlook"
-        sync_outlook(source)
-      end
+    Time.use_zone(source.household.zone) do
+      sync(source)
+      source.update!(last_synced_at: Time.current, last_sync_attempted_at: Time.current, last_sync_error: nil, synced: true)
+    rescue FeedError => e
+      source.update!(last_sync_attempted_at: Time.current, last_sync_error: e.message)
+    ensure
+      # Whoever has the calendar open sees the new events / status.
+      Turbo::StreamsChannel.broadcast_refresh_to(source.household, "calendar_sources")
     end
-
-    source.update!(last_synced_at: Time.current, synced: true)
   rescue => e
-    Rails.logger.error "[CalendarSyncJob] source=#{source_id} error=#{e.message}"
+    source&.update_columns(last_sync_attempted_at: Time.current, last_sync_error: "Something went wrong reading this calendar.")
+    Rails.logger.error "[CalendarSyncJob] source=#{source_id} #{e.class}: #{e.message}"
     raise
   end
 
   private
 
-  # ──────────────────────────────────────────────────────────────
-  # iCal / WebCal (covers Apple Calendar exports too)
-  # ──────────────────────────────────────────────────────────────
-  def sync_ical(source)
-    return unless source.ical_url.present?
+  def sync(source)
+    calendars = Icalendar::Calendar.parse(fetch(source.ical_url))
+    raise FeedError, "That link didn't return a calendar." if calendars.empty?
 
-    body = fetch_url(source.ical_url)
-    return unless body
-
-    begin
-      require "icalendar"
-      require "icalendar/tzinfo"
-    rescue LoadError
-      Rails.logger.error "[CalendarSyncJob] Add `gem 'icalendar'` to your Gemfile to enable iCal sync."
-      return
-    end
-
-    calendars = Icalendar::Calendar.parse(body)
-    window_start = SYNC_WINDOW_PAST.ago
-    window_end   = SYNC_WINDOW_FUTURE.from_now
-
-    upserted_uids = []
+    @window_start = SYNC_WINDOW_PAST.ago
+    @window_end   = SYNC_WINDOW_FUTURE.from_now
+    seen = []
 
     calendars.each do |cal|
-      # Resolve the calendar's timezone for floating-time events
-      cal_tz = resolve_tz(cal)
+      fallback_zone = feed_zone(cal)
+      series, changed_occurrences = cal.events.partition { |vevent| vevent.recurrence_id.blank? }
 
-      cal.events.each do |vevent|
-        uid = vevent.uid.to_s.strip
-        next if uid.blank?
+      series.each do |vevent|
+        occurrences(vevent, fallback_zone).each do |key, starts_at, ends_at, all_day|
+          seen << key if upsert(source, vevent, key, starts_at, ends_at, all_day)
+        end
+      end
 
-        starts_at, all_day = parse_dt(vevent.dtstart, cal_tz)
-        ends_at,   _       = parse_dt(vevent.dtend || vevent.dtstart, cal_tz)
-
-        if all_day
-          ends_at = ends_at > starts_at ? ends_at - 1.second : starts_at.end_of_day
+      # A single occurrence edited in the source calendar: replaces the one
+      # the series generated (same key), or removes it if it was cancelled.
+      changed_occurrences.each do |vevent|
+        key = occurrence_key(vevent.uid, vevent.recurrence_id)
+        if vevent.status.to_s.casecmp?("cancelled")
+          seen.delete(key)
+          next
         end
 
-        next if ends_at < window_start || starts_at > window_end
+        starts_at, all_day = parse_time(vevent.dtstart, fallback_zone)
+        ends_at, _ = parse_time(vevent.dtend || vevent.dtstart, fallback_zone)
+        ends_at = all_day_end(starts_at, ends_at) if all_day
+        next if ends_at < @window_start || starts_at > @window_end
 
-        # Collect the UID regardless of whether save succeeds
-        upserted_uids << uid
-
-        attrs = {
-          user_id:         source.user_id,
-          household_id:    source.household_id,
-          title:           vevent.summary.to_s.strip.presence || "(No title)",
-          description:     vevent.description.to_s.strip.presence,
-          location:        vevent.location.to_s.strip.presence,
-          starts_at:       starts_at,
-          ends_at:         ends_at,
-          all_day:         all_day,
-          status:          map_status(vevent.status.to_s),
-          url:             vevent.url.to_s.strip.presence,
-          recurrence_rule: vevent.rrule.first&.to_s.presence
-        }
-
-        event = CalendarEvent.find_or_initialize_by(
-          calendar_source_id: source.id,
-          external_uid:       uid
-        )
-        event.assign_attributes(attrs)
-        event.save! if event.new_record? || event.changed?
-      rescue => e
-        Rails.logger.warn "[CalendarSyncJob] Skipping event uid=#{uid} error=#{e.message}"
+        seen << key unless seen.include?(key)
+        upsert(source, vevent, key, starts_at, ends_at, all_day)
       end
     end
 
-    # Remove events that disappeared from the feed (within our window)
+    remove_missing(source, seen)
+  end
+
+  # [key, starts_at, ends_at, all_day] for each time this event happens in
+  # the window.
+  def occurrences(vevent, fallback_zone)
+    uid = vevent.uid.to_s.strip
+    return [] if uid.blank?
+
+    starts_at, all_day = parse_time(vevent.dtstart, fallback_zone)
+    ends_at, _ = parse_time(vevent.dtend || vevent.dtstart, fallback_zone)
+    ends_at = all_day_end(starts_at, ends_at) if all_day
+
+    if vevent.rrule.blank?
+      return [] if ends_at < @window_start || starts_at > @window_end
+      return [ [ uid, starts_at, ends_at, all_day ] ]
+    end
+
+    duration = ends_at - starts_at
+    vevent.occurrences_between(@window_start - duration, @window_end).map do |occurrence|
+      if all_day
+        # The gem hands back all-day dates as the server's local midnight —
+        # keep just the date and anchor it to the household's zone.
+        date = occurrence.start_time.getlocal.to_date
+        occurrence_start = date.in_time_zone
+        [ occurrence_key(uid, date), occurrence_start, occurrence_start + duration, true ]
+      else
+        occurrence_start = occurrence.start_time.in_time_zone
+        [ occurrence_key(uid, occurrence.start_time), occurrence_start, occurrence_start + duration, false ]
+      end
+    end
+  end
+
+  def occurrence_key(uid, original_start)
+    stamp = original_start.is_a?(Date) && !original_start.is_a?(DateTime) ? original_start.iso8601 : original_start.to_time.utc.iso8601
+    "#{uid.to_s.strip}::#{stamp}"
+  end
+
+  def upsert(source, vevent, key, starts_at, ends_at, all_day)
+    event = CalendarEvent.find_or_initialize_by(calendar_source_id: source.id, external_uid: key)
+    event.assign_attributes(
+      user_id:         source.user_id,
+      household_id:    source.household_id,
+      title:           vevent.summary.to_s.strip.presence || "(No title)",
+      description:     vevent.description.to_s.strip.presence,
+      location:        vevent.location.to_s.strip.presence,
+      starts_at:       starts_at,
+      ends_at:         ends_at,
+      all_day:         all_day,
+      status:          map_status(vevent.status.to_s),
+      url:             vevent.url.to_s.strip.presence,
+      recurrence_rule: vevent.rrule.first&.value_ical
+    )
+    event.save! if event.new_record? || event.changed?
+    true
+  rescue ActiveRecord::RecordInvalid => e
+    Rails.logger.warn "[CalendarSyncJob] Skipping #{key}: #{e.message}"
+    false
+  end
+
+  # Anything in the window that's no longer in the feed was deleted (or moved
+  # out of range) in the source calendar. Events added in the app have no
+  # external_uid and are never touched.
+  def remove_missing(source, seen)
     CalendarEvent.where(calendar_source_id: source.id)
-                 .where.not(external_uid: upserted_uids)
-                 .where(external_uid: CalendarEvent.where(calendar_source_id: source.id)
-                                                   .where("starts_at >= ?", window_start)
-                                                   .select(:external_uid))
+                 .where.not(external_uid: nil)
+                 .where.not(external_uid: seen)
+                 .where("ends_at >= ?", @window_start)
                  .destroy_all
   end
 
-  # ──────────────────────────────────────────────────────────────
-  # Google Calendar (OAuth)
-  # ──────────────────────────────────────────────────────────────
-  # Requires: gem 'google-apis-calendar_v3'
-  #
-  # Easiest alternative: have the user paste their Google Calendar's
-  # public iCal URL (Settings → [calendar] → "Secret address in iCal format")
-  # and treat it as a normal ical source.
-  # ──────────────────────────────────────────────────────────────
-  def sync_google(source)
-    # Refresh token if expired
-    if source.token_expired? && source.refresh_token.present?
-      refresh_google_token(source)
-    end
+  def fetch(url)
+    uri = URI.parse(url.to_s.strip.sub(/\Awebcal:\/\//i, "https://"))
+    raise FeedError, "That isn't a web link." unless uri.is_a?(URI::HTTP) && uri.host.present?
 
-    # TODO: implement with google-apis-calendar_v3 gem
-    # Example skeleton:
-    #
-    #   require "google/apis/calendar_v3"
-    #   svc = Google::Apis::CalendarV3::CalendarService.new
-    #   svc.authorization = google_credentials(source)
-    #
-    #   result = svc.list_events(
-    #     source.external_id || "primary",
-    #     single_events: true,
-    #     time_min:      SYNC_WINDOW_PAST.ago.iso8601,
-    #     time_max:      SYNC_WINDOW_FUTURE.from_now.iso8601,
-    #     max_results:   2500
-    #   )
-    #
-    #   result.items.each do |item|
-    #     upsert_google_event(source, item)
-    #   end
-    Rails.logger.info "[CalendarSyncJob] Google OAuth sync not yet implemented for source #{source.id}. Consider using the iCal export URL instead."
-  end
-
-  # ──────────────────────────────────────────────────────────────
-  # Outlook / Microsoft 365 (OAuth via Microsoft Graph)
-  # ──────────────────────────────────────────────────────────────
-  # Requires: gem 'microsoft_graph' or plain HTTParty calls
-  # Outlook also exposes an iCal URL: Settings → View all Outlook settings
-  # → Calendar → Shared calendars → Publish a calendar → ICS link
-  # ──────────────────────────────────────────────────────────────
-  def sync_outlook(source)
-    if source.token_expired? && source.refresh_token.present?
-      refresh_outlook_token(source)
-    end
-
-    # TODO: implement with Microsoft Graph API
-    # GET https://graph.microsoft.com/v1.0/me/calendarView
-    # Authorization: Bearer {source.access_token}
-    Rails.logger.info "[CalendarSyncJob] Outlook OAuth sync not yet implemented for source #{source.id}. Consider using the iCal export URL instead."
-  end
-
-  # ──────────────────────────────────────────────────────────────
-  # Helpers
-  # ──────────────────────────────────────────────────────────────
-
-  def fetch_url(url)
-    uri = URI.parse(url.sub(/\Awebcal:\/\//i, "https://"))
     response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 20) do |http|
-      http.get(uri.request_uri, "User-Agent" => "RecipeBank-CalendarSync/1.0")
+      http.get(uri.request_uri, "User-Agent" => "HomemakersHaven-CalendarSync/1.0")
     end
-    response.body if response.is_a?(Net::HTTPSuccess)
-  rescue => e
-    Rails.logger.error "[CalendarSyncJob] fetch failed for #{url}: #{e.message}"
-    nil
+    return response.body if response.is_a?(Net::HTTPSuccess)
+
+    raise FeedError, "The calendar link returned an error (#{response.code}). It may have been reset — paste a fresh link."
+  rescue URI::InvalidURIError
+    raise FeedError, "That isn't a web link."
+  rescue SocketError, Timeout::Error, Errno::ECONNREFUSED, OpenSSL::SSL::SSLError, Net::OpenTimeout, Net::ReadTimeout => e
+    raise FeedError, "Couldn't reach the calendar (#{e.class.name.demodulize})."
   end
 
-  def parse_dt(dt, fallback_tz)
-    return [Time.current, false] unless dt
+  # [time, all_day?] — all-day dates become midnight in the household's zone;
+  # timed values keep their own zone, else the feed's, else the household's.
+  def parse_time(value, fallback_zone)
+    return [ Time.current, false ] unless value
 
-    all_day = dt.is_a?(Icalendar::Values::Date)
-    tz_id   = dt.respond_to?(:ical_params) && dt.ical_params["tzid"]&.first
-    zone    = tz_id ? (TZInfo::Timezone.get(tz_id) rescue nil) : nil
-    zone  ||= fallback_tz
-
-    time = if all_day
-             dt.to_date.to_time.in_time_zone(Time.zone)
-           elsif zone
-             dt.to_time.in_time_zone(zone)
-           else
-             dt.to_time.utc.in_time_zone(Time.zone)
-           end
-
-    [time, all_day]
-  rescue
-    [Time.current, false]
+    if value.is_a?(Icalendar::Values::Date)
+      [ value.to_date.in_time_zone, true ]
+    else
+      # Zoned values (including "Z", which parses as TZID=UTC) carry their own
+      # zone; floating ones are wall-clock time in the feed's or household's.
+      if value.ical_params["tzid"].present?
+        [ value.to_time.in_time_zone, false ]
+      else
+        wall = value.value
+        zone = fallback_zone || Time.zone
+        [ zone.local(wall.year, wall.month, wall.day, wall.hour, wall.min, wall.sec), false ]
+      end
+    end
   end
 
-  def resolve_tz(cal)
-    tz_component = cal.timezones.first
-    return Time.zone unless tz_component
+  # All-day DTEND is the day after (exclusive); store the last moment of the
+  # final day.
+  def all_day_end(starts_at, ends_at)
+    ends_at > starts_at ? ends_at - 1.second : starts_at.end_of_day
+  end
 
-    tz_id = tz_component.tzid.to_s
-    TZInfo::Timezone.get(tz_id) rescue Time.zone
-  rescue
-    Time.zone
+  def feed_zone(cal)
+    tzid = cal.timezones.first&.tzid.to_s.presence ||
+           cal.custom_property("x_wr_timezone").first.to_s.presence
+    tzid && ActiveSupport::TimeZone[tzid]
   end
 
   def map_status(ical_status)
@@ -221,15 +209,5 @@ class CalendarSyncJob < ApplicationJob
     when "cancelled" then "cancelled"
     else "confirmed"
     end
-  end
-
-  def refresh_google_token(source)
-    # POST to https://oauth2.googleapis.com/token with refresh_token
-    # Update source.access_token and source.token_expires_at
-  end
-
-  def refresh_outlook_token(source)
-    # POST to https://login.microsoftonline.com/common/oauth2/v2.0/token
-    # Update source.access_token and source.token_expires_at
   end
 end

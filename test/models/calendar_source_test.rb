@@ -4,7 +4,7 @@ class CalendarSourceTest < ActiveSupport::TestCase
   test "position is scoped to household, shared across members" do
     household = households(:one)
 
-    first = household.calendar_sources.create!(user: users(:one), name: "Alice's second calendar", provider: "google", color: "olive")
+    first = household.calendar_sources.create!(user: users(:one), name: "Alice's second calendar", provider: "google", color: "olive", ical_url: "https://calendar.example.com/feed.ics")
 
     assert_equal 2, first.reload.position # calendar_sources(:one) already occupies position 1
   end

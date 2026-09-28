@@ -3,6 +3,9 @@ class CalendarEventsController < ApplicationController
   # Limited members can look but not change these (see ApplicationController).
   before_action :require_household_admin!, except: :show
   before_action :set_event, only: [:show, :edit, :update, :destroy]
+  # Events that came from a feed are read-only here — the next sync would
+  # overwrite any change (CalendarSyncJob). Change them in the calendar app.
+  before_action :require_local_event!, only: [:edit, :update, :destroy]
 
   def show
 
@@ -22,10 +25,7 @@ class CalendarEventsController < ApplicationController
     @event = current_household.calendar_events.build(event_params)
     @sources = current_household.calendar_sources.ordered
     if @event.save
-      respond_to do |format|
-        format.turbo_stream
-        format.html { redirect_to day_calendars_path(date: @event.starts_at.to_date), notice: "Event created." }
-      end
+      redirect_to day_calendars_path(date: @event.starts_at.to_date), notice: "Event created.", status: :see_other
     else
       render :new, status: :unprocessable_entity
     end
@@ -38,10 +38,7 @@ class CalendarEventsController < ApplicationController
   def update
     @sources = current_household.calendar_sources.ordered
     if @event.update(event_params)
-      respond_to do |format|
-        format.turbo_stream
-        format.html { redirect_to day_calendars_path(date: @event.starts_at.to_date), notice: "Event updated." }
-      end
+      redirect_to day_calendars_path(date: @event.starts_at.to_date), notice: "Event updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -50,16 +47,20 @@ class CalendarEventsController < ApplicationController
   def destroy
     date = @event.starts_at.to_date
     @event.destroy
-    respond_to do |format|
-      format.turbo_stream
-      format.html { redirect_to day_calendars_path(date: date), notice: "Event removed." }
-    end
+    redirect_to day_calendars_path(date: date), notice: "Event removed.", status: :see_other
   end
 
   private
 
   def set_event
     @event = current_household.calendar_events.find(params[:id])
+  end
+
+  def require_local_event!
+    return unless @event.synced?
+
+    redirect_to day_calendars_path(date: @event.starts_at.to_date),
+                alert: "“#{@event.title}” comes from #{@event.source_name} — change it there.", status: :see_other
   end
 
   def event_params

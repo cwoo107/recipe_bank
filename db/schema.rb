@@ -83,6 +83,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
     t.string "external_id"
     t.integer "household_id", null: false
     t.string "ical_url"
+    t.datetime "last_sync_attempted_at"
+    t.text "last_sync_error"
     t.datetime "last_synced_at"
     t.string "name", null: false
     t.integer "position", default: 0, null: false
@@ -169,6 +171,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
     t.integer "family_size", default: 1, null: false
     t.integer "minutes_per_day", default: 30, null: false
     t.integer "owner_id", null: false
+    t.string "time_zone"
     t.datetime "updated_at", null: false
     t.integer "week_start_day", default: 1, null: false
     t.index ["owner_id"], name: "index_households_on_owner_id"

@@ -8,7 +8,7 @@ class CalendarSourcesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create calendar source" do
     assert_difference("CalendarSource.count") do
-      post calendar_sources_url, params: { calendar_source: { name: "New Calendar", provider: "google", color: "olive" } }
+      post calendar_sources_url, params: { calendar_source: { name: "New Calendar", provider: "google", color: "olive", ical_url: "https://calendar.example.com/feed.ics" } }
     end
 
     assert_equal households(:one), CalendarSource.last.household

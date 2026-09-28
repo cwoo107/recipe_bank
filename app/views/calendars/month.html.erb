@@ -36,6 +36,7 @@
         <% end %>
       </div>
 
+      <%= render "calendars/sync_now_button" %>
       <%# Add event %>
       <% if household_admin? %>
       <%= link_to new_calendar_event_path,
@@ -54,7 +55,8 @@
       <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
         <%# Day-of-week headers %>
         <div class="grid grid-cols-7 border-b border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16]">
-          <% current_household.ordered_wdays.each do |wday| %>
+          <%# Always Sunday first — see CalendarsController#month. %>
+          <% Date::ABBR_DAYNAMES.each_index do |wday| %>
             <div class="py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
               <%= Date::ABBR_DAYNAMES[wday] %>
             </div>

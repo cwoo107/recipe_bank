@@ -1,12 +1,8 @@
 class CalendarSourcesController < ApplicationController
   before_action :authenticate_user!
   # Limited members can look but not change these (see ApplicationController).
-  before_action :require_household_admin!, except: :index
+  before_action :require_household_admin!
   before_action :set_source, only: [:edit, :update, :destroy, :toggle_visible, :sync]
-
-  def index
-    @sources = current_household.calendar_sources.ordered
-  end
 
   def new
     @source = current_household.calendar_sources.build
@@ -62,6 +58,16 @@ class CalendarSourcesController < ApplicationController
       format.turbo_stream { render turbo_stream: turbo_stream.replace("source_#{@source.id}_status", partial: "calendar_sources/sync_status", locals: { source: @source, syncing: true }) }
       format.html { redirect_back fallback_location: calendars_path, notice: "Sync started." }
     end
+  end
+
+  # "Sync now" in the calendar header: every linked calendar at once. The page
+  # refreshes itself as each finishes (CalendarSyncJob broadcasts).
+  def sync_all
+    sources = current_household.calendar_sources.select(&:syncable?)
+    sources.each { |source| CalendarSyncJob.perform_later(source.id) }
+
+    redirect_back_or_to calendars_path, status: :see_other,
+                        notice: sources.any? ? "Syncing #{helpers.pluralize(sources.size, 'calendar')} — new events will appear in a moment." : "No calendars to sync yet."
   end
 
   private

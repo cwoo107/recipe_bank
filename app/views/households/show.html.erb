@@ -31,7 +31,7 @@
           <%= render "form", household: @household %>
         </div>
       <% else %>
-        <dl class="grid gap-4 sm:grid-cols-4 text-sm">
+        <dl class="grid gap-4 sm:grid-cols-3 text-sm">
           <div>
             <dt class="text-olive-500">Family name</dt>
             <dd class="mt-1 font-medium text-sage-900"><%= @household.family_name %></dd>
@@ -47,6 +47,10 @@
           <div>
             <dt class="text-olive-500">Week starts on</dt>
             <dd class="mt-1 font-medium text-sage-900"><%= @household.week_start_day_name %></dd>
+          </div>
+          <div>
+            <dt class="text-olive-500">Time zone</dt>
+            <dd class="mt-1 font-medium text-sage-900"><%= @household.time_zone&.tr("_", " ") || "Not set" %></dd>
           </div>
         </dl>
         <p class="mt-4 text-xs text-olive-400">Only household admins can change these.</p>

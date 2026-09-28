@@ -4,6 +4,12 @@
 # and recreated between test runs. Don't rely on the data there!
 
 Rails.application.configure do
+  # Fixed Active Record encryption keys for tests, so they don't need the
+  # master key (real keys live in credentials).
+  config.active_record.encryption.primary_key = "test-primary-key-0000000000000000"
+  config.active_record.encryption.deterministic_key = "test-deterministic-key-000000000"
+  config.active_record.encryption.key_derivation_salt = "test-key-derivation-salt-0000000"
+
   # Settings specified here will take precedence over those in config/application.rb.
 
   # While tests run files are not watched, reloading is not necessary.

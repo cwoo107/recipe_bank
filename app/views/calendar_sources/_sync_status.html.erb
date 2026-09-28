@@ -1,0 +1,17 @@
+<%# One calendar's sync status under its name in the sidebar. Doesn't depend on
+    who's viewing, so it's safe to broadcast.
+    Locals: source, syncing (true right after "Sync now" is pressed) %>
+<% syncing = local_assigns.fetch(:syncing, false) %>
+<div id="source_<%= source.id %>_status" class="text-[10px] leading-snug">
+  <% if syncing %>
+    <span class="text-gray-400 dark:text-gray-500">Syncing…</span>
+  <% elsif source.last_sync_error.present? %>
+    <span class="text-dusty-rose-600 dark:text-dusty-rose-400" title="<%= source.last_sync_error %>">
+      Couldn't sync<%= " #{time_ago_in_words(source.last_sync_attempted_at)} ago" if source.last_sync_attempted_at %>
+    </span>
+  <% elsif source.last_synced_at %>
+    <span class="text-gray-400 dark:text-gray-600">Synced <%= time_ago_in_words(source.last_synced_at) %> ago</span>
+  <% else %>
+    <span class="text-gray-400 dark:text-gray-600">Not synced yet</span>
+  <% end %>
+</div>

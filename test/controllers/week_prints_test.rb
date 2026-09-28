@@ -99,7 +99,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
   end
 
   test "calendar events print in their calendar's colors" do
-    source = @household.calendar_sources.create!(name: "Family", provider: "google", color: "seafoam", user: users(:one))
+    source = @household.calendar_sources.create!(name: "Family", provider: "google", color: "seafoam", ical_url: "https://calendar.example.com/feed.ics", user: users(:one))
     @household.calendar_events.create!(calendar_source: source, user: users(:one), title: "Soccer practice",
                                        starts_at: MONDAY.to_time.change(hour: 17), ends_at: MONDAY.to_time.change(hour: 18))
 

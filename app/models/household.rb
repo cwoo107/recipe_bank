@@ -20,6 +20,7 @@ class Household < ApplicationRecord
   validates :minutes_per_day, presence: true, numericality: { only_integer: true, greater_than: 0 }
   validates :week_start_day, inclusion: { in: 0..6 }
   validates :family_size, numericality: { only_integer: true, greater_than: 0 }
+  validate :time_zone_is_known
   validate :family_size_covers_listed_members, on: :update
 
   after_create :create_owner_member
@@ -29,6 +30,23 @@ class Household < ApplicationRecord
   def self.default_family_name_for(user)
     handle = user.email.to_s.split("@").first.presence || "New"
     "#{handle.titleize}'s Household"
+  end
+
+  # The household's zone for pages and calendar syncing; falls back to the
+  # app default (UTC) until one's set.
+  def zone
+    ActiveSupport::TimeZone[time_zone.to_s] || Time.zone_default
+  end
+
+  # For the settings picker: every zone Rails knows, by UTC offset, as IANA
+  # names (what browsers report), plus the current one if it isn't listed.
+  def self.time_zone_options(current = nil)
+    options = ActiveSupport::TimeZone.all.map { |z| [ "(GMT#{z.formatted_offset}) #{z.name}", z.tzinfo.name ] }
+                                     .uniq(&:last)
+    if current.present? && options.none? { |_, id| id == current }
+      options.unshift([ current.tr("_", " "), current ])
+    end
+    options
   end
 
   # Options for the week start picker, in calendar order (Sunday first).
@@ -210,6 +228,12 @@ class Household < ApplicationRecord
              awaiting_first_password: true).tap do |user|
       user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
     end
+  end
+
+  def time_zone_is_known
+    return if time_zone.blank? || ActiveSupport::TimeZone[time_zone]
+
+    errors.add(:time_zone, "isn't a time zone we recognize")
   end
 
   def family_size_covers_listed_members

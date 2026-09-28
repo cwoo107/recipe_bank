@@ -25,6 +25,9 @@ class CalendarEvent < ApplicationRecord
 
   delegate :color_classes, :name, to: :calendar_source, prefix: :source
 
+  # Came from a calendar feed (vs. added here) — read-only in the app.
+  def synced? = external_uid.present?
+
   def duration_minutes
     ((ends_at - starts_at) / 60).round
   end

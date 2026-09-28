@@ -14,8 +14,10 @@ class CalendarsController < ApplicationController
       @date = Time.zone.today.beginning_of_month
     end
 
-    @range_start = @date.beginning_of_month.beginning_of_week
-    @range_end   = @date.end_of_month.end_of_week
+    # Month grids always start on Sunday, like a wall calendar — the
+    # household's week start day only applies to week-based views.
+    @range_start = @date.beginning_of_month.beginning_of_week(:sunday)
+    @range_end   = @date.end_of_month.end_of_week(:sunday)
 
     load_events(@range_start, @range_end + 1.day)
     @events_by_date = group_events_by_date(@events, @range_start, @range_end)

@@ -1,7 +1,7 @@
 class ApplicationController < ActionController::Base
   before_action :authenticate_user!
-  before_action :set_user_timezone
   before_action :configure_permitted_parameters, if: :devise_controller?
+  around_action :use_time_zone
   around_action :use_household_week_start, if: :user_signed_in?
   helper_method :current_household, :active_weekly_plan, :household_admin?, :current_member
   layout :resolve_layout
@@ -29,12 +29,27 @@ class ApplicationController < ActionController::Base
     devise_parameter_sanitizer.permit(:sign_up, keys: [:household_family_name])
   end
 
-  def set_user_timezone
-    timezone = cookies[:browser_timezone]
-    if timezone.present?
-      # ActiveSupport understands IANA timezone names like "America/Denver"
-      Time.zone = ActiveSupport::TimeZone[timezone] || ActiveSupport::TimeZone.find_tzinfo(timezone) rescue Time.zone
-    end
+  # Pages show times in the household's zone, so everyone in it sees the same
+  # day and time (and it matches what calendar syncing used). Until one's
+  # saved, the first admin's browser zone becomes it; signed-out pages just
+  # use the browser's zone.
+  def use_time_zone(&block)
+    adopt_browser_time_zone if user_signed_in?
+
+    zone = (current_household&.time_zone.presence if user_signed_in?) || browser_time_zone
+    Time.use_zone(ActiveSupport::TimeZone[zone.to_s] || Time.zone_default, &block)
+  end
+
+  def browser_time_zone
+    name = cookies[:browser_timezone].to_s
+    name if ActiveSupport::TimeZone[name]
+  end
+
+  def adopt_browser_time_zone
+    household = current_household
+    return unless household && household.time_zone.blank? && browser_time_zone && household_admin?
+
+    household.update_column(:time_zone, browser_time_zone)
   end
 
   # Weeks everywhere (meals, chores, plans, calendar, grocery lists) start on

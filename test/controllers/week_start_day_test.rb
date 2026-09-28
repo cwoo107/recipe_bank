@@ -65,13 +65,23 @@ class WeekStartDayTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /Week of Oct 4, 2026/
   end
 
-  test "the calendar's day headers start on the household's start day" do
+  test "the month view always starts on Sunday, whatever the household's week start" do
     @household.update!(week_start_day: 4)
 
     get month_calendars_url(year: 2026, month: 10)
     assert_select ".grid-cols-7 > div.uppercase", count: 7 do |headers|
-      assert_equal %w[Thu Fri Sat Sun Mon Tue Wed], headers.map { |h| h.text.strip }
+      assert_equal %w[Sun Mon Tue Wed Thu Fri Sat], headers.map { |h| h.text.strip }
     end
+    assert_select "[data-calendar-date]", minimum: 28 do |cells|
+      assert_equal "2026-09-27", cells.first["data-calendar-date"], "Oct 1 2026 is a Thursday; the grid opens on the Sunday before"
+    end
+  end
+
+  test "the week view still follows the household's week start" do
+    @household.update!(week_start_day: 4)
+
+    get week_calendars_url(date: "2026-10-07")
+    assert_select "a[href='#{week_calendars_path(date: '2026-09-24')}']" # previous week starts on a Thursday
   end
 
   test "the week start is only applied for the request" do

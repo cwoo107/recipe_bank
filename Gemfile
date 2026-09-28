@@ -93,3 +93,5 @@ gem 'icalendar'
 # gem 'microsoft_graph'
 
 gem "ruby_native", "~> 0.15.3"
+
+gem "icalendar-recurrence", "~> 1.2"

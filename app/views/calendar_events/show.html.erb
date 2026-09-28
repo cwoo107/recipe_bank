@@ -69,15 +69,17 @@
   </div>
 
 
-    <% unless @event.external_uid.present? %>
-    <div class="px-6 py-4 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
-
-      <% if household_admin? %>
-      <%= button_to "Delete", calendar_event_path(@event), method: :delete,
-            class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400 hover:text-dusty-rose-800 transition",
-            data: { turbo_confirm: "Delete this event?" } %>
+    <div class="px-6 py-4 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between gap-3">
+      <% if @event.synced? %>
+        <%# Feed events are overwritten on the next sync, so they can't be changed here. %>
+        <p class="text-xs text-gray-500 dark:text-gray-400">From <%= @event.source_name %> — to change it, edit it in that calendar.</p>
+      <% elsif household_admin? %>
+        <%= link_to "Edit", edit_calendar_event_path(@event), data: { turbo_frame: "_top" },
+              class: "text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
+        <%= button_to "Delete", calendar_event_path(@event), method: :delete,
+              form: { data: { turbo_frame: "_top" } },
+              class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400 hover:text-dusty-rose-800 transition cursor-pointer",
+              data: { turbo_confirm: "Delete this event?" } %>
       <% end %>
     </div>
-
-    <% end %>
 </turbo-frame>

@@ -126,13 +126,14 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :calendar_sources do
+  resources :calendar_sources, except: %i[index show] do
     member do
       patch :toggle_visible
       post  :sync
     end
     collection do
       post :reorder
+      post :sync_all
     end
   end
 

@@ -8,6 +8,10 @@ Bundler.require(*Rails.groups)
 
 module RecipeBank
   class Application < Rails::Application
+    # Calendar feed links were stored in plain text before being encrypted
+    # (see CalendarSource); keep reading any that haven't been re-saved.
+    config.active_record.encryption.support_unencrypted_data = true
+
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 

@@ -1,4 +1,6 @@
 <%# _sidebar.html.erb — args: sources %>
+<%# A background sync finishing refreshes this page (CalendarSyncJob). %>
+<%= turbo_stream_from current_household, "calendar_sources" %>
 <aside class="hidden lg:block w-56 shrink-0 space-y-4">
   <%# Mini month navigator %>
   <div class="rounded-lg border border-gray-200 dark:border-white/10
@@ -16,11 +18,12 @@
       </div>
     </div>
     <div class="grid grid-cols-7 gap-0 text-center">
-      <% current_household.ordered_wdays.each do |wday| %>
+      <%# A month grid, so Sunday first like the month view. %>
+      <% Date::ABBR_DAYNAMES.each_index do |wday| %>
         <div class="text-[10px] font-medium text-gray-400 dark:text-gray-600 py-0.5"><%= Date::ABBR_DAYNAMES[wday].first %></div>
       <% end %>
-      <% mini_start = mini_date.beginning_of_month.beginning_of_week
-         mini_end   = mini_date.end_of_month.end_of_week
+      <% mini_start = mini_date.beginning_of_month.beginning_of_week(:sunday)
+         mini_end   = mini_date.end_of_month.end_of_week(:sunday)
          (mini_start..mini_end).each do |d| %>
         <% is_today = d == Time.zone.today
            in_month = d.month == mini_date.month %>
@@ -71,13 +74,19 @@
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                 <%= source.name %>
               </div>
-              <div class="text-[10px] text-gray-400 dark:text-gray-600 capitalize">
-                <%= source.provider_label %>
-              </div>
+              <%= render "calendar_sources/sync_status", source: source %>
             </div>
 
-            <%# Edit menu %>
-            <div class="opacity-0 group-hover:opacity-100 transition flex gap-1">
+            <%# Sync now (always visible) + edit (on hover) %>
+            <% if household_admin? %>
+                <%= button_to sync_calendar_source_path(source), method: :post,
+                      form: { "data-turbo-stream": "true" },
+                      title: "Sync now", aria: { label: "Sync #{source.name} now" },
+                      class: "text-gray-400 hover:text-[#5f734c] dark:text-gray-500 dark:hover:text-[#7a8f62] transition cursor-pointer" do %>
+                  <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z" clip-rule="evenodd" /></svg>
+                <% end %>
+            <% end %>
+            <div class="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition flex items-center gap-1">
               <% if household_admin? %>
               <%= link_to edit_calendar_source_path(source),
                     class: "text-gray-300 hover:text-gray-600 dark:text-gray-600 dark:hover:text-gray-300 transition" do %>
