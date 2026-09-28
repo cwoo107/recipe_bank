@@ -1,5 +1,6 @@
-<%# calendar_events/_form.html.erb %>
+<%# calendar_events/_form.html.erb — locals: event, sources, return_to (the calendar page to go back to) %>
 <%= form_with model: event, class: "space-y-5" do |f| %>
+  <%= hidden_field_tag :return_to, return_to %>
   <% if event.errors.any? %>
     <div class="rounded-lg bg-dusty-rose-50 dark:bg-dusty-rose-900/20 border border-dusty-rose-200 dark:border-dusty-rose-800/40 p-4">
       <ul class="text-sm text-dusty-rose-700 dark:text-dusty-rose-300 space-y-1 list-disc list-inside">
@@ -83,16 +84,9 @@
       <%= f.submit event.new_record? ? "Create Event" : "Save Event",
             class: "rounded-lg bg-[#5f734c] px-5 py-2.5 text-sm font-semibold text-white shadow-xs
                     hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer transition" %>
-      <button type="button" data-action="dialog#close"
-              class="rounded-lg px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20
-                     text-sm font-medium text-gray-700 dark:text-white transition">
-        Cancel
-      </button>
+      <%= link_to "Cancel", return_to,
+            class: "rounded-lg px-5 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20
+                    text-sm font-medium text-gray-700 dark:text-white transition" %>
     </div>
-    <% unless event.new_record? %>
-      <%= button_to "Delete", calendar_event_path(event), method: :delete,
-            class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400 hover:text-dusty-rose-800 dark:hover:text-dusty-rose-200 transition",
-            data: { turbo_confirm: "Delete this event?" } %>
-    <% end %>
   </div>
 <% end %>

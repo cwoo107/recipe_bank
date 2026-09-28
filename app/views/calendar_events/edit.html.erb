@@ -8,6 +8,13 @@
       Events go on one of your calendars — <%= link_to "connect a calendar", new_calendar_source_path, class: "text-[#5f734c] dark:text-[#7a8f62] hover:underline" %> first.
     </p>
   <% else %>
-    <%= render "form", event: @event, sources: @sources %>
+    <%= render "form", event: @event, sources: @sources, return_to: @return_to %>
+
+    <%# Outside the form — a button_to is its own form and can't nest. %>
+    <div class="mt-6 border-t border-gray-100 dark:border-white/10 pt-4">
+      <%= button_to "Delete event", calendar_event_path(@event), method: :delete,
+            class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400 hover:text-dusty-rose-800 dark:hover:text-dusty-rose-200 transition cursor-pointer",
+            data: { turbo_confirm: "Delete this event?" } %>
+    </div>
   <% end %>
 </div>

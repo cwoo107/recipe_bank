@@ -19,6 +19,7 @@ class CalendarEventsController < ApplicationController
       calendar_source_id: params[:calendar_source_id] || current_household.calendar_sources.first&.id
     )
     @sources = current_household.calendar_sources.ordered
+    @return_to = calendar_return_path
   end
 
   def create
@@ -27,12 +28,14 @@ class CalendarEventsController < ApplicationController
     if @event.save
       redirect_to day_calendars_path(date: @event.starts_at.to_date), notice: "Event created.", status: :see_other
     else
+      @return_to = calendar_return_path
       render :new, status: :unprocessable_entity
     end
   end
 
   def edit
     @sources = current_household.calendar_sources.ordered
+    @return_to = calendar_return_path
   end
 
   def update
@@ -40,6 +43,7 @@ class CalendarEventsController < ApplicationController
     if @event.update(event_params)
       redirect_to day_calendars_path(date: @event.starts_at.to_date), notice: "Event updated.", status: :see_other
     else
+      @return_to = calendar_return_path
       render :edit, status: :unprocessable_entity
     end
   end
@@ -54,6 +58,23 @@ class CalendarEventsController < ApplicationController
 
   def set_event
     @event = current_household.calendar_events.find(params[:id])
+  end
+
+  # Where Cancel goes: the calendar page you came from (month, week or day),
+  # carried through failed saves in a hidden field — else the month the event
+  # is in. Only local /calendar pages, so this can't redirect off-site.
+  def calendar_return_path
+    candidate = params[:return_to].presence || request.referer
+    path = begin
+      uri = URI.parse(candidate.to_s)
+      [ uri.path, uri.query ].compact.join("?") if uri.host.nil? || uri.host == request.host
+    rescue URI::InvalidURIError
+      nil
+    end
+    return path if path&.match?(%r{\A/calendar(/|\?|\z)})
+
+    date = (@event&.starts_at || Time.current).to_date
+    month_calendars_path(year: date.year, month: date.month)
   end
 
   def require_local_event!

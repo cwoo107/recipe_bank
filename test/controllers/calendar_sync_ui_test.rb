@@ -172,4 +172,31 @@ class CalendarSyncUiTest < ActionDispatch::IntegrationTest
     get day_calendars_url
     assert_select "h1, h2, p", text: /October 5|Oct 5/
   end
+
+  test "Cancel on the new-event page goes back to the calendar you came from" do
+    get new_calendar_event_url, headers: { "HTTP_REFERER" => week_calendars_url(date: "2026-10-05") }
+    assert_select "a[href='#{week_calendars_path(date: '2026-10-05')}']", text: "Cancel"
+    assert_select "input[type=hidden][name=return_to][value='#{week_calendars_path(date: '2026-10-05')}']"
+  end
+
+  test "Cancel falls back to the event's month, and never leaves the calendar" do
+    get new_calendar_event_url(starts_at: "2026-11-12"), headers: { "HTTP_REFERER" => "https://evil.example.com/calendar" }
+    assert_select "a[href='#{month_calendars_path(year: 2026, month: 11)}']", text: "Cancel"
+  end
+
+  test "Cancel still goes back after a failed save" do
+    post calendar_events_url, params: { return_to: day_calendars_path(date: "2026-10-05"),
+                                        calendar_event: { title: "", calendar_source_id: @source.id,
+                                                          starts_at: "2026-10-05T09:00", ends_at: "2026-10-05T10:00" } }
+    assert_response :unprocessable_entity
+    assert_select "a[href='#{day_calendars_path(date: '2026-10-05')}']", text: "Cancel"
+  end
+
+  test "the edit page's Delete button sits outside the form" do
+    event = @household.calendar_events.create!(calendar_source: @source, user: users(:one), title: "Dentist",
+                                               starts_at: 1.day.from_now, ends_at: 1.day.from_now + 1.hour)
+    get edit_calendar_event_url(event)
+    assert_select "form form", count: 0
+    assert_select "form[action='#{calendar_event_path(event)}'] button", text: "Delete event"
+  end
 end
