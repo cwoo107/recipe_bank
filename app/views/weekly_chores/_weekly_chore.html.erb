@@ -13,12 +13,18 @@
       drag-handle hit area underneath, matching todos/_todo.html.erb. %>
   <div class="relative z-10 pointer-events-none flex flex-col gap-1">
     <div class="flex items-start gap-1.5 min-w-0">
-      <%= form_with model: weekly_chore, url: weekly_chore_path(weekly_chore), method: :patch,
-            class: "pointer-events-auto mt-0.5 shrink-0", data: { chore_item_target: "form", format: :turbo_stream } do |f| %>
-        <%= f.check_box :completed,
-              data: { action: "change->chore-item#toggleCheck" },
-              style: "accent-color: #5f734c;",
-              class: "size-4 rounded border-gray-300 focus:ring-[#5f734c] dark:border-gray-600" %>
+      <%# Admins can tick any chore; limited members only the ones assigned to them. %>
+      <% if weekly_chore_completable?(weekly_chore) %>
+        <%= form_with model: weekly_chore, url: weekly_chore_path(weekly_chore), method: :patch,
+              class: "pointer-events-auto mt-0.5 shrink-0", data: { chore_item_target: "form", format: :turbo_stream } do |f| %>
+          <%= f.check_box :completed,
+                data: { action: "change->chore-item#toggleCheck" },
+                style: "accent-color: #5f734c;",
+                class: "size-4 rounded border-gray-300 focus:ring-[#5f734c] dark:border-gray-600" %>
+        <% end %>
+      <% else %>
+        <input type="checkbox" disabled <%= "checked" if weekly_chore.completed? %> aria-label="<%= weekly_chore.completed? ? "Done" : "Not done" %>"
+               style="accent-color: #5f734c;" class="mt-0.5 size-4 shrink-0 rounded border-gray-300 opacity-60 dark:border-gray-600">
       <% end %>
       <div class="min-w-0 flex-1">
         <p class="text-xs font-medium text-gray-900 dark:text-white leading-snug <%= 'line-through opacity-50' if weekly_chore.completed? %>">
@@ -35,6 +41,7 @@
 
     <%# Bottom-right so the name/assignee/pill above have the full card
         width to themselves. %>
+    <% if household_admin? %>
     <div class="pointer-events-auto flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
       <%= render "weekly_chores/chore_details_dialog", chore: chore %>
 
@@ -47,5 +54,6 @@
         </svg>
       <% end %>
     </div>
+    <% end %>
   </div>
 </div>

@@ -1,5 +1,9 @@
 class WeeklyChoresController < ApplicationController
   before_action :set_weekly_chore, only: %i[update destroy move]
+  # Scheduling the board is admin-only. Limited members can only tick the
+  # chores assigned to them complete (update with just `completed`).
+  before_action :require_household_admin!, only: %i[create move reorder destroy]
+  before_action :require_completion_only!, only: :update
 
   def index
     @week_start = week_start_from_params
@@ -91,6 +95,13 @@ class WeeklyChoresController < ApplicationController
 
   def week_start_from_params
     (params[:date].present? ? Date.parse(params[:date]) : Time.zone.today).beginning_of_week
+  end
+
+  def require_completion_only!
+    return if household_admin?
+    return if weekly_chore_params.keys == [ "completed" ] && helpers.weekly_chore_completable?(@weekly_chore)
+
+    deny_access("You can only check off chores assigned to you.")
   end
 
   def weekly_chore_params

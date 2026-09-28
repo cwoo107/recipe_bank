@@ -39,7 +39,8 @@
     </div>
   </div>
 
-  <div data-controller="chore-board"
+  <%# Scheduling by drag-and-drop is admin-only. %>
+  <div <%= 'data-controller=chore-board' if household_admin? %>
        data-chore-board-week-start-value="<%= @week_start.iso8601 %>"
        data-chore-board-create-url-value="<%= weekly_chores_path %>"
        data-chore-board-reorder-url-value="<%= reorder_weekly_chores_path %>">

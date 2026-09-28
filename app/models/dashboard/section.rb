@@ -49,5 +49,9 @@ module Dashboard
     def cta_path
       step_path
     end
+
+    # The feature's own page — where limited members (who can't use the
+    # planning wizard) go from the dashboard.
+    def page_path = raise NotImplementedError
   end
 end

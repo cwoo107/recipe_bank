@@ -1,4 +1,6 @@
 class RecipesController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: %i[index show toggle_favorite]
   before_action :set_recipe,        only: %i[show edit update destroy toggle_favorite toggle_visibility]
   before_action :require_ownership!, only: %i[edit update destroy toggle_visibility]
 

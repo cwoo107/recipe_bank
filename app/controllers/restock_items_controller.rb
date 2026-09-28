@@ -1,5 +1,7 @@
 class RestockItemsController < ApplicationController
   before_action :authenticate_user!
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: :index
   before_action :set_restock_item, only: %i[edit update destroy mark_stocked mark_restock]
 
   def index

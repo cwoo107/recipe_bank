@@ -6,7 +6,7 @@ class DashboardController < ApplicationController
     current_household.weekly_plans.where(currently_planning: true).update_all(currently_planning: false)
     @weekly_plan.reload
     @next_week_to_plan = WeeklyPlan.week_to_plan(current_household)
-    @unfinished_plan   = WeeklyPlan.unfinished_for(current_household)
+    @unfinished_plan   = household_admin? ? WeeklyPlan.unfinished_for(current_household) : nil # planning is admin-only
     @sections    = Dashboard.sections.map do |klass|
       klass.new(household: current_household, week_start: @week_start, weekly_plan: @weekly_plan)
     end

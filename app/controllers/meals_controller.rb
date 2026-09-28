@@ -1,4 +1,6 @@
 class MealsController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: %i[index show week_stats]
   before_action :set_meal, only: %i[show edit update destroy]
 
   def index

@@ -52,5 +52,7 @@ module Dashboard
     def cta_path
       meals_planned? ? step_path : plan_week_step_path(section: "meals", week: week_start)
     end
+
+    def page_path = grocery_lists_path(date: week_start)
   end
 end

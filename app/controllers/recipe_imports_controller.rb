@@ -1,4 +1,6 @@
 class RecipeImportsController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!
   # Imports run off the request thread so the progress page can stream
   # updates while they work. Tests swap in the inline runner.
   THREADED_RUNNER = ->(&work) {

@@ -10,7 +10,7 @@
         <%= @chores.count %> recurring chore<%= @chores.count == 1 ? "" : "s" %> · <%= link_to "This week's list", weekly_chores_path, class: "text-[#5f734c] dark:text-[#7a8f62] font-medium hover:underline" %>
       </p>
     </div>
-    <div class="mt-4 sm:ml-16 sm:mt-0">
+    <div class="mt-4 sm:ml-16 sm:mt-0 <%= 'hidden' unless household_admin? %>">
       <%= link_to new_chore_path,
                   class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
         <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
@@ -52,7 +52,7 @@
             <% end %>
           </div>
 
-          <div class="flex items-center gap-3 shrink-0">
+          <div class="flex items-center gap-3 shrink-0 <%= 'hidden' unless household_admin? %>">
             <%= link_to "Edit", edit_chore_path(chore), class: "text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
             <%= button_to "Delete", chore_path(chore), method: :delete,
                   class: "text-sm font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer",

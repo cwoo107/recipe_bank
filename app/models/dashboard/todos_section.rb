@@ -32,5 +32,7 @@ module Dashboard
     def empty_headline = "To-dos"
     def empty_body     = "Nothing scheduled into #{week_phrase} yet."
     def cta_label      = "Review to-dos"
+
+    def page_path = todos_path
   end
 end

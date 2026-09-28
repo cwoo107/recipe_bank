@@ -1,4 +1,6 @@
 class GroceryListsController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: %i[index show]
   before_action :set_grocery_list, only: %i[show edit update destroy]
   before_action :set_date, only: [:index, :generate]
 

@@ -12,7 +12,7 @@
                 } do |f| %>
 
     <!-- Checkbox -->
-    <div class="flex items-center">
+    <div class="flex items-center admin-only">
       <%= f.check_box :checked,
                       checked: grocery_list.checked == true,
                       data: { action: "change->grocery-item#toggleCheck" },
@@ -53,7 +53,7 @@
       <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1">
         <button type="button"
                 data-action="click->grocery-item#decrement"
-                class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                class="admin-only text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
           −
         </button>
 
@@ -63,7 +63,7 @@
 
         <button type="button"
                 data-action="click->grocery-item#increment"
-                class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                class="admin-only text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
           +
         </button>
       </div>
@@ -92,6 +92,7 @@
                 data: {
                   turbo: true
                 },
+                form_class: "admin-only",
                 class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400",
                 aria: { label: "Remove #{grocery_list.ingredient.ingredient} from grocery list" } do %>
     <svg viewBox="0 0 20 20" fill="currentColor" class="size-6" aria-hidden="true">

@@ -37,11 +37,13 @@
       </div>
 
       <%# Add event %>
+      <% if household_admin? %>
       <%= link_to new_calendar_event_path,
             class: "inline-flex items-center gap-x-1.5 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold
                     text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" do %>
         <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
         New event
+      <% end %>
       <% end %>
     </div>
   </div>
@@ -100,11 +102,13 @@
 
                 <%# Quick-add trigger on empty days %>
                 <% if day_events.empty? %>
+                  <% if household_admin? %>
                   <%= link_to new_calendar_event_path(starts_at: date.to_s),
                         class: "hidden group-hover:flex absolute inset-0 items-center justify-center
                                 text-gray-300 hover:text-[#5f734c] hover:bg-[#5f734c]/5 rounded transition",
                         data: { turbo_frame: "modal" } do %>
                     <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" /></svg>
+                  <% end %>
                   <% end %>
                 <% end %>
               </div>

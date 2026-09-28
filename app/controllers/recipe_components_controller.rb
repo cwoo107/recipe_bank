@@ -1,5 +1,7 @@
 # Attaching one recipe to another as an ingredient.
 class RecipeComponentsController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!
   before_action :set_recipe
   before_action :set_component, only: %i[update destroy]
 

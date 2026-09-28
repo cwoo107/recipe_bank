@@ -10,6 +10,11 @@
     </div>
   </div>
 
+  <% if flash[:family_size_change] && @household.admin?(current_user) %>
+    <%= render "households/family_size_notice",
+               change: FamilySizeChange.new(@household, from: flash[:family_size_change]["from"], to: flash[:family_size_change]["to"]) %>
+  <% end %>
+
   <%= turbo_frame_tag "household_members" do %>
     <%= render "household_members/list" %>
   <% end %>

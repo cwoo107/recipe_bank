@@ -12,6 +12,7 @@
     <%# Edit/delete icons overlay the corner without affecting the title's line
         height — being in-flow here would stretch the row and push the badge
         below down with a gap that doesn't match the rest of the card's rhythm. %>
+    <% if household_admin? %>
     <div class="pointer-events-auto absolute top-0 right-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <%# Edit %>
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
@@ -42,6 +43,7 @@
         </svg>
       <% end %>
     </div>
+    <% end %>
 
     <p class="pr-16  font-semibold text-gray-900 dark:text-white leading-snug"><%= item.name %></p>
 
@@ -69,7 +71,7 @@
 
     <%# Stocked / Restock check-in — hidden once checked for the week; still
         available from the edit form so the user can change their mind. %>
-    <% unless item.checked_this_week? %>
+    <% if household_admin? && !item.checked_this_week? %>
       <div class="pointer-events-auto mt-3 flex items-center gap-2">
         <%= button_to mark_stocked_restock_item_path(item), method: :patch, form_class: "flex-1",
               class: "w-full rounded-lg px-4 py-1.5 bg-sage-600 hover:bg-sage-700 text-white text-xs font-medium cursor-pointer transition" do %>

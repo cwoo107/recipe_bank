@@ -42,5 +42,7 @@ module Dashboard
       end
     end
     def cta_label      = "Check supplies"
+
+    def page_path = restock_items_path
   end
 end

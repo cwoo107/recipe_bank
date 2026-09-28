@@ -1,4 +1,6 @@
 class ChoresController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: :index
   before_action :set_chore, only: %i[edit update destroy]
 
   def index

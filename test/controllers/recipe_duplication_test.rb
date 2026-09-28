@@ -82,7 +82,8 @@ class RecipeDuplicationTest < ActionDispatch::IntegrationTest
     assert_equal 2.0, @recipe.recipe_ingredients.first.quantity
   end
 
-  test "a household member can fork a sibling's recipe they can't edit" do
+  test "a household admin can fork a sibling's recipe they can't edit" do
+    household_members(:one).update!(role: :admin)
     sign_in @bob
 
     assert_difference("Recipe.count", 1) do

@@ -28,7 +28,10 @@
   <%= turbo_refreshes_with method: :morph, scroll: :preserve %>
 </head>
 
-<body class="min-h-screen bg-[#faf9f7] dark:bg-[#1a1f16] antialiased" data-controller="timezone">
+<%# data-limited hides .admin-only controls for limited members — for markup
+    that's broadcast to everyone at once (e.g. grocery list rows), where the
+    server can't tailor it per viewer. The server still enforces permissions. %>
+<body class="min-h-screen bg-[#faf9f7] dark:bg-[#1a1f16] antialiased" data-controller="timezone" <%= "data-limited" if user_signed_in? && !household_admin? %>>
 <%= native_tabs_tag if user_signed_in? %>
 <%= render 'shared/native_navbar' if user_signed_in? %>
 <%= render 'shared/navbar' unless native_app? %>

@@ -7,7 +7,9 @@
   <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <%= render "recipes/heading", recipe: @recipe %>
 
-    <% if @recipe.owned_by?(current_user) %>
+    <% if !household_admin? %>
+      <%# Limited members can read recipes but not change or copy them. %>
+    <% elsif @recipe.owned_by?(current_user) %>
       <div class="flex shrink-0 gap-x-3">
         <%# Copy steps aside while editing — it's not what you're here for %>
         <div data-edit-mode-target="viewOnlyItems">

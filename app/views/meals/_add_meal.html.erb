@@ -13,6 +13,7 @@
     over Turbo Streams) never needs to touch these buttons. On the desktop grid
     the compact "+" grows into whatever height the day's row has left over
     (rows size to their fullest slot), so short slots don't look cut off. %>
+<% if household_admin? %>
 <% placeholder = local_assigns.fetch(:placeholder, false) %>
 <div data-controller="dialog" data-action="click->dialog#backdropClose"
      class="<%= placeholder ? 'flex-1 flex flex-col' : '' %>">
@@ -44,3 +45,4 @@
     </svg>
   </button>
 </div>
+<% end %>

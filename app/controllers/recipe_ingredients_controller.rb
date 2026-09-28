@@ -1,4 +1,6 @@
 class RecipeIngredientsController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!
   before_action :set_recipe
 
   def create

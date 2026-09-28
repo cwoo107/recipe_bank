@@ -1,9 +1,9 @@
 # Each user has exactly one household, so this is now a singular resource:
 # /household instead of /households/:id. No more Household.all or find(params[:id]).
 class HouseholdsController < ApplicationController
-  before_action :require_household!,       only: %i[show edit update destroy]
-  before_action :set_household,            only: %i[show edit update destroy]
-  before_action :require_household_admin!, only: %i[edit update]
+  before_action :require_household!,       only: %i[show edit update adjust_servings destroy]
+  before_action :set_household,            only: %i[show edit update adjust_servings destroy]
+  before_action :require_household_admin!, only: %i[edit update adjust_servings]
   before_action :require_owner!,           only: :destroy
 
   def show
@@ -35,12 +35,20 @@ class HouseholdsController < ApplicationController
 
   def update
     if @household.update(household_params)
+      offer_family_size_adjustment(*@household.saved_change_to_family_size) if @household.saved_change_to_family_size?
       redirect_to household_path, notice: "Household updated.", status: :see_other
     else
       # Re-render the household page so the settings form shows its errors.
       @members = @household.people
       render :show, status: :unprocessable_entity
     end
+  end
+
+  # "Yes" on the family size notice: shift upcoming shared meals' servings.
+  def adjust_servings
+    change = FamilySizeChange.new(@household, from: params[:from], to: params[:to])
+    change.apply!
+    redirect_to household_path, notice: "Upcoming meals updated for a family of #{change.to}.", status: :see_other
   end
 
   def destroy

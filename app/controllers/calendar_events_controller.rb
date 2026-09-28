@@ -1,5 +1,7 @@
 class CalendarEventsController < ApplicationController
   before_action :authenticate_user!
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: :show
   before_action :set_event, only: [:show, :edit, :update, :destroy]
 
   def show

@@ -1,5 +1,7 @@
 class StepsController < ApplicationController
   include ActionView::RecordIdentifier
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!
   before_action :set_recipe
   before_action :set_step, only: %i[ edit update destroy ]
 

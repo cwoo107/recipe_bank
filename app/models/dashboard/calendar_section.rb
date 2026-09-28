@@ -41,5 +41,7 @@ module Dashboard
     def cta_label
       connected? ? "Review calendar" : "Connect a calendar"
     end
+
+    def page_path = week_calendars_path(date: week_start)
   end
 end

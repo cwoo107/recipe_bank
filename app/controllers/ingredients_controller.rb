@@ -44,6 +44,8 @@ class IngredientsController < ApplicationController
     @ingredient.created_by = current_user
     @recipe = recipe_from_params
 
+    # Adding to a recipe is editing the recipe — admin-only.
+    return deny_access unless @recipe.nil? || household_admin?
     return create_and_add_to_recipe if @recipe
 
     if @ingredient.save

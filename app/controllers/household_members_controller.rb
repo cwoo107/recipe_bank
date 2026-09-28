@@ -3,7 +3,8 @@ class HouseholdMembersController < ApplicationController
   # Anyone in the household can view a member's summary; managing members is
   # admin-only.
   before_action :require_household_admin!, except: :show
-  before_action :set_member, only: %i[show edit update destroy]
+  before_action :set_member, only: %i[show edit update destroy update_password send_password_reset]
+  before_action :require_password_manageable!, only: %i[update_password send_password_reset]
 
   # A member's week: their share of meals (calories, macros, cost), plus the
   # to-dos and chores assigned to them.
@@ -27,11 +28,16 @@ class HouseholdMembersController < ApplicationController
   end
 
   def create
+    family_size_before = current_household.family_size
     @member = current_household.invite_member(**invite_params)
 
     if @member.persisted?
+      # Listing someone beyond the family size bumps it (Household#grow_family_size_to_fit_members!).
+      family_size_after = current_household.reload.family_size
+      offer_family_size_adjustment(family_size_before, family_size_after) if family_size_after != family_size_before
       redirect_to household_path
     else
+      @email = invite_params[:email]
       render :new, status: :unprocessable_entity
     end
   end
@@ -39,11 +45,36 @@ class HouseholdMembersController < ApplicationController
   def edit; end
 
   def update
-    if @member.update(member_params)
-      redirect_to household_path, status: :see_other
+    email = params.dig(:household_member, :email).to_s.strip
+    giving_login = email.present? && !@member.login?
+
+    saved = @member.update(member_params)
+    saved &&= current_household.give_login(@member, email:) if giving_login
+
+    if saved
+      notice = "#{@member.name} can now sign in — we emailed #{email} a link to set their password." if giving_login
+      redirect_to household_path, notice:, status: :see_other
     else
+      @email = email
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  # An admin sets a new password for a member's login.
+  def update_password
+    user = @member.user
+    if user.update(params.expect(user: [ :password, :password_confirmation ]))
+      redirect_to household_path, notice: "#{@member.name}'s password was changed.", status: :see_other
+    else
+      @password_errors = user.errors.full_messages
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # Or emails them a link to choose a new one themselves.
+  def send_password_reset
+    @member.user.send_reset_password_instructions
+    redirect_to household_path, notice: "We emailed #{@member.user.email} a link to reset their password.", status: :see_other
   end
 
   def destroy
@@ -68,10 +99,20 @@ class HouseholdMembersController < ApplicationController
     params.expect(household_member: [:name, :email, :role]).to_h.symbolize_keys
   end
 
-  # Email/password changes belong to the member's own Devise account settings.
-  # Role only matters for members with a login, and the owner is always admin.
+  # A login's email belongs to its own account settings. Role only matters
+  # for members with a login (or getting one now), and the owner is always
+  # admin.
   def member_params
     permitted = params.expect(household_member: [:name, :role])
-    @member.owner? || !@member.login? ? permitted.except(:role) : permitted
+    getting_login = params.dig(:household_member, :email).present?
+    @member.owner? || !(@member.login? || getting_login) ? permitted.except(:role) : permitted
+  end
+
+  # Admins can reset another member's password — not the owner's (theirs is
+  # managed from their own account), and not their own (use account settings).
+  def require_password_manageable!
+    return if helpers.password_manageable?(@member)
+
+    redirect_to household_path, alert: "You can't change that password here.", status: :see_other
   end
 end

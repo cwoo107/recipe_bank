@@ -130,8 +130,7 @@ class Household < ApplicationRecord
     end
 
     transaction do
-      user = User.new(email:, password: SecureRandom.base58(24), skip_household_provisioning: true)
-      user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+      user = build_member_login(email)
       user.save!
 
       member.user = user
@@ -144,6 +143,25 @@ class Household < ApplicationRecord
   rescue ActiveRecord::RecordInvalid => e
     member.errors.merge!(e.record.errors) unless e.record.equal?(member)
     member
+  end
+
+  # Turns an existing no-login member into one who can sign in — same member
+  # row, so their meal, chore and to-do assignments carry over — and emails
+  # them a set-your-password link. Returns false (with errors on the member,
+  # e.g. an email already in use) if it couldn't.
+  def give_login(member, email:)
+    user = build_member_login(email)
+
+    transaction do
+      user.save!
+      member.update!(user: user)
+    end
+    user.send_reset_password_instructions
+    true
+  rescue ActiveRecord::RecordInvalid => e
+    member.errors.merge!(e.record.errors) unless e.record.equal?(member)
+    member.restore_attributes([ :user_id ])
+    false
   end
 
   # Records a member's login creates that belong to the household rather than
@@ -170,6 +188,14 @@ class Household < ApplicationRecord
   end
 
   private
+
+  # A sub-user login with a throwaway password — they set their own from the
+  # emailed reset link.
+  def build_member_login(email)
+    User.new(email:, password: SecureRandom.base58(24), skip_household_provisioning: true).tap do |user|
+      user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+    end
+  end
 
   def family_size_covers_listed_members
     listed = household_members.count

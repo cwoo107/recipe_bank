@@ -44,6 +44,7 @@
           <%= @scope == "public" ? "Browse recipes other households have shared publicly." : "Recipes your household has created or saved." %>
         </p>
       </div>
+      <% if household_admin? %>
       <div class="flex flex-row sm:flex-col gap-2">
         <%= link_to new_recipe_import_path,
                     class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
@@ -62,6 +63,7 @@
           <span class="sm:hidden">New</span>
         <% end %>
       </div>
+      <% end %>
     </div>
 
     <%# Scope: the household's own recipes (default) or the public pool %>
@@ -140,7 +142,7 @@
                   <% else %>
                     <%= render 'collections/collection_button', recipe: recipe %>
                     <%= render 'recipes/duplicate_button', recipe: recipe, style: :link %>
-                    <% if recipe.owned_by?(current_user) %>
+                    <% if household_admin? && recipe.owned_by?(current_user) %>
                       <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
                       <%= button_to "Delete", recipe_path(recipe), method: :delete,
                                     data: { turbo_confirm: "Are you sure?" },
@@ -228,7 +230,7 @@
                     <% else %>
                       <%= render 'collections/collection_button', recipe: recipe %>
                       <%= render 'recipes/duplicate_button', recipe: recipe, style: :link %>
-                      <% if recipe.owned_by?(current_user) %>
+                      <% if household_admin? && recipe.owned_by?(current_user) %>
                         <%= link_to "Edit", edit_recipe_path(recipe), class: "text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
                         <span class="text-gray-300 dark:text-gray-600"> | </span>
                         <%= button_to "Delete", recipe_path(recipe), method: :delete,
@@ -261,8 +263,10 @@
           <h3 class="mt-2 text-sm font-semibold text-gray-900 dark:text-white">No recipes</h3>
           <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Create one of your own, or save one from the public collection.</p>
           <div class="mt-6 flex items-center justify-center gap-3">
+            <% if household_admin? %>
             <%= link_to "New Recipe", new_recipe_path,
                         class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+            <% end %>
             <%= link_to "Browse Public Recipes", recipes_list_path(scope: "public"),
                         class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20" %>
           </div>

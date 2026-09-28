@@ -1,3 +1,5 @@
+<%# Copying and saving recipes is admin-only (limited members can't create recipes). %>
+<% if household_admin? %>
 <%# Locals: recipe (required), saved (required) — the "copy this into our recipes" affordance %>
 <% if saved %>
   <span class="inline-flex items-center gap-x-1 text-sm font-medium text-gray-500 dark:text-gray-400" title="Already in your recipes">
@@ -16,4 +18,5 @@
     </svg>
     Save
   <% end %>
+<% end %>
 <% end %>

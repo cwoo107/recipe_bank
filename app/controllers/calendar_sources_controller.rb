@@ -1,5 +1,7 @@
 class CalendarSourcesController < ApplicationController
   before_action :authenticate_user!
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: :index
   before_action :set_source, only: [:edit, :update, :destroy, :toggle_visible, :sync]
 
   def index

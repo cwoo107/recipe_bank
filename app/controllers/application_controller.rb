@@ -3,7 +3,7 @@ class ApplicationController < ActionController::Base
   before_action :set_user_timezone
   before_action :configure_permitted_parameters, if: :devise_controller?
   around_action :use_household_week_start, if: :user_signed_in?
-  helper_method :current_household, :active_weekly_plan
+  helper_method :current_household, :active_weekly_plan, :household_admin?, :current_member
   layout :resolve_layout
 
   def require_ownership!(record, owner_method: :user)
@@ -60,10 +60,17 @@ class ApplicationController < ActionController::Base
   # planning" bar shown from anywhere in the app. Suppressed on the wizard
   # itself and the dashboard, which already have their own continue/skip UI.
   def active_weekly_plan
-    return nil unless user_signed_in?
+    return nil unless user_signed_in? && household_admin? # planning is admin-only
     return nil if controller_name.in?(%w[plan_week dashboard])
 
     WeeklyPlan.in_progress_for(current_household)
+  end
+
+  # Queues the household page's "adjust upcoming meals?" notice, if there are
+  # any upcoming meals the new family size would change.
+  def offer_family_size_adjustment(from, to)
+    change = FamilySizeChange.new(current_household, from:, to:)
+    flash[:family_size_change] = change.to_flash if change.any?
   end
 
   # Assignee ids arrive from forms — only accept members of this household.
@@ -85,10 +92,35 @@ class ApplicationController < ActionController::Base
     redirect_to new_household_path, alert: "Set up your household first."
   end
 
-  def require_household_admin!
-    return if current_household&.admin?(current_user)
+  # ── Permissions ────────────────────────────────────────────────────────
+  # Owners and admins can do everything. Limited members can look at the
+  # household's recipes, meals, lists and calendar, add to-dos (assigned to
+  # themselves), and tick off the to-dos and chores assigned to them — see
+  # TodosController and WeeklyChoresController for those per-item rules.
 
-    redirect_to root_path, alert: "You don't have permission to manage this household."
+  def household_admin?
+    return @household_admin if defined?(@household_admin)
+
+    @household_admin = current_household&.admin?(current_user) || false
+  end
+
+  # The signed-in user's own member row (owners have one too).
+  def current_member
+    @current_member ||= current_household&.household_members&.find_by(user_id: current_user&.id)
+  end
+
+  def require_household_admin!
+    deny_access unless household_admin?
+  end
+
+  # Page requests go back where they came from with an explanation; the
+  # boards' background fetches (drag-and-drop) just get a 403.
+  def deny_access(message = "Only household admins can do that.")
+    if request.format.html? || request.format.turbo_stream?
+      redirect_back_or_to root_path, alert: message, status: :see_other
+    else
+      head :forbidden
+    end
   end
 
 end

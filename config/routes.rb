@@ -35,8 +35,15 @@ Rails.application.routes.draw do
   end
   resource  :preferences, only: :update
   resources :recurring_meals, only: [:index, :edit, :update, :destroy]
-  resource  :household                           # singular resource — index doesn't exist for these
-  resources :household_members, except: :index  # scoped by current_household, not URL
+  resource  :household do                        # singular resource — index doesn't exist for these
+    patch :adjust_servings
+  end
+  resources :household_members, except: :index do # scoped by current_household, not URL
+    member do
+      patch :update_password
+      post  :send_password_reset
+    end
+  end
 
   resources :recipe_imports, only: [:new, :create, :show] do
     collection do

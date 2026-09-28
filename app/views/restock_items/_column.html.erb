@@ -11,6 +11,7 @@
       </span>
     </div>
 
+    <% if household_admin? %>
     <div class="flex items-center gap-1 shrink-0">
       <%# Rename list %>
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
@@ -62,12 +63,13 @@
         </button>
       </div>
     </div>
+    <% end %>
   </div>
 
-  <%# Sortable card list %>
+  <%# Sortable card list — drag-and-drop is admin-only %>
   <div id="restock_items_<%= category.id %>"
        class="flex flex-col gap-2 p-3 min-h-40 flex-1"
-       data-controller="kanban"
+       <%= 'data-controller=kanban' if household_admin? %>
        data-kanban-url-value="<%= reorder_restock_items_path %>"
        data-kanban-move-url-value="<%= move_restock_item_path(":id") %>"
        data-kanban-param-value="restock_category_id"

@@ -119,7 +119,9 @@ class Todo < ApplicationRecord
         self.actual_time_to_complete = inclusive_minutes_between(start_date, end_date)
       else
         # Straight from "todo" (or no recorded start): trust the estimate and
-        # reverse-derive a start date from the completion timestamp.
+        # reverse-derive a start date from the completion timestamp — now, if
+        # it never had one (to-dos only get dates once in progress).
+        self.end_date              ||= Time.current
         self.actual_time_to_complete = estimated_time_to_complete
         self.start_date              = reverse_start_from(end_date, estimated_time_to_complete)
       end

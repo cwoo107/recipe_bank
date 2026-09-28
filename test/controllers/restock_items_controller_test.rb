@@ -62,8 +62,9 @@ class RestockItemsControllerTest < ActionDispatch::IntegrationTest
     assert_not @item.stocked?
   end
 
-  test "another member of the same household can see and edit the item" do
-    sign_in users(:two) # bob, also in household :one
+  test "an admin in the same household can see and edit the item" do
+    household_members(:one).update!(role: :admin)
+    sign_in users(:two) # bob, now an admin in household :one
 
     patch restock_item_url(@item), params: { restock_item: { name: "Bob edited this" } }
     assert_redirected_to restock_items_url

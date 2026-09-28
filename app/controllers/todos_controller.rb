@@ -1,6 +1,11 @@
 class TodosController < ApplicationController
   before_action :authenticate_user!
   before_action :set_todo, only: %i[edit update destroy]
+  # Limited members: a to-do they created is theirs to edit or delete; one an
+  # admin assigned to them can only change status (move/drag to Done); anyone
+  # else's is read-only. Reordering a whole column is admin-only.
+  before_action :require_todo_editable!, only: %i[edit update destroy]
+  before_action :require_household_admin!, only: :reorder
 
   def index
     @todos_by_status = Todo::STATUSES.index_with do |status|
@@ -19,6 +24,7 @@ class TodosController < ApplicationController
   def create
     @todo = current_household.todos.new(todo_params)
     @todo.user = current_user
+    @todo.assignee = current_member unless household_admin? # limited members' to-dos are their own
     if @todo.save
       # A brand-new todo created directly into "in_progress" or "done" never had
       # a previous status, so we pass nil (treated as "not in_progress").
@@ -90,6 +96,7 @@ class TodosController < ApplicationController
   # Params: { status: "in_progress", position: 2 }
   def move
     set_todo
+    return deny_access("You can only move your own to-dos.") unless helpers.todo_movable?(@todo)
     new_status = params[:status]
     return head :bad_request unless Todo::STATUSES.include?(new_status)
 
@@ -111,11 +118,14 @@ class TodosController < ApplicationController
     @todo = current_household.todos.find(params[:id])
   end
 
+  def require_todo_editable!
+    deny_access("You can only edit to-dos you created.") unless helpers.todo_editable?(@todo)
+  end
+
   def todo_params
-    scoped_assignee_params(params.require(:todo).permit(
-      :title, :description, :priority, :status,
-      :estimated_hours, :estimated_minutes, :assignee_id
-    ))
+    permitted = [ :title, :description, :priority, :status, :estimated_hours, :estimated_minutes ]
+    permitted << :assignee_id if household_admin? # limited members can't hand to-dos to others
+    scoped_assignee_params(params.require(:todo).permit(*permitted))
   end
 
   # Recompute the in-progress timeline, then push the refreshed Gantt chart to

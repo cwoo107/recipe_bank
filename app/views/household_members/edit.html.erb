@@ -6,5 +6,47 @@
     <div class="mt-6">
       <%= render "form", member: @member %>
     </div>
+
+    <% if password_manageable?(@member) %>
+      <%# Password help for a member's login: set one for them, or email them
+          a link to choose their own. %>
+      <div id="member_password" class="mt-8 border-t border-sage-100 pt-6">
+        <h3 class="text-sm font-semibold text-sage-900">Password</h3>
+        <p class="mt-1 text-xs text-olive-400">Signs in as <%= @member.user.email %>. Changing the password signs them out everywhere.</p>
+
+        <% if @password_errors.present? %>
+          <div class="mt-3 rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3">
+            <ul class="list-inside list-disc text-sm text-dusty-rose-700">
+              <% @password_errors.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <%= form_with scope: :user, url: update_password_household_member_path(@member), method: :patch,
+              data: { turbo_frame: "_top" }, class: "mt-4 space-y-4" do |f| %>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <div>
+              <%= f.label :password, "New password", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+              <%= f.password_field :password, autocomplete: "new-password", class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+            </div>
+            <div>
+              <%= f.label :password_confirmation, "Confirm new password", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+              <%= f.password_field :password_confirmation, autocomplete: "new-password", class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+            </div>
+          </div>
+          <%= f.submit "Set password",
+                class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
+        <% end %>
+
+        <div class="mt-4 flex items-center gap-3 text-sm text-olive-500">
+          <span>Or</span>
+          <%= button_to "Email them a reset link", send_password_reset_household_member_path(@member),
+                form: { data: { turbo_frame: "_top" } },
+                class: "rounded-lg px-3 py-1.5 text-sm bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 font-medium cursor-pointer transition" %>
+        </div>
+      </div>
+    <% end %>
   </div>
 <% end %>

@@ -1,5 +1,6 @@
 <%# Edit (opens the meal form in a modal) + Remove, for a meal card.
     Locals: meal, button_class %>
+<% if household_admin? %>
 <div class="flex items-center justify-end gap-1">
   <div data-controller="dialog" data-action="click->dialog#backdropClose">
     <%# text-base resets the card's small text size for the form. %>
@@ -18,3 +19,4 @@
         class: "#{button_class} text-dusty-rose-600 hover:text-dusty-rose-800 cursor-pointer",
         data: { turbo_confirm: "Remove this meal?" } %>
 </div>
+<% end %>

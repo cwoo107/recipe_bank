@@ -20,14 +20,17 @@
   <div class="p-4 flex-1 flex flex-col gap-3">
     <% if section.empty? %>
       <p class="text-sm text-gray-400 dark:text-gray-600 italic"><%= section.empty_body %></p>
-      <%= link_to section.cta_label, section.cta_path,
+      <%# Limited members can't use the planning wizard — send them to the page. %>
+      <%= link_to household_admin? ? section.cta_label : "View #{section.label.downcase}",
+                  household_admin? ? section.cta_path : section.page_path,
                   class: "mt-auto self-start inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
     <% else %>
       <p class="text-base font-medium text-gray-900 dark:text-white"><%= section.summary_line %></p>
       <% if section.detail_line %>
         <p class="text-sm text-gray-600 dark:text-gray-400"><%= section.detail_line %></p>
       <% end %>
-      <%= link_to "Edit #{section.label.downcase}", section.step_path,
+      <%= link_to household_admin? ? "Edit #{section.label.downcase}" : "View #{section.label.downcase}",
+                  household_admin? ? section.step_path : section.page_path,
                   class: "mt-auto self-start text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] rounded" %>
     <% end %>
   </div>

@@ -72,9 +72,11 @@
     <% unless @event.external_uid.present? %>
     <div class="px-6 py-4 bg-gray-50 dark:bg-white/5 border-t border-gray-100 dark:border-white/5 flex items-center justify-between">
 
+      <% if household_admin? %>
       <%= button_to "Delete", calendar_event_path(@event), method: :delete,
             class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400 hover:text-dusty-rose-800 transition",
             data: { turbo_confirm: "Delete this event?" } %>
+      <% end %>
     </div>
 
     <% end %>

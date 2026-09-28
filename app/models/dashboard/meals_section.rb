@@ -37,5 +37,7 @@ module Dashboard
     def empty_headline = "Meals"
     def empty_body     = "Nothing planned yet #{week_phrase}."
     def cta_label      = "Plan meals"
+
+    def page_path = meals_path(date: week_start)
   end
 end

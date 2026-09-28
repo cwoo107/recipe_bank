@@ -1,3 +1,5 @@
+<%# Copying and saving recipes is admin-only (limited members can't create recipes). %>
+<% if household_admin? %>
 <%# Locals: recipe (required), style (optional: :button or :link).
     Forks one of our own recipes so a variant can be built from it. %>
 <% style = local_assigns[:style] || :button %>
@@ -21,4 +23,5 @@
   <% else %>
     Copy
   <% end %>
+<% end %>
 <% end %>

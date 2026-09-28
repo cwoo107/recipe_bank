@@ -31,8 +31,9 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "another member of the same household can see and edit the todo" do
-    sign_in users(:two) # bob, also in household :one
+  test "an admin in the same household can edit someone else's todo" do
+    household_members(:one).update!(role: :admin)
+    sign_in users(:two) # bob, now an admin in household :one
 
     patch todo_url(@todo), params: { todo: { title: "Bob edited this" } }
     assert_redirected_to todos_url

@@ -35,6 +35,8 @@ module Dashboard
     def empty_body     = "No chores scheduled for #{week_phrase} yet."
     def cta_label      = "Plan chores"
 
+    def page_path = weekly_chores_path(date: week_start)
+
     private
 
     def ensure_recurring_chores_scheduled!
