@@ -27,8 +27,15 @@ module Dashboard
       week_start...(week_start + 7)
     end
 
+    # "this week" / "next week" / "the week of Oct 12" — for copy, so a step
+    # opened for a later week doesn't claim to be about this one.
+    def week_phrase
+      label = WeeklyPlan.week_label(week_start)
+      label.start_with?("Week of") ? "the #{label.downcase_first}" : label.downcase
+    end
+
     def step_path
-      plan_week_step_path(section: key)
+      plan_week_step_path(section: key, week: week_start)
     end
 
     # Override in subclasses:

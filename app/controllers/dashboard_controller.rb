@@ -2,7 +2,11 @@ class DashboardController < ApplicationController
   def show
     @week_start  = Date.current.beginning_of_week
     @weekly_plan = WeeklyPlan.current_for(current_household, week_start: @week_start)
-    @weekly_plan.update!(currently_planning: false) if @weekly_plan.currently_planning?
+    # Landing on the dashboard ends any planning session, whichever week.
+    current_household.weekly_plans.where(currently_planning: true).update_all(currently_planning: false)
+    @weekly_plan.reload
+    @next_week_to_plan = WeeklyPlan.week_to_plan(current_household)
+    @unfinished_plan   = WeeklyPlan.unfinished_for(current_household)
     @sections    = Dashboard.sections.map do |klass|
       klass.new(household: current_household, week_start: @week_start, weekly_plan: @weekly_plan)
     end

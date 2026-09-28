@@ -2,14 +2,14 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
     static targets = ["input", "nav"]
-    static values  = { selected: String, weekStart: String }
+    static values  = { selected: String, weekStart: String, firstDay: { type: Number, default: 1 } }
 
     connect() {
         if (!this.weekStartValue) {
             const base = this.selectedValue
                 ? new Date(this.selectedValue + "T00:00:00")
                 : new Date()
-            this.weekStartValue = this.getMonday(base)
+            this.weekStartValue = this.getWeekStart(base)
         }
         this.render()
     }
@@ -31,7 +31,10 @@ export default class extends Controller {
     selectDate(event) {
         const date = event.currentTarget.dataset.date
         this.selectedValue = date
-        if (this.hasInputTarget) this.inputTarget.value = date
+        if (this.hasInputTarget) {
+            this.inputTarget.value = date
+            this.inputTarget.dispatchEvent(new Event("change", { bubbles: true }))
+        }
         this.render()
     }
 
@@ -88,11 +91,11 @@ export default class extends Controller {
     `
     }
 
-    getMonday(date) {
+    // Start of the week containing `date`, using the household's week start
+    // day (firstDayValue, 0 = Sunday).
+    getWeekStart(date) {
         const d = new Date(date)
-        const day = d.getDay()
-        const diff = (day === 0) ? -6 : 1 - day
-        d.setDate(d.getDate() + diff)
+        d.setDate(d.getDate() - ((d.getDay() - this.firstDayValue + 7) % 7))
         return this.formatDate(d)
     }
 

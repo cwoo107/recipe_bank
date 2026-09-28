@@ -23,7 +23,7 @@ module Dashboard
     end
 
     def summary_line
-      "#{events_count} event#{'s' unless events_count == 1} this week — reviewed"
+      "#{events_count} event#{'s' unless events_count == 1} #{week_phrase} — reviewed"
     end
 
     def empty_headline
@@ -32,7 +32,7 @@ module Dashboard
 
     def empty_body
       if connected?
-        "#{events_count} event#{'s' unless events_count == 1} this week — not yet reviewed."
+        "#{events_count} event#{'s' unless events_count == 1} #{week_phrase} — not yet reviewed."
       else
         "No calendar connected yet."
       end

@@ -1,0 +1,44 @@
+<%#
+  Which week the wizard is planning, and a way to switch to another one.
+  locals: week_start (Date), weekly_plan (WeeklyPlan), plannable_weeks (Array<Date>),
+          week_plans (Hash{Date => WeeklyPlan}) — existing plans, for "planned" ticks
+%>
+<div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+  <div>
+    <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Planning</p>
+    <h2 class="mt-1 text-3xl text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">
+      <%= weekly_plan.week_label %>
+      <span class="text-[#5f734c] dark:text-[#7a8f62]">· <%= weekly_plan.week_range_label %></span>
+    </h2>
+    <% if weekly_plan.planning_completed_at.present? %>
+      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Already planned — any changes update this week's plan.</p>
+    <% end %>
+  </div>
+
+  <nav aria-label="Choose a week to plan" class="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+    <ul role="list" class="flex gap-2">
+      <% plannable_weeks.each do |week| %>
+        <% selected = week == week_start %>
+        <% planned  = week_plans[week]&.planned? %>
+        <li class="shrink-0">
+          <%= link_to plan_week_path(week: week),
+                      "aria-current": selected ? "true" : nil,
+                      title: "#{WeeklyPlan.week_range_label(week)}#{' — planned' if planned}",
+                      class: [
+                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium",
+                        selected ? "bg-[#5f734c] text-white dark:bg-[#7a8f62]"
+                                 : "bg-white text-gray-700 inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-gray-200 dark:inset-ring-white/5 dark:hover:bg-white/20"
+                      ] do %>
+            <% if planned %>
+              <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-4">
+                <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+              </svg>
+              <span class="sr-only">Planned:</span>
+            <% end %>
+            <%= week.in?(plannable_weeks.first(2)) ? WeeklyPlan.week_label(week) : week.strftime("%b %-d") %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+</div>

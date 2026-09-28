@@ -47,11 +47,14 @@
     <%# Title %>
     <p class="pr-16 text-sm font-semibold text-gray-900 dark:text-white leading-snug"><%= todo.title %></p>
 
-    <%# Priority badge %>
-    <div class="mt-1">
+    <%# Priority badge, plus who it's assigned to (only when someone is) %>
+    <div class="mt-1 flex items-center gap-2">
       <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= pri[:classes] %>">
         <%= pri[:label] %>
       </span>
+      <% if todo.assignee %>
+        <span class="truncate text-[11px] text-gray-500 dark:text-gray-400"><%= todo.assignee.name %></span>
+      <% end %>
     </div>
 
     <%# Description (truncated) %>

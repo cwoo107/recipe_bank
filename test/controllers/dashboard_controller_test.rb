@@ -34,4 +34,22 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get dashboard_url
     refute plan.reload.currently_planning?
   end
+
+  test "landing on the dashboard ends a planning session for any week" do
+    sign_in users(:one)
+    plan = WeeklyPlan.current_for(households(:one), week_start: Date.current.beginning_of_week + 7)
+    plan.update!(currently_planning: true)
+
+    get dashboard_url
+    refute plan.reload.currently_planning?
+  end
+
+  test "offers next week once this week is planned" do
+    sign_in users(:one)
+    plan = WeeklyPlan.current_for(households(:one))
+    Dashboard.section_keys.each { |k| plan.section(k).mark!("done", by: users(:one)) }
+
+    get dashboard_url
+    assert_select "a[href='#{plan_week_path(week: Date.current.beginning_of_week + 7)}']", text: "Plan next week"
+  end
 end

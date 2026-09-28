@@ -22,6 +22,10 @@ class GroceryListsController < ApplicationController
     if params[:filter].present?
       @grocery_lists = @grocery_lists.where(ingredients: { family: params[:filter] })
     end
+
+    # Second tab: what's marked Restock on the restock checklist, by store.
+    @restock_list = RestockItem.shopping_list(current_household)
+    @active_list  = params[:list] == "restock" ? "restock" : "groceries"
   end
 
   def generate
@@ -154,8 +158,7 @@ class GroceryListsController < ApplicationController
   end
 
   def set_date
-    @date = Date.today.beginning_of_week
-    @date = Date.parse(params[:date]) if params[:date].present?
+    @date = (params[:date].present? ? Date.parse(params[:date]) : Time.zone.today).beginning_of_week
   end
 
   def calculate_servings_needed_for(quantity, unit, ingredient)

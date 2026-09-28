@@ -1,0 +1,20 @@
+<%# Edit (opens the meal form in a modal) + Remove, for a meal card.
+    Locals: meal, button_class %>
+<div class="flex items-center justify-end gap-1">
+  <div data-controller="dialog" data-action="click->dialog#backdropClose">
+    <%# text-base resets the card's small text size for the form. %>
+    <dialog data-dialog-target="dialog" class="text-base text-left dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+      <%= turbo_frame_tag dom_id(meal, :edit), src: edit_meal_path(meal), loading: "lazy" do %>
+        <p class="text-sm text-gray-400">Loading…</p>
+      <% end %>
+      <div class="mt-4">
+        <button type="button" data-action="dialog#close" class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">Close</button>
+      </div>
+    </dialog>
+    <button type="button" data-action="dialog#open" class="<%= button_class %> text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white cursor-pointer">Edit</button>
+  </div>
+
+  <%= button_to "Remove", meal, method: :delete,
+        class: "#{button_class} text-dusty-rose-600 hover:text-dusty-rose-800 cursor-pointer",
+        data: { turbo_confirm: "Remove this meal?" } %>
+</div>

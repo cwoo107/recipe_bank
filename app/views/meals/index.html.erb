@@ -6,12 +6,30 @@
       <h1 class="text-5xl  tracking-tight text-olive-800 dark:text-[#e8ede3]">
         <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">Meal<span class="text-olive-800 dark:text-[#e8ede3]">Planning</span></span>
         </h1>
-      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Meal plan for the week of <%= @date.strftime("%b %d, %Y") %>.</p>
+      <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <p class="text-sm text-gray-700 dark:text-gray-400">Meal plan for the week of <%= @date.strftime("%b %d, %Y") %>.</p>
+
+        <%# Compact view toggle — flips the same user setting found on Account settings %>
+        <% compact = current_user.compact_meals_view? %>
+        <%= button_to preferences_path,
+              method: :patch,
+              params: { user: { compact_meals_view: !compact } },
+              form_class: "inline-flex",
+              role: "switch",
+              aria: { checked: compact },
+              title: compact ? "Show detailed meal cards" : "Show compact meal cards",
+              class: "group inline-flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer" do %>
+          <span class="relative inline-flex h-4 w-7 shrink-0 items-center rounded-full transition-colors <%= compact ? 'bg-[#5f734c] dark:bg-[#7a8f62]' : 'bg-gray-300 dark:bg-white/20' %>">
+            <span class="inline-block size-3 rounded-full bg-white shadow-sm transition-transform <%= compact ? 'translate-x-3.5' : 'translate-x-0.5' %>"></span>
+          </span>
+          Compact view
+        <% end %>
+      </div>
     </div>
     <div class="mt-4 sm:ml-16 sm:mt-0">
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
         <dialog data-dialog-target="dialog" data-meal-calendar-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
-          <%= turbo_frame_tag 'new_meal', src: new_meal_path, data: { 'meal-calendar-target': 'frame' } do %>
+          <%= turbo_frame_tag 'new_meal', src: new_meal_path(week: @date), data: { 'meal-calendar-target': 'frame' } do %>
           <% end %>
           <div class="mt-4">
             <button type="button" data-action="dialog#close" autofocus class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">close</button>
@@ -44,7 +62,7 @@
         </dialog>
 
         <% if current_household.recurring_meals.any? %>
-        <button type="button" data-action="dialog#open" class="inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
+        <button type="button" data-action="dialog#open" class="inline-flex items-center gap-x-2 mt-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
@@ -120,30 +138,14 @@
           <%# Meal cells %>
           <% %w[breakfast lunch dinner].each_with_index do |type, col_i| %>
             <% meals_for_cell = @calendar_meals[[i, type]] || [] %>
-            <div id="desktop_cell_<%= i %>_<%= type %>"
-                 class="flex flex-col gap-2 p-2 min-h-32 <%= col_i < 2 ? 'border-r border-gray-200 dark:border-white/10' : '' %>">
-              <% meals_for_cell.each do |meal| %>
-                <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
-              <% end %>
-              <% if meals_for_cell.empty? %>
-                <div id="empty_cell_<%= i %>_<%= type %>" data-controller="dialog" data-action="click->dialog#backdropClose" class="flex-1 flex min-h-20 dark:bg-[#1a1f16]">
-                  <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
-                    <%= turbo_frame_tag "new_meal", src: new_meal_path(date: current_date.strftime('%Y-%m-%d'), meal_name: type.capitalize), loading: "lazy" do %>
-                    <% end %>
-                    <div class="mt-4">
-                      <button type="button" data-action="dialog#close" class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">Close</button>
-                    </div>
-                  </dialog>
-                  <button type="button"
-                          data-action="dialog#open"
-                          class="flex-1 flex items-center justify-center rounded-md text-gray-300 dark:text-gray-700 hover:text-[#5f734c] hover:bg-[#5f734c]/5 dark:hover:text-[#7a8f62] dark:hover:bg-[#7a8f62]/5 transition-colors w-full"
-                          aria-label="Add <%= type %> for <%= current_date.strftime('%b %d') %>">
-                    <svg viewBox="0 0 20 20" fill="currentColor" class="size-5">
-                      <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                    </svg>
-                  </button>
-                </div>
-              <% end %>
+            <div class="group/cell flex flex-col p-2 min-h-32 <%= col_i < 2 ? 'border-r border-gray-200 dark:border-white/10' : '' %>">
+              <div id="desktop_cell_<%= i %>_<%= type %>" class="flex flex-col gap-2">
+                <% meals_for_cell.each do |meal| %>
+                  <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
+                <% end %>
+              </div>
+              <%= render "meals/add_meal", date: current_date, meal_name: type.capitalize, placeholder: true,
+                         label: "Add #{type} for #{current_date.strftime('%b %d')}" %>
             </div>
           <% end %>
 
@@ -211,11 +213,14 @@
                   </span>
                   </div>
 
-                  <div id="mobile_cell_<%= i %>_<%= type %>"
-                       class="flex flex-col gap-2 p-2 <%= meals_for_cell.empty? ? 'min-h-10' : '' %>">
-                    <% meals_for_cell.each do |meal| %>
-                      <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
-                    <% end %>
+                  <div class="p-2">
+                    <div id="mobile_cell_<%= i %>_<%= type %>" class="flex flex-col gap-2">
+                      <% meals_for_cell.each do |meal| %>
+                        <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
+                      <% end %>
+                    </div>
+                    <%= render "meals/add_meal", date: current_date, meal_name: type.capitalize,
+                               label: "Add #{type} for #{current_date.strftime('%b %d')}" %>
                   </div>
                 </div>
               <% end %>
@@ -249,10 +254,13 @@
               <p id="no_<%= type %>_message" class="text-sm text-gray-400 dark:text-gray-500 italic py-2 px-1">No <%= type.pluralize %> this week.</p>
             <% end %>
           </div>
+          <div class="px-3 pb-2 -mt-2">
+            <%= render "meals/add_meal", date: @date, meal_name: type.capitalize, label: "Add a #{type} this week" %>
+          </div>
         </div>
       <% end %>
     </div>
     <span class="bg-mauve-300 hover:bg-mauve-400 inset-ring-mauve-600/20 dark:bg-mauve-800/20 dark:inset-ring-mauve-300/30 text-mauve-800 dark:text-mauve-300 text-mauve-700 dark:text-mauve-400 hidden"></span>
   </div>
-  <%= render 'meals/week_stats', week_stats: @week_stats, date: @date %>
+  <%= render 'meals/week_stats', week_stats: @week_stats, date: @date, person_stats: @person_stats_available %>
 </div>

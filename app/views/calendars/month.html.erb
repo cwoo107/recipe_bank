@@ -52,9 +52,9 @@
       <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
         <%# Day-of-week headers %>
         <div class="grid grid-cols-7 border-b border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16]">
-          <% %w[Sun Mon Tue Wed Thu Fri Sat].each do |day| %>
+          <% current_household.ordered_wdays.each do |wday| %>
             <div class="py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              <%= day %>
+              <%= Date::ABBR_DAYNAMES[wday] %>
             </div>
           <% end %>
         </div>

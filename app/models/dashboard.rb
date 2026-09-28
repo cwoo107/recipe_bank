@@ -6,6 +6,7 @@ module Dashboard
   def self.sections
     [
       Dashboard::MealsSection,
+      Dashboard::RestockSection,
       Dashboard::GroceriesSection,
       Dashboard::ChoresSection,
       Dashboard::TodosSection,

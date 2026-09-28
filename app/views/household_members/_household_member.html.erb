@@ -1,8 +1,14 @@
 <li id="<%= dom_id household_member %>" class="flex items-center justify-between px-5 py-4">
   <div>
-    <p class="font-medium text-sage-900"><%= household_member.name %></p>
+    <%# Name opens the member's weekly summary (meals, to-dos, chores). Frame
+        breakout since the list sits inside the household_members frame. %>
+    <%= link_to household_member.name, household_member_path(household_member),
+          data: { turbo_frame: "_top" },
+          class: "font-medium text-sage-900 hover:text-[#5f734c] hover:underline" %>
     <div class="mt-1 flex items-center gap-2">
-      <% if household_member.user.nil? %>
+      <% if household_member.owner? %>
+        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-sage-100 text-sage-700">Owner</span>
+      <% elsif household_member.user.nil? %>
         <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-taupe-100 text-taupe-700">No login</span>
       <% elsif household_member.admin? %>
         <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-honey-100 text-honey-800">Admin</span>
@@ -19,9 +25,13 @@
     <div class="flex items-center gap-2">
       <%= link_to "Edit", edit_household_member_path(household_member),
                   class: "rounded-lg px-3 py-1.5 text-sm bg-white dark:bg-white/5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 font-medium transition" %>
-      <%= button_to "Remove", household_member_path(household_member), method: :delete,
-                    data: { turbo_confirm: "Remove #{household_member.name} and delete their login?" },
-                    class: "rounded-lg px-3 py-1.5 text-sm border border-transparent font-medium text-dusty-rose-600 hover:bg-dusty-rose-50 transition cursor-pointer" %>
+      <% unless household_member.owner? %>
+        <%# Full-page submit so the settings section (family size) refreshes too. %>
+        <%= button_to "Remove", household_member_path(household_member), method: :delete,
+                      form: { data: { turbo_frame: "_top" } },
+                      data: { turbo_confirm: household_member.login? ? "Remove #{household_member.name} and delete their login? Anything they added stays with the household." : "Remove #{household_member.name}?" },
+                      class: "rounded-lg px-3 py-1.5 text-sm border border-transparent font-medium text-dusty-rose-600 hover:bg-dusty-rose-50 transition cursor-pointer" %>
+      <% end %>
     </div>
   <% end %>
 </li>

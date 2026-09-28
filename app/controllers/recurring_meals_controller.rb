@@ -37,7 +37,11 @@ class RecurringMealsController < ApplicationController
   end
 
   def recurring_meal_params
-    params.expect(recurring_meal: [:recipe_id, :meal_name, :servings, :pattern_type, :interval_days,
-                                    :start_date, :end_type, :end_date, days_of_week: []])
+    permitted = params.expect(recurring_meal: [:recipe_id, :meal_name, :servings, :pattern_type, :interval_days,
+                                                :start_date, :end_type, :end_date, days_of_week: []])
+    ids = params.dig(:recurring_meal, :eater_ids)
+    return permitted if ids.nil?
+
+    permitted.merge(eater_ids: current_household.household_members.where(id: Array(ids).compact_blank).ids)
   end
 end

@@ -1,0 +1,4 @@
+<%= turbo_frame_tag "week_stats_body", class: "flex-1 flex flex-col overflow-hidden" do %>
+  <%= render "meals/week_stats_body", week_stats: @week_stats, date: @date, member: @member,
+             person_stats: @person_stats_available %>
+<% end %>

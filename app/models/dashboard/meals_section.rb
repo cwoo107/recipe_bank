@@ -35,7 +35,7 @@ module Dashboard
     end
 
     def empty_headline = "Meals"
-    def empty_body     = "Nothing planned yet this week."
+    def empty_body     = "Nothing planned yet #{week_phrase}."
     def cta_label      = "Plan meals"
   end
 end

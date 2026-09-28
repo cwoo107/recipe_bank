@@ -16,11 +16,11 @@
       </div>
     </div>
     <div class="grid grid-cols-7 gap-0 text-center">
-      <% %w[S M T W T F S].each do |d| %>
-        <div class="text-[10px] font-medium text-gray-400 dark:text-gray-600 py-0.5"><%= d %></div>
+      <% current_household.ordered_wdays.each do |wday| %>
+        <div class="text-[10px] font-medium text-gray-400 dark:text-gray-600 py-0.5"><%= Date::ABBR_DAYNAMES[wday].first %></div>
       <% end %>
-      <% mini_start = mini_date.beginning_of_month.beginning_of_week(:sunday)
-         mini_end   = mini_date.end_of_month.end_of_week(:sunday)
+      <% mini_start = mini_date.beginning_of_month.beginning_of_week
+         mini_end   = mini_date.end_of_month.end_of_week
          (mini_start..mini_end).each do |d| %>
         <% is_today = d == Time.zone.today
            in_month = d.month == mini_date.month %>

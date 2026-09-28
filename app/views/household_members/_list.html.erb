@@ -9,13 +9,6 @@
   </div>
 
   <ul class="divide-y divide-sage-100 border-t border-sage-100">
-    <li class="flex items-center justify-between px-5 py-4">
-      <div>
-        <p class="font-medium text-sage-900"><%= @household.owner.email %></p>
-        <span class="mt-1 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-sage-100 text-sage-700">Owner</span>
-      </div>
-    </li>
-
     <%= render @members %>
   </ul>
 </div>

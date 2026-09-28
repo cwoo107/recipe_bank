@@ -1,3 +1,3 @@
 <%= turbo_frame_tag 'new_meal' do %>
-  <%= render "form", meal: meal %>
+  <%= render "form", meal: meal, week_start: local_assigns[:week_start] %>
 <% end %>

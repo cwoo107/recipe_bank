@@ -1,5 +1,7 @@
 class Todo < ApplicationRecord
   belongs_to :user
+  # Optional — who's doing it. See HouseholdMember#todos.
+  belongs_to :assignee, class_name: "HouseholdMember", optional: true
   belongs_to :household
 
   acts_as_list scope: [ :household_id, :status ]
@@ -33,14 +35,13 @@ class Todo < ApplicationRecord
   scope :ordered,   -> { order(:position) }
   scope :by_status, ->(s) { where(status: s).ordered }
 
-  # Todos whose end_date lands inside the current (Mon–Sun) week. Used to keep
+  # Todos whose end_date lands inside the given 7-day week. Used to keep
   # the "done" column from accumulating stale, already-completed items — the
   # week boundaries here match the Gantt's beginning_of_week anchor.
-  scope :ended_this_week, lambda {
-    week_start = Date.current.beginning_of_week.beginning_of_day
-    week_end   = Date.current.end_of_week.end_of_day
-    where(end_date: week_start..week_end)
+  scope :ended_in_week, lambda { |week_start|
+    where(end_date: week_start.beginning_of_day..(week_start + 6).end_of_day)
   }
+  scope :ended_this_week, -> { ended_in_week(Date.current.beginning_of_week) }
 
   # ── Human-readable helpers ────────────────────────────────────────────
 
@@ -196,11 +197,11 @@ class Todo < ApplicationRecord
 
   # ── Gantt data (consumed by gantt_controller.js) ──────────────────────
   #
-  # Always spans the current week (Mon..Sun). Excludes "todo". Offsets are in
+  # Always spans the current week (starting on the household's week start day). Excludes "todo". Offsets are in
   # day-units measured from the start of the week and clamped to [0, 7], so
   # the controller never needs a date adapter.
   def self.gantt_data(household)
-    week_start = Date.current.beginning_of_week # Monday
+    week_start = Date.current.beginning_of_week(household.week_start_symbol)
     days = (0..6).map do |i|
       d = week_start + i
       { label: d.strftime("%a"), date: d.strftime("%-d"), month: d.strftime("%b") }

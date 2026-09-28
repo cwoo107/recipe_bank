@@ -12,3 +12,16 @@ two:
   name: "Kid"
   child: true
   role: 1
+
+# Owners have their own member row (see Household#owner_member).
+alice:
+  household: one
+  user: one # alice — owner of household one
+  name: "Alice"
+  role: 0
+
+carol:
+  household: two
+  user: three # carol — owner of household two
+  name: "Carol"
+  role: 0

@@ -1,6 +1,6 @@
 // app/javascript/controllers/chore_board_controller.js
 //
-// Wraps SortableJS for the weekly chore board: one column per day (Mon..Sun),
+// Wraps SortableJS for the weekly chore board: one column per day of the week,
 // sharing a group with the "Due soon" list so a due chore can be dropped
 // straight onto a day. Mirrors kanban_controller.js's cross-column pattern.
 // Desktop only — the mobile accordion layout doesn't support drag.

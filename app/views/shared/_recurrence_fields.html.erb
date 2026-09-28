@@ -54,7 +54,8 @@
     </div>
 
     <div data-recurrence-pattern-target="weekdayFields" class="flex flex-wrap gap-2 <%= 'hidden' unless is_weekday_pattern %>">
-      <% %w[Sun Mon Tue Wed Thu Fri Sat].each_with_index do |label, wday| %>
+      <% current_household.ordered_wdays.each do |wday| %>
+        <% label = Date::ABBR_DAYNAMES[wday] %>
         <label class="meal-type-pill">
           <%= check_box_tag "#{prefix}[days_of_week][]", wday,
                              recurring_meal.days_of_week&.include?(wday),

@@ -1,0 +1,26 @@
+<%# One row of the restock shopping list. Ticking it off marks the item
+    Stocked on the checklist (bought); it stays here, struck through, until
+    the page reloads — so a mis-tap can be unticked (back to Restock).
+    locals: (item:) %>
+<% bought = item.stocked? %>
+<li id="shopping_restock_item_<%= item.id %>">
+  <%= button_to bought ? mark_restock_restock_item_path(item) : mark_stocked_restock_item_path(item),
+        method: :patch, params: { context: "shopping" },
+        form_class: "w-full",
+        class: "flex w-full items-center gap-3 rounded px-2 py-2.5 text-left hover:bg-[#faf9f7] dark:hover:bg-[#1a1f16] cursor-pointer",
+        aria: { pressed: bought, label: bought ? "Untick #{item.name}" : "Tick off #{item.name}" } do %>
+    <span class="flex size-5 shrink-0 items-center justify-center rounded border <%= bought ? 'border-[#5f734c] bg-[#5f734c] text-white' : 'border-gray-300 dark:border-gray-600' %>">
+      <% if bought %>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
+          <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+        </svg>
+      <% end %>
+    </span>
+    <span class="min-w-0 flex-1 <%= 'line-through opacity-50' if bought %>">
+      <span class="block font-medium text-gray-900 dark:text-white"><%= item.name %></span>
+      <% if item.brand.present? %>
+        <span class="block text-xs text-gray-500 dark:text-gray-400"><%= item.brand %></span>
+      <% end %>
+    </span>
+  <% end %>
+</li>

@@ -1,0 +1,24 @@
+<%# locals: section (Dashboard::RestockSection) %>
+<% if section.items.empty? %>
+  <p class="text-sm text-gray-600 dark:text-gray-400">Your restock checklist is empty. Add the staples you keep on hand — paper towels, coffee, dish soap — and check each one before you shop.</p>
+<% else %>
+  <p class="text-base font-medium text-gray-900 dark:text-white"><%= section.summary_line %></p>
+  <% if section.detail_line %>
+    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"><%= section.detail_line %> — mark each Stocked or Restock.</p>
+  <% end %>
+<% end %>
+
+<%# The same lists as the Restock Checklist page, so check-ins, edits and
+    additions all work in place here. %>
+<div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+  <% section.categories.each do |category| %>
+    <%= render "restock_items/column", category: category %>
+  <% end %>
+</div>
+
+<div class="mt-6 flex flex-wrap gap-3">
+  <%= link_to "Go to Restock Checklist", restock_items_path,
+              class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+  <%= button_to "Continue", plan_week_step_path(section: section.key, week: section.week_start), method: :patch, params: { status: "done" },
+                class: "inline-flex items-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+</div>

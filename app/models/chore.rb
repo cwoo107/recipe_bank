@@ -54,6 +54,8 @@ class Chore < ApplicationRecord
   }.freeze
 
   validates :name, presence: true
+
+  after_update :reassign_upcoming_weekly_chores, if: :saved_change_to_assignee_id?
   validates :frequency, inclusion: { in: FREQUENCIES }
 
   scope :ordered, -> { order(:name) }
@@ -89,10 +91,19 @@ class Chore < ApplicationRecord
   # For a biweekly chore, is `week_start` an "on" week (vs. the alternating
   # "off" week it should skip)? Counts in 2-week steps from
   # default_weekday_started_on, the week the chore was (most recently)
-  # assigned its current day.
+  # assigned its current day. Compares the chore's actual day in each week
+  # rather than the week starts themselves, so the rhythm survives the
+  # household changing which day its weeks start on.
   def biweekly_due_on_week?(week_start)
     return true if default_weekday_started_on.blank?
-    ((week_start - default_weekday_started_on) / 7).to_i.even?
+    ((default_weekday_in(week_start) - default_weekday_in(default_weekday_started_on)) / 7).to_i.even?
+  end
+
+  # The date this chore's remembered weekday falls on in the week starting
+  # `week_start` (the week start itself when there's no remembered day).
+  def default_weekday_in(week_start)
+    return week_start if default_weekday.blank?
+    week_start + ((default_weekday - week_start.wday) % 7)
   end
 
   # Chores that are due but haven't already been added to this week's list —
@@ -122,8 +133,17 @@ class Chore < ApplicationRecord
       next if chore.frequency == "biweekly" && !chore.biweekly_due_on_week?(week_start)
       next if household.weekly_chores.exists?(chore_id: chore.id, week_start: week_start)
 
-      scheduled_date = week_start + ((chore.default_weekday - week_start.wday) % 7)
-      household.weekly_chores.create!(chore: chore, week_start: week_start, scheduled_date: scheduled_date)
+      household.weekly_chores.create!(chore: chore, week_start: week_start, scheduled_date: chore.default_weekday_in(week_start))
     end
+  end
+
+  private
+
+  # Reassigning a chore carries over to this week's and future unfinished
+  # instances already on the board; finished ones keep who actually did them.
+  def reassign_upcoming_weekly_chores
+    weekly_chores.where(completed: false)
+                 .where(week_start: Date.current.beginning_of_week..)
+                 .update_all(assignee_id: assignee_id)
   end
 end

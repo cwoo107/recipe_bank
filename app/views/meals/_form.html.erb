@@ -1,4 +1,15 @@
-<%= form_with(model: meal, class: "space-y-6", data: { controller: "meal-form" }) do |form| %>
+<%# Locals: meal, week_start (optional — the week being planned on the meals page) %>
+<%
+  # The date the picker opens on (and a recurring meal starts on): the meal's
+  # date, else the start of the week being planned — but never before today,
+  # so the current week still opens on today.
+  week_start = local_assigns[:week_start]
+  default_date = meal.date || [ week_start, Date.current ].compact.max
+%>
+<%= form_with(model: meal, class: "space-y-6", data: { controller: "meal-form", meal_form_family_size_value: current_household.family_size,
+                              meal_form_new_record_value: meal.new_record?,
+                              meal_form_slot_data_value: meal_slot_data(current_household, default_date.beginning_of_week, except: meal).to_json,
+                              meal_form_original_eaters_value: meal.eater_ids.to_json }) do |form| %>
   <% if meal.errors.any? %>
     <div id="error_explanation" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 font-medium rounded-lg border border-red-200 dark:border-red-800">
       <h2 class="font-semibold mb-2"><%= pluralize(meal.errors.count, "error") %> prohibited this meal from being saved:</h2>
@@ -111,10 +122,10 @@
         <%= form.label :servings, "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
         <%= form.number_field :servings,
                               min: 1,
-                              value: meal.servings,
-                              placeholder: "4",
+                              value: meal[:servings] || current_household.default_servings_for(date: meal.date, meal_name: meal.meal_name, except: meal),
+                              placeholder: current_household.family_size,
                               class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                              data: { meal_form_target: "servingsInput" } %>
+                              data: { meal_form_target: "servingsInput", action: "input->meal-form#servingsEdited" } %>
       </div>
     </div>
   </div>
@@ -134,7 +145,7 @@
           <%= form.radio_button :meal_name,
                                 value,
                                 required: true,
-                                checked: value == "Breakfast" && meal.meal_name.nil?,
+                                checked: value == (meal.meal_name.presence&.capitalize || "Breakfast"),
                                 class: "sr-only peer",
                                 data: { action: "change->meal-form#mealTypeChanged" } %>
           <span class="
@@ -156,17 +167,26 @@
     </div>
   </div>
 
+  <%= render "shared/eater_fields", field_name: "meal[eater_ids][]", selected_ids: meal.eater_ids,
+             checkbox_data: { action: "change->meal-form#eatersChanged" } %>
+
+  <%# "Take them out of the shared meal's servings?" — filled in by the
+      meal-form controller when someone picked above is already counted in a
+      shared meal planned for the same slot. %>
+  <div data-meal-form-target="sharedPrompt" class="hidden"></div>
+
   <%# Date picker — hidden for Snack/Dessert %>
   <div data-meal-form-target="dateSection"
        data-controller="week-date-picker"
-       data-week-date-picker-selected-value="<%= (meal.date || Date.today).strftime('%Y-%m-%d') %>"
-       data-week-date-picker-week-start-value="<%= (meal.date || Date.today).beginning_of_week.strftime('%Y-%m-%d') %>">
+       data-week-date-picker-selected-value="<%= default_date.strftime('%Y-%m-%d') %>"
+       data-week-date-picker-week-start-value="<%= default_date.beginning_of_week.strftime('%Y-%m-%d') %>"
+       data-week-date-picker-first-day-value="<%= current_household.week_start_day %>">
     <%= form.label :date, "Date", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= form.date_field :date,
                         required: true,
-                        value: meal.date || Date.today,
+                        value: default_date,
                         class: "sr-only",
-                        data: { meal_form_target: "dateInput", week_date_picker_target: "input" } %>
+                        data: { meal_form_target: "dateInput", week_date_picker_target: "input", action: "change->meal-form#slotChanged" } %>
     <div data-week-date-picker-target="nav"></div>
     <% if meal.errors[:date].any? %>
       <p class="mt-1 text-sm text-red-600 dark:text-red-400"><%= meal.errors[:date].first %></p>
@@ -185,7 +205,7 @@
 
       <div data-meal-form-target="recurringFields" class="hidden mt-4 pl-4 border-l-2 border-[#5f734c]/30 dark:border-[#7a8f62]/30">
         <%= render "shared/recurrence_fields", prefix: "meal[recurring]",
-                                                recurring_meal: RecurringMeal.new(start_date: meal.date || Date.today) %>
+                                                recurring_meal: RecurringMeal.new(start_date: default_date) %>
       </div>
     </div>
   <% end %>

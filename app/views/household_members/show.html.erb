@@ -1,41 +1,136 @@
-<div class="mx-auto max-w-2xl">
-  <div class="flex items-end justify-between gap-4">
+<% content_for :title, @member.name %>
+<% week_end = @date + 6 %>
+
+<div class="mx-auto max-w-4xl">
+  <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400">Household</p>
-      <h1 class="mt-1 font-serif text-4xl text-sage-900">
-        The <%= @household.family_name %> household
-      </h1>
+      <%= link_to "← #{current_household.family_name}", household_path,
+            class: "text-xs font-semibold uppercase tracking-widest text-sage-400 hover:text-sage-600" %>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900"><%= @member.name %></h1>
+      <p class="mt-1 text-sm text-olive-500">
+        Week of <%= @date.strftime("%b %-d") %> – <%= week_end.strftime(@date.month == week_end.month ? "%-d, %Y" : "%b %-d, %Y") %>
+      </p>
     </div>
-    <% if @household.admin?(current_user) %>
-      <%= link_to "Settings", edit_household_path, class: "btn-secondary" %>
-    <% end %>
+
+    <div class="flex items-center gap-2">
+      <%= link_to "‹ Prev", household_member_path(@member, date: @date - 7),
+            class: "rounded-lg px-3 py-1.5 text-sm bg-white border border-gray-300 hover:bg-gray-50 font-medium transition" %>
+      <% unless @date == Date.current.beginning_of_week %>
+        <%= link_to "This week", household_member_path(@member),
+              class: "rounded-lg px-3 py-1.5 text-sm bg-white border border-gray-300 hover:bg-gray-50 font-medium transition" %>
+      <% end %>
+      <%= link_to "Next ›", household_member_path(@member, date: @date + 7),
+            class: "rounded-lg px-3 py-1.5 text-sm bg-white border border-gray-300 hover:bg-gray-50 font-medium transition" %>
+    </div>
   </div>
 
-  <div class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
-    <div class="flex items-center justify-between px-5 py-4">
-      <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400">Members</h2>
-      <% if @household.admin?(current_user) %>
-        <%= link_to "Manage members", household_members_path, class: "btn-secondary btn-sm" %>
-      <% end %>
+  <%# ── Meals ── %>
+  <section class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
+    <div class="px-5 py-4">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400">Meals</h2>
     </div>
 
-    <ul class="divide-y divide-sage-100 border-t border-sage-100">
-      <li class="flex items-center justify-between px-5 py-4">
-        <p class="font-medium text-sage-900"><%= @household.owner.email %></p>
-        <span class="badge bg-sage-100 text-sage-700">Owner</span>
-      </li>
-      <% @members.each do |member| %>
-        <li class="flex items-center justify-between px-5 py-4">
-          <p class="font-medium text-sage-900"><%= member.name %></p>
-          <% if member.user.nil? %>
-            <span class="badge bg-taupe-100 text-taupe-700">No login</span>
-          <% elsif member.admin? %>
-            <span class="badge bg-honey-100 text-honey-800">Admin</span>
-          <% else %>
-            <span class="badge bg-mist-100 text-mist-700">Limited</span>
+    <div class="border-t border-sage-100 px-5 py-5">
+      <% if @meal_stats[:meal_count].zero? %>
+        <p class="text-sm text-olive-500">No meals this week.</p>
+      <% else %>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+          <% [
+               ["Calories / day", @meal_stats[:per_serv_calories], "#{@meal_stats[:total_calories]} this week"],
+               ["Protein / day",  "#{@meal_stats[:per_serv_protein]}g", "#{@meal_stats[:total_protein]}g this week"],
+               ["Carbs / day",    "#{@meal_stats[:per_serv_carbs]}g",   "#{@meal_stats[:total_carbs]}g this week"],
+               ["Fat / day",      "#{@meal_stats[:per_serv_fat]}g",     "#{@meal_stats[:total_fat]}g this week"],
+               ["Food cost",      number_to_currency(@meal_stats[:total_cost]), "#{number_to_currency(@meal_stats[:per_serv_cost])} / day"]
+             ].each do |label, value, sub| %>
+            <div class="rounded-lg bg-sage-50/60 px-4 py-3">
+              <p class="text-xs text-olive-500"><%= label %></p>
+              <p class="mt-0.5 text-xl font-semibold text-sage-900"><%= value %></p>
+              <p class="text-[11px] text-olive-400"><%= sub %></p>
+            </div>
           <% end %>
-        </li>
+        </div>
+
+        <table class="mt-5 w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs text-olive-400">
+              <th class="py-2 font-medium">Day</th>
+              <th class="py-2 font-medium">Meal</th>
+              <th class="py-2 font-medium text-right">Portion</th>
+              <th class="py-2 font-medium text-right">Calories</th>
+              <th class="py-2 font-medium text-right hidden sm:table-cell">P / C / F</th>
+              <th class="py-2 font-medium text-right">Cost</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-sage-100">
+            <% @meal_stats[:meals].each do |row| %>
+              <tr>
+                <td class="py-2 text-olive-500 whitespace-nowrap"><%= row[:date].strftime("%a") %> · <%= row[:meal_name].capitalize %></td>
+                <td class="py-2 text-sage-900">
+                  <%= link_to row[:name], recipe_path(row[:meal].recipe), class: "hover:underline" %>
+                  <% if row[:meal].assigned? %>
+                    <span class="ml-1 text-[11px] text-olive-400">assigned</span>
+                  <% end %>
+                </td>
+                <td class="py-2 text-right text-olive-500"><%= row[:share] == 1 ? "All" : "#{(row[:share] * 100).round}%" %></td>
+                <td class="py-2 text-right text-sage-900"><%= row[:calories].round %></td>
+                <td class="py-2 text-right text-olive-500 hidden sm:table-cell"><%= row[:protein].round %> / <%= row[:carbs].round %> / <%= row[:fat].round %>g</td>
+                <td class="py-2 text-right text-sage-900"><%= number_to_currency(row[:cost]) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+        <p class="mt-3 text-xs text-olive-400">
+          Meals assigned to <%= @member.name %> are split among the people assigned. Unassigned meals are split among the family of <%= current_household.family_size %>, leaving out anyone with their own assigned meal at that breakfast, lunch or dinner.
+        </p>
       <% end %>
-    </ul>
+    </div>
+  </section>
+
+  <div class="mt-8 grid gap-8 md:grid-cols-2">
+    <%# ── Chores ── %>
+    <section class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
+      <div class="flex items-center justify-between px-5 py-4">
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400">Chores</h2>
+        <% if @weekly_chores.any? %>
+          <span class="text-xs text-olive-500"><%= @weekly_chores.count(&:completed?) %> of <%= @weekly_chores.size %> done</span>
+        <% end %>
+      </div>
+      <ul class="divide-y divide-sage-100 border-t border-sage-100">
+        <% @weekly_chores.each do |weekly_chore| %>
+          <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+            <span class="<%= weekly_chore.completed? ? 'text-olive-400 line-through' : 'text-sage-900' %>"><%= weekly_chore.chore.name %></span>
+            <span class="shrink-0 text-xs text-olive-400"><%= weekly_chore.scheduled_date&.strftime("%a") %><%= " · done" if weekly_chore.completed? %></span>
+          </li>
+        <% end %>
+        <% if @weekly_chores.empty? %>
+          <li class="px-5 py-3 text-sm text-olive-500">No chores assigned this week.</li>
+        <% end %>
+      </ul>
+    </section>
+
+    <%# ── To-dos ── %>
+    <section class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
+      <div class="flex items-center justify-between px-5 py-4">
+        <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400">To-dos</h2>
+        <span class="text-xs text-olive-500"><%= @todos_done.size %> done this week</span>
+      </div>
+      <ul class="divide-y divide-sage-100 border-t border-sage-100">
+        <% @todos_done.each do |todo| %>
+          <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+            <span class="text-olive-400 line-through"><%= todo.title %></span>
+            <span class="shrink-0 text-xs text-olive-400">done <%= todo.end_date.strftime("%a") %></span>
+          </li>
+        <% end %>
+        <% @todos_open.each do |todo| %>
+          <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
+            <span class="text-sage-900"><%= todo.title %></span>
+            <span class="shrink-0 text-xs text-olive-400"><%= todo.status == "in_progress" ? "In progress" : "To do" %></span>
+          </li>
+        <% end %>
+        <% if @todos_done.empty? && @todos_open.empty? %>
+          <li class="px-5 py-3 text-sm text-olive-500">No to-dos assigned.</li>
+        <% end %>
+      </ul>
+    </section>
   </div>
 </div>

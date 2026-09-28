@@ -5,6 +5,8 @@ class RecurringMeal < ApplicationRecord
 
   has_many :recurring_meal_occurrences, dependent: :destroy
   has_many :meals, dependent: :nullify
+  has_many :recurring_meal_assignments, dependent: :destroy
+  has_many :eaters, through: :recurring_meal_assignments, source: :household_member
 
   serialize :days_of_week, type: Array, coder: JSON
 
@@ -58,9 +60,10 @@ class RecurringMeal < ApplicationRecord
         user: user,
         recipe: recipe,
         meal_name: meal_name,
-        servings: servings,
+        servings: servings || household.family_size,
         date: date,
-        recurring_meal: self
+        recurring_meal: self,
+        eater_ids: eater_ids
       )
       recurring_meal_occurrences.create!(date: date, meal: meal)
       created << meal

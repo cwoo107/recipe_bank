@@ -39,7 +39,7 @@ module Dashboard
 
     def empty_body
       if meals_planned?
-        "Nothing planned yet this week."
+        "Nothing planned yet #{week_phrase}."
       else
         "Plan your meals first, then generate a grocery list."
       end
@@ -50,7 +50,7 @@ module Dashboard
     end
 
     def cta_path
-      meals_planned? ? step_path : plan_week_step_path(section: "meals")
+      meals_planned? ? step_path : plan_week_step_path(section: "meals", week: week_start)
     end
   end
 end

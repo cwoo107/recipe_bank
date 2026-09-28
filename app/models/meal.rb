@@ -6,6 +6,9 @@ class Meal < ApplicationRecord
 
   has_one :recurring_meal_occurrence, dependent: :nullify
 
+  has_many :meal_assignments, dependent: :destroy
+  has_many :eaters, through: :meal_assignments, source: :household_member
+
   CALENDAR_TYPES = %w[breakfast lunch dinner].freeze
   EXTRA_TYPES    = %w[snack dessert].freeze
   ALL_TYPES      = (CALENDAR_TYPES + EXTRA_TYPES).freeze
@@ -50,6 +53,33 @@ class Meal < ApplicationRecord
   def fat_per_serving
     return 0 if servings.zero?
     (scaled_fat / servings).round(1)
+  end
+
+  def assigned? = meal_assignments.any?
+
+  def eater_ids_assigned = meal_assignments.map(&:household_member_id)
+
+  # Breakfast, lunch and dinner on a given day are each one "slot". (Snacks
+  # and desserts are week-level extras, so they aren't slotted.)
+  def slot = calendar_meal? ? [ date, meal_name.downcase ] : nil
+
+  # The fraction of this meal `member` ate. Assigned meals split evenly among
+  # the people assigned (none for anyone else). Unassigned meals are shared by
+  # the family, minus anyone eating their own assigned meal in the same slot
+  # (`excluded_ids`, see MealWeekStats) — so someone having eggs instead of
+  # the family's pancakes gets none of the pancakes, and the rest split them.
+  # nil member means the whole household (all of it).
+  def share_for(member, excluded_ids: [])
+    return 1.0 if member.nil?
+
+    eater_ids = eater_ids_assigned
+    if eater_ids.any?
+      eater_ids.include?(member.id) ? 1.0 / eater_ids.size : 0.0
+    elsif excluded_ids.include?(member.id)
+      0.0
+    else
+      1.0 / [ household.family_size - excluded_ids.size, 1 ].max
+    end
   end
 
   def calendar_meal? = CALENDAR_TYPES.include?(meal_name.downcase)

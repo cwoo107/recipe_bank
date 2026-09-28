@@ -5,10 +5,7 @@ class MealsController < ApplicationController
     @date = week_start_from_params
     RecurringMeal.materialize_household_week!(current_household, @date)
 
-    all_meals = current_household.meals
-                            .where("date >= ?", @date)
-                            .where("date < ?", @date + 7)
-                            .includes(recipe: { recipe_ingredients: :ingredient })
+    all_meals = week_meals(@date)
 
     @calendar_meals = all_meals
                         .select(&:calendar_meal?)
@@ -18,7 +15,20 @@ class MealsController < ApplicationController
                      .select(&:extra_meal?)
                      .group_by { |m| m.meal_name.downcase }
 
-    @week_stats = compute_week_stats(all_meals)
+    @week_stats = MealWeekStats.new(all_meals).to_h
+    @person_stats_available = person_stats_available?(all_meals)
+  end
+
+  # The Week summary panel's body for one person (or the whole household) —
+  # loaded into its turbo frame by the person switcher.
+  def week_stats
+    @date   = week_start_from_params
+    @member = current_household.household_members.find_by(id: params[:member_id])
+    meals   = week_meals(@date)
+
+    @week_stats = MealWeekStats.new(meals, member: @member).to_h
+    @person_stats_available = person_stats_available?(meals)
+    render layout: false
   end
 
   def show
@@ -27,6 +37,8 @@ class MealsController < ApplicationController
   def new
     @meal = Meal.new(date: params[:date].present? ? Date.parse(params[:date]) : nil,
                      meal_name: params[:meal_name].present? ? params[:meal_name] : nil)
+    @meal.servings = current_household.default_servings_for(date: @meal.date, meal_name: @meal.meal_name)
+    @week_start = Date.parse(params[:week]).beginning_of_week if params[:week].present?
   end
 
   def edit
@@ -41,12 +53,20 @@ class MealsController < ApplicationController
   end
 
   def update
+    eaters_before = @meal.eater_ids
+
     respond_to do |format|
       # Editing a meal that a recurring rule generated detaches it — the
       # rule keeps generating the other days normally, this one becomes a
       # standalone meal (see RecurringMeal#materialize_week!, which never
       # regenerates a date once its occurrence tombstone exists).
-      if @meal.update(meal_params.merge(recurring_meal_id: nil))
+      if @meal.update(meal_params.merge(recurring_meal_id: nil, **eater_params(:meal)))
+        # "Take them out of the shared meal's servings?" — answered in the form.
+        drop_confirmed_shared_servings([ [ @meal, @meal.reload.eater_ids - eaters_before ] ])
+
+        # Saved from the Edit modal on the meals page: refresh that page in
+        # place so the card (and week stats) pick up the change.
+        format.turbo_stream { render turbo_stream: turbo_stream.refresh } if turbo_frame_request?
         format.html { redirect_to @meal, notice: "Meal was successfully updated.", status: :see_other }
         format.json { render :show, status: :ok, location: @meal }
       else
@@ -71,17 +91,21 @@ class MealsController < ApplicationController
   private
 
   def create_single_meal
-    @meal = current_household.meals.build(meal_params)
+    @meal = current_household.meals.build(meal_params.merge(eater_params(:meal)))
     @meal.user = current_user
-
     if @meal.extra_meal? && @meal.date.blank?
       @meal.date = Time.zone.today.beginning_of_week
+    end
+
+    if meal_params[:servings].blank?
+      @meal.servings = @meal.eater_ids.any? ? @meal.eater_ids.size : current_household.default_servings_for(date: @meal.date, meal_name: @meal.meal_name)
     end
 
     @date = @meal.date.beginning_of_week
 
     respond_to do |format|
       if @meal.save
+        @adjusted_meals = drop_confirmed_shared_servings([ [ @meal, @meal.eater_ids ] ])
         format.html { redirect_to meals_path, notice: "Meal was successfully added." }
         format.json { render :show, status: :created, location: @meal }
         format.turbo_stream
@@ -105,13 +129,15 @@ class MealsController < ApplicationController
       days_of_week: recurring[:days_of_week],
       start_date: recurring[:start_date],
       end_type: recurring[:end_type],
-      end_date: recurring[:end_date]
+      end_date: recurring[:end_date],
+      **eater_params(:meal)
     )
     @date = (@recurring_meal.start_date || Time.zone.today).beginning_of_week
 
     respond_to do |format|
       if @recurring_meal.save
         @created_meals = @recurring_meal.materialize_week!(@date)
+        @adjusted_meals = drop_confirmed_shared_servings(@created_meals.map { |m| [ m, m.eater_ids ] })
         format.html { redirect_to meals_path(date: @date), notice: "Recurring meal added." }
         format.turbo_stream { render "meals/create_recurring" }
       else
@@ -136,86 +162,50 @@ class MealsController < ApplicationController
   end
 
   def week_start_from_params
-    params[:date].present? ? Date.parse(params[:date]) : Time.zone.today.beginning_of_week
+    (params[:date].present? ? Date.parse(params[:date]) : Time.zone.today).beginning_of_week
   end
 
   def meal_params
     params.expect(meal: [:recipe_id, :meal_name, :date, :servings])
   end
 
-  def compute_week_stats(meals)
-    total_protein  = 0.0
-    total_carbs    = 0.0
-    total_fat      = 0.0
-    total_calories = 0.0
-    total_cost     = 0.0
-    meal_breakdown = []
+  # Optional "who's eating" — only household members count, and the field is
+  # only in the form for households with more than one person, so a missing
+  # param leaves existing assignments alone.
+  def eater_params(scope)
+    ids = params.dig(scope, :eater_ids)
+    return {} if ids.nil?
 
-    meals.each do |meal|
-      p = meal.scaled_protein
-      c = meal.scaled_carbs
-      f = meal.scaled_fat
-      cal = meal.scaled_calories
-      cost = meal.total_cost
-
-      total_protein  += p
-      total_carbs    += c
-      total_fat      += f
-      total_calories += cal
-      total_cost     += cost
-
-      meal_breakdown << {
-        name:          meal.recipe.title,
-        meal_name:     meal.meal_name,
-        servings:      meal.servings,
-        protein:       p.round(1),
-        carbs:         c.round(1),
-        fat:           f.round(1),
-        calories:      cal.round,
-        cost:          cost.round(2),
-        cal_per_serv:  meal.calories_per_serving,
-        protein_per_serv: meal.protein_per_serving,
-        carbs_per_serv:   meal.carbs_per_serving,
-        fat_per_serv:     meal.fat_per_serving,
-        cost_per_serv:    meal.cost_per_serving.round(2)
-      }
-    end
-
-    per_serv_protein  = (total_protein  / 7.0).round(1)
-    per_serv_carbs    = (total_carbs    / 7.0).round(1)
-    per_serv_fat      = (total_fat      / 7.0).round(1)
-    per_serv_calories = (total_calories / 7.0).round
-    per_serv_cost     = (total_cost     / 7.0).round(2)
-
-    {
-      total_protein:  total_protein.round(1),
-      total_carbs:    total_carbs.round(1),
-      total_fat:      total_fat.round(1),
-      total_calories: total_calories.round,
-      total_cost:     total_cost.round(2),
-      per_serv_protein:  per_serv_protein,
-      per_serv_carbs:    per_serv_carbs,
-      per_serv_fat:      per_serv_fat,
-      per_serv_calories: per_serv_calories,
-      per_serv_cost:     per_serv_cost,
-      meal_count:     meals.count,
-      chart_data: {
-        labels: [
-          "Protein #{total_protein.round(1)}g",
-          "Carbs #{total_carbs.round(1)}g",
-          "Fat #{total_fat.round(1)}g"
-        ],
-        datasets: [{
-                     data: [total_protein.round(1), total_carbs.round(1), total_fat.round(1)],
-                     backgroundColor: [
-                       'oklch(71.1% 0.019 323.02)',
-                       'oklch(85% 0.08 95)',
-                       'oklch(75% 0.06 45)'
-                     ],
-                     borderWidth: 2
-                   }]
-      },
-      meals: meal_breakdown
-    }
+    { eater_ids: current_household.household_members.where(id: Array(ids).compact_blank).ids }
   end
+
+  # The meal form asks, before saving, whether to take newly assigned people
+  # out of shared meals already planned in the same slot. A single meal sends
+  # the shared meals said yes to (drop_shared_meal_ids); a recurring meal —
+  # whose slots aren't known until it's saved — sends drop_shared=1 for all.
+  # Returns the shared meals that changed.
+  def drop_confirmed_shared_servings(assignments)
+    adjustment = SharedServingsAdjustment.new(current_household, assignments)
+
+    if params.dig(:meal, :drop_shared) == "1"
+      adjustment.apply!
+    elsif (ids = Array(params.dig(:meal, :drop_shared_meal_ids)).compact_blank).any?
+      adjustment.apply!(only_ids: ids)
+    else
+      []
+    end
+  end
+
+  def week_meals(week_start)
+    current_household.meals
+                     .where(date: week_start...(week_start + 7))
+                     .includes(:meal_assignments, :eaters, :household, recipe: { recipe_ingredients: :ingredient })
+  end
+
+  # The person switcher in the Week summary only shows once someone's been
+  # assigned a meal this week — until then everyone's share is identical.
+  def person_stats_available?(meals)
+    current_household.assignable? && meals.any?(&:assigned?)
+  end
+
 end

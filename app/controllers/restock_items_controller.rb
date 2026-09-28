@@ -76,7 +76,7 @@ class RestockItemsController < ApplicationController
   def mark_stocked
     @restock_item.mark_stocked!
     respond_to do |format|
-      format.turbo_stream { render :update }
+      format.turbo_stream { render shopping_list_context? ? :shopping_item : :update }
       format.html { redirect_to restock_items_path }
     end
   end
@@ -84,12 +84,18 @@ class RestockItemsController < ApplicationController
   def mark_restock
     @restock_item.mark_restock!
     respond_to do |format|
-      format.turbo_stream { render :update }
+      format.turbo_stream { render shopping_list_context? ? :shopping_item : :update }
       format.html { redirect_to restock_items_path }
     end
   end
 
   private
+
+  # Checking items off the restock shopping list (grocery list page) reuses
+  # these actions but re-renders the shopping row instead of the checklist card.
+  def shopping_list_context?
+    params[:context] == "shopping"
+  end
 
   def set_restock_item
     @restock_item = current_household.restock_items.find(params[:id])

@@ -4,7 +4,7 @@ class TodosController < ApplicationController
 
   def index
     @todos_by_status = Todo::STATUSES.index_with do |status|
-      scope = current_household.todos.by_status(status)
+      scope = current_household.todos.by_status(status).includes(:assignee)
 
       scope = scope.ended_this_week if status == "done"
       scope
@@ -112,10 +112,10 @@ class TodosController < ApplicationController
   end
 
   def todo_params
-    params.require(:todo).permit(
+    scoped_assignee_params(params.require(:todo).permit(
       :title, :description, :priority, :status,
-      :estimated_hours, :estimated_minutes
-    )
+      :estimated_hours, :estimated_minutes, :assignee_id
+    ))
   end
 
   # Recompute the in-progress timeline, then push the refreshed Gantt chart to

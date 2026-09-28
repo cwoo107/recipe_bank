@@ -13,22 +13,35 @@
 
     <% unless @nothing_planned %>
       <div class="mt-4 sm:ml-16 sm:mt-0">
-        <%= link_to "Plan your week", plan_week_path,
+        <%= link_to "Plan #{WeeklyPlan.week_label(@next_week_to_plan).downcase_first}", plan_week_path(week: @next_week_to_plan),
                     class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
       </div>
     <% end %>
   </div>
 
+  <% if @unfinished_plan %>
+    <div class="mb-6 flex flex-col gap-3 rounded-lg border border-[#5f734c]/30 bg-[#5f734c]/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-[#7a8f62]/30 dark:bg-[#7a8f62]/10">
+      <p class="text-sm text-gray-700 dark:text-gray-300">
+        You're partway through planning
+        <span class="font-medium text-gray-900 dark:text-white"><%= @unfinished_plan.week_label.downcase_first %></span>
+        (<%= @unfinished_plan.week_range_label %>) — next up is
+        <%= Dashboard.section_class(@unfinished_plan.active_key)::LABEL.downcase %>.
+      </p>
+      <%= link_to "Continue planning", plan_week_path(week: @unfinished_plan.week_start),
+                  class: "inline-flex shrink-0 items-center justify-center rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+    </div>
+  <% end %>
+
   <% if @nothing_planned %>
     <div class="mb-8 rounded-lg bg-[#3f4d34] dark:bg-[#2a3322] px-6 py-8 sm:px-10 sm:py-10 text-center">
       <h2 class="text-3xl text-white" style="font-family: 'Instrument Serif', serif;">Nothing planned for this week yet</h2>
-      <p class="mt-2 text-sm text-[#d7e0cd]">Walk through meals, to-dos, groceries, and your calendar in a few minutes.</p>
-      <%= link_to "Plan your week", plan_week_path,
+      <p class="mt-2 text-sm text-[#d7e0cd]">Walk through meals, restocking, groceries, chores, to-dos, and your calendar in a few minutes.</p>
+      <%= link_to "Plan your week", plan_week_path(week: @week_start),
                   class: "mt-6 inline-flex items-center gap-x-2 rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-[#3f4d34] shadow-xs hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white" %>
     </div>
   <% elsif @everything_done %>
     <p class="mb-6 text-sm text-gray-600 dark:text-gray-400">
-      This week is fully planned. <%= link_to "Reopen the plan", plan_week_path, class: "text-[#5f734c] dark:text-[#7a8f62] font-medium hover:underline" %> to make a change.
+      This week is fully planned. <%= link_to "Reopen the plan", plan_week_path(week: @week_start), class: "text-[#5f734c] dark:text-[#7a8f62] font-medium hover:underline" %> to make a change.
     </p>
   <% end %>
 

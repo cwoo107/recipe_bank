@@ -10,7 +10,7 @@ class WeeklyChoresController < ApplicationController
 
   def create
     chore = current_household.chores.find(params[:chore_id])
-    @week_start = params[:week_start].present? ? Date.parse(params[:week_start]) : Time.zone.today.beginning_of_week
+    @week_start = (params[:week_start].present? ? Date.parse(params[:week_start]) : Time.zone.today).beginning_of_week
 
     # find_or_initialize rather than a plain create: if this chore is somehow
     # already on the week's list (e.g. a due-soon card got dropped twice
@@ -90,7 +90,7 @@ class WeeklyChoresController < ApplicationController
   end
 
   def week_start_from_params
-    params[:date].present? ? Date.parse(params[:date]) : Time.zone.today.beginning_of_week
+    (params[:date].present? ? Date.parse(params[:date]) : Time.zone.today).beginning_of_week
   end
 
   def weekly_chore_params

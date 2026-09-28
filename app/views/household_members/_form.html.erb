@@ -1,6 +1,9 @@
 <%# locals: (member:) %>
 <%= form_with model: member,
       url: member.persisted? ? household_member_path(member) : household_members_path,
+      # Full-page submit: adding someone can raise the family size shown in
+      # the settings section below the members list.
+      data: { turbo_frame: "_top" },
       class: "space-y-5" do |f| %>
 
   <% if member.errors.any? %>
@@ -24,25 +27,27 @@
 
   <% unless member.persisted? %>
     <div>
-      <%= f.label :email, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+      <%= f.label :email, "Email (optional)", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
       <%= f.email_field :email,
             placeholder: "you@example.com",
             class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-      <p class="mt-1.5 text-xs text-olive-400">They'll receive an email to set their own password.</p>
+      <p class="mt-1.5 text-xs text-olive-400">Add an email to give them their own login — they'll get an email to set a password. Leave it blank for kids or anyone who won't use the app.</p>
     </div>
   <% end %>
 
+  <% unless member.persisted? && (member.owner? || !member.login?) %>
   <div>
     <%= f.label :role, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= f.select :role,
           HouseholdMember.roles.keys.map { |r| [r.humanize, r] },
           {},
           class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-    <p class="mt-1.5 text-xs text-olive-400">Admins can manage the household and its members.</p>
+    <p class="mt-1.5 text-xs text-olive-400">Only applies to members with a login. Admins can manage the household and its members.</p>
   </div>
+  <% end %>
 
   <div class="flex items-center gap-3 pt-2">
-    <%= f.submit member.persisted? ? "Save changes" : "Send invite",
+    <%= f.submit member.persisted? ? "Save changes" : "Add member",
           class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
     <%= link_to "Cancel", household_path,
           class: "rounded-lg px-6 py-2.5 bg-white dark:bg-white/5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 font-medium transition" %>

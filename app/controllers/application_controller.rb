@@ -2,6 +2,7 @@ class ApplicationController < ActionController::Base
   before_action :authenticate_user!
   before_action :set_user_timezone
   before_action :configure_permitted_parameters, if: :devise_controller?
+  around_action :use_household_week_start, if: :user_signed_in?
   helper_method :current_household, :active_weekly_plan
   layout :resolve_layout
 
@@ -36,6 +37,18 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  # Weeks everywhere (meals, chores, plans, calendar, grocery lists) start on
+  # the household's chosen day. Setting Date.beginning_of_week for the
+  # request — thread-local, like Time.zone — makes every plain
+  # `beginning_of_week` / `end_of_week` call follow it.
+  def use_household_week_start
+    previous = Date.beginning_of_week
+    Date.beginning_of_week = current_household&.week_start_symbol || previous
+    yield
+  ensure
+    Date.beginning_of_week = previous
+  end
+
   # Every user is provisioned a household at signup (User#provision_household),
   # so this should always resolve — the fallback here just guards edge cases
   # (e.g. users created outside the normal signup path).
@@ -50,8 +63,14 @@ class ApplicationController < ActionController::Base
     return nil unless user_signed_in?
     return nil if controller_name.in?(%w[plan_week dashboard])
 
-    plan = WeeklyPlan.find_by(household: current_household, week_start: Date.current.beginning_of_week)
-    plan&.currently_planning? ? plan : nil
+    WeeklyPlan.in_progress_for(current_household)
+  end
+
+  # Assignee ids arrive from forms — only accept members of this household.
+  def scoped_assignee_params(permitted)
+    return permitted unless permitted.key?(:assignee_id)
+
+    permitted.merge(assignee_id: current_household.household_members.where(id: permitted[:assignee_id].presence).pick(:id))
   end
 
   def provision_household_for(user)

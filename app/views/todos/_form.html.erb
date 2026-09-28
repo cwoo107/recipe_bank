@@ -112,13 +112,25 @@
     })();
   </script>
 
-  <%# Status (hidden if set via column quick-add) %>
-  <div class="mb-6">
-    <%= f.label :status, "Column", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
-    <%= f.select :status,
-          Todo::STATUSES.map { |s| [ Todo::STATUS_LABELS[s], s ] },
-          {},
-          class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+  <%# Status (hidden if set via column quick-add), plus an optional assignee
+      for households with more than one person listed. %>
+  <div class="mb-6 grid gap-4 <%= 'sm:grid-cols-2' if current_household.assignable? %>">
+    <div>
+      <%= f.label :status, "Column", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+      <%= f.select :status,
+            Todo::STATUSES.map { |s| [ Todo::STATUS_LABELS[s], s ] },
+            {},
+            class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+    </div>
+
+    <% if current_household.assignable? %>
+      <div>
+        <%= f.label :assignee_id, "Assigned to", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+        <%= f.collection_select :assignee_id, current_household.people, :id, :name,
+              { include_blank: "Anyone" },
+              class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+      </div>
+    <% end %>
   </div>
 
   <div class="flex gap-3">

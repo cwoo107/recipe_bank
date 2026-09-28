@@ -1,0 +1,46 @@
+<%# "Add a meal" for one slot of the meal planner: a dialog that lazy-loads
+    the new-meal form pre-set to this date and meal type.
+
+    Locals:
+      date:      the date to add to (week start for snacks/desserts)
+      meal_name: "Breakfast", "Lunch", "Dinner", "Snack" or "Dessert"
+      label:     accessible label for the buttons
+      placeholder: true for the big "+" that fills an empty desktop cell
+
+    Must sit inside a `group/cell` element. Which button shows is decided by
+    CSS — the big placeholder while the cell has no meals, the compact "+"
+    under the meals once it has some — so adding or removing meals (including
+    over Turbo Streams) never needs to touch these buttons. On the desktop grid
+    the compact "+" grows into whatever height the day's row has left over
+    (rows size to their fullest slot), so short slots don't look cut off. %>
+<% placeholder = local_assigns.fetch(:placeholder, false) %>
+<div data-controller="dialog" data-action="click->dialog#backdropClose"
+     class="<%= placeholder ? 'flex-1 flex flex-col' : '' %>">
+  <dialog data-dialog-target="dialog" class="text-base text-left dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+    <%= turbo_frame_tag "new_meal", src: new_meal_path(date: date.strftime("%Y-%m-%d"), meal_name: meal_name), loading: "lazy" do %>
+    <% end %>
+    <div class="mt-4">
+      <button type="button" data-action="dialog#close" class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">Close</button>
+    </div>
+  </dialog>
+
+  <% if placeholder %>
+    <button type="button"
+            data-action="dialog#open"
+            class="flex-1 min-h-20 flex items-center justify-center rounded-md text-gray-300 dark:text-gray-700 hover:text-[#5f734c] hover:bg-[#5f734c]/5 dark:hover:text-[#7a8f62] dark:hover:bg-[#7a8f62]/5 transition-colors w-full group-has-[.meal-card]/cell:hidden"
+            aria-label="<%= label %>">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5">
+        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+      </svg>
+    </button>
+  <% end %>
+
+  <button type="button"
+          data-action="dialog#open"
+          class="<%= placeholder ? 'hidden group-has-[.meal-card]/cell:flex flex-1 min-h-6 mt-2' : 'flex mt-1' %> w-full items-center justify-center rounded py-0.5 text-gray-300 dark:text-gray-600 hover:text-[#5f734c] hover:bg-[#5f734c]/5 dark:hover:text-[#7a8f62] dark:hover:bg-[#7a8f62]/5 transition-colors"
+          aria-label="<%= label %>">
+    <svg viewBox="0 0 20 20" fill="currentColor" class="size-4">
+      <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+    </svg>
+  </button>
+</div>

@@ -9,6 +9,22 @@ class RestockItem < ApplicationRecord
 
   scope :ordered, -> { order(:position) }
 
+  # The restock shopping list: everything marked Restock, grouped by the store
+  # it's bought at (blank store last, as "Any store"), then by restock
+  # category in checklist order. Returns [[store_name, [[category, items]]]].
+  def self.shopping_list(household)
+    items = household.restock_items.where(restock: true).includes(:restock_category).to_a
+
+    by_store = items.group_by { |item| item.store.to_s.strip.downcase }
+    by_store.sort_by { |key, _| [ key.blank? ? 1 : 0, key ] }.map do |key, store_items|
+      name = key.blank? ? "Any store" : store_items.first.store.strip
+      categories = store_items.group_by(&:restock_category)
+                              .sort_by { |category, _| [ category.position, category.name ] }
+                              .map { |category, category_items| [ category, category_items.sort_by(&:position) ] }
+      [ name, categories ]
+    end
+  end
+
   # Drag-and-drop move between lists. Mirrors Todo#move_to_column!.
   def move_to_list!(new_restock_category_id, new_position = nil)
     new_restock_category_id = new_restock_category_id.to_i

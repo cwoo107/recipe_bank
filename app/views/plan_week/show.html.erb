@@ -1,8 +1,11 @@
-<% content_for :title, "Plan Your Week — #{@dashboard_section.label}" %>
+<% content_for :title, "Plan #{@weekly_plan.week_label} — #{@dashboard_section.label}" %>
 
 <%= native_form_tag %>
 
 <div class="w-full max-w-6xl mx-auto">
+  <%= render "plan_week/week_switcher", week_start: @week_start, weekly_plan: @weekly_plan,
+             plannable_weeks: @plannable_weeks, week_plans: @week_plans %>
+
   <%= render "plan_week/progress", sections: @sections, current_key: @dashboard_section.key %>
 
   <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
@@ -20,7 +23,7 @@
 
   <div class="mt-4 flex items-center justify-between gap-3">
     <% if @previous_key %>
-      <%= link_to plan_week_step_path(section: @previous_key),
+      <%= link_to plan_week_step_path(section: @previous_key, week: @week_start),
                   class: "text-sm font-medium text-gray-500 hover:text-[#5f734c] dark:text-gray-400 dark:hover:text-[#7a8f62]" do %>
         ← Back
       <% end %>
@@ -28,7 +31,7 @@
       <%= link_to "← Back to dashboard", dashboard_path, class: "text-sm font-medium text-gray-500 hover:text-[#5f734c] dark:text-gray-400 dark:hover:text-[#7a8f62]" %>
     <% end %>
 
-    <%= button_to "Skip this step", plan_week_step_path(section: @dashboard_section.key),
+    <%= button_to "Skip this step", plan_week_step_path(section: @dashboard_section.key, week: @week_start),
                   method: :patch, params: { status: "skipped" },
                   class: "text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-transparent p-0 border-0" %>
   </div>

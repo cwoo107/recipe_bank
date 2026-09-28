@@ -19,10 +19,10 @@ class WeeklyChore < ApplicationRecord
 
   scope :for_week, ->(week_start) { where(week_start: week_start).order(:position) }
 
-  # The first day (Mon..Sun) of the given week that doesn't already have a
-  # chore on it — where a plain "Add to this week" click lands a chore, since
-  # every chore now needs a day (there's no more unscheduled column to drop
-  # it in). Falls back to Monday once every day already has something.
+  # The first day of the given week that doesn't already have a chore on it —
+  # where a plain "Add to this week" click lands a chore, since every chore
+  # now needs a day (there's no more unscheduled column to drop it in). Falls
+  # back to the week's first day once every day already has something.
   def self.first_available_day(household, week_start)
     scheduled_dates = household.weekly_chores.where(week_start: week_start).where.not(scheduled_date: nil).pluck(:scheduled_date).to_set
     (0..6).map { |i| week_start + i }.find { |day| !scheduled_dates.include?(day) } || week_start

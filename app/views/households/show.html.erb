@@ -8,18 +8,56 @@
         The <%= @household.family_name %> household
       </h1>
     </div>
-    <% if @household.admin?(current_user) %>
-      <%= link_to "Settings", edit_household_path,
-            class: "rounded-lg px-4 py-2.5 bg-white dark:bg-white/5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 font-medium transition" %>
-    <% end %>
   </div>
 
   <%= turbo_frame_tag "household_members" do %>
     <%= render "household_members/list" %>
   <% end %>
 
-  <p class="mt-4 text-sm text-olive-500">
-    Members sign in with their own email and password. Admins have the same level of
-    control as the owner.
-  </p>
+  <%# Household settings — editable by admins, read-only for everyone else. %>
+  <div id="household_settings" class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
+    <div class="px-5 py-4">
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400">Settings</h2>
+    </div>
+
+    <div class="border-t border-sage-100 px-5 py-5">
+      <% if @household.admin?(current_user) %>
+        <div class="max-w-md">
+          <%= render "form", household: @household %>
+        </div>
+      <% else %>
+        <dl class="grid gap-4 sm:grid-cols-4 text-sm">
+          <div>
+            <dt class="text-olive-500">Family name</dt>
+            <dd class="mt-1 font-medium text-sage-900"><%= @household.family_name %></dd>
+          </div>
+          <div>
+            <dt class="text-olive-500">Family size</dt>
+            <dd class="mt-1 font-medium text-sage-900"><%= @household.family_size %></dd>
+          </div>
+          <div>
+            <dt class="text-olive-500">Minutes per day for to-dos</dt>
+            <dd class="mt-1 font-medium text-sage-900"><%= @household.minutes_per_day %></dd>
+          </div>
+          <div>
+            <dt class="text-olive-500">Week starts on</dt>
+            <dd class="mt-1 font-medium text-sage-900"><%= @household.week_start_day_name %></dd>
+          </div>
+        </dl>
+        <p class="mt-4 text-xs text-olive-400">Only household admins can change these.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @household.owner?(current_user) %>
+    <div class="mt-8 rounded-xl border border-dusty-rose-200 bg-white p-6 shadow-sm">
+      <h2 class="text-sm font-semibold text-dusty-rose-800">Danger zone</h2>
+      <p class="mt-1 text-sm text-olive-500">
+        Deleting the household removes all members. This can't be undone.
+      </p>
+      <%= button_to "Delete household", household_path, method: :delete,
+            data: { turbo_confirm: "Delete the household and remove all members?" },
+            class: "mt-4 rounded-lg px-3 py-1.5 text-sm border border-dusty-rose-200 bg-dusty-rose-50 font-medium text-dusty-rose-700 hover:bg-dusty-rose-100 cursor-pointer transition" %>
+    </div>
+  <% end %>
 </div>

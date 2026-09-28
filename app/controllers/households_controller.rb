@@ -7,7 +7,7 @@ class HouseholdsController < ApplicationController
   before_action :require_owner!,           only: :destroy
 
   def show
-    @members = @household.household_members.includes(:user).order(:name)
+    @members = @household.people
   end
 
   def new
@@ -28,13 +28,18 @@ class HouseholdsController < ApplicationController
     end
   end
 
-  def edit; end
+  # Settings live on the household page now; keep old links working.
+  def edit
+    redirect_to household_path(anchor: "household_settings")
+  end
 
   def update
     if @household.update(household_params)
       redirect_to household_path, notice: "Household updated.", status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      # Re-render the household page so the settings form shows its errors.
+      @members = @household.people
+      render :show, status: :unprocessable_entity
     end
   end
 
@@ -56,6 +61,6 @@ class HouseholdsController < ApplicationController
   end
 
   def household_params
-    params.expect(household: [:family_name, :minutes_per_day])
+    params.expect(household: [:family_name, :minutes_per_day, :week_start_day, :family_size])
   end
 end

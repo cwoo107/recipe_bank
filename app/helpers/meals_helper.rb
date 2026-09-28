@@ -1,4 +1,24 @@
 module MealsHelper
+  # Each breakfast/lunch/dinner slot of a week, keyed "YYYY-MM-DD|breakfast",
+  # with who has their own assigned meal there and the shared (unassigned)
+  # meals planned there. The meal form uses it to default a shared meal's
+  # servings (family minus those people) and, before saving, to ask whether
+  # newly assigned people should come out of the shared meals' servings.
+  # `except` leaves out the meal being edited.
+  def meal_slot_data(household, week_start, except: nil)
+    meals = household.meals.where(date: week_start...(week_start + 7)).where.not(id: except&.id)
+                     .includes(:recipe, :meal_assignments)
+                     .select(&:calendar_meal?)
+
+    meals.group_by { |meal| "#{meal.date.iso8601}|#{meal.meal_name.downcase}" }.transform_values do |slot_meals|
+      assigned, shared = slot_meals.partition(&:assigned?)
+      {
+        assigned: assigned.flat_map(&:eater_ids_assigned).uniq,
+        shared:   shared.map { |meal| { id: meal.id, title: meal.recipe.title, servings: meal.servings } }
+      }
+    end
+  end
+
   def meal_color_classes(meal)
     case meal.meal_name.downcase
     when "breakfast"

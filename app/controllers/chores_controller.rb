@@ -45,7 +45,7 @@ class ChoresController < ApplicationController
   end
 
   def chore_params
-    params.require(:chore).permit(:name, :description, :frequency, :assignee_id)
+    scoped_assignee_params(params.require(:chore).permit(:name, :description, :frequency, :assignee_id))
   end
 
   # Only ever redirect to a path within this app — params[:return_to] is

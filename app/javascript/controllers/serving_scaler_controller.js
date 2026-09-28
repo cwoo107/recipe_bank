@@ -2,11 +2,20 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
     static targets = ["count", "quantity"]
-    static values  = { base: Number }
+    // initial: servings to open at (the household's family size) — the
+    // quantities are scaled from the recipe's own servings on load.
+    static values  = { base: Number, initial: Number }
 
     connect() {
+        if (!this.hasCountTarget) return
+
         this.baseValue = parseInt(this.countTarget.textContent, 10)
         this.current   = this.baseValue
+
+        if (this.initialValue > 0 && this.initialValue !== this.baseValue) {
+            this.current = this.initialValue
+            this.update()
+        }
     }
 
     // A row re-rendered mid-scale (e.g. after an inline quantity edit) comes

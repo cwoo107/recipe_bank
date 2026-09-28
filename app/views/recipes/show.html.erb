@@ -118,7 +118,8 @@
     <%# Ingredients %>
     <div class="lg:col-span-1">
       <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10"
-           data-controller="serving-scaler">
+           data-controller="serving-scaler"
+           data-serving-scaler-initial-value="<%= current_household&.family_size if user_signed_in? %>">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ingredients</h2>
           <% if @recipe.servings.present? %>

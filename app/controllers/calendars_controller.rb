@@ -14,8 +14,8 @@ class CalendarsController < ApplicationController
       @date = Time.zone.today.beginning_of_month
     end
 
-    @range_start = @date.beginning_of_month.beginning_of_week(:sunday)
-    @range_end   = @date.end_of_month.end_of_week(:sunday)
+    @range_start = @date.beginning_of_month.beginning_of_week
+    @range_end   = @date.end_of_month.end_of_week
 
     load_events(@range_start, @range_end + 1.day)
     @events_by_date = group_events_by_date(@events, @range_start, @range_end)
@@ -23,8 +23,8 @@ class CalendarsController < ApplicationController
 
   def week
     @date      = params[:date].present? ? Date.parse(params[:date]) : Time.zone.today
-    @date      = @date.beginning_of_week(:sunday)
-    @range_end = @date.end_of_week(:sunday)
+    @date      = @date.beginning_of_week
+    @range_end = @date.end_of_week
 
     load_events(@date, @range_end + 1.day)
     @events_by_day  = group_events_by_day(@events, @date, @range_end)

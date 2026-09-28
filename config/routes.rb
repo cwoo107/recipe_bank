@@ -5,7 +5,8 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
 
-  get   "plan-week",          to: "plan_week#start", as: :plan_week
+  get    "plan-week",          to: "plan_week#start", as: :plan_week
+  delete "plan-week",          to: "plan_week#close"
   get   "plan-week/:section", to: "plan_week#show",  as: :plan_week_step
   patch "plan-week/:section", to: "plan_week#update"
 
@@ -27,10 +28,15 @@ Rails.application.routes.draw do
   end
   post 'grocery_lists', to: 'grocery_lists#create', as: :create_grocery_list
 
-  resources :meals
+  resources :meals do
+    collection do
+      get :week_stats
+    end
+  end
+  resource  :preferences, only: :update
   resources :recurring_meals, only: [:index, :edit, :update, :destroy]
   resource  :household                           # singular resource — index doesn't exist for these
-  resources :household_members, except: :show   # scoped by current_household, not URL
+  resources :household_members, except: :index  # scoped by current_household, not URL
 
   resources :recipe_imports, only: [:new, :create, :show] do
     collection do

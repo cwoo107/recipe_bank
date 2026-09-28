@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -165,9 +165,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "family_name"
+    t.integer "family_size", default: 1, null: false
     t.integer "minutes_per_day", default: 30, null: false
     t.integer "owner_id", null: false
     t.datetime "updated_at", null: false
+    t.integer "week_start_day", default: 1, null: false
     t.index ["owner_id"], name: "index_households_on_owner_id"
   end
 
@@ -192,6 +194,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
     t.integer "unit_servings"
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_ingredients_on_created_by_id"
+  end
+
+  create_table "meal_assignments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "household_member_id", null: false
+    t.integer "meal_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_member_id"], name: "index_meal_assignments_on_household_member_id"
+    t.index ["meal_id", "household_member_id"], name: "index_meal_assignments_on_meal_id_and_household_member_id", unique: true
+    t.index ["meal_id"], name: "index_meal_assignments_on_meal_id"
   end
 
   create_table "meals", force: :cascade do |t|
@@ -288,6 +300,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
     t.index ["visibility"], name: "index_recipes_on_visibility"
   end
 
+  create_table "recurring_meal_assignments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "household_member_id", null: false
+    t.integer "recurring_meal_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_member_id"], name: "index_recurring_meal_assignments_on_household_member_id"
+    t.index ["recurring_meal_id", "household_member_id"], name: "index_recurring_meal_assignments_on_rule_and_member", unique: true
+    t.index ["recurring_meal_id"], name: "index_recurring_meal_assignments_on_recurring_meal_id"
+  end
+
   create_table "recurring_meal_occurrences", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.date "date", null: false
@@ -365,6 +387,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
 
   create_table "todos", force: :cascade do |t|
     t.integer "actual_time_to_complete"
+    t.integer "assignee_id"
     t.boolean "completed", default: false, null: false
     t.datetime "created_at", null: false
     t.text "description"
@@ -378,6 +401,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
     t.string "title", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["assignee_id"], name: "index_todos_on_assignee_id"
     t.index ["household_id", "status", "position"], name: "index_todos_on_household_id_and_status_and_position"
     t.index ["household_id", "status", "start_date"], name: "index_todos_on_household_id_and_status_and_start_date"
     t.index ["household_id", "status"], name: "index_todos_on_household_id_and_status"
@@ -399,6 +423,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "compact_meals_view", default: false, null: false
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -475,6 +500,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   add_foreign_key "ingredient_tags", "ingredients"
   add_foreign_key "ingredient_tags", "tags"
   add_foreign_key "ingredients", "users", column: "created_by_id"
+  add_foreign_key "meal_assignments", "household_members"
+  add_foreign_key "meal_assignments", "meals"
   add_foreign_key "meals", "households"
   add_foreign_key "meals", "recipes"
   add_foreign_key "meals", "recurring_meals"
@@ -489,6 +516,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   add_foreign_key "recipe_tags", "tags"
   add_foreign_key "recipes", "recipes", column: "source_recipe_id"
   add_foreign_key "recipes", "users"
+  add_foreign_key "recurring_meal_assignments", "household_members"
+  add_foreign_key "recurring_meal_assignments", "recurring_meals"
   add_foreign_key "recurring_meal_occurrences", "meals"
   add_foreign_key "recurring_meal_occurrences", "recurring_meals"
   add_foreign_key "recurring_meals", "households"
@@ -500,6 +529,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_120000) do
   add_foreign_key "restock_items", "users"
   add_foreign_key "steps", "recipes"
   add_foreign_key "tags", "users"
+  add_foreign_key "todos", "household_members", column: "assignee_id"
   add_foreign_key "todos", "households"
   add_foreign_key "todos", "users"
   add_foreign_key "user_favorites", "recipes"

@@ -1,0 +1,36 @@
+<%# Optional "who's eating" picker for meal and recurring-meal forms. Renders
+    nothing for households with no one listed besides the owner, and stays
+    collapsed until opened (or when people are already picked), so it never
+    gets in the way of households that don't use it.
+
+    Locals:
+      field_name:   param name, e.g. "meal[eater_ids][]"
+      selected_ids: member ids currently picked
+      checkbox_data: extra data attributes for each checkbox (optional) %>
+<% checkbox_data = local_assigns.fetch(:checkbox_data, {}) %>
+<% if current_household.assignable? %>
+  <details class="group" <%= "open" if selected_ids.any? %>>
+    <summary class="cursor-pointer list-none text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-[#5f734c] dark:hover:text-[#7a8f62] select-none">
+      <span class="inline-block transition-transform group-open:rotate-90">›</span>
+      Who's eating? <span class="font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+    </summary>
+
+    <div class="mt-3">
+      <%# Blank value so unchecking everyone clears the assignment. %>
+      <%= hidden_field_tag field_name, "", id: nil %>
+      <div class="flex flex-wrap gap-2">
+        <% current_household.people.each do |person| %>
+          <label>
+            <%= check_box_tag field_name, person.id, selected_ids.include?(person.id),
+                  id: "#{field_name.parameterize(separator: '_')}_#{person.id}",
+                  class: "sr-only peer", data: checkbox_data %>
+            <span class="flex items-center px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border border-gray-300 dark:border-white/15 text-gray-600 dark:text-gray-300 bg-white dark:bg-white/5 transition-all duration-150 peer-checked:bg-[#5f734c] peer-checked:border-[#5f734c] peer-checked:text-white dark:peer-checked:bg-[#7a8f62] dark:peer-checked:border-[#7a8f62] hover:border-[#5f734c]/50 dark:hover:border-[#7a8f62]/50">
+              <%= person.name %>
+            </span>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-2 text-xs text-gray-400 dark:text-gray-500">Leave everyone unchecked if the whole family is eating it.</p>
+    </div>
+  </details>
+<% end %>

@@ -15,7 +15,7 @@ module Dashboard
     end
 
     def done_this_week
-      @done_this_week ||= household.todos.ended_this_week
+      @done_this_week ||= household.todos.ended_in_week(week_start)
     end
 
     def open_count = open_this_week.count
@@ -26,11 +26,11 @@ module Dashboard
     end
 
     def summary_line
-      "#{open_count} open, #{done_count} done this week"
+      "#{open_count} open, #{done_count} done #{week_phrase}"
     end
 
     def empty_headline = "To-dos"
-    def empty_body     = "Nothing scheduled into this week yet."
+    def empty_body     = "Nothing scheduled into #{week_phrase} yet."
     def cta_label      = "Review to-dos"
   end
 end

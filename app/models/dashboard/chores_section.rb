@@ -24,7 +24,7 @@ module Dashboard
 
     def summary_line
       count = chores_this_week.count
-      "#{count} chore#{'s' unless count == 1} on this week's list"
+      "#{count} chore#{'s' unless count == 1} on the list for #{week_phrase}"
     end
 
     def detail_line
@@ -32,7 +32,7 @@ module Dashboard
     end
 
     def empty_headline = "Chores"
-    def empty_body     = "No chores scheduled for this week yet."
+    def empty_body     = "No chores scheduled for #{week_phrase} yet."
     def cta_label      = "Plan chores"
 
     private

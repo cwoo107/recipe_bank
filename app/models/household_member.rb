@@ -5,6 +5,9 @@ class HouseholdMember < ApplicationRecord
   # Deleting a member shouldn't be blocked by (or leave dangling) chore assignments.
   has_many :chores,        foreign_key: :assignee_id, dependent: :nullify, inverse_of: :assignee
   has_many :weekly_chores, foreign_key: :assignee_id, dependent: :nullify, inverse_of: :assignee
+  has_many :todos,         foreign_key: :assignee_id, dependent: :nullify, inverse_of: :assignee
+  has_many :meal_assignments,           dependent: :destroy
+  has_many :recurring_meal_assignments, dependent: :destroy
 
   # admin  => same level of control as the owner
   # limited => can view/use household data, cannot manage the household or members
@@ -12,17 +15,36 @@ class HouseholdMember < ApplicationRecord
 
   validates :name, presence: true
   validates :user_id, uniqueness: true, allow_nil: true
-  validate :user_is_not_the_owner
+  validate :owner_stays_admin
+
+  after_create :grow_household_family_size
+  before_destroy :keep_owner_member, unless: :destroyed_by_association
 
   scope :with_login, -> { where.not(user_id: nil) }
 
+  # The household owner's own row (see Household#owner_member).
+  def owner?
+    user_id.present? && household&.owner_id == user_id
+  end
+
+  def login?
+    user_id.present?
+  end
+
   private
 
-  def user_is_not_the_owner
-    return if user_id.blank?
+  def owner_stays_admin
+    errors.add(:role, "can't be changed for the owner") if owner? && !admin?
+  end
 
-    if household&.owner_id == user_id
-      errors.add(:user, "is the owner and doesn't need a membership")
-    end
+  def grow_household_family_size
+    household.grow_family_size_to_fit_members!
+  end
+
+  def keep_owner_member
+    return unless owner?
+
+    errors.add(:base, "The owner can't be removed from their household")
+    throw :abort
   end
 end

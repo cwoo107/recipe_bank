@@ -3,7 +3,9 @@
 one:
   family_name: "Doe Household"
   owner: one # alice
+  family_size: 3
 
 two:
   family_name: "Smith Household"
   owner: three # carol
+  family_size: 2

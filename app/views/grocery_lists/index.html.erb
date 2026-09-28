@@ -1,6 +1,6 @@
 <% content_for :title, "Grocery lists" %>
 
-<div class="w-full">
+<div class="w-full" data-controller="tabs">
   <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
     <div>
       <h1 class="text-5xl  tracking-tight text-olive-800 dark:text-[#e8ede3]">
@@ -37,7 +37,19 @@
     </div>
   </div>
 
-  <div class="mt-8">
+  <%# Two lists: groceries from the meal plan, and restock items from the
+      restock checklist. %>
+  <% restock_count = @restock_list.sum { |_, categories| categories.sum { |_, items| items.size } } %>
+  <div class="mt-8 flex gap-6 border-b border-gray-200 dark:border-white/10" role="tablist">
+    <% [ [ "groceries", "Groceries" ], [ "restock", "Restock (#{restock_count})" ] ].each do |key, label| %>
+      <button type="button" role="tab" data-tabs-target="tab" data-tabs-panel="<%= key %>_panel" data-action="tabs#show"
+              class="-mb-px border-b-2 px-1 pb-2 text-sm font-semibold cursor-pointer <%= @active_list == key ? "border-[#5f734c] text-[#5f734c] dark:text-[#7a8f62] dark:border-[#7a8f62]" : "border-transparent text-gray-500" %>">
+        <%= label %>
+      </button>
+    <% end %>
+  </div>
+
+  <div id="groceries_panel" data-tabs-target="panel" class="mt-4 <%= 'hidden' unless @active_list == 'groceries' %>">
     <%# Week navigation %>
     <div class="flex items-center justify-between mb-4 gap-2">
       <%= link_to grocery_lists_path(date: @date - 1.week),
@@ -102,5 +114,32 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <div id="restock_panel" data-tabs-target="panel" class="mt-4 <%= 'hidden' unless @active_list == 'restock' %>">
+
+    <% if @restock_list.empty? %>
+      <div class="rounded-lg border-2 border-dashed border-gray-200 dark:border-white/10 p-8 text-center">
+        <p class="text-sm text-gray-500 dark:text-gray-400">Nothing to restock right now.</p>
+      </div>
+    <% else %>
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <% @restock_list.each do |store, categories| %>
+          <section class="rounded-lg bg-white shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
+            <h2 class="px-4 pt-4 text-2xl text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif"><%= store %></h2>
+            <div class="px-2 pb-3">
+              <% categories.each do |category, items| %>
+                <h3 class="mt-3 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"><%= category.name %></h3>
+                <ul class="divide-y divide-gray-100 dark:divide-white/5">
+                  <% items.each do |item| %>
+                    <%= render "restock_items/shopping_item", item: item %>
+                  <% end %>
+                </ul>
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </div>

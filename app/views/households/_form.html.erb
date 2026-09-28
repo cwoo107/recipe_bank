@@ -18,9 +18,21 @@
   </div>
 
   <div>
+    <%= f.label :family_size, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= f.number_field :family_size, min: 1, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+    <p class="mt-1.5 text-xs text-olive-400">How many people eat at home, whether or not they have an account. Used as the default servings for new meals and on recipes.</p>
+  </div>
+
+  <div>
     <%= f.label :minutes_per_day, "Minutes per day for to-dos", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= f.number_field :minutes_per_day, min: 1, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", placeholder: "30" %>
     <p class="mt-1.5 text-xs text-olive-400">How much time your household typically has each day to work on to-dos. Used to schedule and order to-do dates.</p>
+  </div>
+
+  <div>
+    <%= f.label :week_start_day, "Week starts on", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= f.select :week_start_day, Household.week_start_day_options, {}, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+    <p class="mt-1.5 text-xs text-olive-400">Every week in your household — meals, chores, plans, grocery lists and the calendar — runs from this day. Changing it moves this week's and future chore charts, weekly plans and grocery lists onto the new weeks.</p>
   </div>
 
   <div class="pt-2">
