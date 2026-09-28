@@ -71,6 +71,13 @@ class Household < ApplicationRecord
     household_members.includes(:user).order(Arel.sql("CASE WHEN household_members.user_id = #{owner_id.to_i} THEN 0 ELSE 1 END"), :name)
   end
 
+  # The first palette color no one in the household has yet (wrapping around
+  # once all six are used) — new members' default.
+  def next_member_color
+    taken = household_members.pluck(:color)
+    Palette::NAMES.find { |name| taken.exclude?(name) } || Palette::NAMES[taken.size % Palette::NAMES.size]
+  end
+
   # Assignment controls (who's eating, who's doing it) only appear once
   # there's someone besides the owner to choose from — households that never
   # list anyone never see them.
@@ -126,8 +133,9 @@ class Household < ApplicationRecord
   # no login instead (a child, or anyone who won't use the app). Returns the
   # (possibly unpersisted, error-laden) HouseholdMember either way, so
   # controllers can re-render forms.
-  def invite_member(name: nil, email: nil, role: :limited)
+  def invite_member(name: nil, email: nil, role: :limited, color: nil)
     member = household_members.new(name:, role:)
+    member.assign_attributes(color:, color_chosen: true) if color.present?
 
     if email.blank?
       member.role = :limited

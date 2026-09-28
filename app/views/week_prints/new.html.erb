@@ -1,0 +1,47 @@
+<% content_for :title, "Print a week's plan" %>
+<% week_end = @week_start + 6 %>
+
+<div class="mx-auto max-w-2xl">
+  <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
+    <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">Print<span class="text-olive-800 dark:text-[#e8ede3]">Plan</span></span>
+  </h1>
+  <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Choose a week and the pages you want, and we'll make a PDF you can print or save.</p>
+
+  <%# Any week can be printed — step through them here. %>
+  <div class="mt-6 flex items-center justify-between gap-3 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3">
+    <%= link_to "‹ Prev", new_week_print_path(week: @week_start - 7, sections: @sections),
+          class: "rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10" %>
+    <div class="text-center">
+      <p class="text-lg text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;"><%= WeeklyPlan.week_label(@week_start) %></p>
+      <p class="text-xs text-gray-500 dark:text-gray-400"><%= @week_start.strftime("%b %-d") %> – <%= week_end.strftime(@week_start.month == week_end.month ? "%-d, %Y" : "%b %-d, %Y") %></p>
+    </div>
+    <%= link_to "Next ›", new_week_print_path(week: @week_start + 7, sections: @sections),
+          class: "rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/10" %>
+  </div>
+
+  <%# Opens the PDF in a new tab — it's generated on the fly and not saved. %>
+  <%= form_with url: week_print_path(format: :pdf), method: :get, local: true,
+        data: { turbo: false }, html: { target: "_blank" }, class: "mt-6" do %>
+    <%= hidden_field_tag :week, @week_start.iso8601 %>
+
+    <fieldset class="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 divide-y divide-gray-100 dark:divide-white/5">
+      <legend class="sr-only">Pages to print</legend>
+      <% WeekPlanPdf::SECTIONS.each do |key, section| %>
+        <label class="flex items-start gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5">
+          <%= check_box_tag "sections[]", key, @sections.include?(key), id: "section_#{key}",
+                style: "accent-color: #5f734c;", class: "mt-0.5 size-4 rounded border-gray-300" %>
+          <span>
+            <span class="block text-sm font-medium text-gray-900 dark:text-white"><%= section[:label] %></span>
+            <span class="block text-xs text-gray-500 dark:text-gray-400"><%= section[:hint] %></span>
+          </span>
+        </label>
+      <% end %>
+    </fieldset>
+
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <%= submit_tag "Create PDF", name: nil,
+            class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-4 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer" %>
+      <%= link_to "Back to dashboard", dashboard_path, class: "text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
+    </div>
+  <% end %>
+</div>

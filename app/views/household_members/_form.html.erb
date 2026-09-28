@@ -49,6 +49,10 @@
   </div>
   <% end %>
 
+  <%# Their color on the chore chart and to-dos (and printouts). %>
+  <%= render "shared/color_picker", f: f, selected: member.color,
+             dots: Palette::PERSON_CLASSES.transform_values { |classes| classes[:dot] } %>
+
   <div class="flex items-center gap-3 pt-2">
     <%= f.submit member.persisted? ? "Save changes" : "Add member",
           class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>

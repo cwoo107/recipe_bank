@@ -1,0 +1,19 @@
+<%# Round color swatches for picking one of the Palette colors — used for
+    calendars and household members.
+    Locals: f (form builder), selected (color name), dots ({ name => dot class }),
+            label (optional), field (optional, default :color) %>
+<% field = local_assigns.fetch(:field, :color) %>
+<div>
+  <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"><%= local_assigns.fetch(:label, "Color") %></span>
+  <div class="flex gap-2.5 flex-wrap">
+    <% dots.each do |color_key, dot| %>
+      <label class="cursor-pointer" title="<%= color_key.humanize %>">
+        <%= f.radio_button field, color_key, checked: selected == color_key, class: "sr-only peer" %>
+        <span class="block size-8 rounded-full <%= dot %> ring-2 ring-offset-2 ring-transparent
+                     peer-checked:ring-[#5f734c] dark:peer-checked:ring-[#7a8f62]
+                     hover:scale-110 transition-transform"></span>
+        <span class="sr-only"><%= color_key.humanize %></span>
+      </label>
+    <% end %>
+  </div>
+</div>

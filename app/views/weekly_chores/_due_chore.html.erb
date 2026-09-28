@@ -12,7 +12,7 @@
       <%= render "chores/frequency_pill", chore: chore %>
     </div>
     <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-      <%= chore.assignee&.name || "Unassigned" %>
+      <%= chore.assignee ? person_pill(chore.assignee) : "Unassigned" %>
     </p>
   </div>
 

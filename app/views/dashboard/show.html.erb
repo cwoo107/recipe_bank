@@ -11,12 +11,18 @@
       </p>
     </div>
 
-    <% if household_admin? && !@nothing_planned %>
-      <div class="mt-4 sm:ml-16 sm:mt-0">
+    <div class="mt-4 sm:ml-16 sm:mt-0 flex flex-wrap gap-2">
+      <%# Printing is read-only, so every member gets it. The print page can
+          step to any other week. %>
+      <%= link_to new_week_print_path(week: @week_start), class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" do %>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true"><path fill-rule="evenodd" d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5c.966 0 1.75.784 1.75 1.75v3.552c.377.046.752.097 1.126.153A2.212 2.212 0 0 1 18 8.653v4.097A2.25 2.25 0 0 1 15.75 15h-.241l.305 1.984A1.75 1.75 0 0 1 14.084 19H5.915a1.75 1.75 0 0 1-1.73-2.016L4.492 15H4.25A2.25 2.25 0 0 1 2 12.75V8.653c0-1.082.775-2.034 1.874-2.198.374-.056.75-.107 1.127-.153L5 6.25v-3.5Zm8.5 3.397a41.533 41.533 0 0 0-7 0V2.75a.25.25 0 0 1 .25-.25h6.5a.25.25 0 0 1 .25.25v3.397ZM6.608 12.5a.25.25 0 0 0-.247.212l-.693 4.5a.25.25 0 0 0 .247.288h8.17a.25.25 0 0 0 .246-.288l-.692-4.5a.25.25 0 0 0-.247-.212H6.608Z" clip-rule="evenodd" /></svg>
+        Print this week's plan
+      <% end %>
+      <% if household_admin? && !@nothing_planned %>
         <%= link_to "Plan #{WeeklyPlan.week_label(@next_week_to_plan).downcase_first}", plan_week_path(week: @next_week_to_plan),
                     class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
-      </div>
-    <% end %>
+      <% end %>
+    </div>
   </div>
 
   <% if @unfinished_plan %>

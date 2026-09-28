@@ -46,7 +46,7 @@
     <orderEntry type="library" scope="PROVIDED" name="base64 (v0.3.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bcrypt (v3.1.22, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bcrypt_pbkdf (v1.1.2, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="bigdecimal (v4.0.1, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="bigdecimal (v3.1.9, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bindex (v0.8.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bootsnap (v1.20.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="TEST" name="brakeman (v7.1.2, rbenv: 4.0.0) [gem]" level="application" />
@@ -113,8 +113,10 @@
     <orderEntry type="library" scope="PROVIDED" name="ostruct (v0.6.3, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="parallel (v1.27.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="parser (v3.3.10.0, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="pdf-core (v0.10.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="pg (v1.5.9, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="pp (v0.6.3, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="prawn (v2.5.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="prettyprint (v0.2.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="prism (v1.9.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="propshaft (v1.3.1, rbenv: 4.0.0) [gem]" level="application" />
@@ -166,6 +168,7 @@
     <orderEntry type="library" scope="PROVIDED" name="thruster (v0.1.17, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="timeout (v0.6.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="tsort (v0.2.0, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="ttfunk (v1.8.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="turbo-rails (v2.0.20, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="tzinfo (v2.0.6, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="unicode (v0.4.4.5, rbenv: 4.0.0) [gem]" level="application" />

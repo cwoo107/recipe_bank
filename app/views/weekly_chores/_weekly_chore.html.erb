@@ -31,7 +31,7 @@
           <%= chore.name %>
         </p>
         <% if weekly_chore.assignee %>
-          <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate"><%= weekly_chore.assignee.name %></p>
+          <p class="mt-0.5"><%= person_pill(weekly_chore.assignee, size: :xs) %></p>
         <% end %>
         <div class="mt-1">
           <%= render "chores/frequency_pill", chore: chore, small: true %>

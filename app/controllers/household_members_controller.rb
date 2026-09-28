@@ -24,7 +24,7 @@ class HouseholdMembersController < ApplicationController
   end
 
   def new
-    @member = current_household.household_members.new
+    @member = current_household.household_members.new(color: current_household.next_member_color)
   end
 
   def create
@@ -96,14 +96,14 @@ class HouseholdMembersController < ApplicationController
   # Household#invite_member, which builds the Devise user (or, left blank,
   # adds a member with no login).
   def invite_params
-    params.expect(household_member: [:name, :email, :role]).to_h.symbolize_keys
+    params.expect(household_member: [:name, :email, :role, :color]).to_h.symbolize_keys
   end
 
   # A login's email belongs to its own account settings. Role only matters
   # for members with a login (or getting one now), and the owner is always
   # admin.
   def member_params
-    permitted = params.expect(household_member: [:name, :role])
+    permitted = params.expect(household_member: [:name, :role, :color])
     getting_login = params.dig(:household_member, :email).present?
     @member.owner? || !(@member.login? || getting_login) ? permitted.except(:role) : permitted
   end

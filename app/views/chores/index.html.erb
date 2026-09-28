@@ -40,7 +40,7 @@
               <% end %>
             </div>
             <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              <%= chore.assignee&.name || "Unassigned" %>
+              <%= chore.assignee ? person_pill(chore.assignee) : "Unassigned" %>
               <% if chore.last_completed_at %>
                 · Last done <%= chore.last_completed_at.to_date.strftime("%b %-d") %>
               <% else %>

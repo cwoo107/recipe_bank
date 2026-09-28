@@ -2,9 +2,12 @@
   <div>
     <%# Name opens the member's weekly summary (meals, to-dos, chores). Frame
         breakout since the list sits inside the household_members frame. %>
-    <%= link_to household_member.name, household_member_path(household_member),
-          data: { turbo_frame: "_top" },
-          class: "font-medium text-sage-900 hover:text-[#5f734c] hover:underline" %>
+    <div class="flex items-center gap-2">
+      <%= person_dot(household_member, size: "size-3") %>
+      <%= link_to household_member.name, household_member_path(household_member),
+            data: { turbo_frame: "_top" },
+            class: "font-medium text-sage-900 hover:text-[#5f734c] hover:underline" %>
+    </div>
     <div class="mt-1 flex items-center gap-2">
       <% if household_member.owner? %>
         <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-sage-100 text-sage-700">Owner</span>

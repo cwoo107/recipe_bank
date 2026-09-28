@@ -6,7 +6,7 @@
     <div>
       <%= link_to "← #{current_household.family_name}", household_path,
             class: "text-xs font-semibold uppercase tracking-widest text-sage-400 hover:text-sage-600" %>
-      <h1 class="mt-1 font-serif text-4xl text-sage-900"><%= @member.name %></h1>
+      <h1 class="mt-1 flex items-center gap-3 font-serif text-4xl text-sage-900"><%= person_dot(@member, size: "size-4") %><%= @member.name %></h1>
       <p class="mt-1 text-sm text-olive-500">
         Week of <%= @date.strftime("%b %-d") %> – <%= week_end.strftime(@date.month == week_end.month ? "%-d, %Y" : "%b %-d, %Y") %>
       </p>

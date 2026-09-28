@@ -14,9 +14,15 @@ class HouseholdMember < ApplicationRecord
   enum :role, { admin: 0, limited: 1 }, default: :limited, validate: true
 
   validates :name, presence: true
+  validates :color, inclusion: { in: Palette::NAMES }
   validates :user_id, uniqueness: true, allow_nil: true
   validate :owner_stays_admin
 
+  # Set when a color was deliberately chosen (the member form), so it's kept
+  # even if it's the column default. Not persisted.
+  attribute :color_chosen, :boolean, default: false
+
+  before_validation :pick_unused_color, on: :create
   after_create :grow_household_family_size
   before_destroy :keep_owner_member, unless: :destroyed_by_association
 
@@ -31,7 +37,17 @@ class HouseholdMember < ApplicationRecord
     user_id.present?
   end
 
+  def color_classes = Palette.person_classes(color)
+
   private
+
+  # New members get the first color nobody in the household has yet (then
+  # wrap around), unless one was picked.
+  def pick_unused_color
+    return if color_chosen? || household.nil?
+
+    self.color = household.next_member_color
+  end
 
   def owner_stays_admin
     errors.add(:role, "can't be changed for the owner") if owner? && !admin?

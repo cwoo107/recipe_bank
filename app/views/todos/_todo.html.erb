@@ -57,9 +57,7 @@
       <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= pri[:classes] %>">
         <%= pri[:label] %>
       </span>
-      <% if todo.assignee %>
-        <span class="truncate text-[11px] text-gray-500 dark:text-gray-400"><%= todo.assignee.name %></span>
-      <% end %>
+      <%= person_pill(todo.assignee) %>
     </div>
 
     <%# Description (truncated) %>

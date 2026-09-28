@@ -118,17 +118,8 @@
 
   <%# ── Color picker ── %>
   <div>
-    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Color</label>
-    <div class="flex gap-2.5 flex-wrap">
-      <% CalendarSource::COLORS.each do |color_key, classes| %>
-        <label class="cursor-pointer" title="<%= color_key.humanize %>">
-          <%= f.radio_button :color, color_key, checked: source.color == color_key, class: "sr-only peer" %>
-          <span class="block size-8 rounded-full <%= classes[:dot] %> ring-2 ring-offset-2 ring-transparent
-                       peer-checked:ring-[#5f734c] dark:peer-checked:ring-[#7a8f62]
-                       hover:scale-110 transition-transform"></span>
-        </label>
-      <% end %>
-    </div>
+    <%= render "shared/color_picker", f: f, selected: source.color,
+               dots: CalendarSource::COLORS.transform_values { |classes| classes[:dot] } %>
   </div>
 
   <%# ── Submit ── %>

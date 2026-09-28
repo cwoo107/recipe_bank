@@ -5,6 +5,9 @@ Rails.application.routes.draw do
 
   get "dashboard", to: "dashboard#show", as: :dashboard
 
+  # Printable week plan: /print/new to choose, /print.pdf to download
+  resource :week_print, only: %i[new show], path: "print"
+
   get    "plan-week",          to: "plan_week#start", as: :plan_week
   delete "plan-week",          to: "plan_week#close"
   get   "plan-week/:section", to: "plan_week#show",  as: :plan_week_step

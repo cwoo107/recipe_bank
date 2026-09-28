@@ -152,6 +152,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
 
   create_table "household_members", force: :cascade do |t|
     t.boolean "child"
+    t.string "color", default: "olive", null: false
     t.datetime "created_at", null: false
     t.integer "household_id", null: false
     t.string "name"
