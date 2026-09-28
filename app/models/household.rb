@@ -198,7 +198,8 @@ class Household < ApplicationRecord
   # A sub-user login with a throwaway password — they set their own from the
   # emailed reset link.
   def build_member_login(email)
-    User.new(email:, password: SecureRandom.base58(24), skip_household_provisioning: true).tap do |user|
+    User.new(email:, password: SecureRandom.base58(24), skip_household_provisioning: true,
+             awaiting_first_password: true).tap do |user|
       user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
     end
   end

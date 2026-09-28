@@ -423,6 +423,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "awaiting_first_password", default: false, null: false
     t.boolean "compact_meals_view", default: false, null: false
     t.datetime "created_at", null: false
     t.string "email", default: "", null: false

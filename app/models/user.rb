@@ -33,6 +33,7 @@ class User < ApplicationRecord
   attribute :household_family_name, :string
 
   after_create :provision_household, unless: :skip_household_provisioning
+  before_update :mark_first_password_set, if: -> { awaiting_first_password? && will_save_change_to_encrypted_password? }
 
   # Invites a new household sub-user: like a password reset, but with a
   # welcome email (HouseholdMailer#invitation) instead of "someone asked to
@@ -46,7 +47,17 @@ class User < ApplicationRecord
     user_favorites.exists?(recipe: recipe)
   end
 
+  # Devise's "your password was changed" alert — but not for an invited
+  # member choosing their first password (they never had one to change).
+  def send_password_change_notification?
+    super && !saved_change_to_awaiting_first_password?
+  end
+
   private
+
+  def mark_first_password_set
+    self.awaiting_first_password = false
+  end
 
   # Every user needs a household to use the household-scoped planning
   # features. Sub-users created via Household#invite_member already get a

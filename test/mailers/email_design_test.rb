@@ -52,4 +52,48 @@ class EmailDesignTest < ActionMailer::TestCase
     assert_equal "the Anderson household", Household.new(family_name: "Anderson").display_name
     assert_equal "Alice's Household", Household.new(family_name: "Alice's Household").display_name
   end
+
+  test "changing a password sends the password-changed alert" do
+    assert_emails 1 do
+      @bob.update!(password: "newpass123", password_confirmation: "newpass123")
+    end
+    email = ActionMailer::Base.deliveries.last
+    assert_equal "Your HomemakersHaven password was changed", email.subject
+    assert_equal [ @bob.email ], email.to
+  end
+
+  test "changing an email alerts the old address" do
+    old_email = @bob.email
+    assert_emails 1 do
+      @bob.update!(email: "robert@example.com")
+    end
+    email = ActionMailer::Base.deliveries.last
+    assert_equal "Your HomemakersHaven email is changing", email.subject
+    assert_equal [ old_email ], email.to
+    assert_match "robert@example.com", email.html_part.body.to_s
+  end
+
+  test "an invited member setting their first password gets no change alert — later changes do" do
+    member = households(:one).invite_member(name: "Teen", email: "teen@example.com")
+    teen = member.user
+    assert teen.awaiting_first_password?
+
+    assert_no_emails do
+      teen.reset_password("firstpass1", "firstpass1") # what the invite link does
+    end
+    assert_not teen.reload.awaiting_first_password?
+
+    assert_emails 1 do
+      teen.update!(password: "secondpass2", password_confirmation: "secondpass2")
+    end
+  end
+
+  test "people who signed up themselves get the alert from the start" do
+    user = User.create!(email: "dana@example.com", password: "password123")
+    assert_not user.awaiting_first_password?
+
+    assert_emails 1 do
+      user.update!(password: "newpass123", password_confirmation: "newpass123")
+    end
+  end
 end
