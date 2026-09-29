@@ -1,0 +1,38 @@
+<%# locals: (weekly_chores:, week_start:, categories:, due_chores:)
+    The Chore Chart's "Due soon" box: chores coming due that aren't on the
+    board yet, then one row per chore category with a column per day. Shared
+    by the Chore Chart page and the plan-your-week wizard. %>
+<% rows = chore_board_rows(categories, weekly_chores.map(&:chore) + due_chores) %>
+
+<%# Scheduling by drag-and-drop is admin-only. %>
+<div <%= 'data-controller=chore-board' if household_admin? %>
+     data-chore-board-week-start-value="<%= week_start.iso8601 %>"
+     data-chore-board-create-url-value="<%= weekly_chores_path %>"
+     data-chore-board-reorder-url-value="<%= reorder_weekly_chores_path %>"
+     data-chore-board-category-reorder-url-value="<%= reorder_chore_categories_path %>">
+
+  <%= render "weekly_chores/assignee_key" %>
+
+  <div class="px-4 pt-3 pb-3 border-b border-gray-200 dark:border-white/10">
+    <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Coming up</h3>
+    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Drag onto the board to add to the schedule.</p>
+    <div id="due_chores" data-chore-board-target="dueList" class="mt-2 flex flex-col sm:flex-row sm:flex-wrap gap-2">
+      <% if due_chores.empty? %>
+        <p id="no_due_chores_message" class="text-sm text-gray-400 dark:text-gray-600 italic">Nothing coming up.</p>
+      <% else %>
+        <% due_chores.each do |chore| %>
+          <%= render "weekly_chores/due_chore", chore: chore, week_start: week_start %>
+        <% end %>
+      <% end %>
+    </div>
+  </div>
+
+  <%= render "weekly_chores/board", weekly_chores: weekly_chores, week_start: week_start, rows: rows %>
+  <%= render "weekly_chores/mobile_board", weekly_chores: weekly_chores, week_start: week_start, rows: rows %>
+
+  <% if household_admin? %>
+    <%= render "weekly_chores/move_dialog" %>
+    <%= render "weekly_chores/category_change_dialog" %>
+    <%= render "weekly_chores/remove_dialog" %>
+  <% end %>
+</div>

@@ -1,0 +1,103 @@
+<%# locals: (chore:) %>
+<%# One row of the Manage Chores table (desktop). Each
+    editable cell reads as plain text until clicked (chores/_inline_cell).
+    A <form> can't wrap a <tr>, so the row's form sits empty in the first
+    cell and every field joins it through its `form` attribute. %>
+<%
+  editable   = household_admin?
+  form_id    = "chore_inline_form_#{chore.id}"
+  field_id   = ->(attr) { "chore_#{chore.id}_inline_#{attr}" }
+  input      = "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] -mx-2 px-2 py-1 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none"
+  select_act = "change->inline-cell#commit blur->inline-cell#commit keydown.esc->inline-cell#cancel"
+  cell       = "px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 align-top"
+%>
+<tr id="<%= dom_id(chore) %>" data-controller="chore-row">
+  <td class="py-2.5 pl-4 pr-3 sm:pl-6 text-sm font-medium text-gray-900 dark:text-white align-top max-w-56">
+    <% if editable %>
+      <%= form_with model: chore, id: form_id, class: "hidden" do %>
+        <%= hidden_field_tag :inline, 1, id: nil %>
+        <%= hidden_field_tag :from, "desktop", id: nil %>
+      <% end %>
+    <% end %>
+
+    <%= render layout: "chores/inline_cell", locals: { text: chore.name, editable: editable } do %>
+      <%= label_tag field_id.(:name), "Name", class: "sr-only" %>
+      <%= text_field_tag "chore[name]", chore.name, id: field_id.(:name), form: form_id, required: true, class: input,
+            data: { inline_cell_target: "field", action: "blur->inline-cell#commit keydown.enter->inline-cell#commitOnEnter keydown.esc->inline-cell#cancel" } %>
+    <% end %>
+    <% if chore.description.present? %>
+      <p class="text-xs font-normal text-gray-500 dark:text-gray-400 truncate" title="<%= chore.description %>"><%= chore.description %></p>
+    <% end %>
+    <% if editable %><%= render "chores/errors", chore: chore, from: "desktop" %><% end %>
+  </td>
+
+  <td class="<%= cell %> min-w-40 max-w-56">
+    <div id="chore_tasks_desktop_<%= chore.id %>" class="py-1">
+      <%= render "chore_tasks/list", chore: chore, from: "desktop" %>
+    </div>
+  </td>
+
+  <td class="<%= cell %> max-w-44">
+    <%= render layout: "chores/inline_cell", locals: { text: chore.chore_category&.name || "Uncategorized", editable: editable } do %>
+      <%= label_tag field_id.(:category), "Category", class: "sr-only" %>
+      <%= select_tag "chore[chore_category_id]",
+            options_from_collection_for_select(current_household.chore_categories.ordered, :id, :name, chore.chore_category_id),
+            include_blank: "Uncategorized", id: field_id.(:category), form: form_id, class: input,
+            data: { inline_cell_target: "field", action: select_act } %>
+    <% end %>
+  </td>
+
+  <td class="<%= cell %> whitespace-nowrap">
+    <%= render layout: "chores/inline_cell", locals: { text: chore.frequency_label, editable: editable } do %>
+      <%= label_tag field_id.(:frequency), "Frequency", class: "sr-only" %>
+      <%= select_tag "chore[frequency]",
+            options_for_select(Chore::FREQUENCIES.map { |freq| [ Chore::FREQUENCY_LABELS[freq], freq ] }, chore.frequency),
+            id: field_id.(:frequency), form: form_id, class: input,
+            data: { inline_cell_target: "field", chore_row_target: "frequency", action: "#{select_act} change->chore-row#toggleDay" } %>
+    <% end %>
+  </td>
+
+  <td class="<%= cell %> whitespace-nowrap">
+    <%# Only weekly/biweekly chores have a day; the chore-row controller swaps
+        between the field and the "—" when the frequency changes. %>
+    <div data-chore-row-target="day" class="<%= 'hidden' unless chore.recurring? %>">
+      <%= render layout: "chores/inline_cell", locals: { text: chore.default_weekday ? Date::DAYNAMES[chore.default_weekday] : "No set day", editable: editable } do %>
+        <%= label_tag field_id.(:day), "Day", class: "sr-only" %>
+        <%= select_tag "chore[default_weekday]",
+              options_for_select(chore_weekday_options, chore.default_weekday),
+              include_blank: "No set day", id: field_id.(:day), form: form_id, class: input,
+              data: { inline_cell_target: "field", action: select_act } %>
+      <% end %>
+    </div>
+    <div data-chore-row-target="dayNone" class="py-1.5 text-gray-400 dark:text-gray-500 <%= 'hidden' if chore.recurring? %>">—</div>
+  </td>
+
+  <% if current_household.assignable? %>
+    <td class="<%= cell %> max-w-40">
+      <%= render layout: "chores/inline_cell", locals: { text: chore.assignee&.name || "Unassigned", editable: editable } do %>
+        <%= label_tag field_id.(:assignee), "Assigned to", class: "sr-only" %>
+        <%= select_tag "chore[assignee_id]",
+              options_from_collection_for_select(current_household.people, :id, :name, chore.assignee_id),
+              include_blank: "Unassigned", id: field_id.(:assignee), form: form_id, class: input,
+              data: { inline_cell_target: "field", action: select_act } %>
+      <% end %>
+    </td>
+  <% end %>
+
+  <td id="chore_last_done_<%= chore.id %>" class="<%= cell %> whitespace-nowrap">
+    <div class="py-1.5"><%= render "chores/last_done", chore: chore %></div>
+  </td>
+  <td id="chore_next_due_<%= chore.id %>" class="<%= cell %> whitespace-nowrap">
+    <div class="py-1.5"><%= render "chores/next_due", chore: chore %></div>
+  </td>
+
+  <td class="py-2.5 pl-3 pr-4 sm:pr-6 align-top">
+    <% if editable %>
+      <div class="flex items-center justify-end pt-1.5">
+        <%= button_to "Delete", chore_path(chore), method: :delete,
+              class: "text-xs font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer",
+              data: { turbo_confirm: "Delete \"#{chore.name}\"? This also removes it from any weekly lists." } %>
+      </div>
+    <% end %>
+  </td>
+</tr>

@@ -6,8 +6,10 @@ one:
   description: "Bins to the curb"
   frequency: weekly
   assignee: one # Bob, household one
+  chore_category: chores_one
 
 two:
   household: two
   name: "Deep clean kitchen"
   frequency: monthly
+  chore_category: chores_two

@@ -1,0 +1,11 @@
+<%# locals: (chore:) %>
+<%# Last completed / next due. Used in the mobile modal and for limited
+    members; the desktop table splits these into their own columns. %>
+<div class="flex flex-col gap-2 text-xs">
+  <dl class="grid grid-cols-[auto_1fr] gap-x-2 gap-y-0.5">
+    <dt class="text-gray-500 dark:text-gray-400">Last done</dt>
+    <dd class="text-gray-700 dark:text-gray-300"><%= render "chores/last_done", chore: chore %></dd>
+    <dt class="text-gray-500 dark:text-gray-400">Next due</dt>
+    <dd><%= render "chores/next_due", chore: chore %></dd>
+  </dl>
+</div>

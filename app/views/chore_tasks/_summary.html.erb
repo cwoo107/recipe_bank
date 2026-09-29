@@ -1,0 +1,6 @@
+<%# locals: (chore:) %>
+<%# A chore's tasks as one line of small text — the mobile Manage Chores
+    row. %>
+<% if chore.chore_tasks.any? %>
+  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400"><%= chore.chore_tasks.map(&:name).join(" · ") %></p>
+<% end %>

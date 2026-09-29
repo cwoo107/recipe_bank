@@ -1,0 +1,42 @@
+<%# locals: (f:, chore:) %>
+<%# The fields in the Manage Chores mobile modal.
+    The Day field only shows for weekly/biweekly chores (chore-row
+    controller). The desktop table edits cell by cell instead
+    (chores/_table_row). %>
+<%
+  input_class = "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-2.5 py-1.5 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none"
+  label_class = "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+%>
+<div>
+  <%= f.label :name, class: label_class %>
+  <%= f.text_field :name, class: input_class, required: true %>
+  <div class="mt-4">
+    <%= f.label :description, class: label_class %>
+    <%= f.text_area :description, rows: 2, class: "#{input_class} resize-none", placeholder: "Optional details…" %>
+  </div>
+</div>
+
+<div>
+  <%= f.label :chore_category_id, "Category", class: label_class %>
+  <%= f.collection_select :chore_category_id, current_household.chore_categories.ordered, :id, :name,
+        { include_blank: "Uncategorized" }, class: input_class %>
+</div>
+
+<div>
+  <%= f.label :frequency, class: label_class %>
+  <%= f.select :frequency, Chore::FREQUENCIES.map { |freq| [ Chore::FREQUENCY_LABELS[freq], freq ] }, {},
+        class: input_class, data: { chore_row_target: "frequency", action: "change->chore-row#toggleDay" } %>
+</div>
+
+<div class="<%= 'hidden' unless chore.recurring? %>" data-chore-row-target="day">
+  <%= f.label :default_weekday, "Day", class: label_class %>
+  <%= f.select :default_weekday, chore_weekday_options, { include_blank: "No set day" }, class: input_class %>
+</div>
+
+<% if current_household.assignable? %>
+  <div>
+    <%= f.label :assignee_id, "Assigned to", class: label_class %>
+    <%= f.collection_select :assignee_id, current_household.people, :id, :name,
+          { include_blank: "Unassigned" }, class: input_class %>
+  </div>
+<% end %>

@@ -1,0 +1,6 @@
+<%# The frame id comes from the tile that loaded this (desktop and mobile
+    each have their own — see weekly_chores/_add_category_tile.html.erb). %>
+<% frame_id = params[:frame].to_s.match?(/\Anew_chore_category(_\h+)?\z/) ? params[:frame] : "new_chore_category" %>
+<%= turbo_frame_tag frame_id do %>
+  <%= render "form", chore_category: @chore_category %>
+<% end %>

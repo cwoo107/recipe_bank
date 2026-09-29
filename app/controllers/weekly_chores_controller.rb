@@ -8,12 +8,14 @@ class WeeklyChoresController < ApplicationController
   def index
     @week_start = week_start_from_params
     Chore.auto_schedule_recurring!(current_household, week_start: @week_start)
-    @weekly_chores = current_household.weekly_chores.for_week(@week_start).includes(:chore, :assignee)
-    @due_chores = Chore.due_and_unscheduled(current_household, week_start: @week_start)
+    @weekly_chores = current_household.weekly_chores.for_week(@week_start).includes(:assignee, chore: %i[chore_category chore_tasks])
+    @due_chores = Chore.due_soon(current_household, week_start: @week_start)
+    @categories = current_household.chore_categories.ordered
   end
 
   def create
     chore = current_household.chores.find(params[:chore_id])
+    recategorize!(chore)
     @week_start = (params[:week_start].present? ? Date.parse(params[:week_start]) : Time.zone.today).beginning_of_week
 
     # find_or_initialize rather than a plain create: if this chore is somehow
@@ -21,6 +23,12 @@ class WeeklyChoresController < ApplicationController
     # before the first request finished), just move the existing row to
     # wherever it was just dropped instead of failing a uniqueness check.
     @weekly_chore = current_household.weekly_chores.find_or_initialize_by(chore: chore, week_start: @week_start)
+    # Re-adding a chore that was taken off just this week: whatever day it
+    # lands on only applies to this week, like the removal did.
+    if @weekly_chore.skipped?
+      @weekly_chore.skipped = false
+      @weekly_chore.this_week_only = true
+    end
     # A plain "Add to this week" click (no explicit day) fills in the first
     # day that doesn't already have a chore on it — every chore needs a day.
     @weekly_chore.scheduled_date = params[:scheduled_date].presence || WeeklyChore.first_available_day(current_household, @week_start)
@@ -38,11 +46,13 @@ class WeeklyChoresController < ApplicationController
   end
 
   # POST /weekly_chores/:id/move — drag-and-drop onto a different day in the
-  # board. Mirrors TodosController#move.
+  # board. Mirrors TodosController#move. The board asks whether the new day
+  # applies going forward (the default) or scope=week, just this week.
   def move
     @week_start = @weekly_chore.week_start
     scheduled_date = params[:scheduled_date].presence && Date.parse(params[:scheduled_date])
-    @weekly_chore.move_to_day!(scheduled_date, params[:position])
+    recategorize!(@weekly_chore.chore)
+    @weekly_chore.move_to_day!(scheduled_date, params[:position], this_week_only: params[:scope] == "week")
 
     head :ok
   end
@@ -79,7 +89,18 @@ class WeeklyChoresController < ApplicationController
   def destroy
     @week_start = @weekly_chore.week_start
     @chore = @weekly_chore.chore
-    @weekly_chore.destroy!
+
+    # A weekly/biweekly chore dragged back to Coming up asks (on the board)
+    # whether to remove just this week or this week and every one after.
+    @skipped = @chore.recurring? && params[:scope] == "week"
+    if @skipped
+      @weekly_chore.skip!
+    elsif @chore.recurring?
+      @weekly_chore.remove_going_forward!
+    else
+      @weekly_chore.destroy!
+    end
+    @chore.reload
 
     respond_to do |format|
       format.turbo_stream
@@ -88,6 +109,16 @@ class WeeklyChoresController < ApplicationController
   end
 
   private
+
+  # A drop into a different category's row (confirmed on the board) sends
+  # that row's key — a category id, or "none" for Uncategorized — and
+  # re-files the chore itself there, not just this week's instance.
+  def recategorize!(chore)
+    return unless params.key?(:category_key)
+
+    category = params[:category_key] == "none" ? nil : current_household.chore_categories.find(params[:category_key])
+    chore.update!(chore_category: category) unless chore.chore_category_id == category&.id
+  end
 
   def set_weekly_chore
     @weekly_chore = current_household.weekly_chores.find(params[:id])

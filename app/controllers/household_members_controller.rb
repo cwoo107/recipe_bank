@@ -20,7 +20,7 @@ class HouseholdMembersController < ApplicationController
     @todos_done = @member.todos.where(status: "done", end_date: @date.beginning_of_day..(@date + 6).end_of_day).order(:end_date)
     @todos_open = @member.todos.where.not(status: "done").order(:status, :position)
 
-    @weekly_chores = @member.weekly_chores.where(week_start: @date).includes(:chore).order(:scheduled_date, :position)
+    @weekly_chores = @member.weekly_chores.not_skipped.where(week_start: @date).includes(:chore).order(:scheduled_date, :position)
   end
 
   def new

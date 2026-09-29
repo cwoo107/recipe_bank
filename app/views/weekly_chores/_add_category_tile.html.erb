@@ -1,0 +1,25 @@
+<%# The board's "Add a chore category" tile — mirrors the Restock
+    Checklist's "Add a restock category" tile. Rendered once in the desktop
+    grid and once below the mobile accordions, so each copy gets its own
+    frame id. %>
+<% frame_id = "new_chore_category_#{SecureRandom.hex(4)}" %>
+<div class="flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 dark:border-white/10">
+  <div data-controller="dialog" data-action="click->dialog#backdropClose">
+    <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+      <%= turbo_frame_tag frame_id, src: new_chore_category_path(return_to: request.fullpath, frame: frame_id), loading: :lazy do %><% end %>
+      <div class="mt-4">
+        <button type="button" data-action="dialog#close"
+                class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+          Close
+        </button>
+      </div>
+    </dialog>
+    <button type="button" data-action="dialog#open"
+            class="flex items-center gap-2 px-6 py-3 text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition-colors">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="size-5" aria-hidden="true">
+        <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+      </svg>
+      <span class="text-sm font-medium">Add a chore category</span>
+    </button>
+  </div>
+</div>

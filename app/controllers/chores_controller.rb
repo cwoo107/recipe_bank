@@ -4,31 +4,42 @@ class ChoresController < ApplicationController
   before_action :set_chore, only: %i[edit update destroy]
 
   def index
-    @chores = current_household.chores.ordered.includes(:assignee)
+    @chores = current_household.chores.ordered.includes(:assignee, :chore_category, :chore_tasks)
+    @categories = current_household.chore_categories.ordered
   end
 
   def new
-    @chore = current_household.chores.new
+    categories = current_household.chore_categories
+    default_category = categories.find_by(id: params[:chore_category_id]) || categories.find_by(name: "Chores") || categories.ordered.first
+    @chore = current_household.chores.new(chore_category: default_category)
   end
 
   def edit
   end
 
   def create
-    @chore = current_household.chores.new(chore_params)
+    @chore = current_household.chores.new(chore_params.except(:default_weekday))
 
     if @chore.save
-      redirect_to chores_path, notice: "Chore was successfully created."
+      reschedule_from_params
+      redirect_to safe_return_to || chores_path, notice: "Chore was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
   end
 
+  # Handles both the full edit form (board "view details" dialog, edit page)
+  # and the Manage Chores inline editor, which posts inline=1 and gets its
+  # row refreshed in place instead of a redirect.
   def update
-    if @chore.update(chore_params)
-      # Editing from the "view chore" dialog on the Chore Chart board should
-      # land back on the board (with the change reflected), not the Manage
-      # Chores page — see weekly_chores/_chore_details_dialog.html.erb.
+    saved = @chore.update(chore_params.except(:default_weekday))
+    reschedule_from_params if saved
+
+    if params[:inline].present?
+      render :refresh_row, formats: :turbo_stream, status: saved ? :ok : :unprocessable_entity
+    elsif saved
+      # An edit that started somewhere else (return_to) lands back there
+      # rather than on the Manage Chores page.
       redirect_to safe_return_to || chores_path, notice: "Chore was successfully updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
@@ -47,7 +58,23 @@ class ChoresController < ApplicationController
   end
 
   def chore_params
-    scoped_assignee_params(params.require(:chore).permit(:name, :description, :frequency, :assignee_id))
+    permitted = scoped_assignee_params(params.require(:chore).permit(:name, :description, :frequency, :assignee_id, :chore_category_id, :default_weekday))
+    # Only this household's categories — anything else is quietly dropped
+    # rather than surfacing another household's record.
+    if permitted[:chore_category_id].present? && !current_household.chore_categories.exists?(permitted[:chore_category_id])
+      permitted.delete(:chore_category_id)
+    end
+    permitted
+  end
+
+  # Picking a day on Manage Chores applies from this week forward, like the
+  # board's "going forward" move. Ignored for chores that aren't weekly or
+  # biweekly (they don't have a remembered day).
+  def reschedule_from_params
+    return unless chore_params.key?(:default_weekday) && @chore.recurring?
+
+    weekday = chore_params[:default_weekday].presence&.to_i
+    @chore.reschedule_forward!(weekday, from_week: Date.current.beginning_of_week)
   end
 
   # Only ever redirect to a path within this app — params[:return_to] is

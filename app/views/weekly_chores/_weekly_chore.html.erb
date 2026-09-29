@@ -2,13 +2,19 @@
 <% chore = weekly_chore.chore %>
 <div id="weekly_chore_<%= weekly_chore.id %>"
      data-weekly-chore-id="<%= weekly_chore.id %>"
+     data-category-key="<%= chore_board_category_key(chore) %>"
+     data-recurring="<%= chore.recurring? %>"
+     data-chore-name="<%= chore.name %>"
+     data-frequency-label="<%= chore.frequency_label %>"
      data-controller="chore-item"
-     class="chore-card weekly-chore-<%= weekly_chore.id %> group relative rounded-md bg-white dark:bg-[#242b1e] border border-gray-200 dark:border-white/10 p-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
+     title="<%= chore_card_assignee_label(weekly_chore.assignee) %>"
+     class="chore-card weekly-chore-<%= weekly_chore.id %> group relative rounded-md border <%= chore_card_color_classes(weekly_chore.assignee) %> p-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
 
-  <%# Drag handle (invisible but full-width, class used by chore_board_controller.js) %>
+  <%# Drag handle (invisible but full-width, class used by chore_board_controller.js).
+      Dragging the card back up into "Coming up" takes it off this week. %>
   <div class="sortable-handle absolute inset-0 rounded-md cursor-grab active:cursor-grabbing" aria-hidden="true"></div>
 
-  <%# Only the checkbox and action buttons opt back into pointer events — the
+  <%# Only the checkbox opts back into pointer events — the
       rest of the card (including the name/assignee text) stays part of the
       drag-handle hit area underneath, matching todos/_todo.html.erb. %>
   <div class="relative z-10 pointer-events-none flex flex-col gap-1">
@@ -27,33 +33,22 @@
                style="accent-color: #5f734c;" class="mt-0.5 size-4 shrink-0 rounded border-gray-300 opacity-60 dark:border-gray-600">
       <% end %>
       <div class="min-w-0 flex-1">
+        <%# No assignee pill (the card's color says who — see the page's key)
+            and no frequency pill: once it's on the schedule, how often it
+            comes around is self-evident. %>
         <p class="text-xs font-medium text-gray-900 dark:text-white leading-snug <%= 'line-through opacity-50' if weekly_chore.completed? %>">
           <%= chore.name %>
+          <span class="sr-only">· <%= chore_card_assignee_label(weekly_chore.assignee) %></span>
         </p>
-        <% if weekly_chore.assignee %>
-          <p class="mt-0.5"><%= person_pill(weekly_chore.assignee, size: :xs) %></p>
+        <% if chore.chore_tasks.any? %>
+          <ul class="mt-0.5 space-y-px text-[10px] leading-snug text-gray-600 dark:text-gray-300 <%= 'opacity-50' if weekly_chore.completed? %>"
+              aria-label="Tasks">
+            <% chore.chore_tasks.each do |task| %>
+              <li class="break-words"><span aria-hidden="true" class="text-gray-400 dark:text-gray-500">•</span> <%= task.name %></li>
+            <% end %>
+          </ul>
         <% end %>
-        <div class="mt-1">
-          <%= render "chores/frequency_pill", chore: chore, small: true %>
-        </div>
       </div>
     </div>
-
-    <%# Bottom-right so the name/assignee/pill above have the full card
-        width to themselves. %>
-    <% if household_admin? %>
-    <div class="pointer-events-auto flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-      <%= render "weekly_chores/chore_details_dialog", chore: chore %>
-
-      <%= button_to weekly_chore_path(weekly_chore), method: :delete,
-            class: "text-gray-400 hover:text-dusty-rose-600 dark:hover:text-dusty-rose-400 transition-colors",
-            data: { turbo: true },
-            aria: { label: "Remove #{chore.name} from this week" } do %>
-        <svg viewBox="0 0 20 20" fill="currentColor" class="size-3.5" aria-hidden="true">
-          <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
-        </svg>
-      <% end %>
-    </div>
-    <% end %>
   </div>
 </div>

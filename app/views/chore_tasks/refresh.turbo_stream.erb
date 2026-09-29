@@ -1,0 +1,10 @@
+<%# After adding, renaming or removing a task: re-render the chore's task
+    lists (desktop Tasks column, mobile modal) and the mobile row's summary. %>
+<% %w[desktop mobile].each do |from| %>
+  <%= turbo_stream.update "chore_tasks_#{from}_#{@chore.id}" do %>
+    <%= render "chore_tasks/list", chore: @chore, from: from, adding: @adding_in == from %>
+  <% end %>
+<% end %>
+<%= turbo_stream.update "chore_task_summary_#{@chore.id}" do %>
+  <%= render "chore_tasks/summary", chore: @chore %>
+<% end %>

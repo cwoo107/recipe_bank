@@ -1,0 +1,19 @@
+<%# locals: (chore:) %>
+<%# Read-only name / category / frequency / assignee. %>
+<div class="min-w-0">
+  <div class="flex items-center gap-2 flex-wrap">
+    <p class="text-base font-medium text-gray-900 dark:text-white"><%= chore.name %></p>
+    <%= render "chores/frequency_pill", chore: chore %>
+    <% if chore.recurring? && chore.default_weekday %>
+      <span class="text-xs text-gray-500 dark:text-gray-400"><%= Date::DAYNAMES[chore.default_weekday].pluralize %></span>
+    <% end %>
+  </div>
+  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+    <%= chore.chore_category&.name || "Uncategorized" %> ·
+    <%= chore.assignee ? person_pill(chore.assignee) : "Unassigned" %>
+  </p>
+  <div id="chore_task_summary_<%= chore.id %>"><%= render "chore_tasks/summary", chore: chore %></div>
+  <% if chore.description.present? %>
+    <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"><%= chore.description %></p>
+  <% end %>
+</div>

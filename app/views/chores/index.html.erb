@@ -21,44 +21,81 @@
     </div>
   </div>
 
+  <% if household_admin? %>
+    <details class="mb-6 rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] group/categories">
+      <summary class="cursor-pointer select-none px-4 py-3 flex items-center justify-between">
+        <span class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">
+          Manage Categories
+        </span>
+        <svg viewBox="0 0 20 20" fill="currentColor" class="size-5 text-gray-400 transition-transform group-open/categories:rotate-180" aria-hidden="true">
+          <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+        </svg>
+      </summary>
+      <div class="px-4 pb-4 space-y-2">
+        <% @categories.each do |category| %>
+          <div id="<%= dom_id(category) %>" class="flex items-center gap-2">
+            <%= form_with model: category, class: "flex-1", data: { controller: "auto-submit", action: "change->auto-submit#submit" } do |f| %>
+              <%= f.label :name, "Name for #{category.name}", class: "sr-only" %>
+              <%= f.text_field :name, required: true,
+                    class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-2.5 py-1.5 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+            <% end %>
+            <%= button_to chore_category_path(category), method: :delete,
+                  class: "text-gray-400 hover:text-dusty-rose-600 dark:hover:text-dusty-rose-400 transition-colors cursor-pointer",
+                  data: { turbo_confirm: "Delete the \"#{category.name}\" category? Its chores will become uncategorized." },
+                  aria: { label: "Delete the #{category.name} category" } do %>
+              <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
+                <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+              </svg>
+            <% end %>
+          </div>
+        <% end %>
+
+        <%= form_with model: ChoreCategory.new, url: chore_categories_path, class: "flex items-center gap-2 pt-2" do |f| %>
+          <%= f.label :name, "New category name", class: "sr-only" %>
+          <%= f.text_field :name, required: true, placeholder: "New category, e.g. Yard",
+                class: "block flex-1 rounded-md border border-dashed border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-2.5 py-1.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+          <%= f.submit "Add category",
+                class: "inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20 cursor-pointer" %>
+        <% end %>
+      </div>
+    </details>
+  <% end %>
+
   <% if @chores.empty? %>
     <div class="rounded-lg border border-dashed border-gray-300 dark:border-white/15 p-8 text-center">
       <p class="text-sm text-gray-500 dark:text-gray-400 italic">No chores yet. Add the recurring chores your household needs to keep up with.</p>
     </div>
   <% else %>
-    <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] divide-y divide-gray-200 dark:divide-white/10 overflow-hidden">
-      <% @chores.each do |chore| %>
-        <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-4">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2 flex-wrap">
-              <p class="text-base font-medium text-gray-900 dark:text-white"><%= chore.name %></p>
-              <%= render "chores/frequency_pill", chore: chore %>
-              <% if chore.due? %>
-                <span class="inline-flex items-center rounded-full bg-honey-100 px-2 py-0.5 text-xs font-medium text-honey-800 dark:bg-honey-900/30 dark:text-honey-300">
-                  Due
-                </span>
-              <% end %>
-            </div>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              <%= chore.assignee ? person_pill(chore.assignee) : "Unassigned" %>
-              <% if chore.last_completed_at %>
-                · Last done <%= chore.last_completed_at.to_date.strftime("%b %-d") %>
-              <% else %>
-                · Never completed
-              <% end %>
-            </p>
-            <% if chore.description.present? %>
-              <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"><%= chore.description %></p>
+    <%# ── DESKTOP: table — click a cell to edit it (chores/_table_row) ── %>
+    <div class="hidden md:block overflow-x-auto bg-white shadow-sm inset-ring inset-ring-gray-900/5 rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
+      <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            <th scope="col" class="py-3.5 pl-4 pr-3 sm:pl-6 text-left text-sm font-semibold text-gray-900 dark:text-white">Chore</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Tasks</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Category</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Frequency</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Day</th>
+            <% if current_household.assignable? %>
+              <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Assigned to</th>
             <% end %>
-          </div>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Last done</th>
+            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Next due</th>
+            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
+          <% @chores.each do |chore| %>
+            <%= render "chores/table_row", chore: chore %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
 
-          <div class="flex items-center gap-3 shrink-0 <%= 'hidden' unless household_admin? %>">
-            <%= link_to "Edit", edit_chore_path(chore), class: "text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
-            <%= button_to "Delete", chore_path(chore), method: :delete,
-                  class: "text-sm font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer",
-                  data: { turbo_confirm: "Delete \"#{chore.name}\"? This also removes it from any weekly lists." } %>
-          </div>
-        </div>
+    <%# ── MOBILE: list, editing in a modal ── %>
+    <div class="md:hidden rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] divide-y divide-gray-200 dark:divide-white/10">
+      <% @chores.each do |chore| %>
+        <%= render "chores/chore", chore: chore %>
       <% end %>
     </div>
   <% end %>

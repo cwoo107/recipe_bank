@@ -1,0 +1,16 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+standard_cleaning_one:
+  name: "Standard Cleaning"
+  position: 1
+  household: one
+
+chores_one:
+  name: "Chores"
+  position: 2
+  household: one
+
+chores_two:
+  name: "Chores"
+  position: 1
+  household: two

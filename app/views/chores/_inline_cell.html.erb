@@ -1,0 +1,18 @@
+<%# locals: (text:, editable: true) %>
+<%# Layout for one Manage Chores table
+    cell: plain text that turns into its field (the block) on click. See
+    inline_cell_controller.js. Non-editable cells just show the text. %>
+<% if editable %>
+  <div data-controller="inline-cell" class="min-w-0">
+    <div data-inline-cell-target="display" role="button" tabindex="0"
+         data-action="click->inline-cell#edit keydown.enter->inline-cell#edit keydown.space->inline-cell#edit:prevent"
+         class="-mx-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#5f734c] truncate">
+      <span data-inline-cell-target="text"><%= text %></span>
+    </div>
+    <div data-inline-cell-target="editor" class="hidden">
+      <%= yield %>
+    </div>
+  </div>
+<% else %>
+  <div class="py-1.5 truncate"><%= text %></div>
+<% end %>

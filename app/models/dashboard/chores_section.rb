@@ -7,14 +7,18 @@ module Dashboard
     def chores_this_week
       @chores_this_week ||= begin
         ensure_recurring_chores_scheduled!
-        household.weekly_chores.for_week(week_start).includes(:chore, :assignee)
+        household.weekly_chores.for_week(week_start).includes(:assignee, chore: %i[chore_category chore_tasks])
       end
+    end
+
+    def categories
+      @categories ||= household.chore_categories.ordered
     end
 
     def due_chores
       @due_chores ||= begin
         ensure_recurring_chores_scheduled!
-        Chore.due_and_unscheduled(household, week_start: week_start)
+        Chore.due_soon(household, week_start: week_start)
       end
     end
 
@@ -28,7 +32,7 @@ module Dashboard
     end
 
     def detail_line
-      due_chores.any? ? "#{due_chores.size} due and not yet added" : nil
+      due_chores.any? ? "#{due_chores.size} due soon and not yet added" : nil
     end
 
     def empty_headline = "Chores"

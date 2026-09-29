@@ -1,0 +1,12 @@
+<%# locals: (chore:) %>
+<%# One item in the mobile Manage Chores list. Admins get
+    an Edit button that opens a modal (chores/_mobile); limited members just
+    see the details. The desktop table is chores/_table_row. %>
+<div class="px-4 py-3">
+  <% if household_admin? %>
+    <%= render "chores/mobile", chore: chore %>
+  <% else %>
+    <%= render "chores/summary", chore: chore %>
+    <div class="mt-2"><%= render "chores/status", chore: chore %></div>
+  <% end %>
+</div>

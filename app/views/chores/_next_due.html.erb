@@ -1,0 +1,3 @@
+<%# locals: (chore:) %>
+<% next_due = chore.next_due_date %>
+<span class="<%= chore_due_label_classes(next_due) %>"><%= chore_due_label(next_due) %></span>

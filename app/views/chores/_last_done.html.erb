@@ -1,0 +1,2 @@
+<%# locals: (chore:) %>
+<%= chore.last_completed_at ? chore.last_completed_at.to_date.strftime("%a, %b %-d") : "Never" %>

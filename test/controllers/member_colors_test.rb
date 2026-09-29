@@ -36,15 +36,17 @@ class MemberColorsTest < ActionDispatch::IntegrationTest
     assert_not @bob.update(color: "neon")
   end
 
-  test "chore and to-do cards show the person as a pill in their color, with no colored border" do
+  test "chore cards are tinted in the person's color; to-do cards show them as a pill" do
     week = Date.current.beginning_of_week
     chore = @household.weekly_chores.create!(chore: chores(:one), week_start: week, scheduled_date: week, assignee: @bob)
     todo  = @household.todos.create!(title: "Fix fence", priority: :medium, status: "todo", user: users(:one), assignee: @bob)
     pill  = Palette.person_classes(@bob.color)[:pill].split.first
+    card  = Palette.person_classes(@bob.color)[:card].split.first
 
     get weekly_chores_url
     assert_select "#weekly_chore_#{chore.id}[class*=border-l-4]", count: 0
-    assert_select "#weekly_chore_#{chore.id} span.#{pill}", text: "Bob"
+    assert_select "#weekly_chore_#{chore.id}.#{card}"
+    assert_select "#weekly_chore_#{chore.id} span.#{pill}", count: 0
 
     get todos_url
     assert_select "#todo_#{todo.id} span.#{pill}", text: "Bob"

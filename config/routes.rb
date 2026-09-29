@@ -116,7 +116,14 @@ Rails.application.routes.draw do
 
   resources :restock_categories, only: [ :new, :create, :edit, :update, :destroy ]
 
-  resources :chores
+  resources :chore_categories, only: [ :new, :create, :edit, :update, :destroy ] do
+    collection do
+      post :reorder
+    end
+  end
+  resources :chores do
+    resources :chore_tasks, only: [ :create, :update, :destroy ]
+  end
   resources :weekly_chores, only: [ :index, :create, :update, :destroy ] do
     collection do
       post :reorder

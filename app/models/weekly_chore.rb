@@ -13,18 +13,29 @@ class WeeklyChore < ApplicationRecord
   validates :chore_id, uniqueness: { scope: :week_start }
   validate :scheduled_date_within_week
 
-  before_validation :default_assignee_from_chore, on: :create
-  after_save :sync_chore_default_weekday, if: :saved_change_to_scheduled_date?
-  after_destroy :clear_chore_default_weekday, if: :scheduled?
+  # Set for a move that should only affect this one week (the board's "Just
+  # this week" choice) — the chore keeps its remembered day, and other weeks
+  # are left alone.
+  attribute :this_week_only, :boolean, default: false
 
-  scope :for_week, ->(week_start) { where(week_start: week_start).order(:position) }
+  before_validation :default_assignee_from_chore, on: :create
+  after_save :sync_chore_default_weekday, if: -> { saved_change_to_scheduled_date? && !this_week_only }
+  after_destroy :clear_chore_default_weekday, if: :scheduled?
+  # Taking a finished instance off the board takes its completion with it.
+  after_destroy :refresh_chore_last_completed!, if: :completed?
+
+  # Skipped instances ("remove just this week" on a recurring chore) stay in
+  # the table only so auto-scheduling knows not to recreate them — nothing
+  # shows them.
+  scope :not_skipped, -> { where(skipped: false) }
+  scope :for_week, ->(week_start) { not_skipped.where(week_start: week_start).order(:position) }
 
   # The first day of the given week that doesn't already have a chore on it —
   # where a plain "Add to this week" click lands a chore, since every chore
   # now needs a day (there's no more unscheduled column to drop it in). Falls
   # back to the week's first day once every day already has something.
   def self.first_available_day(household, week_start)
-    scheduled_dates = household.weekly_chores.where(week_start: week_start).where.not(scheduled_date: nil).pluck(:scheduled_date).to_set
+    scheduled_dates = household.weekly_chores.not_skipped.where(week_start: week_start).where.not(scheduled_date: nil).pluck(:scheduled_date).to_set
     (0..6).map { |i| week_start + i }.find { |day| !scheduled_dates.include?(day) } || week_start
   end
 
@@ -42,10 +53,39 @@ class WeeklyChore < ApplicationRecord
     refresh_chore_last_completed!
   end
 
-  # Drag-and-drop move between days. Mirrors Todo#move_to_column!.
-  def move_to_day!(new_date, new_position = nil)
+  # Takes a recurring chore off just this one week, leaving its remembered
+  # day (and every other week) alone. The row stays, marked skipped, so
+  # Chore#schedule_into_week! won't put it straight back; the chore shows in
+  # that week's Due soon row instead, and adding it again un-skips it.
+  def skip!
+    was_completed = completed?
+    update!(skipped: true, completed: false, completed_at: nil)
+    refresh_chore_last_completed! if was_completed
+  end
+
+  # Takes a recurring chore off this week and every later one: it forgets
+  # its remembered day (see clear_chore_default_weekday) and its unfinished
+  # later instances go too. Earlier weeks are left as they were.
+  def remove_going_forward!
+    transaction do
+      chore.weekly_chores.where(completed: false).where("week_start > ?", week_start).delete_all
+      destroy!
+    end
+  end
+
+  # Re-stamps an already-completed instance as done just now.
+  def touch_completion!
+    update!(completed_at: Time.current)
+    refresh_chore_last_completed!
+  end
+
+  # Drag-and-drop move between days. Mirrors Todo#move_to_column!. By
+  # default the new day applies going forward (see sync_chore_default_weekday);
+  # this_week_only: true moves just this instance.
+  def move_to_day!(new_date, new_position = nil, this_week_only: false)
     return if new_date == scheduled_date && (new_position.nil? || new_position == position)
 
+    self.this_week_only = this_week_only
     old_date = scheduled_date
     self.scheduled_date = new_date
     remove_from_list if old_date != new_date
@@ -81,10 +121,9 @@ class WeeklyChore < ApplicationRecord
 
   # Scheduling (or unscheduling) onto a day updates the chore's remembered
   # weekday, so Chore.auto_schedule_recurring! can replicate it onto that
-  # same day next time it's due — no manual re-drag needed. Also propagates
-  # the change to any future weeks that already auto-scheduled themselves
-  # before this move happened, so rescheduling this week's instance doesn't
-  # leave already-generated future weeks stuck on the old day.
+  # same day next time it's due — no manual re-drag needed. The change only
+  # ever applies from this instance's week forward (Chore#reschedule_forward!):
+  # already-generated later weeks move with it, earlier weeks never do.
   #
   # Only weekly/biweekly chores get this treatment (Chore::RECURRING_FREQUENCIES)
   # — a monthly+ chore that's never marked done is always "due", so without
@@ -94,24 +133,12 @@ class WeeklyChore < ApplicationRecord
   def sync_chore_default_weekday
     return unless chore.recurring?
 
-    new_weekday = scheduled_date&.wday
-    started_on = new_weekday.present? ? (new_weekday == chore.default_weekday ? chore.default_weekday_started_on : week_start) : nil
-    chore.update!(default_weekday: new_weekday, default_weekday_started_on: started_on)
-    propagate_to_future_instances
-  end
+    chore.reschedule_forward!(scheduled_date&.wday, from_week: week_start)
+    return if scheduled_date.present?
 
-  def propagate_to_future_instances
-    future = chore.weekly_chores.where.not(id: id).where("week_start > ?", week_start).where(completed: false)
-
-    if scheduled_date.present?
-      new_wday = scheduled_date.wday
-      future.find_each do |future_chore|
-        new_date = future_chore.week_start + ((new_wday - future_chore.week_start.wday) % 7)
-        future_chore.update_column(:scheduled_date, new_date) unless future_chore.scheduled_date == new_date
-      end
-    else
-      future.where.not(scheduled_date: nil).update_all(scheduled_date: nil)
-    end
+    chore.weekly_chores.where.not(id: id).where("week_start > ?", week_start)
+         .where(completed: false).where.not(scheduled_date: nil)
+         .update_all(scheduled_date: nil)
   end
 
   def clear_chore_default_weekday

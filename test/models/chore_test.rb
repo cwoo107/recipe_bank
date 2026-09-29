@@ -42,7 +42,7 @@ class ChoreTest < ActiveSupport::TestCase
     end
   end
 
-  test "due_and_unscheduled excludes chores already on this week's list and chores not yet due" do
+  test "due_soon excludes chores already on this week's list and chores not yet due" do
     household = households(:one)
     week_start = Date.current.beginning_of_week
 
@@ -54,21 +54,21 @@ class ChoreTest < ActiveSupport::TestCase
     already_scheduled = household.chores.create!(name: "Mop floors", frequency: "weekly")
     household.weekly_chores.create!(chore: already_scheduled, week_start: week_start)
 
-    due = Chore.due_and_unscheduled(household, week_start: week_start)
+    due = Chore.due_soon(household, week_start: week_start)
 
     assert_includes due, due_chore
     refute_includes due, not_due
     refute_includes due, already_scheduled
   end
 
-  test "due_and_unscheduled excludes a recurring chore on its 'off' week (it's handled by auto-scheduling, not Due soon)" do
+  test "due_soon excludes a recurring chore on its 'off' week (it's handled by auto-scheduling, not Due soon)" do
     household = households(:one)
     week_start = Date.current.beginning_of_week
     biweekly = household.chores.create!(name: "Mow lawn", frequency: "biweekly",
                                          default_weekday: (week_start + 2).wday, default_weekday_started_on: week_start)
 
     off_week = week_start + 7
-    due = Chore.due_and_unscheduled(household, week_start: off_week)
+    due = Chore.due_soon(household, week_start: off_week)
 
     refute_includes due, biweekly
   end
@@ -159,5 +159,86 @@ class ChoreTest < ActiveSupport::TestCase
     refute chore.biweekly_due_on_week?(anchor_week + 7)
     assert chore.biweekly_due_on_week?(anchor_week + 14)
     refute chore.biweekly_due_on_week?(anchor_week + 21)
+  end
+
+  test "due_soon includes chores coming due within the next month but not further out" do
+    household = households(:one)
+    week_start = Date.current.beginning_of_week
+
+    soon = household.chores.create!(name: "Change filters", frequency: "monthly", last_completed_at: week_start - 20.days)
+    later = household.chores.create!(name: "Clean gutters", frequency: "quarterly", last_completed_at: week_start - 10.days)
+
+    due = Chore.due_soon(household, week_start: week_start)
+
+    assert_includes due, soon
+    refute_includes due, later
+  end
+
+  test "auto_schedule_recurring! never back-fills a week from before the remembered day was set" do
+    household = households(:one)
+    week_start = Date.current.beginning_of_week
+    chore = household.chores.create!(name: "Vacuum", frequency: "weekly",
+                                      default_weekday: (week_start + 3).wday, default_weekday_started_on: week_start)
+
+    Chore.auto_schedule_recurring!(household, week_start: week_start - 7)
+
+    assert_nil household.weekly_chores.find_by(chore: chore, week_start: week_start - 7)
+  end
+
+  test "reschedule_forward! moves this and later unfinished weeks, never earlier ones" do
+    household = households(:one)
+    week_start = Date.current.beginning_of_week
+    chore = household.chores.create!(name: "Vacuum", frequency: "weekly",
+                                      default_weekday: (week_start + 1).wday, default_weekday_started_on: week_start - 14)
+    last_week = household.weekly_chores.create!(chore: chore, week_start: week_start - 7, scheduled_date: week_start - 6, this_week_only: true)
+    this_week = household.weekly_chores.create!(chore: chore, week_start: week_start, scheduled_date: week_start + 1, this_week_only: true)
+
+    chore.reschedule_forward!((week_start + 3).wday, from_week: week_start)
+
+    assert_equal week_start - 6, last_week.reload.scheduled_date
+    assert_equal week_start + 3, this_week.reload.scheduled_date
+    assert_equal week_start, chore.reload.default_weekday_started_on
+  end
+
+  test "reschedule_forward! from a future week fills the weeks in between on the old day" do
+    household = households(:one)
+    week_start = Date.current.beginning_of_week
+    chore = household.chores.create!(name: "Vacuum", frequency: "weekly",
+                                      default_weekday: (week_start + 1).wday, default_weekday_started_on: week_start)
+
+    chore.reschedule_forward!((week_start + 3).wday, from_week: week_start + 14)
+
+    assert_equal week_start + 1, household.weekly_chores.find_by(chore: chore, week_start: week_start).scheduled_date
+    assert_equal week_start + 8, household.weekly_chores.find_by(chore: chore, week_start: week_start + 7).scheduled_date
+    chore.schedule_into_week!(week_start + 14)
+    assert_equal week_start + 17, household.weekly_chores.find_by(chore: chore, week_start: week_start + 14).scheduled_date
+  end
+
+  test "switching to a non-recurring frequency forgets the remembered day" do
+    chore = chores(:one)
+    chore.update!(default_weekday: 2, default_weekday_started_on: Date.current.beginning_of_week)
+
+    chore.update!(frequency: "monthly")
+
+    assert_nil chore.default_weekday
+    assert_nil chore.default_weekday_started_on
+  end
+
+  test "next_due_date follows the remembered day for a recurring chore" do
+    week_start = Date.current.beginning_of_week
+    chore = households(:one).chores.create!(name: "Vacuum", frequency: "weekly",
+                                             default_weekday: (week_start + 3).wday, default_weekday_started_on: week_start)
+
+    assert_equal week_start + 3, chore.next_due_date
+
+    households(:one).weekly_chores.create!(chore: chore, week_start: week_start, scheduled_date: week_start + 3, completed: true)
+    assert_equal week_start + 10, chore.next_due_date
+  end
+
+  test "chore category must belong to the same household" do
+    chore = chores(:one)
+    chore.chore_category = households(:two).chore_categories.first || households(:two).chore_categories.create!(name: "Other")
+
+    refute chore.valid?
   end
 end

@@ -1,4 +1,8 @@
-<%# locals: (weekly_chores:, week_start:) %>
+<%# locals: (weekly_chores:, week_start:, rows:) %>
+<%# One accordion per day,
+    with that day's chores grouped under their category. Every category's
+    container is rendered (so "Add to this week" can append into it); its
+    heading only shows once it holds a chore. %>
 <%
   grouped = weekly_chores.group_by(&:scheduled_date)
   days    = (0..6).map { |i| week_start + i }
@@ -7,6 +11,7 @@
   <% days.each do |day| %>
     <% is_today   = day == Date.current %>
     <% day_chores = grouped[day] || [] %>
+    <% by_category = day_chores.group_by { |wc| chore_board_category_key(wc.chore) } %>
 
     <div data-controller="accordion"
          data-accordion-open-value="<%= is_today %>"
@@ -44,12 +49,23 @@
       </button>
 
       <div data-accordion-target="content" class="accordion-content">
-        <div id="weekly_chores_day_mobile_<%= day.iso8601 %>" class="flex flex-col gap-2 p-3 <%= day_chores.empty? ? 'min-h-10' : '' %>">
-          <% day_chores.each do |weekly_chore| %>
-            <%= render "weekly_chores/weekly_chore", weekly_chore: weekly_chore %>
+        <div class="p-3 space-y-3 <%= day_chores.empty? ? 'min-h-10' : '' %>">
+          <% rows.each do |key, name, _category| %>
+            <div class="hidden has-[.chore-card]:block">
+              <h4 class="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"><%= name %></h4>
+              <div id="weekly_chores_cell_mobile_<%= day.iso8601 %>_<%= key %>" class="flex flex-col gap-2">
+                <% (by_category[key] || []).each do |weekly_chore| %>
+                  <%= render "weekly_chores/weekly_chore", weekly_chore: weekly_chore %>
+                <% end %>
+              </div>
+            </div>
           <% end %>
         </div>
       </div>
     </div>
+  <% end %>
+
+  <% if household_admin? %>
+    <%= render "weekly_chores/add_category_tile" %>
   <% end %>
 </div>

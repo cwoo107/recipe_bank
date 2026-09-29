@@ -127,7 +127,9 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
   test "chores step lists chores that are due and not yet on this week's list" do
     get plan_week_step_url(section: "chores")
     assert_response :success
-    assert_select "button", text: "Add to this week"
+    assert_select "#due_chores #due_chore_#{chores(:one).id}"
+    assert_select "#due_chore_#{chores(:one).id} .sm\\:hidden button", text: "Add to this week"
+    assert_select "#due_chore_#{chores(:one).id} dialog form[action*=scheduled_date]", 7
   end
 
   test "visiting any step marks the plan as currently planning" do

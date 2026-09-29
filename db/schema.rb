@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_210000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -102,8 +102,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
     t.index ["user_id"], name: "index_calendar_sources_on_user_id"
   end
 
+  create_table "chore_categories", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id", "position"], name: "index_chore_categories_on_household_id_and_position"
+    t.index ["household_id"], name: "index_chore_categories_on_household_id"
+  end
+
+  create_table "chore_tasks", force: :cascade do |t|
+    t.integer "chore_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["chore_id", "position"], name: "index_chore_tasks_on_chore_id_and_position"
+    t.index ["chore_id"], name: "index_chore_tasks_on_chore_id"
+  end
+
   create_table "chores", force: :cascade do |t|
     t.integer "assignee_id"
+    t.integer "chore_category_id"
     t.datetime "created_at", null: false
     t.integer "default_weekday"
     t.date "default_weekday_started_on"
@@ -114,6 +135,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["assignee_id"], name: "index_chores_on_assignee_id"
+    t.index ["chore_category_id"], name: "index_chores_on_chore_category_id"
     t.index ["household_id", "name"], name: "index_chores_on_household_id_and_name"
     t.index ["household_id"], name: "index_chores_on_household_id"
   end
@@ -449,6 +471,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
     t.integer "household_id", null: false
     t.integer "position", default: 0, null: false
     t.date "scheduled_date"
+    t.boolean "skipped", default: false, null: false
     t.datetime "updated_at", null: false
     t.date "week_start", null: false
     t.index ["assignee_id"], name: "index_weekly_chores_on_assignee_id"
@@ -491,6 +514,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_120100) do
   add_foreign_key "calendar_events", "users"
   add_foreign_key "calendar_sources", "households"
   add_foreign_key "calendar_sources", "users"
+  add_foreign_key "chore_categories", "households"
+  add_foreign_key "chore_tasks", "chores"
+  add_foreign_key "chores", "chore_categories"
   add_foreign_key "chores", "household_members", column: "assignee_id"
   add_foreign_key "chores", "households"
   add_foreign_key "collection_recipes", "collections"

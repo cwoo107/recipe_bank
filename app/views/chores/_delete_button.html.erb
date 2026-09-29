@@ -1,0 +1,4 @@
+<%# locals: (chore:) %>
+<%= button_to "Delete chore", chore_path(chore), method: :delete,
+      class: "text-sm font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer",
+      data: { turbo_confirm: "Delete \"#{chore.name}\"? This also removes it from any weekly lists." } %>

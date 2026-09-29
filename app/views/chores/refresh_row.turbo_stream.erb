@@ -1,0 +1,21 @@
+<%# After an inline edit on Manage Chores. The desktop
+    table row's editable cells are left in place (they've already swapped
+    their new text in client-side — see inline_cell_controller.js, and
+    re-rendering them could close a field someone just clicked into); only
+    the computed columns and errors refresh. The mobile
+    copy is replaced wholesale, reopening its modal when a save from inside it
+    failed. %>
+<% from = params[:from] == "mobile" ? "mobile" : "desktop" %>
+<%= turbo_stream.update "chore_last_done_#{@chore.id}" do %>
+  <div class="py-1.5"><%= render "chores/last_done", chore: @chore %></div>
+<% end %>
+<%= turbo_stream.update "chore_next_due_#{@chore.id}" do %>
+  <div class="py-1.5"><%= render "chores/next_due", chore: @chore %></div>
+<% end %>
+<%= turbo_stream.replace "chore_errors_desktop_#{@chore.id}" do %>
+  <%= render "chores/errors", chore: @chore, from: "desktop" %>
+<% end %>
+<%= turbo_stream.replace "chore_mobile_#{@chore.id}" do %>
+  <%= render "chores/mobile", chore: @chore,
+             open: from == "mobile" && @chore.errors.any? %>
+<% end %>

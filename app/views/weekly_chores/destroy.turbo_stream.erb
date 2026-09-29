@@ -2,7 +2,7 @@
     desktop grid and once in the mobile accordion — both copies need to go. %>
 <%= turbo_stream.remove_all ".weekly-chore-#{@weekly_chore.id}" %>
 
-<% if @chore.due? %>
+<% if @skipped || @chore.due_soon?(week_start: @week_start) %>
   <%= turbo_stream.remove "no_due_chores_message" %>
   <%= turbo_stream.append "due_chores" do %>
     <%= render "due_chore", chore: @chore, week_start: @week_start %>

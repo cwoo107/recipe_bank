@@ -9,6 +9,7 @@ class Household < ApplicationRecord
   has_many :todos,            dependent: :destroy
   has_many :restock_items,    dependent: :destroy
   has_many :restock_categories, dependent: :destroy
+  has_many :chore_categories, dependent: :destroy
   has_many :chores,           dependent: :destroy
   has_many :weekly_chores,    dependent: :destroy
   has_many :grocery_lists,    dependent: :destroy
@@ -25,6 +26,7 @@ class Household < ApplicationRecord
 
   after_create :create_owner_member
   after_create :seed_default_restock_categories
+  after_create :seed_default_chore_categories
   after_update :realign_weeks, if: :saved_change_to_week_start_day?
 
   def self.default_family_name_for(user)
@@ -259,6 +261,12 @@ class Household < ApplicationRecord
   def seed_default_restock_categories
     RestockCategory::DEFAULT_NAMES.each_with_index do |name, index|
       restock_categories.create!(name: name, position: index + 1)
+    end
+  end
+
+  def seed_default_chore_categories
+    ChoreCategory::DEFAULT_NAMES.each_with_index do |name, index|
+      chore_categories.create!(name: name, position: index + 1)
     end
   end
 end

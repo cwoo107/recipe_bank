@@ -39,34 +39,9 @@
     </div>
   </div>
 
-  <%# Scheduling by drag-and-drop is admin-only. %>
-  <div <%= 'data-controller=chore-board' if household_admin? %>
-       data-chore-board-week-start-value="<%= @week_start.iso8601 %>"
-       data-chore-board-create-url-value="<%= weekly_chores_path %>"
-       data-chore-board-reorder-url-value="<%= reorder_weekly_chores_path %>">
+  <section class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
 
-    <section class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
-      <div class="px-4 py-3 border-b border-gray-200 dark:border-white/10">
-        <h2 class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">Due soon</h2>
-      </div>
-      <div id="due_chores" data-chore-board-target="dueList" class="divide-y divide-gray-200 dark:divide-white/10">
-        <% if @due_chores.empty? %>
-          <p id="no_due_chores_message" class="px-4 py-4 text-sm text-gray-400 dark:text-gray-600 italic">Nothing due right now.</p>
-        <% else %>
-          <% @due_chores.each do |chore| %>
-            <%= render "due_chore", chore: chore, week_start: @week_start %>
-          <% end %>
-        <% end %>
-      </div>
-    </section>
-
-    <section class="mt-6 rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
-      <div class="px-4 py-3 border-b border-gray-200 dark:border-white/10">
-        <h2 class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">This week</h2>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 hidden sm:block">Drag a chore onto a day to schedule it.</p>
-      </div>
-      <%= render "weekly_chores/board", weekly_chores: @weekly_chores, week_start: @week_start %>
-      <%= render "weekly_chores/mobile_board", weekly_chores: @weekly_chores, week_start: @week_start %>
-    </section>
-  </div>
+    <%= render "weekly_chores/due_soon_board", weekly_chores: @weekly_chores, week_start: @week_start,
+                                               categories: @categories, due_chores: @due_chores %>
+  </section>
 </div>

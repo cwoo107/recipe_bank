@@ -1,0 +1,29 @@
+<%# Asked when a weekly/biweekly chore is dragged back into "Coming up" —
+    see chore_board_controller.js#unschedule. Styled like the other app
+    alerts (the "Remove recurring meal?" prompt). %>
+<dialog data-chore-board-target="removeDialog"
+        data-action="cancel->chore-board#dismiss click->chore-board#dialogBackdrop"
+        class="dark:bg-[#1a1f16] w-11/12 sm:w-96 rounded-lg p-6 shadow-xl backdrop:bg-black/50 m-auto">
+  <h3 class="text-base font-semibold text-gray-900 dark:text-white">Remove recurring chore?</h3>
+  <p class="mt-1.5 text-sm text-gray-500 dark:text-gray-400">
+    <span data-chore-board-target="removeChoreName">This chore</span> · <span data-chore-board-target="removeFrequency"></span>
+  </p>
+  <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+    Take it off just this week, or stop it repeating from this week on? Earlier weeks stay as they are.
+  </p>
+
+  <div class="mt-5 flex flex-col gap-2">
+    <button type="button" data-action="chore-board#answer" data-value="week" autofocus
+            class="w-full rounded-lg px-4 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white text-sm font-medium cursor-pointer transition">
+      Just this week
+    </button>
+    <button type="button" data-action="chore-board#answer" data-value="all"
+            class="w-full rounded-lg px-4 py-2.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 text-white text-sm font-medium cursor-pointer transition">
+      This and all future weeks
+    </button>
+    <button type="button" data-action="chore-board#dismiss"
+            class="w-full rounded-lg px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white text-sm font-medium cursor-pointer transition">
+      Cancel
+    </button>
+  </div>
+</dialog>

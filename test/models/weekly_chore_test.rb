@@ -261,4 +261,58 @@ class WeeklyChoreTest < ActiveSupport::TestCase
 
     assert_equal original_anchor, chores(:one).reload.default_weekday_started_on
   end
+
+  test "a this-week-only move leaves the remembered day and other weeks alone" do
+    week_start = Date.current.beginning_of_week
+    this_week = households(:one).weekly_chores.create!(chore: chores(:one), week_start: week_start, scheduled_date: week_start + 1)
+    next_week = households(:one).weekly_chores.create!(chore: chores(:one), week_start: week_start + 7, scheduled_date: week_start + 8)
+
+    this_week.move_to_day!(week_start + 3, this_week_only: true)
+
+    assert_equal week_start + 3, this_week.reload.scheduled_date
+    assert_equal week_start + 8, next_week.reload.scheduled_date
+    assert_equal (week_start + 1).wday, chores(:one).reload.default_weekday
+  end
+
+  test "moving a chore going forward never changes earlier weeks" do
+    week_start = Date.current.beginning_of_week
+    last_week = households(:one).weekly_chores.create!(chore: chores(:one), week_start: week_start - 7, scheduled_date: week_start - 6)
+    this_week = households(:one).weekly_chores.create!(chore: chores(:one), week_start: week_start, scheduled_date: week_start + 1)
+
+    this_week.move_to_day!(week_start + 3)
+
+    assert_equal week_start - 6, last_week.reload.scheduled_date
+    Chore.auto_schedule_recurring!(households(:one), week_start: week_start - 14)
+    assert_nil households(:one).weekly_chores.find_by(chore: chores(:one), week_start: week_start - 14)
+  end
+
+  test "removing a completed instance recomputes the chore's last_completed_at" do
+    chore = households(:one).chores.create!(name: "Clean oven", frequency: "monthly")
+    instance = households(:one).weekly_chores.create!(chore: chore, week_start: Date.current.beginning_of_week, scheduled_date: Date.current)
+    instance.mark_complete!
+    assert_not_nil chore.reload.last_completed_at
+
+    instance.destroy!
+
+    assert_nil chore.reload.last_completed_at
+  end
+
+  test "a skipped instance is hidden from the week and isn't recreated by auto-scheduling" do
+    week_start = Date.current.beginning_of_week
+    instance = households(:one).weekly_chores.create!(chore: chores(:one), week_start: week_start, scheduled_date: week_start + 1)
+
+    instance.skip!
+    Chore.auto_schedule_recurring!(households(:one), week_start: week_start)
+
+    assert_empty households(:one).weekly_chores.for_week(week_start).where(chore: chores(:one))
+    assert_equal 1, households(:one).weekly_chores.where(chore: chores(:one), week_start: week_start).count
+  end
+
+  test "next_due_date passes over a skipped week" do
+    week_start = Date.current.beginning_of_week
+    instance = households(:one).weekly_chores.create!(chore: chores(:one), week_start: week_start, scheduled_date: week_start + 3)
+    instance.skip!
+
+    assert_equal week_start + 10, chores(:one).reload.next_due_date
+  end
 end

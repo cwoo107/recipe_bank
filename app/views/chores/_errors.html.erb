@@ -1,0 +1,6 @@
+<%# locals: (chore:, from:) %>
+<div id="chore_errors_<%= from %>_<%= chore.id %>">
+  <% if chore.errors.any? %>
+    <p class="mt-2 text-xs text-dusty-rose-700 dark:text-dusty-rose-300"><%= chore.errors.full_messages.to_sentence %></p>
+  <% end %>
+</div>

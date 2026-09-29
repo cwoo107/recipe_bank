@@ -8,12 +8,13 @@
   <% end %>
 <% else %>
   <%# Plain "Add to this week" click — append into whichever day got picked,
-      in both the desktop grid and the mobile accordion. %>
-  <% day = @weekly_chore.scheduled_date.iso8601 %>
-  <%= turbo_stream.append "weekly_chores_day_desktop_#{day}" do %>
+      in the chore's category row, in both the desktop grid and the mobile
+      accordion. %>
+  <% cell = "#{@weekly_chore.scheduled_date.iso8601}_#{chore_board_category_key(@weekly_chore.chore)}" %>
+  <%= turbo_stream.append "weekly_chores_cell_desktop_#{cell}" do %>
     <%= render "weekly_chore", weekly_chore: @weekly_chore %>
   <% end %>
-  <%= turbo_stream.append "weekly_chores_day_mobile_#{day}" do %>
+  <%= turbo_stream.append "weekly_chores_cell_mobile_#{cell}" do %>
     <%= render "weekly_chore", weekly_chore: @weekly_chore %>
   <% end %>
 <% end %>

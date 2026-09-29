@@ -1,0 +1,10 @@
+<%= turbo_frame_tag "edit_chore_category_#{@chore_category.id}" do %>
+  <%= render "form", chore_category: @chore_category %>
+
+  <div class="mt-6 pt-4 border-t border-gray-200 dark:border-white/10">
+    <%= button_to "Delete category", chore_category_path(@chore_category, return_to: params[:return_to]), method: :delete,
+          form: { data: { turbo_frame: "_top", turbo_confirm: "Delete the \"#{@chore_category.name}\" category? Its chores will move to Uncategorized." } },
+          class: "text-sm font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer" %>
+    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Its chores stay, under Uncategorized.</p>
+  </div>
+<% end %>

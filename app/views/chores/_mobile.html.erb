@@ -1,0 +1,50 @@
+<%# locals: (chore:, open: false) %>
+<%# Mobile row: summary + an Edit button that
+    opens the same fields in a modal. Replaced wholesale after a save;
+    `open` reopens the modal after a validation error. %>
+<div id="chore_mobile_<%= chore.id %>" data-controller="dialog" data-dialog-open-value="<%= open %>" data-action="click->dialog#backdropClose">
+  <div class="flex items-start justify-between gap-3">
+    <%= render "chores/summary", chore: chore %>
+    <button type="button" data-action="dialog#open"
+            class="shrink-0 inline-flex items-center rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
+      Edit
+    </button>
+  </div>
+  <div class="mt-2 text-xs">
+    <% next_due = chore.next_due_date %>
+    <span class="text-gray-500 dark:text-gray-400">Next due</span>
+    <span class="<%= chore_due_label_classes(next_due) %>"><%= chore_due_label(next_due) %></span>
+  </div>
+
+  <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 rounded-lg p-5 shadow-xl backdrop:bg-black/50 m-auto">
+    <h3 class="mb-4 text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">Edit chore</h3>
+
+    <%= form_with model: chore, namespace: "mobile_#{chore.id}", class: "space-y-4", data: { controller: "chore-row" } do |f| %>
+      <%= hidden_field_tag :inline, 1, id: nil %>
+      <%= hidden_field_tag :from, "mobile", id: nil %>
+      <%= render "chores/fields", f: f, chore: chore %>
+      <%= render "chores/errors", chore: chore, from: "mobile" %>
+      <%= f.submit "Save changes",
+            class: "w-full inline-flex justify-center items-center rounded-md bg-[#5f734c] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer transition-colors" %>
+    <% end %>
+
+    <div class="mt-5 pt-4 border-t border-gray-200 dark:border-white/10">
+      <h4 class="mb-1.5 text-sm font-medium text-gray-700 dark:text-gray-300">Tasks</h4>
+      <div id="chore_tasks_mobile_<%= chore.id %>">
+        <%= render "chore_tasks/list", chore: chore, from: "mobile" %>
+      </div>
+    </div>
+
+    <div class="mt-5 pt-4 border-t border-gray-200 dark:border-white/10">
+      <%= render "chores/status", chore: chore %>
+    </div>
+
+    <div class="mt-5 flex items-center justify-between">
+      <button type="button" data-action="dialog#close"
+              class="rounded-lg px-5 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white text-sm font-medium transition">
+        Close
+      </button>
+      <%= render "chores/delete_button", chore: chore %>
+    </div>
+  </dialog>
+</div>

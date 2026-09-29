@@ -1,0 +1,19 @@
+<%# locals: (key:, name:, category:, days:, grouped:, columns:) %>
+<%# One
+    category's row on the desktop board. Real categories carry
+    data-category-row-id so the row list can be drag-reordered. %>
+<div class="grid gap-1.5" style="<%= columns %>" <%= tag.attributes(data: { category_row_id: category&.id }) %>>
+  <%= render "weekly_chores/category_label", name: name, category: category %>
+  <% days.each do |day| %>
+    <% is_today = day == Date.current %>
+    <div id="weekly_chores_cell_desktop_<%= day.iso8601 %>_<%= key %>"
+         data-chore-board-target="column" data-date="<%= day.iso8601 %>"
+         data-category-key="<%= key %>" data-category-name="<%= name %>"
+         class="min-w-0 min-h-16 flex flex-col gap-1.5 rounded-md border p-1
+                <%= is_today ? 'border-[#5f734c]/60 dark:border-[#7a8f62]/60 bg-[#5f734c]/5 dark:bg-[#7a8f62]/10' : 'border-gray-200 dark:border-white/10' %>">
+      <% (grouped[[ day, key ]] || []).each do |weekly_chore| %>
+        <%= render "weekly_chores/weekly_chore", weekly_chore: weekly_chore %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

@@ -4,15 +4,23 @@
 module Palette
   NAMES = %w[olive seafoam honey mist mauve dusty-rose].freeze
 
-  # For a person: a dot (pickers, member list) and a pill (their name on
-  # chore and to-do cards).
+  # For a person: a dot (pickers, member list), a pill (their name on to-do
+  # cards), and a card tint (chore cards on the Chore Chart, which are
+  # colored by assignee instead of carrying a name pill — see
+  # weekly_chores/_assignee_key).
   PERSON_CLASSES = {
-    "olive"      => { dot: "bg-olive-500",      pill: "bg-olive-100 text-olive-800 dark:bg-olive-800/40 dark:text-olive-200" },
-    "seafoam"    => { dot: "bg-seafoam-500",    pill: "bg-seafoam-100 text-seafoam-800 dark:bg-seafoam-900/40 dark:text-seafoam-300" },
-    "honey"      => { dot: "bg-honey-500",      pill: "bg-honey-100 text-honey-800 dark:bg-honey-900/40 dark:text-honey-300" },
-    "mist"       => { dot: "bg-mist-500",       pill: "bg-mist-100 text-mist-800 dark:bg-mist-800/40 dark:text-mist-200" },
-    "mauve"      => { dot: "bg-mauve-500",      pill: "bg-mauve-100 text-mauve-800 dark:bg-mauve-800/40 dark:text-mauve-200" },
-    "dusty-rose" => { dot: "bg-dusty-rose-500", pill: "bg-dusty-rose-100 text-dusty-rose-800 dark:bg-dusty-rose-900/40 dark:text-dusty-rose-300" }
+    "olive"      => { dot: "bg-olive-500",      pill: "bg-olive-100 text-olive-800 dark:bg-olive-800/40 dark:text-olive-200",
+                    card: "bg-olive-100 border-olive-300 dark:bg-olive-800/40 dark:border-olive-600" },
+    "seafoam"    => { dot: "bg-seafoam-500",    pill: "bg-seafoam-100 text-seafoam-800 dark:bg-seafoam-900/40 dark:text-seafoam-300",
+                    card: "bg-seafoam-100 border-seafoam-300 dark:bg-seafoam-900/40 dark:border-seafoam-700" },
+    "honey"      => { dot: "bg-honey-500",      pill: "bg-honey-100 text-honey-800 dark:bg-honey-900/40 dark:text-honey-300",
+                    card: "bg-honey-100 border-honey-300 dark:bg-honey-900/40 dark:border-honey-700" },
+    "mist"       => { dot: "bg-mist-500",       pill: "bg-mist-100 text-mist-800 dark:bg-mist-800/40 dark:text-mist-200",
+                    card: "bg-mist-100 border-mist-300 dark:bg-mist-800/40 dark:border-mist-600" },
+    "mauve"      => { dot: "bg-mauve-500",      pill: "bg-mauve-100 text-mauve-800 dark:bg-mauve-800/40 dark:text-mauve-200",
+                    card: "bg-mauve-100 border-mauve-300 dark:bg-mauve-800/40 dark:border-mauve-600" },
+    "dusty-rose" => { dot: "bg-dusty-rose-500", pill: "bg-dusty-rose-100 text-dusty-rose-800 dark:bg-dusty-rose-900/40 dark:text-dusty-rose-300",
+                    card: "bg-dusty-rose-100 border-dusty-rose-300 dark:bg-dusty-rose-900/40 dark:border-dusty-rose-700" }
   }.freeze
 
   # For printing (WeekPlanPdf), as RGB hex converted from the app's oklch
