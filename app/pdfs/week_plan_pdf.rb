@@ -44,19 +44,35 @@ class WeekPlanPdf
   }.freeze
 
 
+  # These print on exactly one page each, shrunk to fit when they run long
+  # (see #fit_to_page). Recipes are left to run across as many pages as
+  # they need — shrinking a week of recipes onto one page would be unreadable.
+  FIT_TO_PAGE = SECTIONS.keys - %w[recipes]
+
+  # Single-column lists that switch to two columns once they'd run past one
+  # page, so a long week fills the page rather than shrinking into a thin
+  # strip of tiny text down the left side.
+  TWO_COLUMNS_WHEN_LONG = %w[chores todos].freeze
+
+  MARGIN = [ 64, 48, 56, 48 ].freeze
+
   include Prawn::View
 
-  def initialize(household:, week_start:, sections:)
-    @household  = household
-    @week_start = week_start
-    @week       = week_start...(week_start + 7)
-    @sections   = SECTIONS.keys & Array(sections)
+  # page_size and list_columns are only overridden for the tall scratch
+  # document #fit_to_page measures a section in.
+  def initialize(household:, week_start:, sections:, page_size: "LETTER", list_columns: 1)
+    @household    = household
+    @week_start   = week_start
+    @week         = week_start...(week_start + 7)
+    @sections     = SECTIONS.keys & Array(sections)
+    @page_size    = page_size
+    @list_columns = list_columns
   end
 
   def document
     @document ||= Prawn::Document.new(
-      page_size: "LETTER",
-      margin: [ 64, 48, 56, 48 ],
+      page_size: @page_size,
+      margin: MARGIN,
       info: { Title: "#{week_title} — #{@household.family_name}", Creator: "HomemakersHaven" }
     )
   end
@@ -66,10 +82,11 @@ class WeekPlanPdf
     font SANS
     fill_color INK
 
-    title_block
+    # No title block on page one: the brand, household and week already run
+    # along the top of every page (page_furniture).
     @sections.each_with_index do |key, index|
       start_new_page if index.positive?
-      send("#{key}_section")
+      FIT_TO_PAGE.include?(key) ? fit_to_page(key) : send("#{key}_section")
     end
 
     page_furniture
@@ -111,19 +128,51 @@ class WeekPlanPdf
     "Week of #{@week_start.strftime('%b %-d')} – #{ending}"
   end
 
-  def title_block
-    font(SERIF) { formatted_text [ { text: "Homemakers", color: SAGE, size: 13 }, { text: "Haven", color: INK, size: 13 } ] }
-    move_down 6
-    font(SERIF) { text clean(week_title), size: 30, color: INK }
-    text clean(@household.display_name.upcase_first), size: 10, color: MUTED
-    move_down 4
-    text clean(@sections.map { |key| SECTIONS[key][:label] }.join("  ·  ")), size: 9, color: MUTED
-    move_down 10
-    stroke_color SAGE
-    line_width 2
-    stroke_horizontal_rule
-    line_width 1
-    move_down 18
+  # A section that must stay on one page. It's laid out once in a scratch
+  # document with a very tall page to find its natural height; if that's
+  # more than the page holds, it's drawn scaled down to fit. The scaled
+  # drawing area is proportionally wider as well as taller, so text re-wraps
+  # into the extra width rather than just shrinking — which only makes the
+  # section shorter, so it's guaranteed to fit. The chore chart and to-dos
+  # first try two columns (TWO_COLUMNS_WHEN_LONG) and only shrink if even
+  # that won't fit.
+  def fit_to_page(key)
+    available = cursor
+    @list_columns = 1
+    needed = natural_height(key)
+    if needed > available && TWO_COLUMNS_WHEN_LONG.include?(key)
+      @list_columns = 2
+      needed = natural_height(key)
+    end
+    return send("#{key}_section") if needed <= available
+
+    factor = available / needed
+    scale(factor, origin: [ 0, cursor ]) do
+      # Twice the height needed, so a "does the next row fit?" check near
+      # the end never trips a page break inside the box; the unused half
+      # hangs off the bottom of the page, empty.
+      bounding_box([ 0, cursor ], width: bounds.width / factor, height: needed * 2) do
+        send("#{key}_section")
+      end
+    end
+  end
+
+  MEASURE_PAGE_HEIGHT = 50_000
+
+  def natural_height(key)
+    width   = document.bounds.width + MARGIN[1] + MARGIN[3]
+    scratch = self.class.new(household: @household, week_start: @week_start, sections: [ key ],
+                             page_size: [ width, MEASURE_PAGE_HEIGHT ], list_columns: @list_columns)
+    scratch.send(:measure_section, key)
+  end
+
+  # (Run on the scratch document.) How far down the section reached,
+  # counting any whole pages it filled first.
+  def measure_section(key)
+    register_fonts
+    font SANS
+    send("#{key}_section")
+    (page_count - 1) * bounds.height + (bounds.top - cursor)
   end
 
   # Brand + week on every page, page numbers at the bottom.
@@ -164,14 +213,8 @@ class WeekPlanPdf
     start_new_page if cursor < points
   end
 
-  # A line with an empty tick box, for anything meant to be checked off.
-  # `person` (a HouseholdMember) tints it in their color.
-  def checkbox_line(label, detail = nil, checked: false, person: nil)
-    checkbox_columns([ [ label, detail, checked, person ] ], columns: 1)
-  end
-
   # Tick-box items laid out in columns (left to right, then down), so long
-  # shopping lists fit on fewer pages. Items are [label, detail, checked,
+  # lists fit on fewer pages. Items are [label, detail, checked,
   # person (optional)].
   def checkbox_columns(items, columns: 2, gap: 18)
     width = (bounds.width - gap * (columns - 1)) / columns
@@ -191,7 +234,10 @@ class WeekPlanPdf
 
   def checkbox_height(label, detail, width, person = nil)
     inset = person ? 16 + PERSON_PAD * 2 : 16
-    height = [ height_of(clean(label), width: width - inset, size: 10), 9 ].max + (detail.present? ? 11 : 0) + 5
+    # A detail line can wrap (a chore's task list), so it's measured too —
+    # never less than the one-line allowance it always had.
+    detail_height = detail.present? ? [ height_of(clean(detail), width: width - inset, size: 8) + 2, 11 ].max : 0
+    height = [ height_of(clean(label), width: width - inset, size: 10), 9 ].max + detail_height + 5
     person ? height + PERSON_PAD + 2 : height
   end
 
@@ -214,9 +260,19 @@ class WeekPlanPdf
     end
     fill_color INK
 
-    bounding_box([ x + 16, top ], width: width - 16) do
-      text clean(label), size: 10, color: checked ? MUTED : (colors ? colors[:text] : INK)
-      text(clean(detail), size: 8, color: colors ? colors[:text] : MUTED) if detail.present?
+    # Placed text boxes rather than flowing text in a bounding box: flowing
+    # text in an unsized box measures against the page's bottom margin, so on
+    # a section drawn shrunk-to-fit (#fit_to_page) it would think it had run
+    # off the page and start a new one. The row height was already measured
+    # (#checkbox_height), so nothing needs to flow.
+    text_width   = width - 16
+    label        = clean(label)
+    label_height = height_of(label, width: text_width, size: 10)
+    colored_text_box label, at: [ x + 16, top ], width: text_width, size: 10,
+                     color: checked ? MUTED : (colors ? colors[:text] : INK)
+    if detail.present?
+      colored_text_box clean(detail), at: [ x + 16, top - label_height ], width: text_width, size: 8,
+                       color: colors ? colors[:text] : MUTED
     end
   end
 
@@ -312,7 +368,7 @@ class WeekPlanPdf
   CARD_GAP = 4
 
   def meals_section
-    section_heading "Meal plan", "Servings in brackets."
+    section_heading "Meal plan"
 
     calendar, extras = week_meals.partition(&:calendar_meal?)
     day_width  = 70
@@ -485,7 +541,7 @@ class WeekPlanPdf
   end
 
   def restock_section
-    section_heading "Restock list", "Everything marked Restock on the restock checklist."
+    section_heading "Restock list"
 
     list = RestockItem.shopping_list(@household)
     return empty_note("Nothing is marked Restock right now.") if list.empty?
@@ -505,7 +561,7 @@ class WeekPlanPdf
     section_heading "Chore chart"
 
     Chore.auto_schedule_recurring!(@household, week_start: @week_start)
-    chores = @household.weekly_chores.for_week(@week_start).includes(:chore, :assignee).group_by(&:scheduled_date)
+    chores = @household.weekly_chores.for_week(@week_start).includes(:assignee, chore: :chore_tasks).group_by(&:scheduled_date)
     return empty_note("No chores on the chart this week.") if chores.values.flatten.empty?
 
     people_legend(chores.values.flatten.map(&:assignee))
@@ -515,27 +571,40 @@ class WeekPlanPdf
       subheading date.strftime("%A %b %-d")
       next empty_note("Nothing scheduled.") if day_chores.empty?
 
-      day_chores.each { |wc| checkbox_line wc.chore.name, wc.assignee&.name, checked: wc.completed?, person: wc.assignee }
+      # One column normally; two once the chart would run past a page
+      # (@list_columns — see #fit_to_page).
+      checkbox_columns(day_chores.map { |wc| chore_item(wc) }, columns: @list_columns)
     end
 
     unscheduled = chores[nil] || []
     if unscheduled.any?
       subheading "Any day"
-      unscheduled.each { |wc| checkbox_line wc.chore.name, wc.assignee&.name, checked: wc.completed?, person: wc.assignee }
+      checkbox_columns(unscheduled.map { |wc| chore_item(wc) }, columns: @list_columns)
     end
   end
 
+  # "Clean bathroom - Bob" on one line, with the chore's tasks (if any)
+  # underneath: "Clean toilet · Mop floors · Wipe sink". A checkbox_columns
+  # item.
+  def chore_item(weekly_chore)
+    label = [ weekly_chore.chore.name, weekly_chore.assignee&.name ].compact.join(" - ")
+    tasks = weekly_chore.chore.chore_tasks.map(&:name).join("  ·  ").presence
+    [ label, tasks, weekly_chore.completed?, weekly_chore.assignee ]
+  end
+
   def todos_section
-    section_heading "To-dos", "In progress."
+    section_heading "To-dos"
 
     todos = printed_todos
     return empty_note("Nothing in progress right now.") if todos.empty?
 
     people_legend(todos.map(&:assignee))
-    todos.each do |todo|
+    # One column normally; two once the list would run past a page
+    # (@list_columns — see #fit_to_page).
+    checkbox_columns(todos.map do |todo|
       dates = todo.start_date && todo.end_date ? "#{todo.start_date.strftime('%b %-d')} – #{todo.end_date.strftime('%b %-d')}" : nil
-      checkbox_line todo.title, [ todo.assignee&.name, todo.priority_label, dates ].compact.join("  ·  "), person: todo.assignee
-    end
+      [ todo.title, [ todo.assignee&.name, todo.priority_label, dates ].compact.join("  ·  "), false, todo.assignee ]
+    end, columns: @list_columns)
   end
 
   def calendar_section

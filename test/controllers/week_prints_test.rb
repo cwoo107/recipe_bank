@@ -79,6 +79,17 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     assert_select "a", text: /Print this week's plan/, count: 0
   end
 
+  test "the first page has no title block repeating the running header" do
+    lines = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render)
+
+    # Only the running header (once per page) names the brand and week now.
+    pages = lines.count { |line| line.start_with?("Page ") }
+    assert_operator pages, :>=, 1
+    assert_equal pages, lines.count { |line| line.include?("Week of Jan 5") }, lines.inspect
+    refute_includes lines, "Homemakers"
+    assert_includes lines, "Chore chart"
+  end
+
   private
 
   def page_count(pdf) = pdf.scan(%r{/Type /Page\b}).size
@@ -113,5 +124,92 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
   def rgb_operator(hex)
     r, g, b = hex.scan(/../).map { |c| Regexp.escape(format("%.5f", c.to_i(16) / 255.0)[0, 6]) }
     /#{r}\d* #{g}\d* #{b}\d* scn/
+  end
+
+  test "the printed chore chart puts the assignee after the title and lists the chore's tasks" do
+    chore = chores(:one) # "Take out trash", assigned to Bob
+    chore.chore_tasks.create!(name: "Rinse bins")
+    chore.chore_tasks.create!(name: "Wheel to curb")
+
+    lines = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render)
+
+    assert_includes lines, "Take out trash - #{household_members(:one).name}"
+    assert(lines.any? { |line| line.include?("Rinse bins") && line.include?("Wheel to curb") }, "tasks listed: #{lines.inspect}")
+    refute_includes lines, "Take out trash" # the title no longer sits alone with the name below it
+  end
+
+  test "a long chore chart and to-do list each shrink onto one page" do
+    80.times do |i|
+      chore = @household.chores.create!(name: "Chore number #{i} with a fairly long name", frequency: "monthly")
+      3.times { |t| chore.chore_tasks.create!(name: "Task #{t} for chore #{i}") }
+      @household.weekly_chores.create!(chore: chore, week_start: MONDAY, scheduled_date: MONDAY + (i % 7))
+      @household.todos.create!(title: "To-do number #{i}", priority: :medium, status: "in_progress", user: users(:one))
+    end
+
+    %w[chores todos].each do |section|
+      pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: [ section ]).render
+      assert_equal 1, page_count(pdf), "#{section} fits on one page"
+      assert_match(/ cm\b/, pdf, "#{section} is drawn scaled")
+      lines = pdf_text_lines(pdf)
+      assert(lines.any? { |line| line.include?("number 79") }, "#{section} still includes the last item")
+    end
+
+    # Each chosen section still gets its own page.
+    assert_equal 2, page_count(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores todos]).render)
+  end
+
+  test "a long chore chart and to-do list switch to two columns; short ones stay in one" do
+    short = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render)
+    assert(short.select { |_, text| text.start_with?("Take out trash") }.all? { |x, _| x < 306 }, "short chart is one column")
+
+    40.times do |i|
+      chore = @household.chores.create!(name: "Chore number #{i}", frequency: "monthly")
+      @household.weekly_chores.create!(chore: chore, week_start: MONDAY, scheduled_date: MONDAY + (i % 7))
+      @household.todos.create!(title: "To-do number #{i}", priority: :medium, status: "in_progress", user: users(:one))
+    end
+
+    { "chores" => "Chore number", "todos" => "To-do number" }.each do |section, prefix|
+      items = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: [ section ]).render)
+                .select { |_, text| text.start_with?(prefix) }
+      assert(items.any? { |x, _| x > 306 }, "#{section} uses a second column")
+      assert(items.any? { |x, _| x < 306 }, "#{section} still uses the first column")
+    end
+  end
+
+  test "a section that already fits prints at full size" do
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[todos]).render
+
+    assert_equal 1, page_count(pdf)
+    assert_no_match(/^[\d.]+ 0(\.0+)? 0(\.0+)? [\d.]+ 0(\.0+)? 0(\.0+)? cm$/, pdf, "no scaling applied")
+  end
+
+  test "recipes still run across as many pages as they need" do
+    assert_not_includes WeekPlanPdf::FIT_TO_PAGE, "recipes"
+  end
+
+  private
+
+  # Prawn writes each run of text as a hex string (<...> Tj, or [<...> kern
+  # <...>] TJ when kerned); decode them back into lines.
+  def pdf_text_lines(pdf)
+    pdf.b.scan(/(<[0-9a-fA-F]*>)\s*Tj|\[((?:<[0-9a-fA-F]*>|[\s\d.-])*)\]\s*TJ/).map do |single, array|
+      (single || array).scan(/<([0-9a-fA-F]*)>/).flatten.map { |hex| [ hex ].pack("H*") }.join
+                       .encode("UTF-8", "Windows-1252", invalid: :replace, undef: :replace)
+    end
+  end
+
+  # [x, text] for each text run, x in the page's own points (a shrunk
+  # section's positions are scaled back from its " cm" transform, so they're
+  # comparable with the 612pt page width).
+  def pdf_text_positions(pdf)
+    # Prawn's scale is a translate ("1 0 0 1 tx ty cm") then the scale
+    # itself ("f 0 0 f 0 0 cm"): page x = tx + f * x.
+    shift, factor = pdf.b.match(/^1(?:\.0+)? 0(?:\.0+)? 0(?:\.0+)? 1(?:\.0+)? ([-\d.]+) [-\d.]+ cm\s+([\d.]+) 0(?:\.0+)? 0(?:\.0+)? [\d.]+ 0(?:\.0+)? 0(?:\.0+)? cm$/)&.captures&.map(&:to_f)
+    shift, factor = 0.0, 1.0 unless factor
+    pdf.b.scan(/BT\b(.*?)\bET/m).filter_map do |(block)|
+      x = block[/([-\d.]+) [-\d.]+ Td/, 1]
+      next unless x
+      [ shift + x.to_f * factor, pdf_text_lines(block).join ]
+    end
   end
 end
