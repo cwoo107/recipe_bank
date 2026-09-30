@@ -24,6 +24,15 @@ class Ingredient < ApplicationRecord
 
   scope :for_household, ->(household) { where(household: household) }
 
+  # The household's ingredient called `name`, whatever its capitalization,
+  # or a new unsaved one to add to their library — for a name typed straight
+  # into the recipe page's ingredient picker.
+  def self.find_or_initialize_for(household, name, created_by:)
+    name = name.to_s.squish
+    household.ingredients.where("LOWER(ingredient) = ?", name.downcase).order(:id).first ||
+      household.ingredients.build(ingredient: name, created_by:)
+  end
+
   def editable_by?(user)
     household_id.present? && household_id == user&.household&.id
   end

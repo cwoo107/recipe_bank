@@ -30,7 +30,9 @@ class RecipeIngredientEditingTest < ActionDispatch::IntegrationTest
   end
 
   test "the picker keeps a legacy free-text unit rather than rewriting it" do
-    @line.update!(unit: "tablespoons")
+    # Straight to the column: saving normalizes units now (UnitNormalizer),
+    # so only lines stored before that can still hold one like this.
+    @line.update_column(:unit, "tablespoons")
 
     get recipe_url(@recipe)
 

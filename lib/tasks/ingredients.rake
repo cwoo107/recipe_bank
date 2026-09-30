@@ -137,4 +137,60 @@ namespace :ingredients do
     puts format("  %-30s %d", "merged into another", counts.fetch(:merge, 0))
     puts format("  %-30s %d", "flagged to check by hand (!)", changes.count { |change| change.notes.any? })
   end
+
+  # Tidies how units are written on recipe lines and nutrition facts —
+  # "Tablespoons", "Tbsp", "T" all become the picker's "tbsp" — and flags
+  # units the picker doesn't offer. Amounts are never changed. See UnitAudit.
+  #
+  #   bin/rails ingredients:normalize_units                 # audit only
+  #   bin/rails ingredients:normalize_units HOUSEHOLD=12    # one household
+  #   bin/rails ingredients:normalize_units CSV=tmp/unit_audit.csv
+  #   bin/rails ingredients:normalize_units APPLY=1         # save the changes
+  desc "Audit and clean up how units are written (dry run unless APPLY=1; HOUSEHOLD=id, CSV=path)"
+  task normalize_units: :environment do
+    apply     = ENV['APPLY'] == '1'
+    household = ENV['HOUSEHOLD'].presence && Household.find(ENV['HOUSEHOLD'])
+    audit     = UnitAudit.new(household: household)
+    changes   = audit.changes
+
+    puts apply ? "Applying changes." : "Dry run — nothing will be saved. Re-run with APPLY=1 to apply."
+    puts "Scope: #{household ? "#{household.family_name} (household ##{household.id})" : 'every household'}"
+    puts
+
+    if changes.empty?
+      puts "Every unit is already written the picker's way."
+      next
+    end
+
+    shown = ->(unit) { unit.nil? ? "(no unit)" : unit.inspect }
+    changes.group_by(&:source).each do |source, source_changes|
+      puts source.label.capitalize
+      source_changes.sort_by { |change| [ change.kind.to_s, change.from.downcase ] }.each do |change|
+        label  = change.update? ? "update" : "check "
+        target = change.update? ? shown.(change.to) : "(left as is)"
+        puts format("  %s  %-22s → %-12s %5d", label, change.from.inspect, target, change.count)
+        change.notes.each { |note| puts "          ! #{note}" }
+      end
+      puts
+    end
+
+    if (path = ENV['CSV'].presence)
+      require 'csv'
+      CSV.open(path, 'w') do |csv|
+        csv << %w[action table current_unit new_unit rows notes]
+        changes.each do |change|
+          csv << [ change.kind, change.source.model.table_name, change.from, change.to, change.count, change.notes.join('; ') ]
+        end
+      end
+      puts "Wrote #{changes.size} rows to #{path}"
+    end
+
+    audit.apply! if apply
+
+    updates = changes.select(&:update?)
+    puts "Summary#{' (dry run — nothing saved)' unless apply}:"
+    puts format("  %-30s %d (%d rows)", "units rewritten", updates.size, updates.sum(&:count))
+    puts format("  %-30s %d (%d rows)", "flagged to check by hand (!)", changes.count { |change| !change.update? },
+                changes.reject(&:update?).sum(&:count))
+  end
 end

@@ -3,9 +3,15 @@ import { Controller } from "@hotwired/stimulus"
 export default class extends Controller {
     static targets = ["select", "searchInput", "dropdown", "option",
                        "searchTab", "collectionTab", "sourceSelect", "collectionPicker", "tagChip",
-                       "publicToggle"]
+                       "publicToggle", "newName"]
     static values = {
-        placeholder: { type: String, default: "Search..." }
+        placeholder: { type: String, default: "Search..." },
+        // Creatable pickers (the recipe page's ingredient picker) also take a
+        // name that isn't one of the options: it goes in the newName hidden
+        // field for the server to create, and the dropdown offers it as
+        // createLabel ("%s" is the typed text).
+        creatable: { type: Boolean, default: false },
+        createLabel: { type: String, default: "Add “%s”" }
     }
 
     connect() {
@@ -97,6 +103,13 @@ export default class extends Controller {
             dropdown.appendChild(optionDiv)
         })
 
+        if (this.creatableValue) {
+            this.createOption = document.createElement('div')
+            this.createOption.className = 'hidden px-3 py-2 text-sm cursor-pointer font-medium text-[#5f734c] dark:text-[#95a97d] hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-200 dark:border-gray-700'
+            this.createOption.dataset.action = 'click->searchable-select#chooseNew'
+            dropdown.prepend(this.createOption)
+        }
+
         wrapper.appendChild(input)
         wrapper.appendChild(dropdown)
         this.originalSelect.parentNode.insertBefore(wrapper, this.originalSelect)
@@ -112,7 +125,35 @@ export default class extends Controller {
     }
 
     filterOptions() {
+        if (this.creatableValue) this.syncTypedName()
         this.applyFilters()
+    }
+
+    // Creatable pickers: editing the text un-picks whatever was picked, an
+    // exact (case-insensitive) match picks that option, and anything else is
+    // a new name — offered at the top of the dropdown and sent as newName.
+    syncTypedName() {
+        const typed = this.searchInputTarget.value.trim()
+        const exact = typed && this.options.find(opt => opt.value && opt.text.toLowerCase() === typed.toLowerCase())
+
+        this.originalSelect.value = exact ? exact.value : ''
+        this.optionTargets.forEach(opt => {
+            opt.classList.toggle('bg-blue-100', opt.dataset.value === this.originalSelect.value)
+            opt.classList.toggle('dark:bg-blue-900', opt.dataset.value === this.originalSelect.value)
+            opt.classList.toggle('font-medium', opt.dataset.value === this.originalSelect.value)
+        })
+        if (this.hasNewNameTarget) this.newNameTarget.value = exact ? '' : typed
+
+        this.createOption.textContent = this.createLabelValue.replace('%s', typed)
+        this.createOption.classList.toggle('hidden', !typed || !!exact)
+    }
+
+    // Clicking "Add “…” as a new ingredient": keep the typed name and move on
+    // to the amount.
+    chooseNew() {
+        this.syncTypedName()
+        this.hideDropdown()
+        this.element.querySelector('input[type=number]')?.focus()
     }
 
     // Toggles a tag chip on/off (multi-select, OR'd together) and re-filters.
@@ -229,6 +270,8 @@ export default class extends Controller {
 
         // Update hidden select
         this.originalSelect.value = selectedValue
+        if (this.hasNewNameTarget) this.newNameTarget.value = ''
+        this.createOption?.classList.add('hidden')
 
         // Update search input
         this.searchInputTarget.value = selectedText

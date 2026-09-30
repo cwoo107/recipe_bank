@@ -3,18 +3,33 @@ class RecipeIngredientsController < ApplicationController
   before_action :require_household_admin!
   before_action :set_recipe
 
+  # Adds a line for a picked ingredient — or for a name typed into the
+  # picker that isn't in the library yet, which is created along with the
+  # line. Like "Create and add Ingredient", nothing else is asked for: its
+  # family, cost and nutrition are filled in by IngredientEnrichmentJob.
   def create
     @recipe_ingredient = @recipe.recipe_ingredients.build(recipe_ingredient_params)
+    new_ingredient = typed_ingredient if @recipe_ingredient.ingredient_id.blank?
+    @recipe_ingredient.ingredient = new_ingredient if new_ingredient
+    created = new_ingredient&.new_record?
 
-    if @recipe_ingredient.save
+    if @recipe_ingredient.save # saves a new ingredient first, in the same transaction
+      IngredientEnrichmentJob.perform_later(new_ingredient.id) if created
+
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: [
+          streams = [
             turbo_stream.replace("recipe_ingredients_section", partial: "recipes/recipe_ingredients", locals: { recipe: @recipe }),
             turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient"),
             turbo_stream.replace("macros_chart", partial: "recipes/macros_chart", locals: { recipe: @recipe })
           ]
+          if created
+            streams << turbo_stream.update("flash", partial: "shared/flash",
+                                           locals: { notice: "Added #{new_ingredient.ingredient} to your ingredients. We're estimating its cost and nutrition now." })
+          end
+          render turbo_stream: streams
         end
+        format.html { redirect_to @recipe, notice: "Ingredient added." }
       end
     else
       redirect_to @recipe, alert: "Failed to add ingredient."
@@ -69,5 +84,11 @@ class RecipeIngredientsController < ApplicationController
 
   def recipe_ingredient_params
     params.require(:recipe_ingredient).permit(:ingredient_id, :quantity, :unit, :optional)
+  end
+
+  # What was typed into the picker when no existing ingredient was picked.
+  def typed_ingredient
+    name = params.dig(:recipe_ingredient, :new_ingredient_name).to_s.squish
+    Ingredient.find_or_initialize_for(current_household, name, created_by: current_user) if name.present?
   end
 end

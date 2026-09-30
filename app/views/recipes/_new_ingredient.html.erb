@@ -2,8 +2,16 @@
   <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10"
        data-edit-mode-target="editOnlyItems"
        data-controller="searchable-select"
-       data-searchable-select-placeholder-value="Search for an ingredient...">
+       data-searchable-select-placeholder-value="Search or type a new ingredient..."
+       data-searchable-select-creatable-value="true"
+       data-searchable-select-create-label-value="Add “%s” as a new ingredient">
     <%= form_with model: [@recipe, @recipe.recipe_ingredients.build], class: "space-y-3" do |form| %>
+      <%# A name that isn't in the library yet — RecipeIngredientsController
+          creates the ingredient along with the line. Filled in by the picker
+          (searchable_select_controller.js) whenever nothing's picked. %>
+      <%= hidden_field_tag "recipe_ingredient[new_ingredient_name]", nil,
+                           id: "recipe_ingredient_new_ingredient_name",
+                           data: { searchable_select_target: "newName" } %>
       <div>
         <%= form.label :ingredient_id, "Ingredient", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
         <%= form.select :ingredient_id,
@@ -51,8 +59,7 @@
     <% end %>
 
     <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-      Or <%= link_to "create a new ingredient", new_ingredient_path(recipe_id: @recipe.id), class: "font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
-
+      Not in your ingredients yet? Type its name — we'll add it and work out its category, cost and nutrition.
     </p>
   </div>
 <% end %>

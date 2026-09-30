@@ -1,7 +1,9 @@
 require "test_helper"
 
-# "Create and add Ingredient" — the compact form reached from a recipe's edit
-# mode, which saves the ingredient and its recipe line together.
+# "Create and add Ingredient" — the compact form that saves an ingredient and
+# its recipe line together. The recipe page no longer links here (a new name
+# is typed straight into its picker — see TypedIngredientTest), but the form
+# still works for anyone who reaches it.
 class IngredientCreateAndAddTest < ActionDispatch::IntegrationTest
   setup do
     @user   = users(:one)
@@ -30,10 +32,12 @@ class IngredientCreateAndAddTest < ActionDispatch::IntegrationTest
                   "Create and add Ingredient"
   end
 
-  test "the recipe page really does link from inside that frame" do
+  test "the recipe page no longer links to it — a new name is typed into the picker instead" do
     get recipe_url(@recipe)
 
-    assert_select "turbo-frame#new_ingredient a[href=?]", new_recipe_link_target
+    assert_select "turbo-frame#new_ingredient a[href=?]", new_recipe_link_target, count: 0
+    assert_select "turbo-frame#new_ingredient [data-searchable-select-creatable-value=true]"
+    assert_select "turbo-frame#new_ingredient input[type=hidden][name=?]", "recipe_ingredient[new_ingredient_name]"
   end
 
   test "a rejected submission still comes back inside the frame" do

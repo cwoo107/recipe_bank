@@ -8,6 +8,11 @@ class RecipeIngredient < ApplicationRecord
   # ingredients were per-household can still have their amounts edited.
   validate :ingredient_in_recipe_household, if: :will_save_change_to_ingredient_id?
 
+  # "Tablespoons", "T", "Tbsp" … are all stored as the picker's "tbsp" (see
+  # UnitNormalizer) — whether typed, picked or imported. Older lines are
+  # tidied by the ingredients:normalize_units audit.
+  before_validation :normalize_unit, if: :will_save_change_to_unit?
+
   # The unit picker shown on the recipe page. Every option here is one
   # Recipe#convert_to_grams can weigh, so the macro maths keeps working
   # whichever the user picks.
@@ -23,6 +28,10 @@ class RecipeIngredient < ApplicationRecord
   UNITS = UNIT_GROUPS.values.flatten.freeze
 
   private
+
+  def normalize_unit
+    self.unit = UnitNormalizer.call(unit).unit
+  end
 
   def ingredient_in_recipe_household
     return if ingredient.nil? || recipe.nil?
