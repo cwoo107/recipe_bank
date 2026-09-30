@@ -187,6 +187,23 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     assert_not_includes WeekPlanPdf::FIT_TO_PAGE, "recipes"
   end
 
+  test "unassigned chores and to-dos line up with the assigned ones' colored cards" do
+    bob = household_members(:one)
+    unassigned = @household.chores.create!(name: "Sweep porch", frequency: "monthly")
+    @household.weekly_chores.create!(chore: unassigned, week_start: MONDAY, scheduled_date: MONDAY + 1, assignee: nil)
+    @household.todos.create!(title: "Assigned job", priority: :medium, status: "in_progress", user: users(:one), assignee: bob)
+    @household.todos.create!(title: "Unassigned job", priority: :medium, status: "in_progress", user: users(:one))
+
+    { "chores" => [ "Take out trash - #{bob.name}", "Sweep porch" ],
+      "todos"  => [ "Assigned job", "Unassigned job" ] }.each do |section, (assigned, unassigned_label)|
+      positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: [ section ]).render)
+      x_of = ->(label) { positions.find { |_, text| text == label }&.first }
+
+      assert x_of.(assigned), "#{section}: found #{assigned.inspect} in #{positions.map(&:last).inspect}"
+      assert_in_delta x_of.(assigned), x_of.(unassigned_label), 0.01, "#{section}: labels start at the same x"
+    end
+  end
+
   private
 
   # Prawn writes each run of text as a hex string (<...> Tj, or [<...> kern

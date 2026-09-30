@@ -1,7 +1,7 @@
 <%= turbo_frame_tag "household_members" do %>
-  <div class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm p-6">
-    <p class="text-xs font-semibold uppercase tracking-widest text-sage-400">Household</p>
-    <h2 class="mt-1 font-serif text-2xl text-sage-900">Edit <%= @member.name %></h2>
+  <div class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm p-6 dark:border-white/10 dark:bg-[#1a1f16]">
+    <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Household</p>
+    <h2 class="mt-1 font-serif text-2xl text-sage-900 dark:text-[#e8ede3]">Edit <%= @member.name %></h2>
 
     <div class="mt-6">
       <%= render "form", member: @member %>
@@ -10,13 +10,13 @@
     <% if password_manageable?(@member) %>
       <%# Password help for a member's login: set one for them, or email them
           a link to choose their own. %>
-      <div id="member_password" class="mt-8 border-t border-sage-100 pt-6">
-        <h3 class="text-sm font-semibold text-sage-900">Password</h3>
-        <p class="mt-1 text-xs text-olive-400">Signs in as <%= @member.user.email %>. Changing the password signs them out everywhere.</p>
+      <div id="member_password" class="mt-8 border-t border-sage-100 pt-6 dark:border-white/10">
+        <h3 class="text-sm font-semibold text-sage-900 dark:text-white">Password</h3>
+        <p class="mt-1 text-xs text-olive-400 dark:text-gray-500">Signs in as <%= @member.user.email %>. Changing the password signs them out everywhere.</p>
 
         <% if @password_errors.present? %>
-          <div class="mt-3 rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3">
-            <ul class="list-inside list-disc text-sm text-dusty-rose-700">
+          <div class="mt-3 rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3 dark:border-dusty-rose-800/60 dark:bg-dusty-rose-900/20">
+            <ul class="list-inside list-disc text-sm text-dusty-rose-700 dark:text-dusty-rose-300">
               <% @password_errors.each do |message| %>
                 <li><%= message %></li>
               <% end %>
@@ -40,11 +40,11 @@
                 class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
         <% end %>
 
-        <div class="mt-4 flex items-center gap-3 text-sm text-olive-500">
+        <div class="mt-4 flex items-center gap-3 text-sm text-olive-500 dark:text-gray-400">
           <span>Or</span>
           <%= button_to "Email them a reset link", send_password_reset_household_member_path(@member),
                 form: { data: { turbo_frame: "_top" } },
-                class: "rounded-lg px-3 py-1.5 text-sm bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 font-medium cursor-pointer transition" %>
+                class: "rounded-lg px-3 py-1.5 text-sm bg-white text-gray-900 border border-gray-300 hover:bg-gray-50 font-medium cursor-pointer transition dark:text-white dark:border-white/10 dark:hover:bg-white/10 dark:bg-white/5" %>
         </div>
       </div>
     <% end %>

@@ -286,8 +286,58 @@
 }
 
 /* Rich text editor styles */
+/* Saved rich text (recipe step instructions) renders inside Action Text's
+   <div class="trix-content">, so this color wins over the page's own text
+   classes — it needs its own dark variant. Headings inherit it. */
 .trix-content {
-  @apply max-w-none leading-relaxed text-gray-800;
+  @apply max-w-none leading-relaxed text-gray-800 dark:text-gray-100;
+}
+
+.trix-content a {
+  @apply text-[#5f734c] underline underline-offset-2 dark:text-[#a3b88a];
+}
+
+/* The Trix editor itself (step new/edit) in dark mode. actiontext.css is
+   Trix's stock light-only stylesheet; these win over it by specificity
+   (the leading `html`) whatever order the two load in. */
+@variant dark {
+  html trix-editor {
+    border-color: rgb(255 255 255 / 0.15);
+  }
+
+  html trix-toolbar .trix-button-group,
+  html trix-toolbar .trix-button {
+    border-color: rgb(255 255 255 / 0.15);
+  }
+
+  html trix-toolbar .trix-button {
+    color: rgb(255 255 255 / 0.8);
+  }
+
+  /* The toolbar icons are black SVG backgrounds — flip them to light. */
+  html trix-toolbar .trix-button--icon::before {
+    filter: invert(1);
+  }
+
+  html trix-toolbar .trix-button.trix-active {
+    background: rgb(122 143 98 / 0.4);
+  }
+
+  html trix-toolbar .trix-button:disabled::before {
+    opacity: 0.25;
+  }
+
+  html trix-toolbar .trix-dialog {
+    background: #1a1f16;
+    border-top-color: #7a8f62;
+    color: #fff;
+  }
+
+  html trix-toolbar .trix-input--dialog {
+    background: rgb(255 255 255 / 0.05);
+    border-color: rgb(255 255 255 / 0.2);
+    color: #fff;
+  }
 }
 
 .trix-content h1 {

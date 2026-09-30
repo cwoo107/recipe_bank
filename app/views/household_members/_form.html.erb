@@ -7,11 +7,11 @@
       class: "space-y-5" do |f| %>
 
   <% if member.errors.any? %>
-    <div class="rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3">
-      <p class="text-sm font-medium text-dusty-rose-800">
+    <div class="rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3 dark:border-dusty-rose-800/60 dark:bg-dusty-rose-900/20">
+      <p class="text-sm font-medium text-dusty-rose-800 dark:text-dusty-rose-300">
         <%= pluralize(member.errors.count, "thing") %> to fix:
       </p>
-      <ul class="mt-1 list-inside list-disc text-sm text-dusty-rose-700">
+      <ul class="mt-1 list-inside list-disc text-sm text-dusty-rose-700 dark:text-dusty-rose-300">
         <% member.errors.full_messages.each do |msg| %>
           <li><%= msg %></li>
         <% end %>
@@ -34,7 +34,7 @@
             value: @email,
             placeholder: "you@example.com",
             class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-      <p class="mt-1.5 text-xs text-olive-400">Add an email to give them their own login — they'll get an email to set a password. Leave it blank for kids or anyone who won't use the app.</p>
+      <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Add an email to give them their own login — they'll get an email to set a password. Leave it blank for kids or anyone who won't use the app.</p>
     </div>
   <% end %>
 
@@ -45,7 +45,7 @@
           HouseholdMember.roles.keys.map { |r| [r.humanize, r] },
           {},
           class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-    <p class="mt-1.5 text-xs text-olive-400">Only applies once they have a login. Admins can manage the household and its members.</p>
+    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Only applies once they have a login. Admins can manage the household and its members.</p>
   </div>
   <% end %>
 

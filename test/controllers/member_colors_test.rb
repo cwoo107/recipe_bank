@@ -65,7 +65,7 @@ class MemberColorsTest < ActionDispatch::IntegrationTest
 
     %w[chores todos].each do |section|
       pdf = WeekPlanPdf.new(household: @household, week_start: week, sections: [ section ]).render
-      tint = Palette.print_colors(@bob.color)[:bg]
+      tint = Palette.print_colors(@bob.color)[:card]
       r, g, b = tint.scan(/../).map { |c| Regexp.escape(format("%.5f", c.to_i(16) / 255.0)[0, 6]) }
       assert_match(/#{r}\d* #{g}\d* #{b}\d* scn/, pdf, "#{section} page uses Bob's color")
     end

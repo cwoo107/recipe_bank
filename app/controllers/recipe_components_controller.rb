@@ -6,6 +6,14 @@ class RecipeComponentsController < ApplicationController
   before_action :set_component, only: %i[update destroy]
 
   def create
+    # Only what the picker offers: the household's own recipes, or public
+    # ones. Anything else (another household's private recipe, by posting
+    # its id) is refused rather than attached.
+    component_recipe_id = component_params[:component_recipe_id]
+    if component_recipe_id.present? && !Recipe.browsable_by_household(current_household).exists?(component_recipe_id)
+      return redirect_to @recipe, alert: "That recipe isn't available to add."
+    end
+
     @component = @recipe.recipe_components.build(component_params)
 
     if @component.save

@@ -23,7 +23,10 @@ class RecipeComponentsTest < ApplicationSystemTestCase
     click_button "Edit"
 
     within "#new_component" do
-      select "Lemon Garlic Sauce", from: "recipe_component[component_recipe_id]"
+      # The searchable picker (searchable_select_controller.js) hides the
+      # real <select> behind a type-to-search input.
+      find("input[placeholder='Search for a recipe...']").fill_in(with: "Lemon")
+      find("[data-searchable-select-target=option]", text: "Lemon Garlic Sauce").click
       fill_in "Batches", with: "0.5"
       click_button "Add recipe"
     end
@@ -45,6 +48,32 @@ class RecipeComponentsTest < ApplicationSystemTestCase
     end
 
     assert_equal [@sauce], @chicken.reload.component_recipes
+  end
+
+  test "public recipes only show in the picker once the toggle is on" do
+    pesto = users(:three).recipes.create!(title: "Public Pesto", visibility: "public", servings: 2)
+
+    visit recipe_url(@chicken)
+    click_button "Edit"
+
+    within "#new_component" do
+      # Just opening the list, before typing anything, must already leave
+      # public recipes out while the toggle is off.
+      find("input[placeholder='Search for a recipe...']").click
+      assert_selector "[data-searchable-select-target=option]", text: "Lemon Garlic Sauce"
+      assert_no_selector "[data-searchable-select-target=option]", text: "Public Pesto"
+
+      find("input[placeholder='Search for a recipe...']").fill_in(with: "Pesto")
+      assert_no_selector "[data-searchable-select-target=option]", text: "Public Pesto"
+
+      check "Also browse public recipes"
+      find("input[placeholder='Search for a recipe...']").fill_in(with: "Pesto")
+      find("[data-searchable-select-target=option]", text: "Public Pesto").click
+      click_button "Add recipe"
+    end
+
+    assert_text "Added Public Pesto"
+    assert_equal [ pesto ], @chicken.reload.component_recipes
   end
 
   test "editing the component recipe flows through to the one using it" do

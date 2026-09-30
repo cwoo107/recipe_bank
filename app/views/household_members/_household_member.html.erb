@@ -6,20 +6,20 @@
       <%= person_dot(household_member, size: "size-3") %>
       <%= link_to household_member.name, household_member_path(household_member),
             data: { turbo_frame: "_top" },
-            class: "font-medium text-sage-900 hover:text-[#5f734c] hover:underline" %>
+            class: "font-medium text-sage-900 hover:text-[#5f734c] hover:underline dark:text-white dark:hover:text-[#7a8f62]" %>
     </div>
     <div class="mt-1 flex items-center gap-2">
       <% if household_member.owner? %>
-        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-sage-100 text-sage-700">Owner</span>
+        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-sage-100 text-sage-700 dark:bg-sage-900/40 dark:text-sage-200">Owner</span>
       <% elsif household_member.user.nil? %>
-        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-taupe-100 text-taupe-700">No login</span>
+        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-taupe-100 text-taupe-700 dark:bg-taupe-900/40 dark:text-taupe-300">No login</span>
       <% elsif household_member.admin? %>
-        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-honey-100 text-honey-800">Admin</span>
+        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-honey-100 text-honey-800 dark:bg-honey-900/30 dark:text-honey-300">Admin</span>
       <% else %>
-        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-mist-100 text-mist-700">Limited</span>
+        <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium bg-mist-100 text-mist-700 dark:bg-mist-900/40 dark:text-mist-300">Limited</span>
       <% end %>
       <% if household_member.user %>
-        <span class="text-xs text-olive-400"><%= household_member.user.email %></span>
+        <span class="text-xs text-olive-400 dark:text-gray-500"><%= household_member.user.email %></span>
       <% end %>
     </div>
   </div>
@@ -33,7 +33,7 @@
         <%= button_to "Remove", household_member_path(household_member), method: :delete,
                       form: { data: { turbo_frame: "_top" } },
                       data: { turbo_confirm: household_member.login? ? "Remove #{household_member.name} and delete their login? Anything they added stays with the household." : "Remove #{household_member.name}?" },
-                      class: "rounded-lg px-3 py-1.5 text-sm border border-transparent font-medium text-dusty-rose-600 hover:bg-dusty-rose-50 transition cursor-pointer" %>
+                      class: "rounded-lg px-3 py-1.5 text-sm border border-transparent font-medium text-dusty-rose-600 hover:bg-dusty-rose-50 transition cursor-pointer dark:text-dusty-rose-400 dark:hover:bg-dusty-rose-900/20" %>
       <% end %>
     </div>
   <% end %>

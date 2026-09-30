@@ -65,6 +65,40 @@ class RecipeComponentsControllerTest < ActionDispatch::IntegrationTest
     assert_select "#new_component select option[value=?]", @sauce.id.to_s, count: 0
   end
 
+  test "the picker is searchable, the household's recipes by default, public ones behind a toggle" do
+    public_elsewhere  = users(:three).recipes.create!(title: "Public Pesto", visibility: "public", servings: 2)
+    private_elsewhere = users(:three).recipes.create!(title: "Secret Salsa", visibility: "private", servings: 2)
+
+    get recipe_url(@chicken)
+
+    assert_select "#new_component form[data-controller~=searchable-select]" do
+      assert_select "input[type=checkbox][data-searchable-select-target=publicToggle]:not([checked])"
+      assert_select "select[data-searchable-select-target=select]"
+      assert_select "option[value=?][data-public=false]", @sauce.id.to_s
+      assert_select "option[value=?][data-public=true]", public_elsewhere.id.to_s
+      assert_select "option[value=?]", private_elsewhere.id.to_s, count: 0
+    end
+  end
+
+  test "a public recipe from another household can be added" do
+    pesto = users(:three).recipes.create!(title: "Public Pesto", visibility: "public", servings: 2)
+
+    assert_difference("RecipeComponent.count", 1) do
+      post recipe_recipe_components_url(@chicken), params: { recipe_component: { component_recipe_id: pesto.id } }
+    end
+    assert_equal pesto, @chicken.recipe_components.sole.component_recipe
+  end
+
+  test "another household's private recipe can't be attached by posting its id" do
+    salsa = users(:three).recipes.create!(title: "Secret Salsa", visibility: "private", servings: 2)
+
+    assert_no_difference("RecipeComponent.count") do
+      post recipe_recipe_components_url(@chicken), params: { recipe_component: { component_recipe_id: salsa.id } }
+    end
+    assert_redirected_to recipe_url(@chicken)
+    assert_match(/isn't available/, flash[:alert])
+  end
+
   test "the multiplier can be adjusted in place" do
     component = @chicken.recipe_components.create!(component_recipe: @sauce)
 

@@ -11,12 +11,23 @@ module RecipesHelper
   # own, minus this recipe, minus ones already attached, minus anything that
   # already uses this recipe (which would close a loop). The last filter walks
   # each candidate's component tree, so it costs a query per candidate.
-  def available_component_recipes(recipe, household)
-    Recipe.for_household(household)
-          .where.not(id: recipe.id)
-          .where.not(id: recipe.component_recipes.select(:id))
-          .order(:title)
-          .reject { |candidate| candidate.depends_on?(recipe) }
+  # include_public: true widens the pool from the household's own recipes to
+  # public ones too (the same pool the meal planner browses —
+  # Recipe.browsable_by_household); the picker hides those until its
+  # "Also browse public recipes" toggle is on.
+  #
+  # Only a recipe that has components of its own can already use this one,
+  # so the (query-per-recipe) circularity walk is skipped for the rest —
+  # which is most of them, and matters once public recipes are included.
+  def available_component_recipes(recipe, household, include_public: false)
+    pool = include_public ? Recipe.browsable_by_household(household) : Recipe.for_household(household)
+    candidates = pool.where.not(id: recipe.id)
+                     .where.not(id: recipe.component_recipes.select(:id))
+                     .order(:title)
+                     .to_a
+    with_components = RecipeComponent.where(parent_recipe_id: candidates.map(&:id)).distinct.pluck(:parent_recipe_id).to_set
+
+    candidates.reject { |candidate| with_components.include?(candidate.id) && candidate.depends_on?(recipe) }
   end
 
   # Every step inside a component recipe, including the ones it pulls in

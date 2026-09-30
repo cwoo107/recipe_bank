@@ -3,8 +3,8 @@
 <div class="mx-auto max-w-6xl">
   <div class="flex items-end justify-between gap-4">
     <div>
-      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400">Household</p>
-      <h1 class="mt-1 font-serif text-4xl text-sage-900">
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Household</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">
         The <%= @household.family_name %> household
       </h1>
     </div>
@@ -20,12 +20,12 @@
   <% end %>
 
   <%# Household settings — editable by admins, read-only for everyone else. %>
-  <div id="household_settings" class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
+  <div id="household_settings" class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
     <div class="px-5 py-4">
-      <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400">Settings</h2>
+      <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Settings</h2>
     </div>
 
-    <div class="border-t border-sage-100 px-5 py-5">
+    <div class="border-t border-sage-100 px-5 py-5 dark:border-white/10">
       <% if @household.admin?(current_user) %>
         <div class="max-w-md">
           <%= render "form", household: @household %>
@@ -33,40 +33,40 @@
       <% else %>
         <dl class="grid gap-4 sm:grid-cols-3 text-sm">
           <div>
-            <dt class="text-olive-500">Family name</dt>
-            <dd class="mt-1 font-medium text-sage-900"><%= @household.family_name %></dd>
+            <dt class="text-olive-500 dark:text-gray-400">Family name</dt>
+            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.family_name %></dd>
           </div>
           <div>
-            <dt class="text-olive-500">Family size</dt>
-            <dd class="mt-1 font-medium text-sage-900"><%= @household.family_size %></dd>
+            <dt class="text-olive-500 dark:text-gray-400">Family size</dt>
+            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.family_size %></dd>
           </div>
           <div>
-            <dt class="text-olive-500">Minutes per day for to-dos</dt>
-            <dd class="mt-1 font-medium text-sage-900"><%= @household.minutes_per_day %></dd>
+            <dt class="text-olive-500 dark:text-gray-400">Minutes per day for to-dos</dt>
+            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.minutes_per_day %></dd>
           </div>
           <div>
-            <dt class="text-olive-500">Week starts on</dt>
-            <dd class="mt-1 font-medium text-sage-900"><%= @household.week_start_day_name %></dd>
+            <dt class="text-olive-500 dark:text-gray-400">Week starts on</dt>
+            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.week_start_day_name %></dd>
           </div>
           <div>
-            <dt class="text-olive-500">Time zone</dt>
-            <dd class="mt-1 font-medium text-sage-900"><%= @household.time_zone&.tr("_", " ") || "Not set" %></dd>
+            <dt class="text-olive-500 dark:text-gray-400">Time zone</dt>
+            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.time_zone&.tr("_", " ") || "Not set" %></dd>
           </div>
         </dl>
-        <p class="mt-4 text-xs text-olive-400">Only household admins can change these.</p>
+        <p class="mt-4 text-xs text-olive-400 dark:text-gray-500">Only household admins can change these.</p>
       <% end %>
     </div>
   </div>
 
   <% if @household.owner?(current_user) %>
-    <div class="mt-8 rounded-xl border border-dusty-rose-200 bg-white p-6 shadow-sm">
-      <h2 class="text-sm font-semibold text-dusty-rose-800">Danger zone</h2>
-      <p class="mt-1 text-sm text-olive-500">
+    <div class="mt-8 rounded-xl border border-dusty-rose-200 bg-white p-6 shadow-sm dark:border-dusty-rose-900/60 dark:bg-[#1a1f16]">
+      <h2 class="text-sm font-semibold text-dusty-rose-800 dark:text-dusty-rose-300">Danger zone</h2>
+      <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
         Deleting the household removes all members. This can't be undone.
       </p>
       <%= button_to "Delete household", household_path, method: :delete,
             data: { turbo_confirm: "Delete the household and remove all members?" },
-            class: "mt-4 rounded-lg px-3 py-1.5 text-sm border border-dusty-rose-200 bg-dusty-rose-50 font-medium text-dusty-rose-700 hover:bg-dusty-rose-100 cursor-pointer transition" %>
+            class: "mt-4 rounded-lg px-3 py-1.5 text-sm border border-dusty-rose-200 bg-dusty-rose-50 font-medium text-dusty-rose-700 hover:bg-dusty-rose-100 cursor-pointer transition dark:border-dusty-rose-800 dark:bg-dusty-rose-900/20 dark:text-dusty-rose-300 dark:hover:bg-dusty-rose-900/40" %>
     </div>
   <% end %>
 </div>

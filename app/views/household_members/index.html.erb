@@ -2,36 +2,36 @@
 
   <div class="flex items-end justify-between gap-4">
     <div>
-      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400">Household</p>
-      <h1 class="mt-1 font-serif text-4xl text-sage-900">
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Household</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">
         The <%= current_household.family_name %> household
       </h1>
     </div>
     <%= link_to "Add member", new_household_member_path, class: "btn-primary" %>
   </div>
 
-  <div class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm">
+  <div class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
 
-    <ul class="divide-y divide-sage-100">
+    <ul class="divide-y divide-sage-100 dark:divide-white/10">
       <li class="flex items-center justify-between px-5 py-4">
         <div>
-          <p class="font-medium text-sage-900"><%= current_household.owner.email %></p>
-          <span class="badge mt-1 bg-sage-100 text-sage-700">Owner</span>
+          <p class="font-medium text-sage-900 dark:text-white"><%= current_household.owner.email %></p>
+          <span class="badge mt-1 bg-sage-100 text-sage-700 dark:bg-sage-900/40 dark:text-gray-300">Owner</span>
         </div>
       </li>
 
       <% @members.each do |member| %>
         <li class="flex items-center justify-between px-5 py-4">
           <div>
-            <p class="font-medium text-sage-900"><%= member.name %></p>
+            <p class="font-medium text-sage-900 dark:text-white"><%= member.name %></p>
             <div class="mt-1 flex items-center gap-2">
               <% if member.admin? %>
-                <span class="badge bg-honey-100 text-honey-800">Admin</span>
+                <span class="badge bg-honey-100 text-honey-800 dark:bg-honey-900/30 dark:text-honey-300">Admin</span>
               <% else %>
-                <span class="badge bg-mist-100 text-mist-700">Limited</span>
+                <span class="badge bg-mist-100 text-mist-700 dark:bg-mist-900/40 dark:text-mist-300">Limited</span>
               <% end %>
               <% if member.user %>
-                <span class="text-xs text-olive-400"><%= member.user.email %></span>
+                <span class="text-xs text-olive-400 dark:text-gray-500"><%= member.user.email %></span>
               <% end %>
             </div>
           </div>
@@ -40,7 +40,7 @@
             <%= link_to "Edit", edit_household_member_path(member), class: "btn-secondary btn-sm" %>
             <%= button_to "Remove", household_member_path(member), method: :delete,
                   data: { turbo_confirm: "Remove #{member.name} and delete their login?" },
-                  class: "btn-sm border border-transparent font-medium text-dusty-rose-600 hover:bg-dusty-rose-50" %>
+                  class: "btn-sm border border-transparent font-medium text-dusty-rose-600 hover:bg-dusty-rose-50 dark:text-dusty-rose-400 dark:hover:bg-dusty-rose-900/20" %>
           </div>
         </li>
       <% end %>

@@ -216,14 +216,19 @@ class WeekPlanPdf
   # Tick-box items laid out in columns (left to right, then down), so long
   # lists fit on fewer pages. Items are [label, detail, checked,
   # person (optional)].
-  def checkbox_columns(items, columns: 2, gap: 18)
+  #
+  # padded: true gives every item the inset of a person's colored card
+  # (#draw_checkbox), assigned or not — for lists that mix the two (chores,
+  # to-dos), so an unassigned item's checkbox and text line up with the
+  # assigned ones around it instead of sitting PERSON_PAD further left.
+  def checkbox_columns(items, columns: 2, gap: 18, padded: false)
     width = (bounds.width - gap * (columns - 1)) / columns
     items.each_slice(columns) do |row|
-      height = row.map { |label, detail, _, person| checkbox_height(label, detail, width, person) }.max
+      height = row.map { |label, detail, _, person| checkbox_height(label, detail, width, person, padded:) }.max
       ensure_room(height)
       top = cursor
       row.each_with_index do |(label, detail, checked, person), i|
-        draw_checkbox((width + gap) * i, top, width, height, label, detail, checked, person)
+        draw_checkbox((width + gap) * i, top, width, height, label, detail, checked, person, padded:)
       end
       move_cursor_to top - height # each item's box moves the cursor itself
     end
@@ -232,20 +237,26 @@ class WeekPlanPdf
   # A person's items sit on a card in their color, so they need padding.
   PERSON_PAD = 6
 
-  def checkbox_height(label, detail, width, person = nil)
-    inset = person ? 16 + PERSON_PAD * 2 : 16
+  def checkbox_height(label, detail, width, person = nil, padded: false)
+    padded ||= person.present?
+    inset = padded ? 16 + PERSON_PAD * 2 : 16
     # A detail line can wrap (a chore's task list), so it's measured too —
     # never less than the one-line allowance it always had.
     detail_height = detail.present? ? [ height_of(clean(detail), width: width - inset, size: 8) + 2, 11 ].max : 0
     height = [ height_of(clean(label), width: width - inset, size: 10), 9 ].max + detail_height + 5
-    person ? height + PERSON_PAD + 2 : height
+    padded ? height + PERSON_PAD + 2 : height
   end
 
-  def draw_checkbox(x, top, width, row_height, label, detail, checked, person = nil)
+  def draw_checkbox(x, top, width, row_height, label, detail, checked, person = nil, padded: false)
     colors = person && Palette.print_colors(person.color)
     if colors
-      fill_color colors[:bg]
+      fill_color colors[:card] # a person's card tint — deeper than a calendar event's bg
       fill_rounded_rectangle [ x, top ], width, row_height - 3, 4
+    end
+
+    # The card's inset — also used, without the card, for an unassigned item
+    # in a padded list.
+    if colors || padded
       x += PERSON_PAD
       width -= PERSON_PAD * 2
       top -= PERSON_PAD - 1
@@ -573,13 +584,13 @@ class WeekPlanPdf
 
       # One column normally; two once the chart would run past a page
       # (@list_columns — see #fit_to_page).
-      checkbox_columns(day_chores.map { |wc| chore_item(wc) }, columns: @list_columns)
+      checkbox_columns(day_chores.map { |wc| chore_item(wc) }, columns: @list_columns, padded: true)
     end
 
     unscheduled = chores[nil] || []
     if unscheduled.any?
       subheading "Any day"
-      checkbox_columns(unscheduled.map { |wc| chore_item(wc) }, columns: @list_columns)
+      checkbox_columns(unscheduled.map { |wc| chore_item(wc) }, columns: @list_columns, padded: true)
     end
   end
 
@@ -604,7 +615,7 @@ class WeekPlanPdf
     checkbox_columns(todos.map do |todo|
       dates = todo.start_date && todo.end_date ? "#{todo.start_date.strftime('%b %-d')} – #{todo.end_date.strftime('%b %-d')}" : nil
       [ todo.title, [ todo.assignee&.name, todo.priority_label, dates ].compact.join("  ·  "), false, todo.assignee ]
-    end, columns: @list_columns)
+    end, columns: @list_columns, padded: true)
   end
 
   def calendar_section

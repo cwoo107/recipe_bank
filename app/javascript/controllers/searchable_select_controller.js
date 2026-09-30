@@ -26,6 +26,11 @@ export default class extends Controller {
 
         this.buildCustomSelect()
         this.originalSelect.style.display = 'none'
+
+        // Apply the starting filters (e.g. public recipes hidden while the
+        // toggle is off) before anything is shown — otherwise focusing the
+        // empty search box lists every option until a filter first changes.
+        this.applyFilters({ show: false })
     }
 
     buildCustomSelect() {
@@ -168,7 +173,7 @@ export default class extends Controller {
     // an option must satisfy all of them (text match, in the active recipe pool,
     // any selected tag, and — in "collection" mode — membership in the chosen
     // collection).
-    applyFilters() {
+    applyFilters({ show = true } = {}) {
         const term = this.hasSearchInputTarget ? this.searchInputTarget.value.toLowerCase() : ""
 
         this.optionTargets.forEach(option => {
@@ -195,7 +200,7 @@ export default class extends Controller {
             option.classList.toggle('hidden', !(matchesText && matchesTags && matchesCollection && matchesPool))
         })
 
-        this.showDropdown()
+        if (show) this.showDropdown()
     }
 
     setActiveTab(active, inactive) {

@@ -1,19 +1,39 @@
 <%# Locals: recipe (required). Attaching another recipe as an ingredient.
     Candidates exclude this recipe, ones already attached, and anything that
-    already uses this recipe — that last check walks each candidate's own
-    component tree, so it costs a query per candidate. %>
-<% candidates = available_component_recipes(recipe, current_household) %>
+    already uses this recipe (see RecipesHelper#available_component_recipes).
+    Like the meal planner's recipe picker: searchable, the household's own
+    recipes by default, public ones rendered too but hidden until "Also
+    browse public recipes" is ticked (searchable_select_controller.js). %>
+<% household_user_ids = current_household.users.pluck(:id).to_set %>
+<% favorite_ids       = current_user.user_favorites.pluck(:recipe_id).to_set %>
+<% candidates         = available_component_recipes(recipe, current_household, include_public: true) %>
 
 <div id="new_component" class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10"
      data-edit-mode-target="editOnlyItems">
   <h3 class="text-sm font-medium text-gray-900 dark:text-white">Use another recipe as an ingredient</h3>
 
   <% if candidates.any? %>
-    <%= form_with model: [recipe, RecipeComponent.new], class: "mt-2 space-y-2" do |form| %>
+    <%= form_with model: [recipe, RecipeComponent.new], class: "mt-2 space-y-2",
+          data: { controller: "searchable-select", searchable_select_placeholder_value: "Search for a recipe..." } do |form| %>
+      <label class="inline-flex items-center gap-2 cursor-pointer">
+        <%= check_box_tag "component_include_public_recipes", "1", false, id: "component_include_public_recipes_#{recipe.id}",
+                          data: { searchable_select_target: "publicToggle",
+                                  action: "change->searchable-select#togglePublic" },
+                          class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
+        <span class="text-sm text-gray-600 dark:text-gray-300">Also browse public recipes</span>
+      </label>
+
+      <%= form.label :component_recipe_id, "Recipe", class: "sr-only" %>
       <%= form.select :component_recipe_id,
-                      options_for_select(candidates.map { |r| [r.title, r.id] }),
-                      { include_blank: "Choose a recipe..." },
-                      class: "block w-full rounded-lg bg-white px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 outline-none dark:bg-white/5 dark:text-white dark:border-white/10 dark:*:bg-gray-800" %>
+                      options_for_select(candidates.map { |r|
+                        [r.title, r.id, {
+                          'data-favorite' => favorite_ids.include?(r.id),
+                          'data-public'   => !household_user_ids.include?(r.user_id)
+                        }]
+                      }),
+                      { include_blank: true },
+                      class: "block w-full rounded-lg bg-white px-3 py-2 text-sm text-gray-900 border border-gray-300 focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 outline-none dark:bg-white/5 dark:text-white dark:border-white/10 dark:*:bg-gray-800",
+                      data: { searchable_select_target: "select" } %>
 
       <div class="flex items-end gap-2">
         <div class="flex-1">
