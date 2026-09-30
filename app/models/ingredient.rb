@@ -23,14 +23,29 @@ class Ingredient < ApplicationRecord
   before_validation :capitalize_ingredient
 
   scope :for_household, ->(household) { where(household: household) }
+  scope :named, ->(name) { where("LOWER(ingredients.ingredient) = ?", name.to_s.squish.downcase) }
+  scope :catalog, -> { where(household_id: nil) }
 
-  # The household's ingredient called `name`, whatever its capitalization,
-  # or a new unsaved one to add to their library — for a name typed straight
-  # into the recipe page's ingredient picker.
+  # For a name typed straight into the recipe page's ingredient picker,
+  # whatever its capitalization: the household's own ingredient by that
+  # name; else a copy of the shared catalog's (saved — prices, nutrition and
+  # all, via #copy_for); else a new, unsaved one to add to their library.
   def self.find_or_initialize_for(household, name, created_by:)
     name = name.to_s.squish
-    household.ingredients.where("LOWER(ingredient) = ?", name.downcase).order(:id).first ||
+    household.ingredients.named(name).order(:id).first ||
+      catalog_entry_named(name)&.copy_for(household, user: created_by) ||
       household.ingredients.build(ingredient: name, created_by:)
+  end
+
+  # The catalog's ingredient by that name — the unbranded one if there are
+  # several brands of it, since a typed name doesn't say which.
+  def self.catalog_entry_named(name)
+    catalog.named(name).order(Arel.sql("CASE WHEN COALESCE(ingredients.brand, '') = '' THEN 0 ELSE 1 END"), :id).first
+  end
+
+  # Anything IngredientEnrichmentJob would fill in still blank.
+  def needs_enrichment?
+    family.blank? || unit_price.blank? || unit_servings.blank? || nutrition_fact.nil?
   end
 
   def editable_by?(user)

@@ -1,0 +1,246 @@
+ingredient,brand,family,organic,unit_price,unit_servings,serving_size,serving_unit,calories,protein,total_fat,total_carb
+Ground beef 80/20,,protein,false,6.83,4,4,oz,290,19,23,0
+Chicken breast boneless skinless,,protein,false,4.29,4,4,oz,120,26,1.5,0
+Chicken thighs boneless skinless,,protein,false,3.99,4,4,oz,140,22,5,0
+Salmon fillet,,protein,false,10.99,4,4,oz,230,23,15,0
+Bacon,,protein,false,6.56,8,2,slice,80,6,6,0
+Eggs large,,protein,false,2.14,12,1,,70,6,5,0
+Firm tofu,,protein,false,2.29,5,3,oz,80,9,4.5,2
+Dried black beans,,protein,false,1.63,13,0.25,cup,120,8,0.5,22
+Canned black beans,,protein,false,1.09,3,0.5,cup,110,7,0.5,20
+Canned tuna in water,,protein,false,1.29,2,2,oz,50,11,0.5,0
+Peanut butter,,protein,false,2.99,14,2,tbsp,190,7,16,8
+Whole milk,,dairy,false,4.32,16,1,cup,150,8,8,12
+Butter unsalted,,dairy,false,3.82,32,1,tbsp,100,0,11,0
+Heavy cream,,dairy,false,3.99,32,1,tbsp,50,0,5,0
+Cheddar cheese,,dairy,false,3.49,8,1,oz,110,7,9,1
+Mozzarella shredded,,dairy,false,2.79,8,0.25,cup,80,7,6,1
+Parmesan grated,,dairy,false,4.49,45,1,tbsp,20,2,1.5,0
+Cream cheese,,dairy,false,2.49,8,2,tbsp,100,2,10,2
+Sour cream,,dairy,false,2.29,15,2,tbsp,60,1,5,1
+Greek yogurt plain nonfat,,dairy,false,5.49,5,0.75,cup,90,17,0,6
+All-purpose flour,,grain,false,2.70,76,0.25,cup,100,3,0,22
+White rice long grain,,grain,false,2.49,20,0.25,cup,160,3,0,36
+Brown rice,,grain,false,2.79,21,0.25,cup,170,4,1.5,35
+Quinoa,,grain,false,3.99,8,0.25,cup,170,6,2.5,29
+Spaghetti,,grain,false,1.49,8,2,oz,200,7,1,42
+Rolled oats,,grain,false,5.49,30,0.5,cup,150,5,3,27
+Sandwich bread white,,grain,false,2.49,20,1,slice,70,2,1,13
+Flour tortillas 8 inch,,grain,false,2.99,10,1,,140,4,3.5,24
+Panko breadcrumbs,,grain,false,2.49,7,0.5,cup,110,4,0,23
+Yellow onion,,produce,false,0.99,1,1,,44,1.2,0.1,10.3
+Garlic,,produce,false,0.59,10,1,clove,4,0.2,0,1
+Carrots,,produce,false,1.79,10,3,oz,35,1,0,8
+Russet potatoes,,produce,false,3.99,10,1,,110,3,0,26
+Tomato,,produce,false,0.79,1,1,,22,1.1,0.2,4.8
+Canned diced tomatoes,,produce,false,1.19,3,0.5,cup,25,1,0,5
+Tomato paste,,produce,false,0.89,5,2,tbsp,30,2,0,6
+Red bell pepper,,produce,false,1.29,1,1,,31,1,0.4,7
+Broccoli crowns,,produce,false,1.99,5,1,cup,31,2.6,0.3,6
+Baby spinach,,produce,false,2.99,2,3,cup,20,2,0,3
+Celery,,produce,false,1.99,4,1,cup,14,0.7,0.2,3
+Cilantro,,produce,false,0.99,12,0.25,cup,1,0.1,0,0.1
+Frozen peas,,produce,false,1.49,4,0.67,cup,70,5,0,12
+Avocado,,produce,false,1.25,3,0.33,,80,1,7,4
+Lemon,,produce,false,0.69,1,1,,17,0.6,0.2,5.4
+Lime,,produce,false,0.39,1,1,,20,0.5,0.1,7
+Banana,,produce,false,0.29,1,1,,105,1.3,0.4,27
+Apple,,produce,false,0.89,1,1,,95,0.5,0.3,25
+Extra virgin olive oil,,fat,false,7.99,33,1,tbsp,120,0,14,0
+Vegetable oil,,fat,false,4.29,96,1,tbsp,120,0,14,0
+Mayonnaise,,fat,false,4.49,62,1,tbsp,90,0,10,0
+Coconut milk canned,,fat,false,1.99,5,0.33,cup,140,1,14,2
+Chocolate chips,,fat,false,3.49,24,1,tbsp,70,1,4,9
+Salt,,spices,false,1.29,491,0.25,tsp,0,0,0,0
+Black pepper ground,,spices,false,3.49,141,0.25,tsp,0,0,0,0
+Ground cinnamon,,spices,false,2.49,95,0.25,tsp,0,0,0,0
+Ground cumin,,spices,false,3.49,85,0.25,tsp,0,0,0,0
+Chili powder,,spices,false,2.99,101,0.25,tsp,0,0,0,0
+Paprika,,spices,false,3.29,100,0.25,tsp,0,0,0,0
+Garlic powder,,spices,false,2.99,110,0.25,tsp,0,0,0,0
+Dried oregano,,spices,false,2.49,70,0.25,tsp,0,0,0,0
+Vanilla extract,,spices,false,9.49,12,1,tsp,12,0,0,0.5
+Baking soda,,spices,false,1.29,757,0.125,tsp,0,0,0,0
+Baking powder,,spices,false,2.99,383,0.125,tsp,0,0,0,0
+Granulated sugar,,,false,3.49,454,1,tsp,15,0,0,4
+Brown sugar,,,false,2.49,227,1,tsp,15,0,0,4
+Honey,,,false,4.99,16,1,tbsp,60,0,0,17
+Soy sauce,,,false,2.99,30,1,tbsp,10,1,0,1
+Chicken broth,,,false,2.29,4,1,cup,10,1,0,1
+Apple cider vinegar,,,false,2.49,32,1,tbsp,0,0,0,0
+Ketchup,,,false,2.49,33,1,tbsp,20,0,0,5
+Dijon mustard,,,false,2.99,68,1,tsp,5,0,0,0
+Ground turkey 93/7,,protein,false,5.49,4,4,oz,170,21,9,0
+Ground pork,,protein,false,4.49,4,4,oz,300,19,24,0
+Pork chops boneless,,protein,false,4.99,4,4,oz,160,24,6,0
+Pork tenderloin,,protein,false,4.49,4,4,oz,140,24,4,0
+Italian sausage links,,protein,false,5.49,5,1,,260,13,22,2
+Hot dogs,,protein,false,3.49,8,1,,150,5,13,2
+Beef chuck roast,,protein,false,20.97,12,4,oz,230,21,16,0
+Beef sirloin steak,,protein,false,10.99,4,4,oz,160,24,7,0
+Beef stew meat,,protein,false,7.99,4,4,oz,170,24,8,0
+Chicken wings,,protein,false,7.98,8,4,oz,220,20,15,0
+Deli turkey,,protein,false,4.99,4,2,oz,60,11,1,1
+Deli ham,,protein,false,4.49,4,2,oz,60,10,1.5,2
+Pepperoni,,protein,false,3.49,6,1,oz,140,5,13,0
+Shrimp raw,,protein,false,8.99,4,4,oz,100,23,0.5,0
+Cod fillet,,protein,false,9.99,4,4,oz,90,20,0.5,0
+Tilapia fillet,,protein,false,5.99,4,4,oz,110,23,2,0
+Canned salmon,,protein,false,4.49,6,0.25,cup,90,11,5,0
+Liquid egg whites,,protein,false,3.49,10,3,tbsp,25,5,0,0
+Tempeh,,protein,false,3.49,2,4,oz,220,23,12,9
+Edamame shelled frozen,,protein,false,2.49,4,0.5,cup,100,9,3,8
+Dried lentils,,protein,false,1.99,13,0.25,cup,120,9,0.5,21
+Canned chickpeas,,protein,false,1.19,3,0.5,cup,120,6,2,20
+Canned kidney beans,,protein,false,1.09,3,0.5,cup,110,7,0,19
+Canned pinto beans,,protein,false,1.09,3,0.5,cup,110,6,0.5,19
+Refried beans,,protein,false,1.49,3,0.5,cup,120,7,1,20
+Almonds,,protein,false,6.99,16,1,oz,160,6,14,6
+Walnuts,,protein,false,4.99,8,1,oz,190,4,18,4
+Pecans,,protein,false,6.49,8,1,oz,200,3,20,4
+Cashews,,protein,false,7.99,16,1,oz,160,5,13,9
+Almond butter,,protein,false,6.99,10,2,tbsp,190,7,17,6
+Organic chicken breast boneless skinless,,protein,true,7.99,4,4,oz,120,26,1.5,0
+Organic eggs large,,protein,true,5.99,12,1,,70,6,5,0
+2% milk,,dairy,false,4.18,16,1,cup,120,8,5,12
+Skim milk,,dairy,false,3.99,16,1,cup,90,8,0,12
+Organic whole milk,,dairy,true,5.49,8,1,cup,150,8,8,12
+Half and half,,dairy,false,2.49,32,2,tbsp,40,1,3.5,1
+Buttermilk,,dairy,false,1.99,4,1,cup,100,8,2,12
+Butter salted,,dairy,false,3.82,32,1,tbsp,100,0,11,0
+Plain whole milk yogurt,,dairy,false,3.49,4,1,cup,150,8,8,11
+Cottage cheese 4%,,dairy,false,3.29,4,0.5,cup,110,12,5,4
+Ricotta whole milk,,dairy,false,3.99,7,0.25,cup,90,5,7,2
+Feta crumbled,,dairy,false,3.49,4,1,oz,70,4,6,1
+Goat cheese,,dairy,false,3.99,4,1,oz,70,5,6,0
+Monterey Jack cheese,,dairy,false,3.49,8,1,oz,110,7,9,0
+Swiss cheese sliced,,dairy,false,3.99,8,1,oz,110,8,9,0
+American cheese singles,,dairy,false,3.49,16,1,slice,60,3,4,2
+Evaporated milk,,dairy,false,1.49,12,2,tbsp,40,2,2,3
+Sweetened condensed milk,,dairy,false,2.49,10,2,tbsp,130,3,3,22
+Whole wheat flour,,grain,false,3.99,76,0.25,cup,110,4,0.5,22
+Bread flour,,grain,false,4.49,76,0.25,cup,110,4,0,22
+Cornmeal,,grain,false,2.49,30,0.25,cup,110,2,1,23
+Cornstarch,,grain,false,1.99,56,1,tbsp,30,0,0,7
+Penne,,grain,false,1.49,8,2,oz,200,7,1,42
+Elbow macaroni,,grain,false,1.49,8,2,oz,200,7,1,42
+Lasagna noodles,,grain,false,1.99,8,2,oz,200,7,1,42
+Whole wheat spaghetti,,grain,false,1.79,8,2,oz,180,8,1.5,39
+Egg noodles,,grain,false,2.29,6,2,oz,220,8,2.5,40
+Rice noodles,,grain,false,2.99,8,2,oz,200,3,0,45
+Jasmine rice,,grain,false,3.49,20,0.25,cup,160,3,0,36
+Basmati rice,,grain,false,3.99,20,0.25,cup,160,3,0,36
+Arborio rice,,grain,false,3.99,10,0.25,cup,160,3,0,36
+Couscous,,grain,false,2.49,5,0.33,cup,210,7,0,42
+Pearl barley,,grain,false,1.99,9,0.25,cup,175,5,0.5,39
+Plain breadcrumbs,,grain,false,2.29,15,0.25,cup,110,4,1.5,20
+Whole wheat bread,,grain,false,3.49,20,1,slice,80,4,1,14
+Hamburger buns,,grain,false,2.49,8,1,,140,4,2,25
+Hot dog buns,,grain,false,2.49,8,1,,130,4,2,23
+Corn tortillas 6 inch,,grain,false,2.49,30,1,,50,1,0.5,11
+English muffins,,grain,false,2.99,6,1,,130,5,1,26
+Bagels plain,,grain,false,3.49,6,1,,270,10,1.5,54
+Saltine crackers,,grain,false,2.99,32,5,piece,60,1,1.5,11
+Red onion,,produce,false,1.29,1,1,,44,1.2,0.1,10.3
+Green onions,,produce,false,0.99,4,0.25,cup,8,0.5,0,2
+Shallot,,produce,false,0.79,1,1,,29,1,0,7
+Zucchini,,produce,false,0.99,1,1,,33,2.4,0.6,6
+Yellow squash,,produce,false,0.99,1,1,,31,2.4,0.4,6.3
+Cucumber,,produce,false,0.79,1,1,,45,2,0.3,11
+Green bell pepper,,produce,false,0.89,1,1,,24,1,0.2,5.5
+Jalapeño,,produce,false,0.15,1,1,,4,0.1,0.1,0.9
+White mushrooms,,produce,false,2.29,3,3,oz,20,3,0,3
+Cauliflower,,produce,false,2.99,6,1,cup,27,2,0.3,5
+Green cabbage,,produce,false,2.49,10,1,cup,22,1.1,0.1,5.2
+Romaine hearts,,produce,false,3.49,6,3,oz,15,1,0,3
+Iceberg lettuce,,produce,false,1.79,7,1,cup,10,0.6,0.1,2.1
+Kale,,produce,false,1.99,10,1,cup,7,0.6,0.3,0.9
+Mixed salad greens,,produce,false,3.99,2,3,oz,15,1,0,3
+Green beans,,produce,false,2.49,4,1,cup,31,1.8,0.2,7
+Asparagus,,produce,false,3.49,3,1,cup,27,3,0.2,5.2
+Sweet potato,,produce,false,0.89,1,1,,112,2,0.1,26
+Corn on the cob,,produce,false,0.50,1,1,,88,3.3,1.4,19
+Frozen corn,,produce,false,1.49,4,0.67,cup,80,3,1,17
+Frozen broccoli,,produce,false,1.49,4,1,cup,25,2,0,4
+Frozen mixed vegetables,,produce,false,1.49,4,0.67,cup,60,2,0,12
+Frozen spinach,,produce,false,1.49,3,1,cup,25,3,0,3
+Canned corn,,produce,false,0.99,3,0.5,cup,60,2,1,12
+Tomato sauce,,produce,false,0.99,7,0.25,cup,20,1,0,4
+Crushed tomatoes,,produce,false,2.49,6,0.5,cup,40,2,0,8
+Canned pumpkin,,produce,false,1.99,3,0.5,cup,40,1,0,9
+Salsa,,produce,false,3.49,14,2,tbsp,10,0,0,2
+Black olives,,produce,false,2.29,11,5,piece,25,0,2.5,1
+Dill pickles,,produce,false,2.99,16,1,oz,5,0,0,1
+Fresh ginger,,produce,false,0.75,42,1,tsp,2,0,0,0.4
+Fresh basil,,produce,false,2.49,4,2,tbsp,1,0.2,0,0.1
+Fresh parsley,,produce,false,0.99,4,0.25,cup,5,0.4,0.1,1
+Fresh rosemary,,produce,false,2.49,30,1,tsp,1,0,0,0.1
+Fresh thyme,,produce,false,2.49,26,1,tsp,1,0,0,0.2
+Strawberries,,produce,false,3.49,3,1,cup,49,1,0.5,12
+Blueberries,,produce,false,3.99,2,1,cup,84,1.1,0.5,21
+Raspberries,,produce,false,3.99,1,1,cup,64,1.5,0.8,15
+Red grapes,,produce,false,4.58,6,1,cup,104,1.1,0.2,27
+Navel orange,,produce,false,0.99,1,1,,69,1.3,0.2,17.5
+Peach,,produce,false,0.79,1,1,,59,1.4,0.4,14
+Pear,,produce,false,0.99,1,1,,101,0.6,0.3,27
+Mango,,produce,false,0.99,2,1,cup,99,1.4,0.6,25
+Pineapple,,produce,false,2.99,5,1,cup,82,0.9,0.2,22
+Cantaloupe,,produce,false,2.99,3,1,cup,54,1.3,0.3,13
+Watermelon,,produce,false,5.99,23,1,cup,46,0.9,0.2,11.5
+Raisins,,produce,false,3.29,8,0.25,cup,130,1,0,31
+Dried cranberries,,produce,false,2.99,4,0.25,cup,130,0,0,33
+Organic baby spinach,,produce,true,3.99,2,3,cup,20,2,0,3
+Organic carrots,,produce,true,2.49,10,3,oz,35,1,0,8
+Organic banana,,produce,true,0.35,1,1,,105,1.3,0.4,27
+Canola oil,,fat,false,4.49,96,1,tbsp,120,0,14,0
+Avocado oil,,fat,false,8.99,33,1,tbsp,120,0,14,0
+Sesame oil,,fat,false,4.49,10,1,tbsp,120,0,14,0
+Coconut oil,,fat,false,5.99,28,1,tbsp,120,0,14,0
+Ghee,,fat,false,7.99,19,1,tbsp,120,0,13,0
+Vegetable shortening,,fat,false,3.99,37,1,tbsp,110,0,12,0
+Lard,,fat,false,3.49,35,1,tbsp,115,0,13,0
+Tahini,,fat,false,7.99,15,2,tbsp,180,5,16,6
+Sesame seeds,,fat,false,3.99,7,1,tbsp,50,1.6,4.5,2
+Semi-sweet baking chocolate,,fat,false,2.99,8,0.5,oz,70,1,4.5,9
+Kosher salt,,spices,false,3.99,1134,0.25,tsp,0,0,0,0
+Onion powder,,spices,false,3.99,120,0.25,tsp,0,0,0,0
+Smoked paprika,,spices,false,3.99,83,0.25,tsp,0,0,0,0
+Cayenne pepper,,spices,false,3.49,110,0.25,tsp,0,0,0,0
+Red pepper flakes,,spices,false,3.49,85,0.25,tsp,0,0,0,0
+Italian seasoning,,spices,false,2.99,82,0.25,tsp,0,0,0,0
+Dried basil,,spices,false,2.99,98,0.25,tsp,0,0,0,0
+Dried thyme,,spices,false,3.49,85,0.25,tsp,0,0,0,0
+Bay leaves,,spices,false,3.99,17,1,piece,0,0,0,0
+Ground ginger,,spices,false,3.99,93,0.25,tsp,0,0,0,0
+Ground nutmeg,,spices,false,4.99,57,0.25,tsp,0,0,0,0
+Ground cloves,,spices,false,4.99,51,0.25,tsp,0,0,0,0
+Ground coriander,,spices,false,3.99,79,0.25,tsp,0,0,0,0
+Ground turmeric,,spices,false,3.99,52,0.25,tsp,0,0,0,0
+Curry powder,,spices,false,3.99,99,0.25,tsp,0,0,0,0
+Taco seasoning,,spices,false,0.99,6,2,tsp,15,0,0,3
+Almond extract,,spices,false,4.49,24,0.25,tsp,3,0,0,0
+Active dry yeast,,spices,false,1.99,3,1,,20,3,0.5,3
+Cream of tartar,,spices,false,4.99,56,0.25,tsp,0,0,0,0
+Powdered sugar,,,false,2.49,30,0.25,cup,120,0,0,30
+Maple syrup,,,false,8.99,6,0.25,cup,210,0,0,53
+Molasses,,,false,4.49,24,1,tbsp,60,0,0,15
+Light corn syrup,,,false,3.49,16,2,tbsp,120,0,0,30
+Strawberry jam,,,false,2.99,25,1,tbsp,50,0,0,13
+Unsweetened cocoa powder,,,false,3.99,45,1,tbsp,10,1,0.5,3
+Shredded coconut sweetened,,,false,2.49,7,0.33,cup,140,1,9,13
+Mini marshmallows,,,false,1.99,9,0.67,cup,100,0,0,24
+Unflavored gelatin,,,false,2.49,4,1,,25,6,0,0
+Beef broth,,,false,2.29,4,1,cup,15,2,0,1
+Vegetable broth,,,false,2.29,4,1,cup,15,0,0,3
+Marinara sauce,,,false,2.99,5,0.5,cup,70,2,2,11
+BBQ sauce,,,false,2.49,14,2,tbsp,70,0,0,17
+Hoisin sauce,,,false,3.49,15,1,tbsp,35,0,0.5,7
+Fish sauce,,,false,3.99,13,1,tbsp,5,1,0,0
+Worcestershire sauce,,,false,3.49,60,1,tsp,5,0,0,1
+Hot sauce,,,false,2.49,30,1,tsp,0,0,0,0
+Sriracha,,,false,4.49,96,1,tsp,5,0,0,1
+Yellow mustard,,,false,1.49,79,1,tsp,0,0,0,0
+White vinegar,,,false,1.49,64,1,tbsp,0,0,0,0
+Red wine vinegar,,,false,2.49,25,1,tbsp,0,0,0,0
+Rice vinegar,,,false,2.99,24,1,tbsp,0,0,0,0
+Balsamic vinegar,,,false,4.99,33,1,tbsp,15,0,0,3

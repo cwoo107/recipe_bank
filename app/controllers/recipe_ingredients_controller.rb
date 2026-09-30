@@ -4,17 +4,27 @@ class RecipeIngredientsController < ApplicationController
   before_action :set_recipe
 
   # Adds a line for a picked ingredient — or for a name typed into the
-  # picker that isn't in the library yet, which is created along with the
-  # line. Like "Create and add Ingredient", nothing else is asked for: its
-  # family, cost and nutrition are filled in by IngredientEnrichmentJob.
+  # picker that isn't in the library yet, which is added along with the
+  # line: copied from the shared catalog if it's there, otherwise created
+  # from just the name. Either way IngredientEnrichmentJob fills in whatever
+  # family, cost and nutrition it's still missing.
   def create
     @recipe_ingredient = @recipe.recipe_ingredients.build(recipe_ingredient_params)
-    new_ingredient = typed_ingredient if @recipe_ingredient.ingredient_id.blank?
-    @recipe_ingredient.ingredient = new_ingredient if new_ingredient
-    created = new_ingredient&.new_record?
+    added = nil # :copied or :created, when the line brings a new ingredient
 
-    if @recipe_ingredient.save # saves a new ingredient first, in the same transaction
-      IngredientEnrichmentJob.perform_later(new_ingredient.id) if created
+    saved = RecipeIngredient.transaction do
+      if @recipe_ingredient.ingredient_id.blank? && (typed = typed_ingredient)
+        added = typed.new_record? ? :created : (:copied if typed.previously_new_record?)
+        @recipe_ingredient.ingredient = typed
+      end
+
+      # Saves a new ingredient first; a failed line rolls back a catalog copy.
+      @recipe_ingredient.save || raise(ActiveRecord::Rollback)
+    end
+
+    if saved
+      new_ingredient = @recipe_ingredient.ingredient
+      IngredientEnrichmentJob.perform_later(new_ingredient.id) if added && new_ingredient.needs_enrichment?
 
       respond_to do |format|
         format.turbo_stream do
@@ -23,9 +33,10 @@ class RecipeIngredientsController < ApplicationController
             turbo_stream.replace("new_ingredient", partial: "recipes/new_ingredient"),
             turbo_stream.replace("macros_chart", partial: "recipes/macros_chart", locals: { recipe: @recipe })
           ]
-          if created
-            streams << turbo_stream.update("flash", partial: "shared/flash",
-                                           locals: { notice: "Added #{new_ingredient.ingredient} to your ingredients. We're estimating its cost and nutrition now." })
+          if added
+            notice = added == :copied ? "Added #{new_ingredient.ingredient} to your ingredients, with its cost and nutrition." :
+                                        "Added #{new_ingredient.ingredient} to your ingredients. We're estimating its cost and nutrition now."
+            streams << turbo_stream.update("flash", partial: "shared/flash", locals: { notice: })
           end
           render turbo_stream: streams
         end

@@ -193,4 +193,53 @@ namespace :ingredients do
     puts format("  %-30s %d (%d rows)", "flagged to check by hand (!)", changes.count { |change| !change.update? },
                 changes.reject(&:update?).sum(&:count))
   end
+
+  # Loads the shared ingredient catalog from a CSV — see
+  # Ingredient::CatalogImport for the columns and how rows are matched.
+  # Re-running after editing the file updates what changed.
+  #
+  #   bin/rails ingredients:import_catalog                       # dry run of db/ingredients.csv
+  #   bin/rails ingredients:import_catalog FILE=tmp/more.csv
+  #   bin/rails ingredients:import_catalog VERBOSE=1             # list unchanged rows too
+  #   bin/rails ingredients:import_catalog APPLY=1               # save
+  desc "Import the shared ingredient catalog from a CSV (dry run unless APPLY=1; FILE=path, VERBOSE=1)"
+  task import_catalog: :environment do
+    apply  = ENV['APPLY'] == '1'
+    path   = ENV['FILE'].presence || Rails.root.join('db/ingredients.csv').to_s
+    import = Ingredient::CatalogImport.new(path)
+
+    begin
+      rows = import.rows
+    rescue Ingredient::CatalogImport::HeaderError => e
+      abort "#{path}: #{e.message}"
+    end
+
+    puts apply ? "Applying changes." : "Dry run — nothing will be saved. Re-run with APPLY=1 to apply."
+    puts "File: #{path} (#{rows.size} rows)"
+    puts
+
+    labels = { create: "create ", update: "update ", unchanged: "same   ", invalid: "SKIP   " }
+    rows.each do |row|
+      next if row.action == :unchanged && row.notes.empty? && ENV['VERBOSE'] != '1'
+
+      detail =
+        if row.update?
+          (row.attributes.merge(row.nutrition)).map { |attribute, value| "#{attribute}=#{value.inspect}" }.join(', ')
+        end
+      puts format("  %s line %-4d %-40s %s", labels[row.action], row.line, row.name.to_s.inspect, detail)
+      row.problems.each { |problem| puts "                   ✗ #{problem}" }
+      row.notes.each { |note| puts "                   ! #{note}" }
+    end
+    puts
+
+    import.apply! if apply
+
+    counts = rows.group_by(&:action).transform_values(&:size)
+    puts "Summary#{' (dry run — nothing saved)' unless apply}:"
+    puts format("  %-30s %d", "created", counts.fetch(:create, 0))
+    puts format("  %-30s %d", "updated", counts.fetch(:update, 0))
+    puts format("  %-30s %d", "already up to date", counts.fetch(:unchanged, 0))
+    puts format("  %-30s %d", "skipped as invalid (✗)", counts.fetch(:invalid, 0))
+    puts format("  %-30s %d", "with notes to check (!)", rows.count { |row| row.notes.any? })
+  end
 end
