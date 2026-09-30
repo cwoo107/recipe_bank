@@ -29,8 +29,8 @@ class Ingredient::NameAuditTest < ActiveSupport::TestCase
   end
 
   test "apply! merges an ingredient that turns out to be a duplicate once cleaned" do
-    oil       = ingredient("Vegetable oil", family: "oil")
-    duplicate = ingredient("Vegetable or canola oil", unit_price: 3.5)
+    oil       = ingredient("Parmesan", family: "dairy")
+    duplicate = ingredient(". finely parmesan", unit_price: 3.5) # a confident cleanup — no notes
     line      = @recipe.recipe_ingredients.create!(ingredient: duplicate, quantity: 2, unit: "tbsp")
     tag       = Tag.create!(tag: "Pantry", color: "olive", user: @user)
     duplicate.tags << tag
@@ -50,32 +50,93 @@ class Ingredient::NameAuditTest < ActiveSupport::TestCase
     assert_includes oil.reload.tags, tag
     assert_equal 120, oil.nutrition_fact.calories
     assert_equal 3.5, oil.unit_price               # filled in from the duplicate
-    assert_equal "oil", oil.family                 # the kept one's own value wins
+    assert_equal "dairy", oil.family               # the kept one's own value wins
     rows = GroceryList.where(household: @household, week_of: week)
     assert_equal [ [ oil.id, 3 ] ], rows.pluck(:ingredient_id, :units) # combined, not listed twice
   end
 
-  test "near-identical names in one household merge, keeping the most used" do
+  test "names that only look alike are flagged, not merged — the app treats them as different ingredients" do
     hyphen = ingredient("All-purpose flour")
     space  = ingredient("All purpose flour")
     2.times { @recipe.recipe_ingredients.create!(ingredient: space, quantity: 1, unit: "cup") }
 
     change = Ingredient::NameAudit.new(household: @household).changes.sole
 
-    assert change.merge?
+    assert_equal :review, change.kind
     assert_equal hyphen, change.ingredient
-    assert_equal space, change.into
+    assert_match(/looks like the same thing as ##{space.id}/, change.notes.join)
+
+    Ingredient::NameAudit.new(household: @household).apply!
+    assert hyphen.reload.persisted?
   end
 
-  test "never merges across households or across brands" do
-    ingredient("Vegetable or canola oil")
-    households(:one).ingredients.create!(ingredient: "Vegetable oil")
+  test "a guessed cleanup never merges into another ingredient" do
+    oil   = ingredient("Vegetable oil")
+    guess = ingredient("Vegetable or canola oil") # "kept the first" alternative — a judgement call
+
+    change = Ingredient::NameAudit.new(household: @household).changes.sole
+
+    assert_equal :review, change.kind
+    assert_equal guess, change.ingredient
+    assert_match(/would become a duplicate of ##{oil.id}/, change.notes.join)
+    assert_match(/kept the first/, change.notes.join)
+
+    Ingredient::NameAudit.new(household: @household).apply!
+    assert_equal "Vegetable or canola oil", guess.reload.ingredient
+  end
+
+  test "each household's own copy of an ingredient is left alone" do
+    mine   = ingredient("Vegetable oil")
+    theirs = households(:one).ingredients.create!(ingredient: "Vegetable oil")
     ingredient("Butter", brand: "Kerrygold")
     ingredient("Butter", brand: "Land O Lakes")
 
-    kinds = Ingredient::NameAudit.new(household: @household).changes.map(&:kind)
+    assert_empty Ingredient::NameAudit.new.changes.select { |change| [ mine, theirs ].include?(change.ingredient) }
+    assert_empty Ingredient::NameAudit.new(household: @household).changes
+  end
 
-    assert_equal [ :rename ], kinds
+  test "the shared catalog is never touched" do
+    catalog = Ingredient.create!(ingredient: ". finely parmesan", household: nil)
+
+    assert_not_includes Ingredient::NameAudit.new.changes.map(&:ingredient), catalog
+  end
+
+  test "a merge keeps the copy link, so copying the original again reuses the kept ingredient" do
+    original  = households(:one).ingredients.create!(ingredient: "Parmesan")
+    keeper    = ingredient("Parmesan")
+    duplicate = ingredient(". finely parmesan", source_ingredient: original)
+
+    Ingredient::NameAudit.new(household: @household).apply!
+
+    assert_nil Ingredient.find_by(id: duplicate.id)
+    assert_equal original, keeper.reload.source_ingredient
+    assert_no_difference("Ingredient.count") do
+      assert_equal keeper, original.copy_for(@household, user: @user)
+    end
+  end
+
+  test "other households' copies of a merged-away ingredient trace back to the kept one" do
+    keeper    = ingredient("Parmesan")
+    duplicate = ingredient(". finely parmesan")
+    their_copy = households(:one).ingredients.create!(ingredient: "Parmesan", source_ingredient: duplicate)
+
+    Ingredient::NameAudit.new(household: @household).apply!
+
+    assert_equal keeper, their_copy.reload.source_ingredient
+  end
+
+  test "two copies of different originals aren't merged, since only one copy link could survive" do
+    first_original  = households(:one).ingredients.create!(ingredient: "Parmesan")
+    second_original = households(:one).ingredients.create!(ingredient: "Parmesan", brand: "Other")
+    keeper    = ingredient("Parmesan", source_ingredient: first_original)
+    duplicate = ingredient(". finely parmesan", source_ingredient: second_original)
+
+    change = Ingredient::NameAudit.new(household: @household).changes.sole
+
+    assert_equal :review, change.kind
+    assert_equal duplicate, change.ingredient
+    assert_match(/copy of a different original/, change.notes.join)
+    assert keeper.persisted?
   end
 
   test "flags a clean-looking name that still needs a person" do
