@@ -1,0 +1,11 @@
+<% content_for :preheader, "Update your card to keep your HomemakersHaven plan." %>
+<%= email_heading "Your payment didn't go through" %>
+
+<%= email_paragraph do %>
+  Hi <%= email_name_for(@owner) %>, we couldn't charge your card for <strong><%= @household.display_name %></strong>'s plan.
+  We'll try again over the next few days — updating your card now keeps everything running without a break.
+<% end %>
+
+<%= email_button "Update my card", @url %>
+
+<%= email_note "Open Plan & billing on your household page, then choose Manage billing." %>

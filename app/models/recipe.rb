@@ -121,7 +121,7 @@ class Recipe < ApplicationRecord
 
       recipe_ingredients.each do |ri|
         copy.recipe_ingredients.create!(ingredient: ri.ingredient.copy_for(user.household, user: user),
-                                        quantity: ri.quantity, unit: ri.unit)
+                                        quantity: ri.quantity, unit: ri.unit, optional: ri.optional)
       end
 
       steps.each do |step|
@@ -165,6 +165,7 @@ class Recipe < ApplicationRecord
     def ingredient    = recipe_ingredient.ingredient
     def ingredient_id = recipe_ingredient.ingredient_id
     def unit          = recipe_ingredient.unit
+    def optional?     = recipe_ingredient.optional?
     def quantity      = recipe_ingredient.quantity.to_f * multiplier
     def scaled?       = multiplier != 1.0
   end

@@ -35,6 +35,7 @@
 <%= native_tabs_tag if user_signed_in? %>
 <%= render 'shared/native_navbar' if user_signed_in? %>
 <%= render 'shared/navbar' unless native_app? %>
+<%= render 'shared/trial_banner' %>
 
 <div id="flash"></div>
 <%= render 'shared/flash' if notice.present? || alert.present? %>

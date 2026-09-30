@@ -3,3 +3,6 @@
 sync_all_calendars:
   cron: "0 */3 * * *" # every 3 hours
   class: "SyncAllCalendarsJob"
+trial_reminders:
+  cron: "0 15 * * *" # daily, 15:00 UTC (morning in the US)
+  class: "TrialRemindersJob"

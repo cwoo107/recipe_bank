@@ -1,6 +1,9 @@
 # Each user has exactly one household, so this is now a singular resource:
 # /household instead of /households/:id. No more Household.all or find(params[:id]).
 class HouseholdsController < ApplicationController
+  # The page holds the billing section, so it stays open (billing-only —
+  # see show.html.erb) once a trial has run out.
+  skip_before_action :require_active_subscription!, only: :show
   before_action :require_household!,       only: %i[show edit update adjust_servings destroy]
   before_action :set_household,            only: %i[show edit update adjust_servings destroy]
   before_action :require_household_admin!, only: %i[edit update adjust_servings]

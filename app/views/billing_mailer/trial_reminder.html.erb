@@ -1,0 +1,22 @@
+<% ends_on = l(@household.trial_ends_at.in_time_zone(@household.zone).to_date, format: :long) %>
+<% if @stage == "ended" %>
+  <% content_for :preheader, "Pick a plan to keep using HomemakersHaven — everything's still there." %>
+  <%= email_heading "Your free trial has ended" %>
+
+  <%= email_paragraph do %>
+    Hi <%= email_name_for(@owner) %>, the free month for <strong><%= @household.display_name %></strong> ended on <%= ends_on %>.
+    Your recipes, meal plans and lists are all still there — pick a plan to pick up where you left off.
+  <% end %>
+<% else %>
+  <% content_for :preheader, "Your free month ends on #{ends_on}." %>
+  <%= email_heading(@stage == "day" ? "Your trial ends tomorrow" : "One week left in your trial") %>
+
+  <%= email_paragraph do %>
+    Hi <%= email_name_for(@owner) %>, the free month for <strong><%= @household.display_name %></strong> ends on <%= ends_on %>.
+    To keep planning without a break, choose a plan: $5 a month, or $52 a year ($4.33 a month).
+  <% end %>
+<% end %>
+
+<%= email_button "Choose a plan", @url %>
+
+<%= email_note "One plan covers everyone in your household. You can cancel any time." %>

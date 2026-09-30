@@ -8,6 +8,9 @@
                     <%= recipe_ingredient.ingredient.ingredient %>
                   </span>
     <% end %>
+    <% if recipe_ingredient.optional? %>
+      <span class="text-xs font-normal text-gray-400 dark:text-gray-500">(optional)</span>
+    <% end %>
   </td>
   <%# Family pill steps aside in edit mode so the amount form gets the width %>
   <td class="whitespace-nowrap text-center text-sm text-gray-500 dark:text-gray-400"
@@ -41,6 +44,12 @@
                         class: "w-24 rounded-md bg-white px-2 py-1 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-white dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-[#7a8f62]",
                         aria: { label: "Unit for #{recipe_ingredient.ingredient.ingredient}" },
                         data: { action: "change->auto-submit#submit" } %>
+        <label class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+          <%= form.check_box :optional,
+                             class: "size-3.5 rounded border-gray-300 text-[#5f734c] focus:ring-[#5f734c] dark:border-white/10 dark:bg-white/5",
+                             data: { action: "change->auto-submit#submit" } %>
+          Optional
+        </label>
       <% end %>
     </div>
   </td>

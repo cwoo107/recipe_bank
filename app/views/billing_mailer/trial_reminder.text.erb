@@ -1,0 +1,14 @@
+<% ends_on = l(@household.trial_ends_at.in_time_zone(@household.zone).to_date, format: :long) %>
+<% if @stage == "ended" %>
+Your free trial has ended
+
+Hi <%= email_name_for(@owner) %>, the free month for <%= @household.display_name %> ended on <%= ends_on %>. Your recipes, meal plans and lists are all still there — pick a plan to pick up where you left off.
+<% else %>
+<%= @stage == "day" ? "Your trial ends tomorrow" : "One week left in your trial" %>
+
+Hi <%= email_name_for(@owner) %>, the free month for <%= @household.display_name %> ends on <%= ends_on %>. To keep planning without a break, choose a plan: $5 a month, or $52 a year ($4.33 a month).
+<% end %>
+
+Choose a plan: <%= @url %>
+
+One plan covers everyone in your household. You can cancel any time.

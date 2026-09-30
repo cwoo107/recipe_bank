@@ -6,10 +6,8 @@ require "prawn"
 #
 #   WeekPlanPdf.new(household:, week_start:, sections: %w[meals groceries]).render
 #
-# Set in the app's own typefaces — Instrument Serif for headings, Inter for
-# text — embedded from vendor/fonts (Prawn subsets them, so only the letters
-# used end up in the file). Neither font has emoji, so #clean drops those
-# rather than printing empty boxes.
+# Fonts, colors and recipe layout come from PdfBasics. Neither font has
+# emoji, so #clean drops those rather than printing empty boxes.
 class WeekPlanPdf
   SECTIONS = {
     "meals"     => { label: "Meal plan",          hint: "Breakfast, lunch and dinner for each day, plus snacks and desserts" },
@@ -20,17 +18,6 @@ class WeekPlanPdf
     "todos"     => { label: "To-dos",             hint: "What's in progress" },
     "calendar"  => { label: "Calendar",           hint: "The week's events, day by day" }
   }.freeze
-
-  SAGE       = "5f734c".freeze
-  SAGE_DARK  = "3f4d34".freeze
-  SAGE_LIGHT = "e8ede3".freeze
-  INK        = "2f3027".freeze
-  MUTED      = "6f705f".freeze
-  RULE       = "d4ddc9".freeze
-
-  FONT_DIR = Rails.root.join("vendor/fonts")
-  SERIF    = "Instrument Serif".freeze
-  SANS     = "Inter".freeze
 
   # The meal planner's card colors (MealsHelper#meal_color_classes): the
   # palette's 300 shade behind, 800 for the title, 700 for the details —
@@ -57,6 +44,7 @@ class WeekPlanPdf
   MARGIN = [ 64, 48, 56, 48 ].freeze
 
   include Prawn::View
+  include PdfBasics
 
   # page_size and list_columns are only overridden for the tall scratch
   # document #fit_to_page measures a section in.
@@ -104,21 +92,6 @@ class WeekPlanPdf
   end
 
   private
-
-  def register_fonts
-    font_families.update(
-      SANS => {
-        normal: FONT_DIR.join("Inter-Regular.ttf").to_s,
-        italic: FONT_DIR.join("Inter-Italic.ttf").to_s,
-        bold:   FONT_DIR.join("Inter-SemiBold.ttf").to_s
-      },
-      SERIF => {
-        normal: FONT_DIR.join("InstrumentSerif-Regular.ttf").to_s,
-        italic: FONT_DIR.join("InstrumentSerif-Italic.ttf").to_s,
-        bold:   FONT_DIR.join("InstrumentSerif-Regular.ttf").to_s # the family has no bold
-      }
-    )
-  end
 
   # ── Page layout ──────────────────────────────────────────────────────
 
@@ -361,11 +334,6 @@ class WeekPlanPdf
     fill_color INK
   end
 
-  # Emoji (and their joiners/variation selectors) aren't in either font.
-  def clean(value)
-    value.to_s.gsub(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/, "").squeeze(" ").strip
-  end
-
   # ── Sections ─────────────────────────────────────────────────────────
 
   def week_meals
@@ -501,33 +469,7 @@ class WeekPlanPdf
       text clean([ ("Serves #{recipe.servings}" if recipe.servings), "On the plan: #{when_served}" ].compact.join("  ·  ")), size: 9, color: MUTED
       move_down 8
 
-      recipe.sections.each do |section|
-        ingredients = section.own_ingredients
-        next if ingredients.empty?
-
-        text(clean(section.root? ? "Ingredients" : "For the #{section.recipe.title}"), size: 10, style: :bold)
-        ingredients.each do |line|
-          amount = line.quantity.positive? ? helpers.display_quantity_with_unit(line.quantity.round(2), line.unit) : nil
-          text clean("•  #{[ amount.presence, line.ingredient&.ingredient ].compact.join(' ')}"), size: 10
-        end
-        move_down 6
-      end
-
-      items = recipe.instruction_items
-      next if items.empty?
-
-      text "Steps", size: 10, style: :bold
-      items.each_with_index do |item, n|
-        if item.is_a?(Step)
-          text clean("#{n + 1}.  #{item.content.to_plain_text.squish}"), size: 10, leading: 1.5
-        else
-          text clean("#{n + 1}.  Make the #{item.component_recipe.title}:"), size: 10
-          item.component_recipe.steps.each_with_index do |step, s|
-            indent(18) { text clean("#{(97 + s).chr}.  #{step.content.to_plain_text.squish}"), size: 10, leading: 1.5 }
-          end
-        end
-        move_down 3
-      end
+      recipe_ingredients_and_steps(recipe)
     end
   end
 
@@ -682,9 +624,5 @@ class WeekPlanPdf
     colored_text_box detail, at: [ card_x + 9, top - 6 - title_height ], width: width - 18, size: 8, color: colors[:text]
 
     move_cursor_to top - height - 5
-  end
-
-  def helpers
-    @helpers ||= Class.new { include RecipeIngredientsHelper }.new
   end
 end

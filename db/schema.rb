@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_01_130000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -47,6 +47,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "admin_actions", force: :cascade do |t|
+    t.string "action", null: false
+    t.integer "admin_id", null: false
+    t.datetime "created_at", null: false
+    t.json "details", default: {}, null: false
+    t.integer "household_id"
+    t.text "note"
+    t.datetime "updated_at", null: false
+    t.index ["admin_id"], name: "index_admin_actions_on_admin_id"
+    t.index ["household_id"], name: "index_admin_actions_on_household_id"
   end
 
   create_table "calendar_events", force: :cascade do |t|
@@ -188,16 +200,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
   end
 
   create_table "households", force: :cascade do |t|
+    t.datetime "comped_until"
     t.datetime "created_at", null: false
+    t.datetime "current_period_ends_at"
     t.json "excluded_planner_sections", default: [], null: false
     t.string "family_name"
     t.integer "family_size", default: 1, null: false
     t.integer "minutes_per_day", default: 30, null: false
     t.integer "owner_id", null: false
+    t.string "plan_interval"
+    t.string "stripe_customer_id"
+    t.string "stripe_subscription_id"
+    t.string "subscription_status", default: "trialing", null: false
     t.string "time_zone"
+    t.datetime "trial_ends_at"
+    t.string "trial_reminder_sent"
     t.datetime "updated_at", null: false
     t.integer "week_start_day", default: 1, null: false
     t.index ["owner_id"], name: "index_households_on_owner_id"
+    t.index ["stripe_customer_id"], name: "index_households_on_stripe_customer_id", unique: true
+    t.index ["stripe_subscription_id"], name: "index_households_on_stripe_subscription_id", unique: true
+    t.index ["subscription_status", "trial_ends_at"], name: "index_households_on_subscription_status_and_trial_ends_at"
   end
 
   create_table "ingredient_tags", force: :cascade do |t|
@@ -301,6 +324,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
   create_table "recipe_ingredients", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "ingredient_id", null: false
+    t.boolean "optional", default: false, null: false
     t.float "quantity"
     t.integer "recipe_id", null: false
     t.string "unit"
@@ -409,6 +433,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
     t.index ["recipe_id"], name: "index_steps_on_recipe_id"
   end
 
+  create_table "stripe_events", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "event_id", null: false
+    t.string "event_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["event_id"], name: "index_stripe_events_on_event_id", unique: true
+  end
+
   create_table "tags", force: :cascade do |t|
     t.string "color"
     t.datetime "created_at", null: false
@@ -456,6 +488,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.boolean "app_admin", default: false, null: false
     t.boolean "awaiting_first_password", default: false, null: false
     t.boolean "compact_meals_view", default: false, null: false
     t.datetime "created_at", null: false
@@ -516,6 +549,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "admin_actions", "households", on_delete: :nullify
+  add_foreign_key "admin_actions", "users", column: "admin_id"
   add_foreign_key "calendar_events", "calendar_sources"
   add_foreign_key "calendar_events", "households"
   add_foreign_key "calendar_events", "users"

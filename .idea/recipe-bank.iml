@@ -162,6 +162,7 @@
     <orderEntry type="library" scope="PROVIDED" name="sshkit (v1.25.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="stimulus-rails (v1.3.4, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="stringio (v3.2.0, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="stripe (v19.6.2, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="tailwindcss-rails (v4.4.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="tailwindcss-ruby (v4.1.18, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="thor (v1.4.0, rbenv: 4.0.0) [gem]" level="application" />

@@ -1,4 +1,6 @@
 class Household < ApplicationRecord
+  include Household::Billing
+
   belongs_to :owner, class_name: "User", inverse_of: :owned_household
 
   has_many :household_members, dependent: :destroy

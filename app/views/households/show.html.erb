@@ -1,4 +1,7 @@
 <% content_for :title, "Household" %>
+<%# Once a trial runs out, this page is all that's left open — just billing
+    and the recipe export until someone picks a plan. %>
+<% locked = household_locked? %>
 
 <div class="mx-auto max-w-6xl">
   <div class="flex items-end justify-between gap-4">
@@ -10,6 +13,7 @@
     </div>
   </div>
 
+  <% unless locked %>
   <% if flash[:family_size_change] && @household.admin?(current_user) %>
     <%= render "households/family_size_notice",
                change: FamilySizeChange.new(@household, from: flash[:family_size_change]["from"], to: flash[:family_size_change]["to"]) %>
@@ -57,8 +61,23 @@
       <% end %>
     </div>
   </div>
+  <% end %>
+
+  <%= render "households/billing", household: @household %>
 
   <% if @household.owner?(current_user) %>
+    <%# The owner's copy of every recipe the household has created — always
+        available, subscribed or not (RecipeExportsController). %>
+    <div id="recipe_export" class="mt-8 rounded-xl border border-sage-100 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <h2 class="text-sm font-semibold text-gray-900 dark:text-white">Export recipes</h2>
+      <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
+        Download a PDF of every recipe your household's members have created.
+      </p>
+      <%= link_to "Download recipes (PDF)", household_recipe_export_path(format: :pdf), data: { turbo: false },
+            class: "mt-4 inline-flex rounded-lg px-3 py-1.5 text-sm border border-sage-200 bg-white font-medium text-gray-900 hover:bg-sage-50 transition dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10" %>
+    </div>
+
+    <% unless locked %>
     <div class="mt-8 rounded-xl border border-dusty-rose-200 bg-white p-6 shadow-sm dark:border-dusty-rose-900/60 dark:bg-[#1a1f16]">
       <h2 class="text-sm font-semibold text-dusty-rose-800 dark:text-dusty-rose-300">Danger zone</h2>
       <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
@@ -68,5 +87,6 @@
             data: { turbo_confirm: "Delete the household and remove all members?" },
             class: "mt-4 rounded-lg px-3 py-1.5 text-sm border border-dusty-rose-200 bg-dusty-rose-50 font-medium text-dusty-rose-700 hover:bg-dusty-rose-100 cursor-pointer transition dark:border-dusty-rose-800 dark:bg-dusty-rose-900/20 dark:text-dusty-rose-300 dark:hover:bg-dusty-rose-900/40" %>
     </div>
+    <% end %>
   <% end %>
 </div>

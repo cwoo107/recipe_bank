@@ -1,0 +1,139 @@
+<% content_for :title, "Admin · #{@household.family_name}" %>
+<% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+<% term = "text-sm/6 text-gray-600 dark:text-gray-400" %>
+<% value = "mt-1 text-sm/6 font-medium text-gray-900 dark:text-white" %>
+<% card = "mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]" %>
+<% card_heading = "text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400" %>
+<% primary = "rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] cursor-pointer dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+<% date_format = ->(time) { time ? l(time.to_date, format: :long) : "—" } %>
+
+<div class="mx-auto max-w-6xl">
+  <%= link_to "← All households", admin_households_path, class: "text-sm text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+  <div class="mt-3 flex flex-wrap items-center gap-3">
+    <h1 class="font-serif text-4xl text-sage-900 dark:text-[#e8ede3]"><%= @household.family_name %></h1>
+    <%= billing_state_badge(@household) %>
+  </div>
+  <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
+    Owner <%= mail_to @household.owner.email, class: "hover:underline" %> ·
+    signed up <%= date_format.(@household.created_at) %> ·
+    <%= pluralize(@members.size, "member") %> · <%= pluralize(@recipe_count, "recipe") %>
+  </p>
+
+  <div id="admin_billing" class="<%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Billing</h2></div>
+    <dl class="grid grid-cols-1 gap-x-6 gap-y-4 border-t border-sage-100 px-5 py-6 sm:grid-cols-3 sm:px-8 dark:border-white/10">
+      <% [
+           [ "Status", @household.subscription_status.humanize ],
+           [ "Trial ends", date_format.(@household.trial_ends_at) ],
+           [ "Free access until", date_format.(@household.comped_until) ],
+           [ "Plan", Household::Billing::PLANS.dig(@household.plan, :label) || "—" ],
+           [ "Current period ends", date_format.(@household.current_period_ends_at) ],
+           [ "Last trial reminder", @household.trial_reminder_sent&.humanize || "—" ]
+         ].each do |label, shown| %>
+        <div>
+          <dt class="<%= term %>"><%= label %></dt>
+          <dd class="<%= value %>"><%= shown %></dd>
+        </div>
+      <% end %>
+      <% { "Stripe customer" => [ "customers", @household.stripe_customer_id ],
+           "Stripe subscription" => [ "subscriptions", @household.stripe_subscription_id ] }.each do |label, (kind, id)| %>
+        <div>
+          <dt class="<%= term %>"><%= label %></dt>
+          <dd class="<%= value %>">
+            <%= id ? link_to(id, stripe_dashboard_url(kind, id), target: "_blank", rel: "noopener", class: "text-[#5f734c] hover:underline dark:text-[#7a8f62]") : "—" %>
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+    <p class="border-t border-sage-100 px-5 py-4 text-xs text-olive-400 sm:px-8 dark:border-white/10 dark:text-gray-500">
+      Refunds, credits and plan changes happen in the Stripe Dashboard; they sync back here.
+    </p>
+  </div>
+
+  <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <%# Extend the trial %>
+    <div id="admin_trial_extension" class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Extend trial</h2></div>
+      <div class="border-t border-sage-100 px-5 py-6 sm:px-8 dark:border-white/10">
+        <% unless @household.trial_extendable? %>
+          <p class="text-sm text-olive-500 dark:text-gray-400">This household is paying — use credits or refunds in Stripe instead.</p>
+        <% else %>
+          <% if @household.stripe_subscription_id.present? %>
+            <p class="mb-4 text-xs text-olive-400 dark:text-gray-500">Subscribed but still in its free days — this moves the first charge in Stripe.</p>
+          <% end %>
+          <%= form_with url: admin_household_trial_extension_path(@household), class: "space-y-4" do %>
+            <div>
+              <%= label_tag :days, "Days to add", class: label_class %>
+              <div class="mt-2"><%= number_field_tag :days, 14, min: 1, max: Admin::TrialExtensionsController::MAX_DAYS, class: settings_input_classes %></div>
+              <p class="mt-1 text-xs text-olive-400 dark:text-gray-500">Added to the current end, or to today if it's already passed.</p>
+            </div>
+            <div>
+              <%= label_tag :trial_note, "Note", class: label_class %>
+              <div class="mt-2"><%= text_field_tag :note, nil, id: "trial_note", placeholder: "Why? (shows in the history)", class: settings_input_classes %></div>
+            </div>
+            <%= submit_tag "Extend trial", name: nil, class: primary %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+
+    <%# Free access %>
+    <div id="admin_comp" class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Free access</h2></div>
+      <div class="border-t border-sage-100 px-5 py-6 sm:px-8 dark:border-white/10">
+        <%= form_with url: admin_household_comp_path(@household), class: "space-y-4" do %>
+          <div>
+            <%= label_tag :until, "Free until", class: label_class %>
+            <div class="mt-2"><%= date_field_tag :until, (@household.comped_until || 1.year.from_now).to_date, min: Date.tomorrow, class: settings_input_classes %></div>
+            <p class="mt-1 text-xs text-olive-400 dark:text-gray-500">Full access, no plan needed, through the end of this day.</p>
+          </div>
+          <div>
+            <%= label_tag :comp_note, "Note", class: label_class %>
+            <div class="mt-2"><%= text_field_tag :note, nil, id: "comp_note", placeholder: "Why? (shows in the history)", class: settings_input_classes %></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <%= submit_tag(@household.comped? ? "Change date" : "Give free access", name: nil, class: primary) %>
+          </div>
+        <% end %>
+        <% if @household.comped? %>
+          <%= button_to "End free access now", admin_household_comp_path(@household), method: :delete,
+                data: { turbo_confirm: "End free access for #{@household.family_name}?" },
+                class: "mt-4 rounded-lg border border-dusty-rose-200 bg-dusty-rose-50 px-3 py-1.5 text-sm font-medium text-dusty-rose-700 hover:bg-dusty-rose-100 cursor-pointer dark:border-dusty-rose-800 dark:bg-dusty-rose-900/20 dark:text-dusty-rose-300" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="<%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Members</h2></div>
+    <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+      <% @members.each do |member| %>
+        <li class="flex items-center justify-between gap-4 px-5 py-3 text-sm sm:px-8">
+          <span class="font-medium text-gray-900 dark:text-white"><%= member.name %></span>
+          <span class="text-gray-500 dark:text-gray-400">
+            <%= member.user&.email || "No login" %> · <%= member.owner? ? "Owner" : member.role.humanize %>
+          </span>
+        </li>
+      <% end %>
+    </ul>
+  </div>
+
+  <div id="admin_history" class="<%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">History</h2></div>
+    <% if @actions.any? %>
+      <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+        <% @actions.each do |action| %>
+          <li class="px-5 py-3 text-sm sm:px-8">
+            <p class="text-gray-900 dark:text-white"><%= admin_action_summary(action) %></p>
+            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              <%= action.admin.email %> · <%= l action.created_at, format: :long %>
+              <% if action.note.present? %> · “<%= action.note %>”<% end %>
+            </p>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <p class="border-t border-sage-100 px-5 py-4 text-sm italic text-gray-400 sm:px-8 dark:border-white/10 dark:text-gray-500">No admin changes yet.</p>
+    <% end %>
+  </div>
+</div>

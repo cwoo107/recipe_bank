@@ -40,6 +40,15 @@ Rails.application.routes.draw do
   resources :recurring_meals, only: [:index, :edit, :update, :destroy]
   resource  :household do                        # singular resource — index doesn't exist for these
     patch :adjust_servings
+    resource :recipe_export, only: :show           # the owner's PDF of every household recipe
+  end
+
+  # Plan & billing actions — the section itself is on the household page.
+  resource :billing, only: [] do
+    post :checkout
+    get  :complete                               # back from Stripe Checkout
+    post :portal
+    post :dismiss_trial_banner
   end
   resources :household_members, except: :index do # scoped by current_household, not URL
     member do
@@ -151,6 +160,17 @@ Rails.application.routes.draw do
   get  "calendar/month/:year/:month",    to: "calendars#month",  as: :month_calendars
   get  "calendar/week",                  to: "calendars#week",   as: :week_calendars
   get  "calendar/day",                   to: "calendars#day",    as: :day_calendars
+
+  post "stripe/webhooks", to: "stripe_webhooks#create", as: :stripe_webhooks
+
+  # Staff only (users.app_admin) — see Admin::BaseController.
+  namespace :admin do
+    root to: "households#index"
+    resources :households, only: %i[index show] do
+      resource :trial_extension, only: :create
+      resource :comp, only: %i[create destroy]
+    end
+  end
 
   get "up" => "rails/health#show", as: :rails_health_check
 end

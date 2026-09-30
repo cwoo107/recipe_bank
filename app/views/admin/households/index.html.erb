@@ -1,0 +1,68 @@
+<% content_for :title, "Admin · Households" %>
+<% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+
+<div class="mx-auto max-w-6xl">
+  <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
+  <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Households</h1>
+
+  <%= form_with url: admin_households_path, method: :get, class: "mt-8 flex flex-col gap-4 sm:flex-row sm:items-end" do %>
+    <div class="flex-1">
+      <%= label_tag :q, "Search", class: label_class %>
+      <div class="mt-2">
+        <%= search_field_tag :q, @query, placeholder: "Household name or owner email", class: settings_input_classes %>
+      </div>
+    </div>
+    <div class="sm:w-48">
+      <%= label_tag :state, "Billing", class: label_class %>
+      <div class="mt-2">
+        <%= select_tag :state,
+              options_for_select(Household::Billing::BILLING_STATES.map { |state| [ billing_state_label(state), state ] }, @state),
+              include_blank: "Any", class: settings_select_classes %>
+      </div>
+    </div>
+    <%= submit_tag "Search", name: nil,
+          class: "rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] cursor-pointer dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+  <% end %>
+
+  <% if @households.any? %>
+    <div class="mt-6 overflow-x-auto rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <table id="admin_households" class="min-w-full divide-y divide-sage-100 text-sm dark:divide-white/10">
+        <thead>
+          <tr class="text-left text-xs font-semibold uppercase tracking-wider text-sage-400 dark:text-gray-400">
+            <th class="px-5 py-3">Household</th>
+            <th class="px-5 py-3">Owner</th>
+            <th class="px-5 py-3">Billing</th>
+            <th class="px-5 py-3">Trial ends</th>
+            <th class="px-5 py-3">Signed up</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-sage-100 dark:divide-white/10">
+          <% @households.each do |household| %>
+            <tr class="hover:bg-sage-50/50 dark:hover:bg-white/5">
+              <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                <%= link_to household.family_name, admin_household_path(household), class: "hover:underline" %>
+              </td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= household.owner.email %></td>
+              <td class="px-5 py-3"><%= billing_state_badge(household) %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= household.trial_ends_at ? l(household.trial_ends_at.to_date, format: :long) : "—" %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= l household.created_at.to_date, format: :long %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-4 flex justify-between text-sm">
+      <% if @page > 1 %>
+        <%= link_to "← Previous", admin_households_path(q: @query.presence, state: @state, page: @page - 1), class: "text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+      <% else %>
+        <span></span>
+      <% end %>
+      <% if @next_page %>
+        <%= link_to "Next →", admin_households_path(q: @query.presence, state: @state, page: @next_page), class: "text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="mt-8 text-sm italic text-gray-400 dark:text-gray-500">No households match.</p>
+  <% end %>
+</div>

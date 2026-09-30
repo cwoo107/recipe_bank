@@ -56,6 +56,10 @@
                           class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
               <%= link_to "Account settings", edit_user_registration_path,
                           class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
+              <% if current_user.app_admin? %>
+                <%= link_to "Admin", admin_root_path,
+                            class: "block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
+              <% end %>
               <%= button_to "Sign out", destroy_user_session_path, method: :delete,
                             class: "block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5" %>
             </div>
@@ -117,6 +121,10 @@
                     class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
         <%= link_to "Account settings", edit_user_registration_path,
                     class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
+        <% if current_user.app_admin? %>
+          <%= link_to "Admin", admin_root_path,
+                      class: "block border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
+        <% end %>
         <%= button_to "Sign out", destroy_user_session_path, method: :delete,
                       class: "block w-full text-left border-l-4 border-transparent py-2 pl-3 pr-4 text-base font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 dark:text-gray-300" %>
       </div>

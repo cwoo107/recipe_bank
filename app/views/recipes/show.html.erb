@@ -73,6 +73,13 @@
 
     <div class="lg:col-span-1">
       <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
+        <%# Someone else's public recipe gets saved to the household first %>
+        <% if @recipe.owned_by?(current_user) || @recipe.owned_by_household?(current_household) %>
+          <div class="-ml-2 mb-4 border-b border-gray-200 pb-4 dark:border-white/10">
+            <%= render "collections/collection_button", recipe: @recipe %>
+          </div>
+        <% end %>
+
         <% if @recipe.tags.any? %>
           <div class="flex flex-wrap gap-2">
             <% @recipe.tags.each do |tag| %>

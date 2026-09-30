@@ -3,7 +3,8 @@ class ApplicationController < ActionController::Base
   before_action :configure_permitted_parameters, if: :devise_controller?
   around_action :use_time_zone
   around_action :use_household_week_start, if: :user_signed_in?
-  helper_method :current_household, :active_weekly_plan, :household_admin?, :current_member
+  before_action :require_active_subscription!, if: :user_signed_in?, unless: :devise_controller?
+  helper_method :current_household, :active_weekly_plan, :household_admin?, :current_member, :trial_banner?, :household_locked?
   layout :resolve_layout
 
   def require_ownership!(record, owner_method: :user)
@@ -122,6 +123,35 @@ class ApplicationController < ActionController::Base
   # The signed-in user's own member row (owners have one too).
   def current_member
     @current_member ||= current_household&.household_members&.find_by(user_id: current_user&.id)
+  end
+
+  # ── Billing ────────────────────────────────────────────────────────────
+  # Once a household's free month runs out without a plan, everything but
+  # the household page's billing section (and the owner's recipe export) is
+  # locked until someone subscribes. Nothing is deleted. See Household::Billing.
+
+  def household_locked?
+    Household::Billing.enforced? && current_household.present? && !current_household.access_allowed?
+  end
+
+  def require_active_subscription!
+    return unless household_locked?
+
+    if request.format.html? || request.format.turbo_stream?
+      redirect_to household_path(anchor: "billing"), status: :see_other
+    else
+      head :payment_required
+    end
+  end
+
+  # "N days left in your trial" — admins only (they're the ones who can pick
+  # a plan), for the last week, until dismissed for the day.
+  def trial_banner?
+    return false unless user_signed_in? && Household::Billing.enforced? && household_admin?
+    return false if controller_name == "households" || cookies[:trial_banner_dismissed] == Date.current.iso8601
+
+    household = current_household
+    household.on_trial? && household.needs_plan? && household.trial_days_left <= 7
   end
 
   def require_household_admin!

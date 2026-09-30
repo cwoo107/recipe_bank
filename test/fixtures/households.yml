@@ -4,8 +4,10 @@ one:
   family_name: "Doe Household"
   owner: one # alice
   family_size: 3
+  trial_ends_at: <%= 20.days.from_now.to_fs(:db) %>
 
 two:
   family_name: "Smith Household"
   owner: three # carol
   family_size: 2
+  trial_ends_at: <%= 20.days.from_now.to_fs(:db) %>

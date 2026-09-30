@@ -1,0 +1,80 @@
+<%# The household's plan and trial — the one part of this page a household
+    whose trial has run out still gets (see household_locked?). Plan buttons
+    are for admins; everyone else is pointed to them. %>
+<% plans = Household::Billing::PLANS %>
+<% can_pay = household.admin?(current_user) %>
+<% secondary = "rounded-md bg-white px-3.5 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+
+<div id="billing" class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+  <div class="px-5 py-4">
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Plan &amp; billing</h2>
+  </div>
+
+  <div class="border-t border-sage-100 px-5 py-8 sm:px-8 dark:border-white/10">
+    <div id="billing_status">
+      <% if household.comped? %>
+        <h3 class="text-base/7 font-semibold text-gray-900 dark:text-white">You have free access</h3>
+        <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
+          Courtesy of HomemakersHaven, until <%= l household.comped_until.to_date, format: :long %>.
+        </p>
+      <% elsif household.paid? %>
+        <h3 class="text-base/7 font-semibold text-gray-900 dark:text-white">
+          You're on the <%= plans.dig(household.plan, :label) || "HomemakersHaven" %> plan
+        </h3>
+        <% if household.subscription_status == "past_due" %>
+          <p class="mt-1 text-sm font-medium text-dusty-rose-700 dark:text-dusty-rose-300">
+            Your last payment didn't go through. Update your card to keep your plan.
+          </p>
+        <% elsif household.stripe_trialing? && household.trial_ends_at %>
+          <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">Free until <%= l household.trial_ends_at.to_date, format: :long %> — your first payment is then.</p>
+        <% elsif household.current_period_ends_at %>
+          <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">Renews on <%= l household.current_period_ends_at.to_date, format: :long %>.</p>
+        <% end %>
+        <% if can_pay %>
+          <%= button_to "Manage billing", portal_billing_path, class: "mt-4 #{secondary}" %>
+        <% end %>
+      <% elsif household.on_trial? %>
+        <h3 class="text-base/7 font-semibold text-gray-900 dark:text-white">
+          <%= pluralize(household.trial_days_left, "day") %> left in your free trial
+        </h3>
+        <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
+          Your trial ends on <%= l household.trial_ends_at.to_date, format: :long %>.
+          Pick a plan any time to keep going after that — no card needed until then.
+        </p>
+      <% else %>
+        <h3 class="text-base/7 font-semibold text-gray-900 dark:text-white">
+          <%= household.trial_expired? ? "Your free trial has ended" : "Your subscription has ended" %>
+        </h3>
+        <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
+          Your recipes, meal plans and lists are all still here. Pick a plan to pick up where you left off.
+        </p>
+      <% end %>
+    </div>
+
+    <% if household.needs_plan? %>
+      <% if can_pay %>
+        <div id="billing_plans" class="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <% plans.each do |key, plan| %>
+            <div class="<%= key == 'annual' ? 'border-2 border-[#5f734c]' : 'border border-sage-100 dark:border-white/10' %> rounded-xl p-6">
+              <h4 class="text-sm font-semibold text-gray-900 dark:text-white"><%= plan[:label] %></h4>
+              <p class="mt-3 flex items-baseline gap-1">
+                <span class="font-serif text-4xl text-sage-900 dark:text-[#e8ede3]"><%= plan_price(plan[:per_month_cents]) %></span>
+                <span class="text-sm text-gray-500 dark:text-gray-400">/ month</span>
+              </p>
+              <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
+                <%= key == "annual" ? "Billed #{plan_price(plan[:price_cents])} once a year" : "Billed monthly" %>
+              </p>
+              <%= button_to "Choose #{plan[:label].downcase}", checkout_billing_path, params: { plan: key },
+                    class: "mt-6 w-full rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+            </div>
+          <% end %>
+        </div>
+        <p class="mt-3 text-xs text-olive-400 dark:text-gray-500">One plan covers everyone in your household. Cancel any time.</p>
+      <% else %>
+        <p class="mt-6 text-xs text-olive-400 dark:text-gray-500">
+          Ask your household's owner or an admin to choose a plan.
+        </p>
+      <% end %>
+    <% end %>
+  </div>
+</div>
