@@ -52,6 +52,12 @@
             <dt class="text-olive-500 dark:text-gray-400">Time zone</dt>
             <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.time_zone&.tr("_", " ") || "Not set" %></dd>
           </div>
+          <div>
+            <dt class="text-olive-500 dark:text-gray-400">Weekly planner steps</dt>
+            <dd class="mt-1 font-medium text-sage-900 dark:text-white">
+              <%= @household.planner_section_keys.map { |key| Dashboard.section_class(key)::LABEL }.to_sentence %>
+            </dd>
+          </div>
         </dl>
         <p class="mt-4 text-xs text-olive-400 dark:text-gray-500">Only household admins can change these.</p>
       <% end %>

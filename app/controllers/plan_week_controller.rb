@@ -17,8 +17,7 @@ class PlanWeekController < ApplicationController
   def show
     @sections = sections
     @week_plans = current_household.weekly_plans.where(week_start: @plannable_weeks).index_by(&:week_start)
-    current_index = Dashboard.sections.index(Dashboard.section_class(params[:section]))
-    @previous_key = current_index.positive? ? Dashboard.sections[current_index - 1]::KEY : nil
+    @previous_key = @weekly_plan.previous_key_before(@dashboard_section.key)
   end
 
   def update
@@ -77,8 +76,11 @@ class PlanWeekController < ApplicationController
     "Congrats! It just took you #{minutes} #{unit} to plan #{week}."
   end
 
+  # The planner's steps — only the ones this household plans (see
+  # Household#planner_section_keys). A left-out step can still be opened
+  # directly (set_section doesn't filter); it just isn't in the progress bar.
   def sections
-    @sections ||= Dashboard.sections.map do |klass|
+    @sections ||= Dashboard.sections.select { |klass| current_household.plans_section?(klass::KEY) }.map do |klass|
       klass.new(household: current_household, week_start: @week_start, weekly_plan: @weekly_plan)
     end
   end

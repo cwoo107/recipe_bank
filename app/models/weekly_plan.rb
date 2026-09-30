@@ -68,10 +68,15 @@ class WeeklyPlan < ApplicationRecord
     "#{week_start.strftime('%b %-d')} – #{week_end.strftime(format)}"
   end
 
-  # Finished the wizard, or walked every step some other way.
+  # Finished the wizard, or walked every step some other way. Steps the
+  # household has left out of the planner (Household#planner_section_keys)
+  # don't count.
   def planned?
-    planning_completed_at.present? || Dashboard.section_keys.none? { |k| incomplete?(k) }
+    planning_completed_at.present? || planner_keys.none? { |k| incomplete?(k) }
   end
+
+  # The steps this household plans, in order.
+  def planner_keys = household.planner_section_keys
 
   def week_label       = self.class.week_label(week_start)
   def week_range_label = self.class.week_range_label(week_start)
@@ -102,14 +107,27 @@ class WeeklyPlan < ApplicationRecord
   # The step "in progress" right now — where the wizard resumes, and what
   # the sticky planning bar acts on from anywhere else in the app.
   def active_key
-    Dashboard.section_keys.find { |k| incomplete?(k) } || Dashboard.section_keys.first
+    planner_keys.find { |k| incomplete?(k) } || planner_keys.first
   end
 
+  # The next unfinished planner step after `key`. Placed by the full
+  # Dashboard order, so this also works from a step left out of the planner
+  # that was opened directly (a dashboard card's button): it moves on to the
+  # next included one.
   def next_key_after(key)
     keys = Dashboard.section_keys
     idx = keys.index(key.to_s)
     return nil unless idx
 
-    keys[(idx + 1)..].find { |k| incomplete?(k) }
+    keys[(idx + 1)..].find { |k| household.plans_section?(k) && incomplete?(k) }
+  end
+
+  # The planner step before `key`, the same way.
+  def previous_key_before(key)
+    keys = Dashboard.section_keys
+    idx = keys.index(key.to_s)
+    return nil unless idx
+
+    keys[0...idx].reverse.find { |k| household.plans_section?(k) }
   end
 end

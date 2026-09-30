@@ -21,8 +21,9 @@
     </div>
   </div>
 
-  <%# Last step: offer to print the week being planned. %>
-  <% if @dashboard_section.key == Dashboard.section_keys.last %>
+  <%# Last step: offer to print the week being planned. (The household's last
+      step — later ones may have been left out of the planner.) %>
+  <% if @dashboard_section.key == current_household.planner_section_keys.last %>
     <div class="mt-4 flex flex-col gap-3 rounded-lg border border-[#5f734c]/30 bg-[#5f734c]/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between dark:border-[#7a8f62]/30 dark:bg-[#7a8f62]/10">
       <p class="text-sm text-gray-700 dark:text-gray-300">That's the last step. Want a printed copy of <%= WeeklyPlan.week_label(@week_start).downcase_first %>'s plan for the fridge?</p>
       <%= link_to new_week_print_path(week: @week_start), class: "shrink-0 inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" do %>

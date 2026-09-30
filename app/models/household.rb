@@ -26,6 +26,7 @@ class Household < ApplicationRecord
   validates :family_size, numericality: { only_integer: true, greater_than: 0 }
   validate :time_zone_is_known
   validate :family_size_covers_listed_members, on: :update
+  validate :plans_at_least_one_section
 
   after_create :create_owner_member
   after_create :seed_default_restock_categories
@@ -131,6 +132,37 @@ class Household < ApplicationRecord
   def grow_family_size_to_fit_members!
     listed = household_members.count
     update_column(:family_size, listed) if listed > family_size
+  end
+
+  # ── Weekly planner steps ──────────────────────────────────────────────
+  # A household can leave planning areas it never uses (say, to-dos) out of
+  # "Plan your week". They stay in the navigation and on the dashboard; they
+  # just aren't steps to walk through, and start unticked on the print page.
+  # Stored as the excluded keys (excluded_planner_sections), so an area added
+  # later is included by default.
+
+  # The planner's steps, in Dashboard order.
+  def planner_section_keys
+    Dashboard.section_keys - Array(excluded_planner_sections)
+  end
+
+  def plans_section?(key) = planner_section_keys.include?(key.to_s)
+
+  # The settings form posts the keys to include; everything else is excluded.
+  def planner_sections=(included_keys)
+    included = Array(included_keys).map(&:to_s)
+    self.excluded_planner_sections = Dashboard.section_keys - included
+  end
+
+  # Print pages that follow a planner step when it's left out — the recipes
+  # page belongs to the meal plan.
+  PRINT_SECTIONS_FOR_PLANNER = { "meals" => %w[meals recipes] }.freeze
+
+  # What the print page ticks by default: every page, minus those belonging
+  # to steps left out of the planner.
+  def default_print_sections
+    left_out = Array(excluded_planner_sections).flat_map { |key| PRINT_SECTIONS_FOR_PLANNER.fetch(key, [ key ]) }
+    WeekPlanPdf::SECTIONS.keys - left_out
   end
 
   def owner?(user)
@@ -239,6 +271,12 @@ class Household < ApplicationRecord
     return if time_zone.blank? || ActiveSupport::TimeZone[time_zone]
 
     errors.add(:time_zone, "isn't a time zone we recognize")
+  end
+
+  def plans_at_least_one_section
+    return if planner_section_keys.any?
+
+    errors.add(:base, "Keep at least one step in the weekly planner")
   end
 
   def family_size_covers_listed_members

@@ -42,7 +42,7 @@
     <div class="mb-8 rounded-lg bg-[#3f4d34] dark:bg-[#2a3322] px-6 py-8 sm:px-10 sm:py-10 text-center">
       <h2 class="text-3xl text-white" style="font-family: 'Instrument Serif', serif;">Nothing planned for this week yet</h2>
       <p class="mt-2 text-sm text-[#d7e0cd]">
-        <%= household_admin? ? "Walk through meals, restocking, groceries, chores, to-dos, and your calendar in a few minutes." : "Your household admin hasn't planned this week yet." %>
+        <%= household_admin? ? "Walk through #{@planned_steps.to_sentence} in a few minutes." : "Your household admin hasn't planned this week yet." %>
       </p>
       <% if household_admin? %>
       <%= link_to "Plan your week", plan_week_path(week: @week_start),

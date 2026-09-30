@@ -4,7 +4,9 @@
 class WeekPrintsController < ApplicationController
   def new
     @week_start = week_start_from_params
-    @sections   = selected_sections.presence || WeekPlanPdf::SECTIONS.keys
+    # Pages for steps the household leaves out of the planner start unticked
+    # (Household#default_print_sections); they can still be ticked here.
+    @sections   = selected_sections.presence || current_household.default_print_sections
   end
 
   def show

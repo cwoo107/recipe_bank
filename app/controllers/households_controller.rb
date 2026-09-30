@@ -69,6 +69,7 @@ class HouseholdsController < ApplicationController
   end
 
   def household_params
-    params.expect(household: [:family_name, :minutes_per_day, :week_start_day, :family_size, :time_zone])
+    params.expect(household: [:family_name, :minutes_per_day, :week_start_day, :family_size, :time_zone,
+                              planner_sections: []])
   end
 end

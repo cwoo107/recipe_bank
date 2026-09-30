@@ -26,21 +26,42 @@
   <div>
     <%= f.label :minutes_per_day, "Minutes per day for to-dos", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= f.number_field :minutes_per_day, min: 1, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", placeholder: "30" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">How much time your household typically has each day to work on to-dos. Used to schedule and order to-do dates.</p>
+    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">How much time your household typically has each day to work on to-dos.</p>
   </div>
 
   <div>
     <%= f.label :week_start_day, "Week starts on", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= f.select :week_start_day, Household.week_start_day_options, {}, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Every week in your household — meals, chores, plans, grocery lists and the calendar — runs from this day. Changing it moves this week's and future chore charts, weekly plans and grocery lists onto the new weeks.</p>
+    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Change which day your weekly planning starts with.</p>
   </div>
 
   <div>
     <%= f.label :time_zone, "Time zone", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
     <%= f.select :time_zone, Household.time_zone_options(household.time_zone), { include_blank: "Not set" },
           class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Used for everyone's calendar and schedule, and for syncing calendars. Set from your browser the first time you signed in.</p>
+    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Used for everyone's calendar and schedule, and for syncing calendars.</p>
   </div>
+
+  <% if household.persisted? %>
+    <%# Which areas "Plan your week" walks through (Household#planner_section_keys).
+        The hidden blank makes unticking everything post an empty list —
+        which the model refuses — rather than no field at all. %>
+    <fieldset>
+      <legend class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Weekly planner steps</legend>
+      <%= hidden_field_tag "household[planner_sections][]", "", id: nil %>
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <% Dashboard.sections.each do |section| %>
+          <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+            <%= check_box_tag "household[planner_sections][]", section::KEY, household.plans_section?(section::KEY),
+                              id: "household_planner_sections_#{section::KEY}",
+                              class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
+            <%= section::LABEL %>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Untick anything your household doesn't need to go over each week.</p>
+    </fieldset>
+  <% end %>
 
   <div class="pt-2">
     <%= f.submit household.persisted? ? "Save changes" : "Create household", class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_150000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -189,6 +189,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_130000) do
 
   create_table "households", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.json "excluded_planner_sections", default: [], null: false
     t.string "family_name"
     t.integer "family_size", default: 1, null: false
     t.integer "minutes_per_day", default: 30, null: false
