@@ -1,17 +1,17 @@
-# Async adapter only works within the same process, so for manually triggering cable updates from a console,
-# and seeing results in the browser, you must do so from the web console (running inside the dev process),
-# not a terminal started via bin/rails console! Add "console" to any action or any ERB template view
-# to make the web console appear.
+# Action Cable runs on Redis — the same Redis as Sidekiq (REDIS_URL). Broadcasts
+# come from background jobs as well as web requests (recipe import progress is
+# sent from the Sidekiq worker), so every environment with a separate worker
+# process needs a shared adapter: the in-process async adapter would silently
+# drop anything a worker sends.
 development:
-  adapter: async
+  adapter: redis
+  url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379/1") %>
+  channel_prefix: recipe_bank_development
 
 test:
   adapter: test
 
 production:
-  adapter: solid_cable
-  connects_to:
-    database:
-      writing: cable
-  polling_interval: 0.1.seconds
-  message_retention: 1.day
+  adapter: redis
+  url: <%= ENV.fetch("REDIS_URL", "redis://localhost:6379/1") %>
+  channel_prefix: recipe_bank_production

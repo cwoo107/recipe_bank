@@ -137,6 +137,7 @@
     <orderEntry type="library" scope="PROVIDED" name="rainbow (v3.1.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rake (v13.3.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="rdoc (v7.0.3, rbenv: 4.0.0) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="redis (v5.4.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="redis-client (v0.30.1, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="regexp_parser (v2.11.3, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="reline (v0.6.3, rbenv: 4.0.0) [gem]" level="application" />
@@ -157,8 +158,6 @@
     <orderEntry type="library" scope="PROVIDED" name="selenium-webdriver (v4.39.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sidekiq (v8.1.7, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sidekiq-cron (v2.4.0, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="solid_cable (v3.0.12, rbenv: 4.0.0) [gem]" level="application" />
-    <orderEntry type="library" scope="PROVIDED" name="solid_cache (v1.0.10, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="TEST" name="sqlite3 (v2.9.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="sshkit (v1.25.0, rbenv: 4.0.0) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="stimulus-rails (v1.3.4, rbenv: 4.0.0) [gem]" level="application" />

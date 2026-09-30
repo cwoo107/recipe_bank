@@ -46,8 +46,12 @@ Rails.application.configure do
   # Don't log any deprecations.
   config.active_support.report_deprecations = false
 
-  # Replace the default in-process memory cache store with a durable alternative.
-  config.cache_store = :solid_cache_store
+  # Nothing in the app caches through Rails.cache, so an in-process store is
+  # all Rails itself needs. If app caching is added, use :redis_cache_store on
+  # its own Redis instance — not Sidekiq's: a cache wants its keys evicted
+  # under memory pressure, Sidekiq needs Redis never to evict (or refuse
+  # writes for) its jobs.
+  config.cache_store = :memory_store, { size: 64.megabytes }
 
   # Replace the default in-process and non-durable queuing backend for Active Job.
   config.active_job.queue_adapter = :sidekiq

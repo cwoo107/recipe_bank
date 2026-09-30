@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_30_120100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_130000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -287,6 +287,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_30_120100) do
     t.integer "progress", default: 0
     t.integer "recipe_id"
     t.json "scraped_data"
+    t.string "source_content_type"
+    t.binary "source_file"
     t.string "status", default: "pending", null: false
     t.integer "total_steps", default: 5
     t.datetime "updated_at", null: false

@@ -167,4 +167,82 @@ class RecipeImporterTest < ActiveSupport::TestCase
     flour = @job.recipe.ingredients.find_by(ingredient: "Zzqqx flour")
     assert_equal households(:one), flour.household
   end
+
+  # ── Saved recipes are never reported as failed imports ──
+
+  test "a progress broadcast that fails doesn't fail the import" do
+    run_match_phase
+    @job.update!(status: :resolving_with_ai)
+    @job.define_singleton_method(:broadcast_replace_to) do |*|
+      raise Redis::CannotConnectError, "Error connecting to Redis"
+    end
+
+    run_resume
+
+    assert @job.completed?
+    assert_nil @job.error_message
+    assert_equal 1, Recipe.where(title: "Test Bake").count
+  end
+
+  test "an error after the recipe is committed still records the import as completed" do
+    run_match_phase
+    @job.update!(status: :resolving_with_ai)
+    failed_once = false
+    @job.define_singleton_method(:update!) do |attributes|
+      if attributes[:status] == :completed && !failed_once
+        failed_once = true
+        raise ActiveRecord::StatementInvalid, "connection lost"
+      end
+      super(attributes)
+    end
+
+    recipe = OllamaAssistant.stub(:new, FakeOllamaAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+
+    @job.reload
+    assert @job.completed?
+    assert_equal recipe.id, @job.recipe_id
+    assert_equal 1, Recipe.where(title: "Test Bake").count
+  end
+
+  test "resuming an import that already saved its recipe doesn't save it again" do
+    run_match_phase
+    run_resume
+    first = @job.recipe
+
+    assert_equal first, OllamaAssistant.stub(:new, FakeOllamaAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+    assert_equal 1, Recipe.where(title: "Test Bake").count
+  end
+
+  # ── Nutrition estimates ──
+
+  # What the real Ollama client returns: parsed JSON (string keys), and the
+  # model is free to recapitalise the name.
+  class JsonOllamaAssistant < FakeOllamaAssistant
+    def estimate_nutrition_facts(ingredients)
+      ingredients.map do |i|
+        { "name" => i[:name].to_s.titleize, "calories" => 364, "protein" => 10.0, "total_fat" => 1.0,
+          "total_carb" => 76.0, "serving_size" => 100, "serving_unit" => "g", "unit_price" => 4.25, "unit_servings" => 20 }
+      end
+    end
+  end
+
+  test "an AI nutrition estimate (string keys) is saved on the new ingredient" do
+    run_match_phase
+    OllamaAssistant.stub(:new, JsonOllamaAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+
+    flour = @job.reload.recipe.ingredients.find_by(ingredient: "Zzqqx flour")
+    assert_equal 364, flour.nutrition_fact.calories
+    assert_equal "g", flour.nutrition_fact.serving_unit
+    assert_equal 4.25, flour.unit_price
+    assert_equal 20, flour.unit_servings
+  end
+
+  test "the offline fallback estimate (symbol keys) is still saved" do
+    run_match_phase
+    run_resume
+
+    flour = @job.recipe.ingredients.find_by(ingredient: "Zzqqx flour")
+    assert_equal 10, flour.nutrition_fact.calories
+    assert_equal 1.5, flour.unit_price
+  end
 end

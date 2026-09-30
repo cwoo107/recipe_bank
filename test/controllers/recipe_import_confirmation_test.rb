@@ -5,6 +5,8 @@ require_relative "../support/fake_ollama_assistant"
 # The user-facing half of the confirmation gate: the paused import renders a
 # form, and submitting it resumes the import with the user's decisions.
 class RecipeImportConfirmationTest < ActionDispatch::IntegrationTest
+  include ActiveJob::TestHelper
+
   setup do
     @user = users(:one)
     @olive_oil = Ingredient.create!(household: households(:one), ingredient: "Olive oil", family: "fat")
@@ -31,20 +33,43 @@ class RecipeImportConfirmationTest < ActionDispatch::IntegrationTest
       ]
     )
 
-    # Run the resume inline so the test isn't racing a background thread.
-    RecipeImportsController.background_runner = RecipeImportsController::INLINE_RUNNER
     sign_in @user
   end
 
-  teardown do
-    RecipeImportsController.background_runner = RecipeImportsController::THREADED_RUNNER
-  end
-
+  # Confirming enqueues the resume on Sidekiq (ProcessRecipeImportJob); run
+  # it here so the test sees the finished import.
   def confirm(indexes)
     OllamaAssistant.stub(:new, FakeOllamaAssistant.new) do
-      post confirm_ingredients_recipe_import_url(@job), params: { confirmed: indexes }
+      perform_enqueued_jobs do
+        post confirm_ingredients_recipe_import_url(@job), params: { confirmed: indexes }
+      end
     end
     @job.reload
+  end
+
+  test "confirming enqueues the resume as a background job instead of running it in the request" do
+    assert_enqueued_with(job: ProcessRecipeImportJob, args: [ @job.id, "resume" ]) do
+      post confirm_ingredients_recipe_import_url(@job), params: { confirmed: [ "0" ] }
+    end
+    assert @job.reload.resolving_with_ai?
+  end
+
+  test "only one confirmation can claim the import" do
+    other_copy = RecipeImportJob.find(@job.id) # e.g. a second tab's request
+
+    assert @job.claim_confirmation!
+    assert_not other_copy.claim_confirmation!
+    assert @job.resolving_with_ai?
+  end
+
+  test "submitting the confirmation twice saves the recipe once" do
+    confirm([ "0" ])
+    assert @job.completed?
+
+    confirm([ "0" ])
+
+    assert_redirected_to recipe_import_path(@job)
+    assert_equal 1, Recipe.where(title: "Test Bake").count
   end
 
   test "a paused import shows each ingredient beside its match" do
@@ -90,7 +115,9 @@ class RecipeImportConfirmationTest < ActionDispatch::IntegrationTest
   test "a blank confirmed value doesn't sneak through as row zero" do
     assert_difference("Ingredient.count", 2) do
       OllamaAssistant.stub(:new, FakeOllamaAssistant.new) do
-        post confirm_ingredients_recipe_import_url(@job), params: { confirmed: [""] }
+        perform_enqueued_jobs do
+          post confirm_ingredients_recipe_import_url(@job), params: { confirmed: [""] }
+        end
       end
     end
 

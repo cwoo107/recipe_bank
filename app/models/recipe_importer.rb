@@ -43,11 +43,17 @@ class RecipeImporter
     end
   end
 
-  def perform_from_file(file_data, content_type)
+  # The upload waits on the import (source_file) until this runs on the
+  # worker; it's cleared once read, whether or not extraction succeeds.
+  def perform_from_file
     begin
       # Step 1: Extract recipe from file via Claude
       @job.update_progress(:fetching_html) # reuse status — "Fetching file"
       sleep 0.3
+
+      file_data, content_type = @job.source_file, @job.source_content_type
+      raise "The uploaded file is no longer available — please upload it again." if file_data.blank?
+      @job.update!(source_file: nil)
 
       # Build a temporary file-like object from the raw bytes
       file_io = StringIO.new(file_data)
@@ -89,6 +95,9 @@ class RecipeImporter
   # confirmed matched_ingredients), so this works from a fresh request —
   # no re-fetch or re-upload.
   def resume_after_confirmation
+    # Already saved (a repeat run) — don't make a second copy.
+    return @job.saved_recipe if @job.saved_recipe
+
     scraped_data    = @job.scraped_data.deep_symbolize_keys
     matched_results = self.class.deserialize_results(@job.matched_ingredients)
 
@@ -115,6 +124,17 @@ class RecipeImporter
     Rails.logger.error "=== IMPORT RESUME ERROR ==="
     Rails.logger.error e.message
     Rails.logger.error e.backtrace.join("\n")
+
+    # Anything that goes wrong once the recipe is committed (create_recipe
+    # sets @recipe inside its transaction) isn't a failed import — the
+    # recipe is there. Record the import as completed rather than showing
+    # an error for a recipe that was saved anyway.
+    if @recipe && Recipe.exists?(@recipe.id)
+      Rails.logger.error "Recipe ##{@recipe.id} was already saved — marking import ##{@job.id} completed"
+      @job.update!(status: :completed, recipe_id: @recipe.id, progress: 100,
+                   current_step: 'Import completed!', error_message: nil)
+      return @recipe
+    end
 
     @job.update!(
       status: :failed,
@@ -316,8 +336,13 @@ class RecipeImporter
       # Apply nutrition estimates
       new_ingredients.each do |result|
         # Match by comparing the parsed name with nutrition estimate name
+        # The AI's estimates come back as JSON (string keys) and the offline
+        # fallback's as symbol keys — read either, and don't let the AI's
+        # capitalisation of the name lose the match.
         ingredient_name = result[:parsed][:name]
-        nutrition = nutrition_estimates.find { |n| n.is_a?(Hash) && n['name'] == ingredient_name }
+        nutrition = nutrition_estimates.find do |n|
+          n.is_a?(Hash) && n.with_indifferent_access[:name].to_s.strip.casecmp?(ingredient_name.to_s.strip)
+        end
 
         if nutrition
           Rails.logger.info "Applied nutrition for #{ingredient_name}: #{nutrition.inspect}"
@@ -335,8 +360,9 @@ class RecipeImporter
 
   def create_recipe(scraped_data, matched_results)
     ActiveRecord::Base.transaction do
-      # Create recipe
-      recipe = Recipe.create!(
+      # Create recipe (remembered on @recipe so the rescue in
+      # #resume_after_confirmation can tell it was committed)
+      recipe = @recipe = Recipe.create!(
         title: scraped_data[:title],
         description: scraped_data[:description],
         servings: scraped_data[:servings] || 4,
@@ -388,6 +414,10 @@ class RecipeImporter
   end
 
   def create_ingredient_with_nutrition(parsed, family, nutrition)
+    # String keys from the AI, symbol keys from the fallback — reading only
+    # symbols silently saved every AI estimate as an empty nutrition fact.
+    nutrition = nutrition.is_a?(Hash) ? nutrition.with_indifferent_access : nil
+
     ingredient = Ingredient.create!(
       ingredient: parsed[:name],
       family: family || 'produce',
@@ -397,14 +427,14 @@ class RecipeImporter
       household: household
     )
 
-    if nutrition && nutrition.is_a?(Hash)
+    if nutrition
       ingredient.create_nutrition_fact!(
-        serving_size: nutrition[:serving_size],   # Changed to symbol
-        serving_unit: nutrition[:serving_unit],   # Changed to symbol
-        calories: nutrition[:calories],           # Changed to symbol
-        protein: nutrition[:protein],             # Changed to symbol
-        total_fat: nutrition[:total_fat],         # Changed to symbol
-        total_carb: nutrition[:total_carb]        # Changed to symbol
+        serving_size: nutrition[:serving_size],
+        serving_unit: nutrition[:serving_unit],
+        calories: nutrition[:calories],
+        protein: nutrition[:protein],
+        total_fat: nutrition[:total_fat],
+        total_carb: nutrition[:total_carb]
       )
     end
 

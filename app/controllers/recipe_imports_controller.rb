@@ -1,14 +1,12 @@
 class RecipeImportsController < ApplicationController
   # Limited members can look but not change these (see ApplicationController).
   before_action :require_household_admin!
-  # Imports run off the request thread so the progress page can stream
-  # updates while they work. Tests swap in the inline runner.
-  THREADED_RUNNER = ->(&work) {
-    Thread.new { ActiveRecord::Base.connection_pool.with_connection(&work) }
-  }
-  INLINE_RUNNER = ->(&work) { work.call }
 
-  class_attribute :background_runner, default: THREADED_RUNNER
+  # Imports run on Sidekiq (ProcessRecipeImportJob), and the progress page
+  # streams their updates as Turbo broadcasts over Redis.
+
+  # Uploads wait in the database until the worker reads them.
+  MAX_UPLOAD_SIZE = 25.megabytes
 
   def new
     @import_job = RecipeImportJob.new
@@ -22,8 +20,7 @@ class RecipeImportsController < ApplicationController
       total_steps: 5
     )
 
-    job_id = @import_job.id
-    background_runner.call { RecipeImporter.new(RecipeImportJob.find(job_id)).perform }
+    ProcessRecipeImportJob.perform_later(@import_job.id, "url")
 
     respond_to do |format|
       format.turbo_stream do
@@ -50,21 +47,23 @@ class RecipeImportsController < ApplicationController
       return
     end
 
+    if file.size > MAX_UPLOAD_SIZE
+      redirect_to new_recipe_import_path, alert: "That file is too large — please upload one under #{MAX_UPLOAD_SIZE / 1.megabyte} MB."
+      return
+    end
+
+    # The worker may be in another container, so the upload travels with the
+    # import rather than on this server's disk; it's cleared once read.
     @import_job = current_user.recipe_import_jobs.create!(
       url: nil,
       status: :pending,
       progress: 0,
-      total_steps: 5
+      total_steps: 5,
+      source_file: file.read,
+      source_content_type: file.content_type
     )
 
-    # Read file into memory before passing to thread
-    file_data   = file.read
-    content_type = file.content_type
-
-    job_id = @import_job.id
-    background_runner.call do
-      RecipeImporter.new(RecipeImportJob.find(job_id)).perform_from_file(file_data, content_type)
-    end
+    ProcessRecipeImportJob.perform_later(@import_job.id, "file")
 
     respond_to do |format|
       format.turbo_stream do
@@ -91,7 +90,10 @@ class RecipeImportsController < ApplicationController
   def confirm_ingredients
     @import_job = current_user.recipe_import_jobs.find(params[:id])
 
-    unless @import_job.awaiting_confirmation?
+    # Claimed atomically, so a second submit (another tab, a resubmitted
+    # request) can't also get past this and start a second run that saves
+    # the recipe twice.
+    unless @import_job.claim_confirmation!
       return redirect_to recipe_import_path(@import_job),
                          alert: "This import isn't waiting on ingredient confirmation."
     end
@@ -99,9 +101,7 @@ class RecipeImportsController < ApplicationController
     @import_job.apply_ingredient_confirmations!(Array(params[:confirmed]))
     @import_job.update_progress(:resolving_with_ai, 0, @import_job.ingredient_count)
 
-    # Reload inside the worker rather than sharing this request's instance.
-    job_id = @import_job.id
-    background_runner.call { RecipeImporter.new(RecipeImportJob.find(job_id)).resume_after_confirmation }
+    ProcessRecipeImportJob.perform_later(@import_job.id, "resume")
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace(@import_job) }

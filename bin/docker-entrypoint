@@ -3,8 +3,6 @@
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   mkdir -p storage
   ./bin/rails db:migrate
-  ./bin/rails db:migrate:cache
-  ./bin/rails db:migrate:cable
   bundle exec sidekiq -C config/sidekiq.yml &
 fi
 
