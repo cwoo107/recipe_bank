@@ -25,41 +25,35 @@
       <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Settings</h2>
     </div>
 
-    <div class="border-t border-sage-100 px-5 py-5 dark:border-white/10">
+    <div class="border-t border-sage-100 px-5 py-8 sm:px-8 dark:border-white/10">
       <% if @household.admin?(current_user) %>
-        <div class="max-w-md">
-          <%= render "form", household: @household %>
-        </div>
+        <%= render "form", household: @household %>
       <% else %>
-        <dl class="grid gap-4 sm:grid-cols-3 text-sm">
-          <div>
-            <dt class="text-olive-500 dark:text-gray-400">Family name</dt>
-            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.family_name %></dd>
-          </div>
-          <div>
-            <dt class="text-olive-500 dark:text-gray-400">Family size</dt>
-            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.family_size %></dd>
-          </div>
-          <div>
-            <dt class="text-olive-500 dark:text-gray-400">Minutes per day for to-dos</dt>
-            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.minutes_per_day %></dd>
-          </div>
-          <div>
-            <dt class="text-olive-500 dark:text-gray-400">Week starts on</dt>
-            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.week_start_day_name %></dd>
-          </div>
-          <div>
-            <dt class="text-olive-500 dark:text-gray-400">Time zone</dt>
-            <dd class="mt-1 font-medium text-sage-900 dark:text-white"><%= @household.time_zone&.tr("_", " ") || "Not set" %></dd>
-          </div>
-          <div>
-            <dt class="text-olive-500 dark:text-gray-400">Weekly planner steps</dt>
-            <dd class="mt-1 font-medium text-sage-900 dark:text-white">
-              <%= @household.planner_section_keys.map { |key| Dashboard.section_class(key)::LABEL }.to_sentence %>
-            </dd>
-          </div>
-        </dl>
-        <p class="mt-4 text-xs text-olive-400 dark:text-gray-500">Only household admins can change these.</p>
+        <%# Read-only, in the same sections as the admins' form. %>
+        <% term = "text-sm/6 text-gray-600 dark:text-gray-400" %>
+        <% value = "mt-1 text-sm/6 font-medium text-gray-900 dark:text-white" %>
+        <div class="space-y-10">
+          <% [
+               [ "Household", [ [ "Family name", @household.family_name ], [ "Family size", @household.family_size ] ] ],
+               [ "Schedule",  [ [ "Week starts on", @household.week_start_day_name ],
+                                [ "Time zone", @household.time_zone&.tr("_", " ") || "Not set" ],
+                                [ "Time for to-dos", "#{@household.minutes_per_day} min / day" ] ] ],
+               [ "Weekly planner", [ [ "Steps", @household.planner_section_keys.map { |key| Dashboard.section_class(key)::LABEL }.to_sentence ] ] ]
+             ].each do |heading, rows| %>
+            <div class="border-b border-gray-900/10 pb-10 last:border-b-0 last:pb-0 dark:border-white/10">
+              <h3 class="text-base/7 font-semibold text-gray-900 dark:text-white"><%= heading %></h3>
+              <dl class="mt-4 grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
+                <% rows.each do |label, shown| %>
+                  <div>
+                    <dt class="<%= term %>"><%= label %></dt>
+                    <dd class="<%= value %>"><%= shown %></dd>
+                  </div>
+                <% end %>
+              </dl>
+            </div>
+          <% end %>
+        </div>
+        <p class="mt-8 text-xs text-olive-400 dark:text-gray-500">Only household admins can change these.</p>
       <% end %>
     </div>
   </div>

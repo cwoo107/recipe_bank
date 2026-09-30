@@ -1,8 +1,15 @@
 <%# locals: (household:) %>
-<%= form_with model: household, url: household_path, method: household.persisted? ? :patch : :post, class: "space-y-5" do |f| %>
+<%# Household settings, in titled sections — Household, Schedule, and (once
+    the household exists) Weekly planner — with the actions in a footer.
+    Also the "Set up your household" form, which shows just the first two. %>
+<% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+<% hint_class  = "mt-2 text-sm/6 text-gray-600 dark:text-gray-400" %>
+<% section_heading = "text-base/7 font-semibold text-gray-900 dark:text-white" %>
+<% section_intro   = "mt-1 text-sm/6 text-gray-600 dark:text-gray-400" %>
 
+<%= form_with model: household, url: household_path, method: household.persisted? ? :patch : :post do |f| %>
   <% if household.errors.any? %>
-    <div class="rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3 dark:border-dusty-rose-800/60 dark:bg-dusty-rose-900/20">
+    <div class="mb-8 rounded-lg border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-3 dark:border-dusty-rose-800/60 dark:bg-dusty-rose-900/20">
       <ul class="list-inside list-disc text-sm text-dusty-rose-700 dark:text-dusty-rose-300">
         <% household.errors.full_messages.each do |msg| %>
           <li><%= msg %></li>
@@ -11,59 +18,119 @@
     </div>
   <% end %>
 
-  <div>
-    <%= f.label :family_name, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= f.text_field :family_name, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", placeholder: "e.g. Anderson" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Shown as "The <%= household.family_name.presence || "Anderson" %> household".</p>
-  </div>
+  <div class="space-y-12">
+    <%# ── Household ── %>
+    <div class="border-b border-gray-900/10 pb-12 dark:border-white/10">
+      <h3 class="<%= section_heading %>">Household</h3>
+      <p class="<%= section_intro %>">Who you're planning for.</p>
 
-  <div>
-    <%= f.label :family_size, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= f.number_field :family_size, min: 1, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">How many people eat at home, whether or not they have an account. Used as the default servings for new meals and on recipes.</p>
-  </div>
+      <div class="mt-8 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+        <div class="sm:col-span-4">
+          <%= f.label :family_name, class: label_class %>
+          <div class="mt-2">
+            <%= f.text_field :family_name, class: settings_input_classes, placeholder: "e.g. Anderson" %>
+          </div>
+          <p class="<%= hint_class %>">Shown as "The <%= household.family_name.presence || "Anderson" %> household".</p>
+        </div>
 
-  <div>
-    <%= f.label :minutes_per_day, "Minutes per day for to-dos", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= f.number_field :minutes_per_day, min: 1, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", placeholder: "30" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">How much time your household typically has each day to work on to-dos.</p>
-  </div>
+        <div class="sm:col-span-2">
+          <%= f.label :family_size, class: label_class %>
+          <div class="mt-2">
+            <%= f.number_field :family_size, min: 1, class: settings_input_classes %>
+          </div>
+        </div>
 
-  <div>
-    <%= f.label :week_start_day, "Week starts on", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= f.select :week_start_day, Household.week_start_day_options, {}, class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Change which day your weekly planning starts with.</p>
-  </div>
-
-  <div>
-    <%= f.label :time_zone, "Time zone", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= f.select :time_zone, Household.time_zone_options(household.time_zone), { include_blank: "Not set" },
-          class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-    <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Used for everyone's calendar and schedule, and for syncing calendars.</p>
-  </div>
-
-  <% if household.persisted? %>
-    <%# Which areas "Plan your week" walks through (Household#planner_section_keys).
-        The hidden blank makes unticking everything post an empty list —
-        which the model refuses — rather than no field at all. %>
-    <fieldset>
-      <legend class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Weekly planner steps</legend>
-      <%= hidden_field_tag "household[planner_sections][]", "", id: nil %>
-      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <% Dashboard.sections.each do |section| %>
-          <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
-            <%= check_box_tag "household[planner_sections][]", section::KEY, household.plans_section?(section::KEY),
-                              id: "household_planner_sections_#{section::KEY}",
-                              class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
-            <%= section::LABEL %>
-          </label>
-        <% end %>
+        <p class="col-span-full -mt-4 text-sm/6 text-gray-600 dark:text-gray-400">
+          Family size is how many people eat at home, whether or not they have an account. It's the default servings for new meals and on recipes.
+        </p>
       </div>
-      <p class="mt-1.5 text-xs text-olive-400 dark:text-gray-500">Untick anything your household doesn't need to go over each week.</p>
-    </fieldset>
-  <% end %>
+    </div>
 
-  <div class="pt-2">
-    <%= f.submit household.persisted? ? "Save changes" : "Create household", class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>
+    <%# ── Schedule ── %>
+    <div class="<%= 'border-b border-gray-900/10 pb-12 dark:border-white/10' if household.persisted? %>">
+      <h3 class="<%= section_heading %>">Schedule</h3>
+      <p class="<%= section_intro %>">When your week starts, and how much time you have in it.</p>
+
+      <div class="mt-8 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
+        <div class="sm:col-span-3">
+          <%= f.label :week_start_day, "Week starts on", class: label_class %>
+          <div class="mt-2 grid grid-cols-1">
+            <%= f.select :week_start_day, Household.week_start_day_options, {}, class: settings_select_classes %>
+            <%= render "households/select_chevron" %>
+          </div>
+          <p class="<%= hint_class %>">Change which day your weekly planning starts with.</p>
+        </div>
+
+        <div class="sm:col-span-3">
+          <%= f.label :time_zone, "Time zone", class: label_class %>
+          <div class="mt-2 grid grid-cols-1">
+            <%= f.select :time_zone, Household.time_zone_options(household.time_zone), { include_blank: "Not set" },
+                  class: settings_select_classes %>
+            <%= render "households/select_chevron" %>
+          </div>
+          <p class="<%= hint_class %>">Used for everyone's calendar and schedule, and for syncing calendars.</p>
+        </div>
+
+        <div class="sm:col-span-3">
+          <%= f.label :minutes_per_day, "Time for to-dos", class: label_class %>
+          <div class="mt-2">
+            <div class="flex items-center rounded-md bg-white pr-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-[#5f734c] dark:bg-white/5 dark:outline-white/10 dark:focus-within:outline-[#7a8f62]">
+              <%= f.number_field :minutes_per_day, min: 1, placeholder: "30",
+                    class: "block min-w-0 grow bg-transparent py-1.5 pr-1 pl-3 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6 dark:text-white dark:placeholder:text-gray-500" %>
+              <span class="shrink-0 text-base text-gray-500 select-none sm:text-sm/6 dark:text-gray-400">min / day</span>
+            </div>
+          </div>
+          <p class="<%= hint_class %>">How much time your household typically has each day to work on to-dos.</p>
+        </div>
+      </div>
+    </div>
+
+    <%# ── Weekly planner ── %>
+    <% if household.persisted? %>
+      <%# Which areas "Plan your week" walks through (Household#planner_section_keys).
+          The hidden blank makes unticking everything post an empty list —
+          which the model refuses — rather than no field at all. %>
+      <div>
+        <h3 class="<%= section_heading %>">Weekly planner</h3>
+        <p class="<%= section_intro %>">
+          The steps "Plan your week" walks you through. Untick anything your household doesn't need to go over each week —
+          it stays in the menu, and you can still add it when you print your week.
+        </p>
+
+        <fieldset class="mt-8">
+          <legend class="sr-only">Weekly planner steps</legend>
+          <%= hidden_field_tag "household[planner_sections][]", "", id: nil %>
+          <div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+            <% Dashboard.sections.each do |section| %>
+              <% field_id = "household_planner_sections_#{section::KEY}" %>
+              <div class="flex gap-3">
+                <div class="flex h-6 shrink-0 items-center">
+                  <div class="group grid size-4 grid-cols-1">
+                    <%= check_box_tag "household[planner_sections][]", section::KEY, household.plans_section?(section::KEY),
+                          id: field_id, "aria-describedby": "#{field_id}_description",
+                          class: "col-start-1 row-start-1 appearance-none rounded-sm border border-gray-300 bg-white checked:border-[#5f734c] checked:bg-[#5f734c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:border-white/10 dark:bg-white/5 dark:checked:border-[#7a8f62] dark:checked:bg-[#7a8f62] dark:focus-visible:outline-[#7a8f62] forced-colors:appearance-auto cursor-pointer" %>
+                    <svg viewBox="0 0 14 14" fill="none" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white">
+                      <path d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="opacity-0 group-has-checked:opacity-100" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="text-sm/6">
+                  <label for="<%= field_id %>" class="font-medium text-gray-900 dark:text-white cursor-pointer"><%= section::LABEL %></label>
+                  <p id="<%= field_id %>_description" class="text-gray-500 dark:text-gray-400"><%= planner_step_description(section::KEY) %></p>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </fieldset>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="mt-8 flex items-center justify-end gap-x-6">
+    <% if household.persisted? %>
+      <%= link_to "Cancel", household_path, class: "text-sm/6 font-semibold text-gray-900 dark:text-white" %>
+    <% end %>
+    <%= f.submit household.persisted? ? "Save" : "Create household",
+          class: "rounded-md bg-[#5f734c] px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c] cursor-pointer" %>
   </div>
 <% end %>
