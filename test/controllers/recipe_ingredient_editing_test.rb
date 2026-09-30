@@ -5,7 +5,7 @@ class RecipeIngredientEditingTest < ActionDispatch::IntegrationTest
   setup do
     @user   = users(:one)
     @recipe = @user.recipes.create!(title: "Roast Chicken", visibility: "private", servings: 4)
-    @breast = Ingredient.create!(ingredient: "Chicken breast", family: "protein")
+    @breast = Ingredient.create!(household: households(:one), ingredient: "Chicken breast", family: "protein")
     @line   = @recipe.recipe_ingredients.create!(ingredient: @breast, quantity: 2.0, unit: "lb")
 
     sign_in @user

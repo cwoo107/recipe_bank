@@ -101,10 +101,11 @@ class Recipe < ApplicationRecord
     candidate
   end
 
-  # Deep-copies the recipe into `user`'s collection: ingredients are shared
-  # records so they're just re-pointed, steps carry their rich text over, and
-  # tags are mirrored into the saving user's own tag list (tags are personal).
-  # The copy starts private — it's theirs to share or not.
+  # Deep-copies the recipe into `user`'s collection: ingredients are copied
+  # into the user's household library (reusing ones it already has) so the
+  # copy doesn't depend on anyone else's, steps carry their rich text over,
+  # and tags are mirrored into the saving user's own tag list (tags are
+  # personal). The copy starts private — it's theirs to share or not.
   def duplicate_for(user, title: self.title)
     copy = Recipe.new(
       user:           user,
@@ -119,7 +120,8 @@ class Recipe < ApplicationRecord
       copy.save!
 
       recipe_ingredients.each do |ri|
-        copy.recipe_ingredients.create!(ingredient_id: ri.ingredient_id, quantity: ri.quantity, unit: ri.unit)
+        copy.recipe_ingredients.create!(ingredient: ri.ingredient.copy_for(user.household, user: user),
+                                        quantity: ri.quantity, unit: ri.unit)
       end
 
       steps.each do |step|

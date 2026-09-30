@@ -45,8 +45,8 @@
       <tbody class="divide-y divide-gray-100 dark:divide-white/5">
         <% section.own_ingredients.each do |line| %>
           <tr>
-            <td class="whitespace-nowrap py-2 text-sm">
-              <%= link_to truncate(line.ingredient.ingredient, length: 20), line.ingredient,
+            <td class="break-words py-2 text-sm">
+              <%= link_to line.ingredient.ingredient, line.ingredient,
                           class: "text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
             </td>
             <td class="whitespace-nowrap py-2 px-2 text-right text-sm text-gray-500 dark:text-gray-400">

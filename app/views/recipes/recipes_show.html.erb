@@ -120,10 +120,10 @@
               <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
                 <% @recipe.recipe_ingredients.each do |recipe_ingredient| %>
                   <tr id="recipe_ingredient_<%= recipe_ingredient.id %>">
-                    <td class="whitespace-nowrap py-4 text-sm font-medium dark:text-white">
+                    <td class="break-words py-4 text-sm font-medium dark:text-white">
                       <%= link_to recipe_ingredient.ingredient do %>
                         <span class="text-sm font-medium text-gray-900 hover:text-[#5f734c] dark:text-white dark:hover:text-[#7a8f62]">
-                          <%= truncate(recipe_ingredient.ingredient.ingredient, length: 20) %>
+                          <%= recipe_ingredient.ingredient.ingredient %>
                         </span>
                       <% end %>
                     </td>
@@ -161,7 +161,7 @@
               <%= form.label :ingredient_id, "Ingredient", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
               <%= form.select :ingredient_id,
                               options_for_select(
-                                Ingredient.order(favorite: :desc, ingredient: :asc).map { |r|
+                                current_household.ingredients.order(favorite: :desc, ingredient: :asc).map { |r|
                                   [r.ingredient, r.id, { 'data-favorite' => r.favorite }]
                                 },
                                 form.object.ingredient_id

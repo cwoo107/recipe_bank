@@ -10,7 +10,7 @@ class RecipeDuplicationTest < ActionDispatch::IntegrationTest
 
     @recipe = @alice.recipes.create!(title: "Chicken Teriyaki Bowls", description: "Weeknight",
                                      servings: 4, visibility: "public")
-    @rice   = Ingredient.create!(ingredient: "Rice", family: "grain")
+    @rice   = Ingredient.create!(household: households(:one), ingredient: "Rice", family: "grain")
     @recipe.recipe_ingredients.create!(ingredient: @rice, quantity: 2.0, unit: "cup")
     @recipe.steps.create!(content: "Steam the rice")
     @recipe.tags << @alice.tags.create!(tag: "Dinner", color: "#5f734c")

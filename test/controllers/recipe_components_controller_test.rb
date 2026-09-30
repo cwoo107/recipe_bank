@@ -6,7 +6,7 @@ class RecipeComponentsControllerTest < ActionDispatch::IntegrationTest
     @chicken = @user.recipes.create!(title: "Chicken", visibility: "private", servings: 4)
     @sauce   = @user.recipes.create!(title: "Lemon Garlic Sauce", visibility: "private", servings: 1)
 
-    @cream = Ingredient.create!(ingredient: "Cream", family: "dairy")
+    @cream = Ingredient.create!(household: households(:one), ingredient: "Cream", family: "dairy")
     @sauce.recipe_ingredients.create!(ingredient: @cream, quantity: 2, unit: "cup")
     @sauce.steps.create!(content: "Reduce the cream")
 

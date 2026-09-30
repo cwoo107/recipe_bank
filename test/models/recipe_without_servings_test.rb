@@ -9,7 +9,7 @@ class RecipeWithoutServingsTest < ActiveSupport::TestCase
     @household = households(:one)
     @recipe    = @user.recipes.create!(title: "No Servings", visibility: "private", servings: nil)
 
-    ing = Ingredient.create!(ingredient: "Rice", family: "produce")
+    ing = Ingredient.create!(household: households(:one), ingredient: "Rice", family: "produce")
     ing.create_nutrition_fact!(serving_size: 100, serving_unit: "g", calories: 100,
                                protein: 10, total_fat: 0, total_carb: 0)
     @recipe.recipe_ingredients.create!(ingredient: ing, quantity: 200, unit: "g")

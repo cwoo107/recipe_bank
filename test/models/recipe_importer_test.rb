@@ -18,7 +18,7 @@ class RecipeImporterTest < ActiveSupport::TestCase
 
   setup do
     @user = users(:one)
-    @olive_oil = Ingredient.create!(ingredient: "Olive oil", family: "fat")
+    @olive_oil = Ingredient.create!(household: households(:one), ingredient: "Olive oil", family: "fat")
     @job = @user.recipe_import_jobs.create!(url: "https://example.com/r", status: :pending,
                                             progress: 0, total_steps: 5)
   end
@@ -134,5 +134,37 @@ class RecipeImporterTest < ActiveSupport::TestCase
 
     assert @job.reload.failed?
     assert @job.error_message.present?
+  end
+
+  test "a match from another household is copied in rather than linked to" do
+    @olive_oil.update!(household: households(:two))
+    run_match_phase
+    assert_equal @olive_oil.id, @job.ingredient_matches.first.match_id, "falls back to anyone's ingredients"
+
+    @job.apply_ingredient_confirmations!(["0"])
+    run_resume
+
+    oil = @job.recipe.ingredients.find_by(ingredient: "Olive oil")
+    refute_equal @olive_oil, oil
+    assert_equal households(:one), oil.household
+    assert_equal @olive_oil, oil.source_ingredient
+  end
+
+  test "the household's own ingredient wins over another household's" do
+    @olive_oil.update!(household: households(:two))
+    ours = households(:one).ingredients.create!(ingredient: "Olive oil", family: "fat")
+
+    run_match_phase
+
+    assert_equal ours.id, @job.ingredient_matches.first.match_id
+  end
+
+  test "new ingredients from an import belong to the importer's household" do
+    run_match_phase
+    @job.apply_ingredient_confirmations!(["0"])
+    run_resume
+
+    flour = @job.recipe.ingredients.find_by(ingredient: "Zzqqx flour")
+    assert_equal households(:one), flour.household
   end
 end

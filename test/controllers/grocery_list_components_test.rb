@@ -23,7 +23,7 @@ class GroceryListComponentsTest < ActionDispatch::IntegrationTest
   end
 
   def stocked(name)
-    ing = Ingredient.create!(ingredient: name, family: "produce", unit_price: 4.0, unit_servings: 4)
+    ing = Ingredient.create!(household: households(:one), ingredient: name, family: "produce", unit_price: 4.0, unit_servings: 4)
     ing.create_nutrition_fact!(serving_size: 100, serving_unit: "g", calories: 100,
                                protein: 0, total_fat: 0, total_carb: 0)
     ing

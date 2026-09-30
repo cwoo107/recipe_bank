@@ -12,7 +12,7 @@ class IngredientsController < ApplicationController
       { color: 'mist',       label: 'Spices' }
     ]
 
-    @ingredients = Ingredient.all.includes(:nutrition_fact)
+    @ingredients = current_household.ingredients.includes(:nutrition_fact)
 
     if params[:filter].present?
       @ingredients = @ingredients.where(family: params[:filter])
@@ -42,6 +42,7 @@ class IngredientsController < ApplicationController
   def create
     @ingredient = Ingredient.new(ingredient_params)
     @ingredient.created_by = current_user
+    @ingredient.household  = current_household
     @recipe = recipe_from_params
 
     # Adding to a recipe is editing the recipe — admin-only.

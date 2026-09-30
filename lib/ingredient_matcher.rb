@@ -2,8 +2,8 @@
 require 'fuzzy_match'
 
 class IngredientMatcher
-  def initialize
-    @ingredients = Ingredient.all.to_a
+  def initialize(ingredients = Ingredient.all)
+    @ingredients = ingredients.to_a
   end
 
   def find_or_suggest(parsed_ingredient)

@@ -15,7 +15,7 @@ class RecipeComponentTest < ActiveSupport::TestCase
 
   # 100 cal per 100g keeps grams in == calories out.
   def ingredient(name)
-    ing = Ingredient.create!(ingredient: name, family: "produce")
+    ing = Ingredient.create!(household: households(:one), ingredient: name, family: "produce")
     ing.create_nutrition_fact!(serving_size: 100, serving_unit: "g", calories: 100,
                                protein: 10, total_fat: 0, total_carb: 0)
     ing
@@ -153,7 +153,7 @@ class RecipeComponentTest < ActiveSupport::TestCase
   end
 
   test "a meal's cost counts the components, scaled both ways" do
-    priced = Ingredient.create!(ingredient: "Cream", family: "dairy", unit_price: 4.0, unit_servings: 4)
+    priced = Ingredient.create!(household: households(:one), ingredient: "Cream", family: "dairy", unit_price: 4.0, unit_servings: 4)
     @sauce.recipe_ingredients.create!(ingredient: priced, quantity: 1, unit: "cup")
     @chicken.recipe_components.create!(component_recipe: @sauce, multiplier: 0.5)
 

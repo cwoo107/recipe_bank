@@ -49,6 +49,10 @@ class IngredientParser
     quantity = extract_quantity(text)
     unit     = extract_unit(text)
     name     = extract_name(text, quantity, unit)
+    # Last pass over whatever's left: prep words ("finely", "freshly"),
+    # "X or Y" alternatives, stray punctuation — the same cleanup the
+    # ingredients:normalize_names audit applies to names already saved.
+    name     = IngredientNameNormalizer.call(name, capitalize: false).name
 
     {
       original: original,
@@ -70,9 +74,15 @@ class IngredientParser
 
     text = str.to_s.downcase
     DESCRIPTORS.each do |descriptor|
-      text = text.gsub(/\b#{Regexp.escape(descriptor)}\b/, '')
+      text = text.gsub(descriptor_pattern(descriptor), '')
     end
     text.gsub(/[^a-z\s]/, '').gsub(/\s+/, ' ').strip
+  end
+
+  # A descriptor as a whole word — and not part of a hyphenated one, so
+  # "sun-dried tomatoes" keeps its "dried" (a plain \b match left "sun-").
+  def self.descriptor_pattern(descriptor)
+    /(?<![\w-])#{Regexp.escape(descriptor)}(?![\w-])/i
   end
 
   private
@@ -114,6 +124,12 @@ class IngredientParser
     FRACTIONS.each do |fraction, decimal|
       text = text.gsub(fraction, decimal.to_s)
     end
+
+    # Typed fractions FRACTIONS doesn't list ("1/8", "1 3/8"). Without this,
+    # "1/8 tsp black pepper" parsed as quantity 1 with "/8 tsp black pepper"
+    # left over as the name.
+    text = text.gsub(%r{(\d+)\s+(\d+)/(\d+)}) { ($1.to_f + $2.to_f / $3.to_f).round(3).to_s }
+    text = text.gsub(%r{(?<![\d.])(\d+)/(\d+)}) { ($1.to_f / $2.to_f).round(3).to_s }
 
     text
   end
@@ -175,7 +191,7 @@ class IngredientParser
 
     # Remove descriptors
     DESCRIPTORS.each do |descriptor|
-      name = name.gsub(/\b#{Regexp.escape(descriptor)}\b/i, '').strip
+      name = name.gsub(self.class.descriptor_pattern(descriptor), '').strip
     end
 
     # Remove trailing preparation notes after comma

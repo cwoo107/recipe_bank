@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_120100) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -214,12 +214,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_210000) do
     t.integer "created_by_id"
     t.string "family"
     t.boolean "favorite"
+    t.integer "household_id"
     t.string "ingredient"
     t.boolean "organic"
+    t.integer "source_ingredient_id"
     t.float "unit_price"
     t.integer "unit_servings"
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_ingredients_on_created_by_id"
+    t.index ["household_id"], name: "index_ingredients_on_household_id"
+    t.index ["source_ingredient_id"], name: "index_ingredients_on_source_ingredient_id"
   end
 
   create_table "meal_assignments", force: :cascade do |t|
@@ -530,6 +534,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_210000) do
   add_foreign_key "households", "users", column: "owner_id"
   add_foreign_key "ingredient_tags", "ingredients"
   add_foreign_key "ingredient_tags", "tags"
+  add_foreign_key "ingredients", "households"
+  add_foreign_key "ingredients", "ingredients", column: "source_ingredient_id"
   add_foreign_key "ingredients", "users", column: "created_by_id"
   add_foreign_key "meal_assignments", "household_members"
   add_foreign_key "meal_assignments", "meals"

@@ -8,7 +8,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
 
     recipe = Recipe.create!(title: "Chicken Teriyaki Bowls 🍚", servings: 4, user: users(:one))
-    recipe.recipe_ingredients.create!(ingredient: Ingredient.create!(ingredient: "Rice", family: "grain"), quantity: 1.5, unit: "cup")
+    recipe.recipe_ingredients.create!(ingredient: Ingredient.create!(household: households(:one), ingredient: "Rice", family: "grain"), quantity: 1.5, unit: "cup")
     recipe.steps.create!(content: "Steam the rice")
     @household.meals.create!(recipe:, user: users(:one), meal_name: "Dinner", date: MONDAY, servings: 4,
                              eater_ids: [ household_members(:one).id ])

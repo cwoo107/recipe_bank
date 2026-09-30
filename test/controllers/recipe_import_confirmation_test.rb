@@ -7,7 +7,7 @@ require_relative "../support/fake_ollama_assistant"
 class RecipeImportConfirmationTest < ActionDispatch::IntegrationTest
   setup do
     @user = users(:one)
-    @olive_oil = Ingredient.create!(ingredient: "Olive oil", family: "fat")
+    @olive_oil = Ingredient.create!(household: households(:one), ingredient: "Olive oil", family: "fat")
     @job = @user.recipe_import_jobs.create!(
       url: "https://example.com/r",
       status: :awaiting_confirmation,

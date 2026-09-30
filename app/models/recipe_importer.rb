@@ -192,11 +192,15 @@ class RecipeImporter
 
   def match_ingredients(ingredient_strings)
     parser = IngredientParser.new
-    matcher = IngredientMatcher.new
+    own_matcher   = IngredientMatcher.new(household_ingredients)
+    other_matcher = IngredientMatcher.new(other_ingredients)
 
     ingredient_strings.map.with_index do |ing_str, index|
       parsed = parser.parse(ing_str)
-      match_result = matcher.find_or_suggest(parsed)
+      # The household's own library first; failing that, anyone's — which
+      # create_recipe copies into the household rather than linking to.
+      match_result = own_matcher.find_or_suggest(parsed)
+      match_result = other_matcher.find_or_suggest(parsed) unless match_result[:match]
 
       @job.update!(progress: index + 1)
 
@@ -216,7 +220,8 @@ class RecipeImporter
   # confirmation gate — afterwards the user's decisions are final.
   def resolve_matches_with_ai(matched_results)
     ai = OllamaAssistant.new(model: 'llama2')
-    matcher = IngredientMatcher.new
+    own_matcher   = IngredientMatcher.new(household_ingredients)
+    other_matcher = IngredientMatcher.new(other_ingredients)
 
     # Handle unmatched ingredients (low confidence)
     unmatched = matched_results.select { |r| r[:confidence] < 0.7 }
@@ -229,7 +234,8 @@ class RecipeImporter
       unmatched_with_candidates = unmatched.map do |r|
         {
           ingredient: r[:parsed],
-          candidates: matcher.candidates_for(r[:parsed][:search_name], limit: 10)
+          candidates: (own_matcher.candidates_for(r[:parsed][:search_name], limit: 10) +
+                       other_matcher.candidates_for(r[:parsed][:search_name], limit: 10)).uniq(&:downcase).first(10)
         }
       end
 
@@ -248,7 +254,8 @@ class RecipeImporter
           allowed_candidates = candidates_by_original[resolution['original']] || []
 
           if allowed_candidates.any? { |candidate| candidate.casecmp?(resolution['match_name']) }
-            ingredient = Ingredient.find_by('LOWER(ingredient) = ?', resolution['match_name'].downcase)
+            by_name = ->(scope) { scope.find_by('LOWER(ingredient) = ?', resolution['match_name'].downcase) }
+            ingredient = by_name.(household_ingredients) || by_name.(other_ingredients)
             if ingredient
               result[:match] = ingredient
               result[:confidence] = 0.75
@@ -339,8 +346,9 @@ class RecipeImporter
 
       # Create recipe ingredients
       matched_results.each do |result|
-        # Use existing ingredient OR create new one with nutrition
-        ingredient = result[:match] || create_ingredient_with_nutrition(
+        # Use the matched ingredient (copied into the household if it's
+        # someone else's) OR create a new one with nutrition
+        ingredient = result[:match]&.copy_for(household, user: @job.user) || create_ingredient_with_nutrition(
           result[:parsed],
           result[:family],
           result[:nutrition]
@@ -366,13 +374,27 @@ class RecipeImporter
     end
   end
 
+  def household
+    @household ||= @job.user.household
+  end
+
+  def household_ingredients
+    Ingredient.for_household(household)
+  end
+
+  # Everyone else's ingredients, including the unowned catalog.
+  def other_ingredients
+    Ingredient.where.not(household_id: household.id).or(Ingredient.where(household_id: nil))
+  end
+
   def create_ingredient_with_nutrition(parsed, family, nutrition)
     ingredient = Ingredient.create!(
       ingredient: parsed[:name],
       family: family || 'produce',
       unit_price: nutrition&.dig(:unit_price),
       unit_servings: nutrition&.dig(:unit_servings),
-      created_by: @job.user
+      created_by: @job.user,
+      household: household
     )
 
     if nutrition && nutrition.is_a?(Hash)

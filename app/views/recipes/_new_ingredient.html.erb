@@ -8,7 +8,7 @@
         <%= form.label :ingredient_id, "Ingredient", class: "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
         <%= form.select :ingredient_id,
                         options_for_select(
-                          Ingredient.order(favorite: :desc, ingredient: :asc).map { |r|
+                          current_household.ingredients.order(favorite: :desc, ingredient: :asc).map { |r|
                             [r.ingredient, r.id, { 'data-favorite' => r.favorite }]
                           },
                           form.object.ingredient_id

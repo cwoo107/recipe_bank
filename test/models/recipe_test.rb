@@ -43,7 +43,8 @@ class RecipeTest < ActiveSupport::TestCase
 
   test "duplicate_for copies ingredients, steps and tags into the saving user" do
     source = @carol.recipes.create!(title: "Chili", description: "Warm", servings: 6, visibility: "public")
-    source.recipe_ingredients.create!(ingredient: ingredients(:one), quantity: 2.0, unit: "cups")
+    beans  = households(:two).ingredients.create!(ingredient: "Kidney beans", family: "protein")
+    source.recipe_ingredients.create!(ingredient: beans, quantity: 2.0, unit: "cups")
     source.steps.create!(content: "Simmer gently")
     source.tags << @carol.tags.create!(tag: "Dinner", color: "#5f734c")
 
@@ -55,7 +56,11 @@ class RecipeTest < ActiveSupport::TestCase
     assert_equal 6, copy.servings
     assert copy.private?, "a saved copy starts private"
 
-    assert_equal [ingredients(:one).id], copy.recipe_ingredients.map(&:ingredient_id)
+    copied_beans = copy.recipe_ingredients.first.ingredient
+    refute_equal beans, copied_beans, "the copy gets its own household's ingredient"
+    assert_equal @household, copied_beans.household
+    assert_equal beans, copied_beans.source_ingredient
+    assert_equal "Kidney beans", copied_beans.ingredient
     assert_equal [2.0], copy.recipe_ingredients.map(&:quantity)
     assert_equal ["Simmer gently"], copy.steps.map { |s| s.content.to_plain_text }
 
@@ -79,7 +84,7 @@ class RecipeTest < ActiveSupport::TestCase
   # 100 cal per 100 g, so grams in == calories out and the conversion is
   # readable straight off the assertion.
   def ingredient_at_100_cal_per_100g
-    ing = Ingredient.create!(ingredient: "Test stuff", family: "protein")
+    ing = Ingredient.create!(household: households(:one), ingredient: "Test stuff", family: "protein")
     ing.create_nutrition_fact!(serving_size: 100, serving_unit: "g", calories: 100,
                                protein: 0, total_fat: 0, total_carb: 0)
     ing

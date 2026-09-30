@@ -4,7 +4,7 @@ require_relative "../support/fake_ollama_assistant"
 
 class IngredientEnrichmentJobTest < ActiveSupport::TestCase
   setup do
-    @ingredient = Ingredient.create!(ingredient: "Smoked paprika", created_by: users(:one))
+    @ingredient = Ingredient.create!(household: households(:one), ingredient: "Smoked paprika", created_by: users(:one))
   end
 
   def enrich(ai = FakeOllamaAssistant.new)

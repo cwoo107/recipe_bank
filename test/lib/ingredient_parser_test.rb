@@ -132,4 +132,34 @@ class IngredientParserTest < ActiveSupport::TestCase
     result = parse("3 large ripe tomatoes")
     assert_equal "tomatoes", result[:search_name]
   end
+
+  # The lines behind names like ". finely parmesan" and "/8 tsp black
+  # pepper" in imported recipes — see IngredientNameNormalizer.
+  {
+    "2 oz. finely grated parmesan"                     => "parmesan",
+    "1 tsp fresh thyme leaves"                         => "thyme",
+    "1/8 tsp freshly ground black pepper"              => "black pepper",
+    "100g caster sugar / superfine sugar"              => "caster sugar",
+    "2 tbsp vegetable or canola oil"                   => "vegetable oil",
+    "1/4 cup roughly chopped parsley"                  => "parsley",
+    "1/2 cup oil-packed sun-dried tomatoes, chopped"   => "oil-packed sun-dried tomatoes"
+  }.each do |line, name|
+    test "cleans the name in #{line.inspect}" do
+      assert_equal name, parse(line)[:name]
+    end
+  end
+
+  test "any typed fraction becomes the quantity, not part of the name" do
+    result = parse("1/8 tsp black pepper")
+    assert_equal 0.125, result[:quantity]
+    assert_equal "teaspoon", result[:unit]
+    assert_equal "black pepper", result[:name]
+
+    assert_equal 1.375, parse("1 3/8 cups flour")[:quantity]
+  end
+
+  test "descriptors aren't cut out of hyphenated words" do
+    assert_equal "sun-dried tomatoes", parse("1 cup sun-dried tomatoes")[:name]
+    assert_equal "sundried tomatoes", parse("1 cup sun-dried tomatoes")[:search_name]
+  end
 end

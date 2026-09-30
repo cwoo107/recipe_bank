@@ -16,6 +16,9 @@ class Household < ApplicationRecord
   has_many :calendar_sources, dependent: :destroy
   has_many :calendar_events,  dependent: :destroy
   has_many :weekly_plans,     dependent: :destroy
+  # Left behind as unowned catalog entries rather than destroyed, so recipes
+  # still pointing at them keep their lines.
+  has_many :ingredients,      dependent: :nullify
 
   validates :family_name, presence: true
   validates :minutes_per_day, presence: true, numericality: { only_integer: true, greater_than: 0 }
