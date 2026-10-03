@@ -1,0 +1,80 @@
+<% content_for :title, "Admin · Featured recipes" %>
+<% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+
+<div class="mx-auto max-w-6xl">
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Featured recipes</h1>
+    </div>
+    <%= link_to "Households →", admin_households_path, class: "text-sm text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+  </div>
+  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">These sit at the top of everyone's public recipe list. Copies people save are never featured.</p>
+
+  <% if @featured.any? %>
+    <div class="mt-6 overflow-x-auto rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <table id="admin_featured_recipes" class="min-w-full divide-y divide-sage-100 text-sm dark:divide-white/10">
+        <thead>
+          <tr class="text-left text-xs font-semibold uppercase tracking-wider text-sage-400 dark:text-gray-400">
+            <th class="px-5 py-3">Recipe</th>
+            <th class="px-5 py-3">Owner</th>
+            <th class="px-5 py-3">Visibility</th>
+            <th class="px-5 py-3"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-sage-100 dark:divide-white/10">
+          <% @featured.each do |recipe| %>
+            <tr>
+              <td class="px-5 py-3 font-medium text-gray-900 dark:text-white"><%= link_to recipe.title, recipe_path(recipe), class: "hover:underline" %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= recipe.user.email %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300">
+                <%= recipe.public? ? "Public" : "Private — hidden until made public again" %>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <%= button_to "Unfeature", admin_featured_recipe_path(recipe), method: :delete,
+                      class: "text-dusty-rose-600 hover:text-dusty-rose-900 cursor-pointer dark:text-dusty-rose-400" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="mt-6 text-sm italic text-gray-400 dark:text-gray-500">Nothing is featured yet.</p>
+  <% end %>
+
+  <h2 class="mt-12 font-serif text-2xl text-sage-900 dark:text-[#e8ede3]">Feature a recipe</h2>
+  <%= form_with url: admin_featured_recipes_path, method: :get, class: "mt-4 flex flex-col gap-4 sm:flex-row sm:items-end" do %>
+    <div class="flex-1">
+      <%= label_tag :q, "Search public recipes", class: label_class %>
+      <div class="mt-2">
+        <%= search_field_tag :q, @query, placeholder: "Recipe title", class: settings_input_classes %>
+      </div>
+    </div>
+    <%= submit_tag "Search", name: nil,
+          class: "rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] cursor-pointer dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+  <% end %>
+
+  <% if @results %>
+    <% if @results.any? %>
+      <div class="mt-6 overflow-x-auto rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+        <table id="admin_featured_recipe_results" class="min-w-full divide-y divide-sage-100 text-sm dark:divide-white/10">
+          <tbody class="divide-y divide-sage-100 dark:divide-white/10">
+            <% @results.each do |recipe| %>
+              <tr>
+                <td class="px-5 py-3 font-medium text-gray-900 dark:text-white"><%= link_to recipe.title, recipe_path(recipe), class: "hover:underline" %></td>
+                <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= recipe.user.email %></td>
+                <td class="px-5 py-3 text-right">
+                  <%= button_to "Feature", admin_featured_recipes_path, params: { recipe_id: recipe.id },
+                        class: "text-[#5f734c] hover:text-[#4b5a3d] cursor-pointer dark:text-[#7a8f62]" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <p class="mt-6 text-sm italic text-gray-400 dark:text-gray-500">No public recipes match.</p>
+    <% end %>
+  <% end %>
+</div>

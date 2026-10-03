@@ -124,7 +124,8 @@
         <%# ── MOBILE: card list ──────────────────────────────────────── %>
         <div class="sm:hidden space-y-3">
           <% @recipes.each do |recipe| %>
-            <div class="rounded-lg bg-white shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10 overflow-hidden">
+            <% featured = @scope == "public" && recipe.featured? %>
+            <div class="rounded-lg <%= featured ? 'bg-[#5f734c]/5 dark:bg-[#7a8f62]/10' : 'bg-white dark:bg-white/5' %> shadow-sm inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 overflow-hidden">
               <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/5">
                 <div class="flex items-center gap-2 min-w-0">
                   <% if current_user.favorited?(recipe) %>
@@ -135,6 +136,7 @@
                   <%= link_to recipe, class: "text-sm font-semibold text-gray-900 dark:text-white truncate" do %>
                     <%= recipe.title %>
                   <% end %>
+                  <%= render "recipes/featured_badge" if featured %>
                 </div>
                 <div class="flex items-center gap-2 shrink-0 ml-3">
                   <% if @scope == "public" %>
@@ -194,7 +196,8 @@
             </thead>
             <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
             <% @recipes.each do |recipe| %>
-              <tr>
+              <% featured = @scope == "public" && recipe.featured? %>
+              <tr class="<%= 'bg-[#5f734c]/5 dark:bg-[#7a8f62]/10' if featured %>">
                 <td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6 dark:text-white">
                   <div class="flex items-center gap-x-2">
                     <% if current_user.favorited?(recipe) %>
@@ -203,6 +206,7 @@
                     </span>
                     <% end %>
                     <%= link_to recipe.title, recipe, class: "hover:text-[#5f734c] dark:hover:text-[#7a8f62]" %>
+                    <%= render "recipes/featured_badge" if featured %>
                   </div>
                 </td>
                 <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500 dark:text-gray-400">

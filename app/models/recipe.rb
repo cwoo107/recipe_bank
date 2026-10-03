@@ -36,6 +36,9 @@ class Recipe < ApplicationRecord
   validates :servings,   numericality: { greater_than: 0 }, allow_nil: true
 
   scope :publicly_visible, -> { where(visibility: 'public') }
+  # Picked by app admins (Admin::FeaturedRecipesController) to lead the
+  # public browse list.
+  scope :featured, -> { where(featured: true) }
   scope :visible_to, ->(user) {
     where(visibility: 'public').or(where(user: user))
   }
@@ -105,15 +108,22 @@ class Recipe < ApplicationRecord
   # into the user's household library (reusing ones it already has) so the
   # copy doesn't depend on anyone else's, steps carry their rich text over,
   # and tags are mirrored into the saving user's own tag list (tags are
-  # personal). The copy starts private — it's theirs to share or not.
-  def duplicate_for(user, title: self.title)
+  # personal). Component recipes come along too, so the household ends up
+  # with the sauce as well as the chicken that calls for it. The copy starts
+  # private — it's theirs to share or not — and never featured, which only
+  # app admins set.
+  #
+  # `copied` maps source recipe ids to their copies within one run, so a
+  # component used twice in the tree is only copied once.
+  def duplicate_for(user, title: self.title, copied: {})
     copy = Recipe.new(
       user:           user,
       source_recipe:  self,
       title:          title,
       description:    description,
       servings:       servings,
-      visibility:     'private'
+      visibility:     'private',
+      featured:       false
     )
 
     transaction do
@@ -130,14 +140,24 @@ class Recipe < ApplicationRecord
 
       tags.each { |tag| copy.tags << tag.mirror_for(user) }
 
-      recipe_components.each do |component|
-        copy.recipe_components.create!(component_recipe_id: component.component_recipe_id,
+      recipe_components.includes(:component_recipe).each do |component|
+        copy.recipe_components.create!(component_recipe: component.component_recipe.household_version_for(user, copied:),
                                        multiplier: component.multiplier,
                                        position: component.position)
       end
     end
 
     copy
+  end
+
+  # This recipe as `user`'s household has it: itself if the household already
+  # owns it, the copy they saved earlier, or else a fresh copy.
+  def household_version_for(user, copied: {})
+    household = user.household
+    return self if owned_by_household?(household)
+
+    copied[id] ||= Recipe.for_household(household).find_by(source_recipe: self) ||
+                   duplicate_for(user, copied:)
   end
 
   # ── Components ────────────────────────────────────────────────────────────

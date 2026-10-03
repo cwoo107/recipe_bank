@@ -170,6 +170,8 @@ Rails.application.routes.draw do
       resource :trial_extension, only: :create
       resource :comp, only: %i[create destroy]
     end
+    # :id is the recipe's — featuring is just a flag on it.
+    resources :featured_recipes, only: %i[index create destroy]
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

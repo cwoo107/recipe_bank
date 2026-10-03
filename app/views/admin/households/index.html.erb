@@ -2,8 +2,13 @@
 <% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
 
 <div class="mx-auto max-w-6xl">
-  <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
-  <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Households</h1>
+  <div class="flex items-end justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Households</h1>
+    </div>
+    <%= link_to "Featured recipes →", admin_featured_recipes_path, class: "text-sm text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+  </div>
 
   <%= form_with url: admin_households_path, method: :get, class: "mt-8 flex flex-col gap-4 sm:flex-row sm:items-end" do %>
     <div class="flex-1">

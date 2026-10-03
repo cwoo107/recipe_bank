@@ -16,6 +16,8 @@ class RecipesController < ApplicationController
   def index
     @scope   = SCOPES.include?(params[:scope]) ? params[:scope] : "household"
     @recipes = scoped_recipes.includes(:tags, :recipe_ingredients, :steps, :user_favorites)
+    # Featured recipes lead the public list whatever sort is picked below.
+    @recipes = @recipes.order(featured: :desc) if @scope == "public"
 
     if params[:filter].present?
       tag = Tag.find_by(id: params[:filter])
