@@ -14,12 +14,16 @@ module MealsHelper
       assigned, shared = slot_meals.partition(&:assigned?)
       {
         assigned: assigned.flat_map(&:eater_ids_assigned).uniq,
-        shared:   shared.map { |meal| { id: meal.id, title: meal.recipe.title, servings: meal.servings } }
+        shared:   shared.map { |meal| { id: meal.id, title: meal.title, servings: meal.servings } }
       }
     end
   end
 
+  # Note-only meals (eating out, at a friend's…) share one color whatever
+  # the meal type, so a week shows at a glance which meals aren't cooked.
   def meal_color_classes(meal)
+    return note_meal_color_classes if meal.note_only?
+
     case meal.meal_name.downcase
     when "breakfast"
       {
@@ -82,5 +86,18 @@ module MealsHelper
         subtitle: "text-honey-700 dark:text-honey-400"
       }
     end
+  end
+
+  def note_meal_color_classes
+    {
+      bg: "bg-taupe-200",
+      hover: "hover:bg-taupe-300 dark:hover:bg-taupe-700",
+      # Dashed rather than the solid ring — reads as "held", not "cooked".
+      ring: "inset-ring-transparent border border-dashed border-taupe-400",
+      dark_bg: "dark:bg-taupe-800/30",
+      dark_ring: "dark:border-taupe-500/60",
+      title: "text-taupe-800 dark:text-taupe-200",
+      subtitle: "text-taupe-600 dark:text-taupe-400"
+    }
   end
 end

@@ -17,14 +17,18 @@ class MealWeekStats
 
   # Each meal this person ate some of, with their share of its totals —
   # in eating order: by day, then breakfast, lunch, dinner, snack, dessert.
+  # Note-only meals have nothing to count, so they're left out (though they
+  # still take their eaters out of the slot's shared meals, below).
   def rows
     @rows ||= @meals.sort_by { |meal| [ meal.date, Meal::ALL_TYPES.index(meal.meal_name.downcase) || Meal::ALL_TYPES.size ] }.filter_map do |meal|
+      next if meal.note_only?
+
       share = meal.share_for(member, excluded_ids: assigned_in_slot.fetch(meal.slot, []))
       next if share.zero?
 
       {
         meal:      meal,
-        name:      meal.recipe.title,
+        name:      meal.title,
         meal_name: meal.meal_name,
         date:      meal.date,
         share:     share,

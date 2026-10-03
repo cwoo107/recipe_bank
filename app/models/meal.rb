@@ -1,5 +1,6 @@
 class Meal < ApplicationRecord
-  belongs_to :recipe
+  # No recipe means a note-only meal (see #note_only?).
+  belongs_to :recipe, optional: true
   belongs_to :user
   belongs_to :household
   belongs_to :recurring_meal, optional: true
@@ -15,6 +16,16 @@ class Meal < ApplicationRecord
 
   validates :meal_name, inclusion: { in: ALL_TYPES.map(&:capitalize) + ALL_TYPES }
   validates :date, presence: true
+  validates :note, length: { maximum: 100 }
+  validate  :recipe_or_note
+
+  # A note in place of a recipe — eating out, dinner at a friend's, something
+  # bought ready-made. It holds the slot like any meal (and its eaters are
+  # left out of shared meals there), but there's nothing to cook: no
+  # nutrition, cost or groceries.
+  def note_only? = recipe_id.nil?
+
+  def title = note_only? ? note : recipe.title
 
   # Falls back to the recipe's servings, then to 1 — recipes may leave
   # servings blank, and every per-serving figure below divides by this.
@@ -30,10 +41,10 @@ class Meal < ApplicationRecord
     meal_servings.to_f / recipe_servings
   end
 
-  def scaled_calories  = (recipe.total_calories * servings_multiplier).round
-  def scaled_protein   = (recipe.total_protein  * servings_multiplier).round(1)
-  def scaled_carbs     = (recipe.total_carbs    * servings_multiplier).round(1)
-  def scaled_fat       = (recipe.total_fat      * servings_multiplier).round(1)
+  def scaled_calories  = note_only? ? 0 : (recipe.total_calories * servings_multiplier).round
+  def scaled_protein   = note_only? ? 0 : (recipe.total_protein  * servings_multiplier).round(1)
+  def scaled_carbs     = note_only? ? 0 : (recipe.total_carbs    * servings_multiplier).round(1)
+  def scaled_fat       = note_only? ? 0 : (recipe.total_fat      * servings_multiplier).round(1)
 
   def calories_per_serving
     return 0 if servings.zero?
@@ -88,6 +99,8 @@ class Meal < ApplicationRecord
   # Counts component recipes too — all_ingredients already folds in their
   # batch multipliers, and the meal's own servings multiplier sits on top.
   def total_cost
+    return 0 if note_only?
+
     recipe.all_ingredients.sum do |line|
       ingredient = line.ingredient
       next 0 unless ingredient&.unit_price.present? && ingredient.unit_servings.present? && ingredient.unit_servings > 0
@@ -100,5 +113,11 @@ class Meal < ApplicationRecord
   def cost_per_serving
     return 0 if servings.zero?
     total_cost / servings
+  end
+
+  private
+
+  def recipe_or_note
+    errors.add(:base, "Choose a recipe, or write a note for a meal you're not cooking") if recipe_id.blank? && note.blank?
   end
 end

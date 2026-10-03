@@ -20,17 +20,23 @@ import { Controller } from "@hotwired/stimulus"
 // 3. When Snack or Dessert is selected, hide the date field (these are
 //    week-level entries; the controller sets date = the first day of the week).
 //    Restore it for Breakfast / Lunch / Dinner.
+//
+// 4. The "Make a Note" tab: a note stands in for a meal nobody's cooking,
+//    so it swaps the recipe picker (and servings) for a note field, and
+//    sets meal[entry] so the server knows which one was meant. Notes can't
+//    recur — recurring rules always have a recipe.
 
 const EXTRA_TYPES = ["snack", "dessert"]
 
 export default class extends Controller {
     static targets = ["dateSection", "dateInput", "servingsInput", "recipeServingsHint",
-                       "recurringSection", "recurringCheckbox", "recurringFields", "sharedPrompt"]
+                       "recurringSection", "recurringCheckbox", "recurringFields", "sharedPrompt",
+                       "recipeSection", "noteSection", "noteInput", "entryInput"]
     static values  = { familySize: Number, newRecord: Boolean, slotData: Object, originalEaters: Array }
 
     connect() {
-        // Reflect any pre-selected meal type on load (e.g. edit form)
-        this.syncDateVisibility()
+        // Reflect any pre-selected entry and meal type on load (e.g. edit form)
+        this.syncEntry()
         if (this.newRecordValue) this.updateServings()
     }
 
@@ -70,6 +76,22 @@ export default class extends Controller {
         if (this.hasRecipeServingsHintTarget) {
             this.recipeServingsHintTarget.textContent = `Recipe default: ${recipeServings}`
         }
+    }
+
+    // Triggered by the "Make a Note" tab (the picker marks the tab itself)
+    showNote() {
+        this.setEntry("note")
+        this.noteInputTarget.focus()
+    }
+
+    // Triggered by the two recipe source tabs
+    showRecipe() {
+        this.setEntry("recipe")
+    }
+
+    // The source <select> that stands in for the tabs on small screens
+    sourceSelectChanged(event) {
+        this.setEntry(event.target.value === "note" ? "note" : "recipe")
     }
 
     servingsEdited() {
@@ -137,6 +159,26 @@ export default class extends Controller {
             id: parseInt(input.value, 10),
             name: input.nextElementSibling?.textContent?.trim() || "They"
         }))
+    }
+
+    isNote() {
+        return this.hasEntryInputTarget && this.entryInputTarget.value === "note"
+    }
+
+    setEntry(entry) {
+        this.entryInputTarget.value = entry
+        this.syncEntry()
+        this.renderSharedPrompt() // switching to a note can turn recurring off
+    }
+
+    syncEntry() {
+        if (!this.hasNoteSectionTarget) return
+
+        const note = this.isNote()
+        this.recipeSectionTarget.classList.toggle("hidden", note)
+        this.noteSectionTarget.classList.toggle("hidden", !note)
+        this.noteInputTarget.required = note
+        this.syncDateVisibility()
     }
 
     isRecurring() {
@@ -215,21 +257,23 @@ export default class extends Controller {
 
         const isExtra = EXTRA_TYPES.includes(checked.value.toLowerCase())
 
+        if (isExtra || this.isNote()) {
+            // Recurring meals only make sense for recipes on date-scheduled meal types.
+            if (this.hasRecurringSectionTarget) {
+                this.recurringSectionTarget.classList.add("hidden")
+                this.recurringCheckboxTarget.checked = false
+                this.recurringFieldsTarget.classList.add("hidden")
+            }
+        }
+
         if (isExtra) {
             this.dateSectionTarget.classList.add("hidden")
             // Remove required so the form submits without a date;
             // the controller will supply the week's first day.
             this.dateInputTarget.required = false
             this.dateInputTarget.value = ""
-
-            // Recurring meals only make sense for date-scheduled meal types.
-            if (this.hasRecurringSectionTarget) {
-                this.recurringSectionTarget.classList.add("hidden")
-                this.recurringCheckboxTarget.checked = false
-                this.recurringFieldsTarget.classList.add("hidden")
-            }
         } else {
-            if (this.hasRecurringSectionTarget) {
+            if (this.hasRecurringSectionTarget && !this.isNote()) {
                 this.recurringSectionTarget.classList.remove("hidden")
             }
 

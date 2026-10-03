@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
     static targets = ["select", "searchInput", "dropdown", "option",
-                       "searchTab", "collectionTab", "sourceSelect", "collectionPicker", "tagChip",
+                       "searchTab", "collectionTab", "otherTab", "sourceSelect", "collectionPicker", "tagChip",
                        "publicToggle", "newName"]
     static values = {
         placeholder: { type: String, default: "Search..." },
@@ -177,7 +177,7 @@ export default class extends Controller {
     showSearch() {
         this.source = "search"
         if (this.hasCollectionPickerTarget) this.collectionPickerTarget.classList.add('hidden')
-        this.setActiveTab(this.searchTabTarget, this.collectionTabTarget)
+        this.setActiveTab(this.searchTabTarget, this.collectionTabTarget, ...this.otherTabTargets)
         if (this.hasSourceSelectTarget) this.sourceSelectTarget.value = "search"
         this.applyFilters()
     }
@@ -185,14 +185,33 @@ export default class extends Controller {
     showCollection() {
         this.source = "collection"
         if (this.hasCollectionPickerTarget) this.collectionPickerTarget.classList.remove('hidden')
-        this.setActiveTab(this.collectionTabTarget, this.searchTabTarget)
+        this.setActiveTab(this.collectionTabTarget, this.searchTabTarget, ...this.otherTabTargets)
         if (this.hasSourceSelectTarget) this.sourceSelectTarget.value = "collection"
         this.applyFilters()
     }
 
+    // Tabs for panels outside this picker (the meal form's "Make a Note",
+    // data-source="note"). This side just marks the tab; whoever owns the
+    // panel shows it.
+    showOther(event) {
+        this.activateOther(event.currentTarget)
+    }
+
+    activateOther(tab) {
+        if (this.hasCollectionPickerTarget) this.collectionPickerTarget.classList.add('hidden')
+        this.hideDropdown()
+        this.setActiveTab(tab, this.searchTabTarget, this.collectionTabTarget,
+                          ...this.otherTabTargets.filter(other => other !== tab))
+        if (this.hasSourceSelectTarget) this.sourceSelectTarget.value = tab.dataset.source
+    }
+
     // Mirrors the mobile <select> fallback shown below the sm breakpoint.
     sourceSelectChanged(event) {
-        if (event.target.value === "collection") {
+        const other = this.otherTabTargets.find(tab => tab.dataset.source === event.target.value)
+
+        if (other) {
+            this.activateOther(other)
+        } else if (event.target.value === "collection") {
             this.showCollection()
         } else {
             this.showSearch()
@@ -244,16 +263,18 @@ export default class extends Controller {
         if (show) this.showDropdown()
     }
 
-    setActiveTab(active, inactive) {
+    setActiveTab(active, ...inactives) {
         active.classList.add('border-[#5f734c]', 'text-[#5f734c]', 'dark:border-[#7a8f62]', 'dark:text-[#7a8f62]')
         active.classList.remove('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700',
                                  'dark:text-gray-400', 'dark:hover:border-white/20', 'dark:hover:text-gray-200')
         active.setAttribute('aria-current', 'page')
 
-        inactive.classList.remove('border-[#5f734c]', 'text-[#5f734c]', 'dark:border-[#7a8f62]', 'dark:text-[#7a8f62]')
-        inactive.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700',
-                                'dark:text-gray-400', 'dark:hover:border-white/20', 'dark:hover:text-gray-200')
-        inactive.removeAttribute('aria-current')
+        inactives.forEach(inactive => {
+            inactive.classList.remove('border-[#5f734c]', 'text-[#5f734c]', 'dark:border-[#7a8f62]', 'dark:text-[#7a8f62]')
+            inactive.classList.add('border-transparent', 'text-gray-500', 'hover:border-gray-300', 'hover:text-gray-700',
+                                    'dark:text-gray-400', 'dark:hover:border-white/20', 'dark:hover:text-gray-200')
+            inactive.removeAttribute('aria-current')
+        })
     }
 
     showDropdown() {

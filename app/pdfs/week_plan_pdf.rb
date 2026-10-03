@@ -29,6 +29,7 @@ class WeekPlanPdf
     "snack"     => { bg: "d7d0d7", title: "2a212c", detail: "463947" }, # mauve
     "dessert"   => { bg: "d6b4b5", title: "4d3236", detail: "6e4a4f" }  # dusty rose
   }.freeze
+  NOTE_MEAL_COLORS = { bg: "e3dedb", title: "3d3633", detail: "6b625d" }.freeze # taupe — not cooked
 
 
   # These print on exactly one page each, shrunk to fit when they run long
@@ -405,7 +406,7 @@ class WeekPlanPdf
   end
 
   def card_lines(meal)
-    title  = clean("#{meal.recipe.title} (#{meal.servings})")
+    title  = clean(meal.note_only? ? meal.title : "#{meal.title} (#{meal.servings})")
     detail = meal.eaters.any? ? clean("for #{meal.eaters.map(&:name).to_sentence}") : nil
     [ title, detail ]
   end
@@ -426,7 +427,7 @@ class WeekPlanPdf
   # Rounded, tinted cards like the planner's, stacked in a cell.
   def draw_card_stack(meals, x, top, width)
     meals.each do |meal|
-      colors = MEAL_COLORS.fetch(meal.meal_name.downcase, MEAL_COLORS["lunch"])
+      colors = meal.note_only? ? NOTE_MEAL_COLORS : MEAL_COLORS.fetch(meal.meal_name.downcase, MEAL_COLORS["lunch"])
       title, detail = card_lines(meal)
       height = card_height(meal, width)
 
@@ -457,7 +458,7 @@ class WeekPlanPdf
   def recipes_section
     section_heading "Recipes", "Everything on this week's meal plan."
 
-    by_recipe = week_meals.group_by(&:recipe)
+    by_recipe = week_meals.reject(&:note_only?).group_by(&:recipe)
     return empty_note("No meals planned this week.") if by_recipe.empty?
 
     by_recipe.each_with_index do |(recipe, meals), index|

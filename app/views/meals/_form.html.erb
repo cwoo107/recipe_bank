@@ -21,9 +21,14 @@
     </div>
   <% end %>
 
-  <%# Recipe selector + Servings %>
+  <%# Recipe selector + Servings — or, on the "Make a Note" tab, a note that
+      holds the slot for a meal nobody's cooking (eating out, at a friend's,
+      something ready-made). meal[entry] tells the server which one it is. %>
   <%# The pool is our household's recipes; public ones are rendered too but
       stay hidden until the "browse public" toggle is on. %>
+  <% note_entry = meal.persisted? && meal.note_only? %>
+  <% active_tab, inactive_tab = "border-[#5f734c] text-[#5f734c] dark:border-[#7a8f62] dark:text-[#7a8f62]", "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200" %>
+  <%= hidden_field_tag "meal[entry]", note_entry ? "note" : "recipe", data: { meal_form_target: "entryInput" } %>
   <% household_user_ids = current_household.users.pluck(:id).to_set %>
   <% selectable_recipes  = Recipe.browsable_by_household(current_household)
                                  .includes(:tags, :collection_recipes).order(title: :asc) %>
@@ -32,15 +37,16 @@
        data-controller="searchable-select"
        data-searchable-select-placeholder-value="Search for a recipe...">
 
-    <%# Source tabs: search everything, or narrow to one collection first %>
+    <%# Source tabs: search everything, narrow to one collection first, or skip the recipe and write a note %>
     <div class="mb-3">
       <div class="grid grid-cols-1 sm:hidden">
         <select aria-label="Select a recipe source"
                 data-searchable-select-target="sourceSelect"
-                data-action="change->searchable-select#sourceSelectChanged"
+                data-action="change->searchable-select#sourceSelectChanged change->meal-form#sourceSelectChanged"
                 class="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-2 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-gray-100 dark:outline-white/10 dark:*:bg-gray-800 dark:focus:outline-[#7a8f62]">
           <option value="search">Search for a Recipe</option>
           <option value="collection">Add Recipe from a Collection</option>
+          <option value="note" <%= "selected" if note_entry %>>Make a Note</option>
         </select>
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end fill-gray-500 dark:fill-gray-400">
           <path clip-rule="evenodd" fill-rule="evenodd" d="M4.22 6.22a.75.75 0 0 1 1.06 0L8 8.94l2.72-2.72a.75.75 0 1 1 1.06 1.06l-3.25 3.25a.75.75 0 0 1-1.06 0L4.22 7.28a.75.75 0 0 1 0-1.06Z" />
@@ -49,83 +55,97 @@
       <div class="hidden sm:block">
         <div class="border-b border-gray-200 dark:border-white/10">
           <nav aria-label="Recipe source tabs" class="-mb-px flex space-x-8">
-            <button type="button" data-searchable-select-target="searchTab" data-action="searchable-select#showSearch"
-                    aria-current="page"
-                    class="border-b-2 border-[#5f734c] px-1 py-4 text-sm font-medium whitespace-nowrap text-[#5f734c] dark:border-[#7a8f62] dark:text-[#7a8f62]">
+            <button type="button" data-searchable-select-target="searchTab" data-action="searchable-select#showSearch meal-form#showRecipe"
+                    <%= 'aria-current="page"'.html_safe unless note_entry %>
+                    class="border-b-2 <%= note_entry ? inactive_tab : active_tab %> px-1 py-4 text-sm font-medium whitespace-nowrap">
               Search for a Recipe
             </button>
-            <button type="button" data-searchable-select-target="collectionTab" data-action="searchable-select#showCollection"
-                    class="border-b-2 border-transparent px-1 py-4 text-sm font-medium whitespace-nowrap text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200">
+            <button type="button" data-searchable-select-target="collectionTab" data-action="searchable-select#showCollection meal-form#showRecipe"
+                    class="border-b-2 <%= inactive_tab %> px-1 py-4 text-sm font-medium whitespace-nowrap">
               Add Recipe from a Collection
+            </button>
+            <button type="button" data-searchable-select-target="otherTab" data-source="note" data-action="searchable-select#showOther meal-form#showNote"
+                    <%= 'aria-current="page"'.html_safe if note_entry %>
+                    class="border-b-2 <%= note_entry ? active_tab : inactive_tab %> px-1 py-4 text-sm font-medium whitespace-nowrap">
+              Make a Note
             </button>
           </nav>
         </div>
       </div>
     </div>
 
-    <%# Recipe pool toggle — household-only unless they ask for more %>
-    <label class="mb-3 inline-flex items-center gap-2 cursor-pointer">
-      <%= check_box_tag "meal_include_public_recipes", "1", editing_public_recipe,
-                        data: { searchable_select_target: "publicToggle",
-                                action: "change->searchable-select#togglePublic" },
-                        class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
-      <span class="text-sm text-gray-600 dark:text-gray-300">Also browse public recipes</span>
-    </label>
-
-    <%# Tag filter %>
-    <% recipe_tags = Tag.for_user(current_user) %>
-    <% if recipe_tags.any? %>
-      <div class="flex flex-wrap gap-1.5 mb-3">
-        <% recipe_tags.each do |tag| %>
-          <button type="button"
-                  data-searchable-select-target="tagChip"
-                  data-action="click->searchable-select#toggleTag"
-                  data-tag-id="<%= tag.id %>"
-                  class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10 transition opacity-60"
-                  style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
-            <%= tag.tag %>
-          </button>
-        <% end %>
-      </div>
-    <% end %>
-
-    <%# Collection picker — only shown in the "From a collection" tab %>
-    <div data-searchable-select-target="collectionPicker" class="hidden mb-3">
-      <%= select_tag :meal_source_collection_id,
-                      options_for_select([["Choose a collection...", ""]] + Collection.visible_to(current_user).order(:title).pluck(:title, :id)),
-                      data: { action: "change->searchable-select#collectionChanged" },
-                      class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+    <div data-meal-form-target="noteSection" class="<%= 'hidden' unless note_entry %>">
+      <%= form.label :note, "Note", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+      <%= form.text_field :note, maxlength: 100, placeholder: "Eating out, dinner at the Smiths', takeout…",
+                          class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                          data: { meal_form_target: "noteInput" } %>
     </div>
 
-    <div class="flex items-end gap-3">
-      <div class="flex-[4]">
-        <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-        <%= form.select :recipe_id,
-                        options_for_select(
-                          selectable_recipes.map { |r|
-                            [r.title, r.id, {
-                              'data-favorite'       => current_user.favorited?(r),
-                              'data-public'         => !household_user_ids.include?(r.user_id),
-                              'data-servings'       => r.servings,
-                              'data-tag-ids'        => r.tags.map(&:id).join(','),
-                              'data-collection-ids' => r.collection_recipes.map(&:collection_id).join(',')
-                            }]
-                          },
-                          meal.recipe_id
-                        ),
-                        { include_blank: true },
-                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                        data: { dynamic_filter_target: "field", searchable_select_target: "select", action: "change->dynamic-filter#updateValueField change->meal-form#recipeChanged" } %>
+    <div data-meal-form-target="recipeSection" class="<%= 'hidden' if note_entry %>">
+      <%# Recipe pool toggle — household-only unless they ask for more %>
+      <label class="mb-3 inline-flex items-center gap-2 cursor-pointer">
+        <%= check_box_tag "meal_include_public_recipes", "1", editing_public_recipe,
+                          data: { searchable_select_target: "publicToggle",
+                                  action: "change->searchable-select#togglePublic" },
+                          class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
+        <span class="text-sm text-gray-600 dark:text-gray-300">Also browse public recipes</span>
+      </label>
+
+      <%# Tag filter %>
+      <% recipe_tags = Tag.for_user(current_user) %>
+      <% if recipe_tags.any? %>
+        <div class="flex flex-wrap gap-1.5 mb-3">
+          <% recipe_tags.each do |tag| %>
+            <button type="button"
+                    data-searchable-select-target="tagChip"
+                    data-action="click->searchable-select#toggleTag"
+                    data-tag-id="<%= tag.id %>"
+                    class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10 transition opacity-60"
+                    style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
+              <%= tag.tag %>
+            </button>
+          <% end %>
+        </div>
+      <% end %>
+
+      <%# Collection picker — only shown in the "From a collection" tab %>
+      <div data-searchable-select-target="collectionPicker" class="hidden mb-3">
+        <%= select_tag :meal_source_collection_id,
+                        options_for_select([["Choose a collection...", ""]] + Collection.visible_to(current_user).order(:title).pluck(:title, :id)),
+                        data: { action: "change->searchable-select#collectionChanged" },
+                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
       </div>
 
-      <div class="flex-[1]" data-meal-form-target="servingsField">
-        <%= form.label :servings, "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-        <%= form.number_field :servings,
-                              min: 1,
-                              value: meal[:servings] || current_household.default_servings_for(date: meal.date, meal_name: meal.meal_name, except: meal),
-                              placeholder: current_household.family_size,
-                              class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                              data: { meal_form_target: "servingsInput", action: "input->meal-form#servingsEdited" } %>
+      <div class="flex items-end gap-3">
+        <div class="flex-[4]">
+          <%= form.label :recipe_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+          <%= form.select :recipe_id,
+                          options_for_select(
+                            selectable_recipes.map { |r|
+                              [r.title, r.id, {
+                                'data-favorite'       => current_user.favorited?(r),
+                                'data-public'         => !household_user_ids.include?(r.user_id),
+                                'data-servings'       => r.servings,
+                                'data-tag-ids'        => r.tags.map(&:id).join(','),
+                                'data-collection-ids' => r.collection_recipes.map(&:collection_id).join(',')
+                              }]
+                            },
+                            meal.recipe_id
+                          ),
+                          { include_blank: true },
+                          class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                          data: { dynamic_filter_target: "field", searchable_select_target: "select", action: "change->dynamic-filter#updateValueField change->meal-form#recipeChanged" } %>
+        </div>
+
+        <div class="flex-[1]" data-meal-form-target="servingsField">
+          <%= form.label :servings, "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+          <%= form.number_field :servings,
+                                min: 1,
+                                value: meal[:servings] || current_household.default_servings_for(date: meal.date, meal_name: meal.meal_name, except: meal),
+                                placeholder: current_household.family_size,
+                                class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
+                                data: { meal_form_target: "servingsInput", action: "input->meal-form#servingsEdited" } %>
+        </div>
       </div>
     </div>
   </div>

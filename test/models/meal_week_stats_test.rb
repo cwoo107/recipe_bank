@@ -7,6 +7,8 @@ class MealWeekStatsTest < ActiveSupport::TestCase
     def slot = nil
     def eater_ids_assigned = []
     def recipe = FakeRecipe.new("Eggs")
+    def title = recipe.title
+    def note_only? = false
     def meal_name = "Breakfast"
     def date = Date.new(2026, 1, 5)
   end

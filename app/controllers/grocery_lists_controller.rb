@@ -34,6 +34,7 @@ class GroceryListsController < ApplicationController
     meals = current_household.meals
                         .where("date >= ?", @date)
                         .where("date < ?", @date + 7)
+                        .where.not(recipe_id: nil) # note-only meals have nothing to buy
                         .includes(recipe: { recipe_ingredients: { ingredient: :nutrition_fact } })
 
     current_household.grocery_lists

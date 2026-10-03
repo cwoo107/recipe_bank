@@ -3,14 +3,16 @@
     only the recipe title so the week fits on one screen. %>
 <% compact = current_user&.compact_meals_view? %>
 <div id="meal_<%= meal.id %>" class="meal-card group block rounded-lg <%= colors[:bg] %> <%= compact ? 'px-3 py-2' : 'p-3' %> text-xs/5 <%= colors[:hover] %> inset-ring <%= colors[:ring] %> <%= colors[:dark_bg] %> <%= colors[:dark_ring] %> relative">
-  <%= link_to recipe_path(meal.recipe), class: "absolute inset-0 z-0 rounded-lg" do %>
-    <span class="sr-only"><%= meal.recipe.title %></span>
+  <% unless meal.note_only? %>
+    <%= link_to recipe_path(meal.recipe), class: "absolute inset-0 z-0 rounded-lg" do %>
+      <span class="sr-only"><%= meal.title %></span>
+    <% end %>
   <% end %>
 
   <% if compact %>
     <div class="flex items-center justify-between gap-2">
       <p class="relative z-10 pointer-events-none font-semibold <%= colors[:title] %>">
-        <%= meal.recipe.title %>
+        <%= meal.title %>
         <% if meal.eaters.any? %><span class="font-normal <%= colors[:subtitle] %>">· <%= meal.eaters.map(&:name).to_sentence %></span><% end %>
       </p>
       <div class="relative z-10 pointer-events-auto shrink-0">
@@ -19,25 +21,29 @@
     </div>
   <% else %>
     <div class="relative z-10 pointer-events-none">
-      <p class="font-semibold <%= colors[:title] %>"><%= meal.recipe.title %></p>
+      <p class="font-semibold <%= colors[:title] %>"><%= meal.title %></p>
       <% if meal.eaters.any? %>
         <p class="<%= colors[:subtitle] %>">For <%= meal.eaters.map(&:name).to_sentence %></p>
       <% end %>
-      <p class="mt-0.5 <%= colors[:subtitle] %>">
-        <%= meal.recipe.ingredients.count %> ingredients
-        &middot; <%= meal.servings %> serving<%= meal.servings == 1 ? "" : "s" %>
-        &middot; <%= meal.calories_per_serving %> cal/serving
-      </p>
-      <p class="mt-0.5 <%= colors[:subtitle] %>">
-        <%= meal.protein_per_serving %>g protein
-        / <%= meal.carbs_per_serving %>g carbs
-        / <%= meal.fat_per_serving %>g fat
-      </p>
-      <% if meal.cost_per_serving > 0 %>
+      <% if meal.note_only? %>
+        <p class="mt-0.5 italic <%= colors[:subtitle] %>">Not cooking</p>
+      <% else %>
         <p class="mt-0.5 <%= colors[:subtitle] %>">
-          $<%= sprintf('%.2f', meal.cost_per_serving) %> per serving
-          &middot; $<%= sprintf('%.2f', meal.total_cost) %> total
+          <%= meal.recipe.ingredients.count %> ingredients
+          &middot; <%= meal.servings %> serving<%= meal.servings == 1 ? "" : "s" %>
+          &middot; <%= meal.calories_per_serving %> cal/serving
         </p>
+        <p class="mt-0.5 <%= colors[:subtitle] %>">
+          <%= meal.protein_per_serving %>g protein
+          / <%= meal.carbs_per_serving %>g carbs
+          / <%= meal.fat_per_serving %>g fat
+        </p>
+        <% if meal.cost_per_serving > 0 %>
+          <p class="mt-0.5 <%= colors[:subtitle] %>">
+            $<%= sprintf('%.2f', meal.cost_per_serving) %> per serving
+            &middot; $<%= sprintf('%.2f', meal.total_cost) %> total
+          </p>
+        <% end %>
       <% end %>
     </div>
 

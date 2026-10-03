@@ -149,8 +149,9 @@ class MealsController < ApplicationController
     end
   end
 
+  # Recurring rules always have a recipe — the form hides the option for notes.
   def recurring_requested?
-    params.dig(:meal, :recurring, :enabled) == "1"
+    params.dig(:meal, :recurring, :enabled) == "1" && params.dig(:meal, :entry) != "note"
   end
 
   def recurring_creation_params
@@ -167,8 +168,16 @@ class MealsController < ApplicationController
     (params[:date].present? ? Date.parse(params[:date]) : Time.zone.today).beginning_of_week
   end
 
+  # The form's Recipe / Note switch (meal[entry]) says which one this meal
+  # is; the other field can still hold whatever was there before switching.
   def meal_params
-    params.expect(meal: [:recipe_id, :meal_name, :date, :servings])
+    attrs = params.expect(meal: [:recipe_id, :note, :meal_name, :date, :servings])
+
+    case params.dig(:meal, :entry)
+    when "note"   then attrs.merge(recipe_id: nil)
+    when "recipe" then attrs.merge(note: nil)
+    else               attrs
+    end
   end
 
   # Optional "who's eating" — only household members count, and the field is

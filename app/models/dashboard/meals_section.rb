@@ -31,7 +31,7 @@ module Dashboard
       upcoming = meals_this_week.select { |m| m.date >= Date.current }.first(2)
       return nil if upcoming.empty?
 
-      upcoming.map { |m| "#{m.meal_name} — #{m.recipe.title}" }.join(", ")
+      upcoming.map { |m| "#{m.meal_name} — #{m.title}" }.join(", ")
     end
 
     def empty_headline = "Meals"
