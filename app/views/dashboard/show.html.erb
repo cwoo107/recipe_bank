@@ -30,7 +30,7 @@
       <p class="text-sm text-gray-700 dark:text-gray-300">
         You're partway through planning
         <span class="font-medium text-gray-900 dark:text-white"><%= @unfinished_plan.week_label.downcase_first %></span>
-        (<%= @unfinished_plan.week_range_label %>) — next up is
+        (<%= @unfinished_plan.week_range_label %>). Next up is
         <%= Dashboard.section_class(@unfinished_plan.active_key)::LABEL.downcase %>.
       </p>
       <%= link_to "Continue planning", plan_week_path(week: @unfinished_plan.week_start),
