@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_170000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -353,7 +353,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_150000) do
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id"
-    t.string "visibility", default: "public", null: false
+    t.string "visibility", default: "private", null: false
     t.index ["source_recipe_id"], name: "index_recipes_on_source_recipe_id"
     t.index ["user_id", "visibility"], name: "index_recipes_on_user_id_and_visibility"
     t.index ["user_id"], name: "index_recipes_on_user_id"

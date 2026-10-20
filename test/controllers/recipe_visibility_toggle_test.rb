@@ -84,4 +84,15 @@ class RecipeVisibilityToggleTest < ActionDispatch::IntegrationTest
 
     assert_match "size-7", response.body
   end
+
+  test "a new recipe starts private, and the form says so" do
+    assert Recipe.new.private?
+
+    get new_recipe_url
+    assert_select "input[type=radio][name='recipe[visibility]'][value=private][checked]"
+    assert_select "input[type=radio][name='recipe[visibility]'][value=public]:not([checked])"
+
+    post recipes_url, params: { recipe: { title: "Weeknight pasta" } }
+    assert Recipe.find_by!(title: "Weeknight pasta").private?
+  end
 end

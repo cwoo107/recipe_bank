@@ -26,7 +26,9 @@
         Ingredients
       </button>
     <% end %>
-    <%= link_to tags_path do %>
+    <%# Recipe tags is desktop-only in the tab bar (its page still works if
+        visited directly). %>
+    <%= link_to tags_path, class: "hidden sm:block" do %>
       <button type="button"
               class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
         Recipe tags

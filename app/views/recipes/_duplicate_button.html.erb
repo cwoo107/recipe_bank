@@ -1,6 +1,7 @@
 <%# Copying and saving recipes is admin-only (limited members can't create recipes). %>
 <% if household_admin? %>
-<%# Locals: recipe (required), style (optional: :button or :link).
+<%# Locals: recipe (required), style (optional: :button or :link),
+    class_name and form_class (optional, added to the button and its form).
     Forks one of our own recipes so a variant can be built from it. %>
 <% style = local_assigns[:style] || :button %>
 <% classes = if style == :link
@@ -11,7 +12,8 @@
 
 <%= button_to duplicate_recipe_path(recipe),
               method: :post,
-              class: classes,
+              class: [ classes, local_assigns[:class_name] ].compact.join(" "),
+              form_class: local_assigns[:form_class],
               title: "Create an editable copy of this recipe",
               aria: { label: "Make a copy of #{recipe.title}" } do %>
   <% if style == :button %>

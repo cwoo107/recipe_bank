@@ -28,11 +28,13 @@
             class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
       Ingredients
     </button>
+    <%# Recipe tags is desktop-only in the tab bar (its page still works if
+        visited directly). %>
     <button type="button"
             data-tabs-target="tab"
             data-action="click->tabs#show"
             data-tabs-panel="tags-panel"
-            class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
+            class="hidden sm:block px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 -mb-px">
       Recipe tags
     </button>
   </div>
@@ -133,32 +135,27 @@
           <% @recipes.each do |recipe| %>
             <% featured = @scope == "public" && recipe.featured? %>
             <div class="rounded-lg <%= featured ? 'bg-[#5f734c]/5 dark:bg-[#7a8f62]/10' : 'bg-white dark:bg-white/5' %> shadow-sm inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 overflow-hidden">
-              <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 dark:border-white/5">
-                <div class="flex items-center gap-2 min-w-0">
-                  <% if current_user.favorited?(recipe) %>
-                <span class="text-yellow-500 shrink-0">
-                  <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
-                </span>
-                  <% end %>
-                  <%= link_to recipe, class: "text-sm font-semibold text-gray-900 dark:text-white truncate" do %>
-                    <%= recipe.title %>
-                  <% end %>
-                  <%= render "recipes/featured_badge" if featured %>
-                </div>
-                <div class="flex items-center gap-2 shrink-0 ml-3">
-                  <% if @scope == "public" %>
-                    <%= render 'recipes/save_button', recipe: recipe, saved: @saved_source_ids.include?(recipe.id) %>
-                  <% else %>
-                    <%= render 'collections/collection_button', recipe: recipe %>
-                    <%= render 'recipes/duplicate_button', recipe: recipe, style: :link %>
-                    <% if household_admin? && recipe.owned_by?(current_user) %>
-                      <%= link_to "Edit", edit_recipe_path(recipe), class: "text-sm text-[#5f734c] dark:text-[#7a8f62]" %>
-                      <%= button_to "Delete", recipe_path(recipe), method: :delete,
-                                    data: { turbo_confirm: "Are you sure?" },
-                                    class: "text-sm text-dusty-rose-600 dark:text-dusty-rose-400" %>
-                    <% end %>
-                  <% end %>
-                </div>
+              <%# Title, then its tags on the same line — the tags wrap onto
+                  the next line when there isn't room. %>
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 px-4 py-3 border-b border-gray-100 dark:border-white/5">
+                <% if current_user.favorited?(recipe) %>
+                  <span class="text-yellow-500 shrink-0">
+                    <svg viewBox="0 0 20 20" fill="currentColor" class="size-4"><path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.381c-.833.067-1.171 1.107-.536 1.651l3.62 3.102-1.106 4.637c-.194.813.691 1.456 1.405 1.02L10 15.591l4.069 2.485c.713.436 1.598-.207 1.404-1.02l-1.106-4.637 3.62-3.102c.635-.544.297-1.584-.536-1.65l-4.752-.382-1.831-4.401Z" clip-rule="evenodd" /></svg>
+                  </span>
+                <% end %>
+                <%= link_to recipe, class: "min-w-0 text-sm font-semibold text-gray-900 dark:text-white break-words" do %>
+                  <%= recipe.title %>
+                <% end %>
+                <%= render "recipes/featured_badge" if featured %>
+                <% recipe.tags.limit(3).each do |tag| %>
+                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
+                        style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
+                    <%= tag.tag %>
+                  </span>
+                <% end %>
+                <% if recipe.tags.count > 3 %>
+                  <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
+                <% end %>
               </div>
               <div class="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
                 <span><%= pluralize(recipe.recipe_ingredients.count, 'ingredient') %></span>
@@ -166,14 +163,27 @@
                 <% if recipe.servings.present? %>
                   <span><%= pluralize(recipe.servings, 'serving') %></span>
                 <% end %>
-                <% recipe.tags.limit(3).each do |tag| %>
-              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
-                    style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
-                <%= tag.tag %>
-              </span>
-                <% end %>
-                <% if recipe.tags.count > 3 %>
-                  <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">+<%= recipe.tags.count - 3 %></span>
+              </div>
+
+              <%# Actions on their own row, after the details. Each one gets the
+                  same padding as "Add to a collection", and everything that
+                  wraps a control (the button_to forms, the collection
+                  button's dropdown container) is flex, so none of them sits
+                  on a text line's baseline and they all line up. %>
+              <% action = "inline-flex items-center rounded-md px-2 py-1 text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors" %>
+              <div class="flex flex-wrap items-center gap-1 px-2 py-1.5 border-t border-gray-100 dark:border-white/5 [&>div]:flex">
+                <% if @scope == "public" %>
+                  <div class="px-2 py-0.5"><%= render 'recipes/save_button', recipe: recipe, saved: @saved_source_ids.include?(recipe.id) %></div>
+                <% else %>
+                  <%= render 'collections/collection_button', recipe: recipe %>
+                  <%= render 'recipes/duplicate_button', recipe: recipe, style: :link, class_name: action, form_class: "flex" %>
+                  <% if household_admin? && recipe.owned_by?(current_user) %>
+                    <%= link_to "Edit", edit_recipe_path(recipe), class: "#{action} text-[#5f734c] dark:text-[#7a8f62]" %>
+                    <%= button_to "Delete", recipe_path(recipe), method: :delete,
+                                  form_class: "flex",
+                                  data: { turbo_confirm: "Delete \"#{recipe.title}\"?" },
+                                  class: "#{action} text-dusty-rose-600 dark:text-dusty-rose-400" %>
+                  <% end %>
                 <% end %>
               </div>
             </div>

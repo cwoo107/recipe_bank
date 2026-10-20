@@ -367,7 +367,7 @@ class RecipeImporter
         description: scraped_data[:description],
         servings: scraped_data[:servings] || 4,
         user: @job.user,
-        visibility: 'public'   # imported recipes are always public
+        visibility: 'private'  # imported recipes start private, like any new one
       )
 
       # Create recipe ingredients
