@@ -138,7 +138,7 @@ class Recipe < ApplicationRecord
         copy.steps.create!(position: step.position, content: step.content&.body)
       end
 
-      tags.each { |tag| copy.tags << tag.mirror_for(user) }
+      tags.each { |tag| copy.tags << tag.mirror_for(user.household) }
 
       recipe_components.includes(:component_recipe).each do |component|
         copy.recipe_components.create!(component_recipe: component.component_recipe.household_version_for(user, copied:),

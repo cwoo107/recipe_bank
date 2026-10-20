@@ -110,7 +110,7 @@ class Ingredient < ApplicationRecord
         )
       end
 
-      tags.each { |tag| copy.tags << tag.mirror_for(user) } if user
+      tags.each { |tag| copy.tags << tag.mirror_for(household) }
 
       copy
     end

@@ -8,7 +8,7 @@ class LocalizeRecipeIngredientsTest < ActiveSupport::TestCase
     @carol  = users(:three) # household two
     @garlic = households(:two).ingredients.create!(ingredient: "Garlic", created_by: @carol)
     @garlic.create_nutrition_fact!(serving_size: 3, serving_unit: "g", calories: 4)
-    @garlic.tags << @carol.tags.create!(tag: "Aromatic", color: "#5f734c")
+    @garlic.tags << households(:two).tags.create!(tag: "Aromatic", color: "#5f734c")
 
     @recipe = @alice.recipes.create!(title: "Aglio e olio")
     # How recipes were saved before ingredients were per-household.

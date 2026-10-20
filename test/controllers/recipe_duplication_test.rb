@@ -13,7 +13,7 @@ class RecipeDuplicationTest < ActionDispatch::IntegrationTest
     @rice   = Ingredient.create!(household: households(:one), ingredient: "Rice", family: "grain")
     @recipe.recipe_ingredients.create!(ingredient: @rice, quantity: 2.0, unit: "cup")
     @recipe.steps.create!(content: "Steam the rice")
-    @recipe.tags << @alice.tags.create!(tag: "Dinner", color: "#5f734c")
+    @recipe.tags << households(:one).tags.create!(tag: "Dinner", color: "#5f734c")
 
     sign_in @alice
   end

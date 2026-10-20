@@ -1,9 +1,13 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 one:
-  tag: MyString
-  color: MyString
+  household: one
+  user: one # alice
+  tag: Weeknight
+  color: "#7a8f62"
 
 two:
-  tag: MyString
-  color: MyString
+  household: two
+  user: three # carol
+  tag: Holiday
+  color: "#a67a7f"

@@ -4,7 +4,9 @@ class User < ApplicationRecord
          :recoverable, :rememberable, :validatable
 
   has_many :recipes,            dependent: :destroy
-  has_many :tags,                dependent: :destroy
+  # Tags belong to the household (Tag) — this is just the ones they made,
+  # which stay with the household when the login goes.
+  has_many :created_tags, class_name: "Tag", dependent: :nullify
   has_many :recipe_import_jobs, dependent: :destroy
   has_many :collections,        dependent: :destroy
   has_many :created_ingredients, class_name: 'Ingredient',

@@ -14,7 +14,12 @@ class WeeklyChoresController < ApplicationController
     @categories = current_household.chore_categories.ordered
 
     if @view == "table"
-      @chores = current_household.chores.ordered.includes(:assignee, :chore_category, :chore_tasks)
+      # Sorted by any column (Chore::TABLE_SORTS). To start, by next due:
+      # overdue first, the furthest out last.
+      @sort      = Chore::TABLE_SORTS.key?(params[:sort]) ? params[:sort] : "next_due"
+      @direction = params[:direction] == "desc" ? "desc" : "asc"
+      @chores    = Chore.sort_for_table(current_household.chores.includes(:assignee, :chore_category, :chore_tasks),
+                                        @sort, @direction, week_start: @week_start)
     else
       Chore.auto_schedule_recurring!(current_household, week_start: @week_start)
       @weekly_chores = current_household.weekly_chores.for_week(@week_start).includes(:assignee, chore: %i[chore_category chore_tasks])

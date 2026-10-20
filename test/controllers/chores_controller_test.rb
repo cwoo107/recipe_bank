@@ -151,4 +151,37 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
     assert_match "Last done can&#39;t be in the future", response.body
     assert_equal 3.days.ago.to_date, @chore.reload.last_completed_at.to_date
   end
+
+  test "the table's column headings sort by that column, and the current one flips direction" do
+    get weekly_chores_url(view: "table")
+
+    assert_select "th[aria-sort=ascending] a[href=?]", weekly_chores_path(view: "table", sort: "next_due", direction: "desc"), text: /Next due/
+    assert_select "th[aria-sort=none] a[href=?]", weekly_chores_path(view: "table", sort: "name", direction: "asc"), text: /Chore/
+
+    get weekly_chores_url(view: "table", sort: "name", direction: "desc")
+    assert_select "th[aria-sort=descending]", text: /Chore/
+    assert_select "th[aria-sort=none]", text: /Next due/
+  end
+
+  test "the table starts sorted by next due: overdue first, furthest out last" do
+    households(:one).chores.update_all(last_completed_at: 1.day.ago)
+    overdue = households(:one).chores.create!(name: "Overdue job", frequency: "monthly", last_completed_at: 2.months.ago)
+    far_out = households(:one).chores.create!(name: "Far-out job", frequency: "annually", last_completed_at: 1.day.ago)
+
+    get weekly_chores_url(view: "table")
+
+    rows = css_select("tbody tr").map { |tr| tr["id"] }
+    assert_equal "chore_#{overdue.id}", rows.first
+    assert_equal "chore_#{far_out.id}", rows.last
+  end
+
+  test "sorting reorders the table's rows" do
+    households(:one).chores.create!(name: "Aardvark wash", frequency: "monthly")
+    households(:one).chores.create!(name: "Zebra brushing", frequency: "monthly")
+
+    get weekly_chores_url(view: "table", sort: "name", direction: "desc")
+    rows = css_select("tbody tr").map { |tr| tr["id"] }
+    assert_equal "chore_#{Chore.find_by!(name: 'Zebra brushing').id}", rows.first
+    assert_equal "chore_#{Chore.find_by!(name: 'Aardvark wash').id}", rows.last
+  end
 end

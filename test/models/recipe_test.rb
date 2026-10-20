@@ -41,12 +41,12 @@ class RecipeTest < ActiveSupport::TestCase
     refute_includes scoped, hidden
   end
 
-  test "duplicate_for copies ingredients, steps and tags into the saving user" do
+  test "duplicate_for copies ingredients, steps and tags into the saving user's household" do
     source = @carol.recipes.create!(title: "Chili", description: "Warm", servings: 6, visibility: "public")
     beans  = households(:two).ingredients.create!(ingredient: "Kidney beans", family: "protein")
     source.recipe_ingredients.create!(ingredient: beans, quantity: 2.0, unit: "cups")
     source.steps.create!(content: "Simmer gently")
-    source.tags << @carol.tags.create!(tag: "Dinner", color: "#5f734c")
+    source.tags << households(:two).tags.create!(tag: "Dinner", color: "#5f734c")
 
     copy = source.duplicate_for(@alice)
 
@@ -65,14 +65,14 @@ class RecipeTest < ActiveSupport::TestCase
     assert_equal ["Simmer gently"], copy.steps.map { |s| s.content.to_plain_text }
 
     assert_equal ["Dinner"], copy.tags.map(&:tag)
-    assert_equal [@alice.id], copy.tags.map(&:user_id), "tags are personal, so they're mirrored"
+    assert_equal [households(:one).id], copy.tags.map(&:household_id), "tags belong to the household, so they're mirrored"
     refute_equal source.tags.map(&:id), copy.tags.map(&:id)
   end
 
-  test "duplicate_for reuses a tag the saving user already has" do
-    existing = @alice.tags.create!(tag: "Dinner", color: "#111111")
+  test "duplicate_for reuses a tag the saving user's household already has" do
+    existing = households(:one).tags.create!(tag: "Dinner", color: "#111111")
     source   = @carol.recipes.create!(title: "Chili", visibility: "public")
-    source.tags << @carol.tags.create!(tag: "Dinner", color: "#5f734c")
+    source.tags << households(:two).tags.create!(tag: "Dinner", color: "#5f734c")
 
     copy = source.duplicate_for(@alice)
 

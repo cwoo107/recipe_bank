@@ -39,7 +39,7 @@
 
   <% if @view == "table" %>
     <div class="mt-6">
-      <%= render "chores/table", chores: @chores, categories: @categories %>
+      <%= render "chores/table", chores: @chores, categories: @categories, sort: @sort, direction: @direction %>
     </div>
   <% else %>
   <div class="mt-6 mb-8">

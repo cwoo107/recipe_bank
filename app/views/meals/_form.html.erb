@@ -92,7 +92,7 @@
       </label>
 
       <%# Tag filter %>
-      <% recipe_tags = Tag.for_user(current_user) %>
+      <% recipe_tags = current_household.tags.ordered %>
       <% if recipe_tags.any? %>
         <div class="flex flex-wrap gap-1.5 mb-3">
           <% recipe_tags.each do |tag| %>

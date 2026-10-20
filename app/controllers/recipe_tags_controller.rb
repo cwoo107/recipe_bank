@@ -4,9 +4,11 @@ class RecipeTagsController < ApplicationController
   before_action :set_recipe
 
   def create
-    @recipe_tag = @recipe.recipe_tags.build(recipe_tag_params)
+    # Only this household's own tags.
+    tag = current_household.tags.find_by(id: recipe_tag_params[:tag_id])
+    @recipe_tag = @recipe.recipe_tags.build(tag: tag)
 
-    if @recipe_tag.save
+    if tag && @recipe_tag.save
       redirect_to @recipe, notice: "Tag added successfully."
     else
       redirect_to @recipe, alert: "Failed to add tag."
@@ -20,8 +22,9 @@ class RecipeTagsController < ApplicationController
   end
 
   private
+  # Only the household's own recipes get tagged — not public ones it can see.
   def set_recipe
-    @recipe = Recipe.find(params[:recipe_id])
+    @recipe = Recipe.for_household(current_household).find(params[:recipe_id])
   end
 
   def recipe_tag_params

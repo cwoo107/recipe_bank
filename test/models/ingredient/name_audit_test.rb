@@ -32,7 +32,7 @@ class Ingredient::NameAuditTest < ActiveSupport::TestCase
     oil       = ingredient("Parmesan", family: "dairy")
     duplicate = ingredient(". finely parmesan", unit_price: 3.5) # a confident cleanup — no notes
     line      = @recipe.recipe_ingredients.create!(ingredient: duplicate, quantity: 2, unit: "tbsp")
-    tag       = Tag.create!(tag: "Pantry", color: "olive", user: @user)
+    tag       = Tag.create!(tag: "Pantry", color: "olive", household: @household, user: @user)
     duplicate.tags << tag
     duplicate.create_nutrition_fact!(calories: 120)
     week = Date.current.beginning_of_week

@@ -12,6 +12,7 @@ class Household < ApplicationRecord
   has_many :restock_items,    dependent: :destroy
   has_many :restock_categories, dependent: :destroy
   has_many :chore_categories, dependent: :destroy
+  has_many :tags,             dependent: :destroy
   has_many :chores,           dependent: :destroy
   has_many :weekly_chores,    dependent: :destroy
   has_many :grocery_lists,    dependent: :destroy
@@ -33,6 +34,7 @@ class Household < ApplicationRecord
   after_create :create_owner_member
   after_create :seed_default_restock_categories
   after_create :seed_default_chore_categories
+  after_create :seed_default_tags!
   after_update :realign_weeks, if: :saved_change_to_week_start_day?
 
   def self.default_family_name_for(user)
@@ -243,6 +245,15 @@ class Household < ApplicationRecord
   # of being deleted with the login (or blocking its deletion).
   HANDED_OFF_ON_REMOVAL = %w[Recipe Tag Collection Meal RecurringMeal Todo GroceryList
                              RestockItem CalendarSource CalendarEvent].freeze
+
+  # Adds any of Tag::DEFAULTS the household doesn't have (by name, any
+  # capitalization). New households get them all when they're created.
+  def seed_default_tags!
+    existing = tags.pluck(:tag).map(&:downcase)
+    Tag::DEFAULTS.each do |name, color|
+      tags.create!(tag: name, color: color) unless existing.include?(name.downcase)
+    end
+  end
 
   # Removes a member, and their login if they have one. Everything their login
   # created for the household is handed to the owner first; only personal

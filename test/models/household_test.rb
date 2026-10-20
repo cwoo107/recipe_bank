@@ -28,4 +28,22 @@ class HouseholdTest < ActiveSupport::TestCase
     user = User.new(email: "jane.doe@example.com")
     assert_equal "Jane.Doe's Household", Household.default_family_name_for(user)
   end
+
+  test "a new household starts with the default tags" do
+    household = Household.create!(owner: User.create!(email: "newtags@example.com", password: "password123", skip_household_provisioning: true),
+                                  family_name: "Newtags")
+
+    assert_equal Tag::DEFAULTS.map(&:first).sort, household.tags.pluck(:tag).sort
+  end
+
+  test "seeding the default tags skips ones the household already has, by name" do
+    household = households(:one)
+    household.tags.create!(tag: "breakfast", color: "#000000")
+
+    household.seed_default_tags!
+    household.seed_default_tags!
+
+    assert_equal 1, household.tags.where("LOWER(tag) = ?", "breakfast").count
+    assert_equal Tag::DEFAULTS.size + 1, household.tags.count # + the fixture's Weeknight
+  end
 end

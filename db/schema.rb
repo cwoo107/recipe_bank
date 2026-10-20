@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_150000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -447,9 +447,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_120000) do
   create_table "tags", force: :cascade do |t|
     t.string "color"
     t.datetime "created_at", null: false
+    t.integer "household_id"
     t.string "tag"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.index ["household_id", "tag"], name: "index_tags_on_household_id_and_tag", unique: true
+    t.index ["household_id"], name: "index_tags_on_household_id"
     t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
@@ -606,6 +609,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_120000) do
   add_foreign_key "restock_items", "restock_categories"
   add_foreign_key "restock_items", "users"
   add_foreign_key "steps", "recipes"
+  add_foreign_key "tags", "households"
   add_foreign_key "tags", "users"
   add_foreign_key "todos", "household_members", column: "assignee_id"
   add_foreign_key "todos", "households"

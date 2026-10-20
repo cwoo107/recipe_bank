@@ -302,4 +302,46 @@ class ChoreTest < ActiveSupport::TestCase
       assert_equal [ Date.current ], chore.weekly_chores.pluck(:scheduled_date) # the finished one stays
     end
   end
+
+  # ── Table View sorting ──
+
+  def sorted(column, direction = "asc", chores: households(:one).chores)
+    Chore.sort_for_table(chores.to_a, column, direction, week_start: Date.new(2026, 10, 19)).map(&:name)
+  end
+
+  test "the table sorts by name, ascending or descending" do
+    households(:one).chores.create!(name: "apple picking", frequency: "monthly")
+    households(:one).chores.create!(name: "Zinc polish", frequency: "monthly")
+
+    assert_equal sorted("name").sort_by(&:downcase), sorted("name")
+    assert_equal sorted("name").reverse, sorted("name", "desc")
+  end
+
+  test "blank values go last whichever way a column's sorted" do
+    bob = household_members(:one)
+    households(:one).chores.update_all(assignee_id: nil)
+    households(:one).chores.create!(name: "Assigned", frequency: "monthly", assignee: bob)
+
+    assert_equal "Assigned", sorted("assignee").first
+    assert_equal "Assigned", sorted("assignee", "desc").first
+  end
+
+  test "frequency sorts daily first, annually last, not alphabetically" do
+    chores = %w[annually daily monthly weekly].map { |freq| households(:one).chores.create!(name: "#{freq} job", frequency: freq) }
+
+    assert_equal [ "daily job", "weekly job", "monthly job", "annually job" ], sorted("frequency", chores: Chore.where(id: chores))
+  end
+
+  test "days sort from the household's week start" do
+    week_start = Date.new(2026, 10, 19) # a Monday
+    sunday = households(:one).chores.create!(name: "Sunday job", frequency: "weekly", default_weekday: 0)
+    monday = households(:one).chores.create!(name: "Monday job", frequency: "weekly", default_weekday: 1)
+
+    assert_equal [ "Monday job", "Sunday job" ],
+                 Chore.sort_for_table([ sunday, monday ], "day", "asc", week_start:).map(&:name)
+  end
+
+  test "an unknown column sorts by name" do
+    assert_equal sorted("name"), sorted("nonsense")
+  end
 end

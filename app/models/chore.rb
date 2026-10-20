@@ -115,6 +115,33 @@ class Chore < ApplicationRecord
     next_due_on
   end
 
+  # The Chore Chart Table View's sortable columns, each the value a chore
+  # sorts by there. nil means blank (Uncategorized, Unassigned, no set day,
+  # never done) — those always go last, whichever way the column's sorted.
+  # Days count from the household's week start.
+  TABLE_SORTS = {
+    "name"      => ->(chore, _) { chore.name.downcase },
+    "tasks"     => ->(chore, _) { chore.chore_tasks.size },
+    "category"  => ->(chore, _) { chore.chore_category&.name&.downcase },
+    "frequency" => ->(chore, _) { FREQUENCIES.index(chore.frequency) },
+    "day"       => ->(chore, week_start) { chore.default_weekday && (chore.default_weekday - week_start.wday) % 7 },
+    "assignee"  => ->(chore, _) { chore.assignee&.name&.downcase },
+    "last_done" => ->(chore, _) { chore.last_completed_at },
+    "next_due"  => ->(chore, _) { chore.next_due_date }
+  }.freeze
+
+  # Sorts chores for the Table View by one of TABLE_SORTS (by name when the
+  # column isn't one of them), ties broken by name.
+  def self.sort_for_table(chores, column, direction, week_start:)
+    by = TABLE_SORTS.fetch(column) { TABLE_SORTS["name"] }
+    keyed = chores.map { |chore| [ by.(chore, week_start), chore.name.downcase, chore ] }
+    present, blank = keyed.partition { |value, _, _| !value.nil? }
+
+    present = present.sort_by { |value, name, _| [ value, name ] }
+    present = present.reverse if direction == "desc"
+    (present + blank.sort_by { |_, name, _| name }).map(&:last)
+  end
+
   def frequency_label
     FREQUENCY_LABELS.fetch(frequency)
   end

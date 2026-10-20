@@ -1,22 +1,25 @@
+# The household's recipe tags — the Recipe tags tab on the Recipes page.
 class TagsController < ApplicationController
+  # Limited members can look but not change these (see ApplicationController).
+  before_action :require_household_admin!, except: %i[index show]
   before_action :set_tag, only: %i[show edit update destroy]
 
   def index
-    @tags = current_user.tags.includes(:recipes)
+    @tags = current_household.tags.ordered.includes(:recipes)
   end
 
   def show
   end
 
   def new
-    @tag = current_user.tags.build
+    @tag = current_household.tags.build
   end
 
   def edit
   end
 
   def create
-    @tag = current_user.tags.build(tag_params)
+    @tag = current_household.tags.build(tag_params.merge(user: current_user))
 
     if @tag.save
       redirect_to tags_path, notice: "Tag was successfully created."
@@ -41,8 +44,7 @@ class TagsController < ApplicationController
   private
 
   def set_tag
-    # Scoped to current_user — users can't access each other's tags
-    @tag = current_user.tags.find(params.expect(:id))
+    @tag = current_household.tags.find(params.expect(:id))
   end
 
   def tag_params

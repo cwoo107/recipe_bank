@@ -1,4 +1,4 @@
-<%# locals: (chores:, categories:) %>
+<%# locals: (chores:, categories:, sort: "next_due", direction: "asc") %>
 <%# The Chore Chart's Table View (weekly_chores/index, view=table): manage
     categories, then every chore — a click-to-edit table on desktop
     (chores/_table_row), a list with an edit modal on mobile (chores/_chore). %>
@@ -50,18 +50,19 @@
   <%# ── DESKTOP: table — click a cell to edit it (chores/_table_row) ── %>
   <div class="hidden md:block overflow-x-auto bg-white shadow-sm inset-ring inset-ring-gray-900/5 rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
     <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
+      <% sorting = { sort:, direction: } %>
       <thead class="bg-gray-50 dark:bg-white/5">
         <tr>
-          <th scope="col" class="py-3.5 pl-4 pr-3 sm:pl-6 text-left text-sm font-semibold text-gray-900 dark:text-white">Chore</th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Tasks</th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Category</th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Frequency</th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Day</th>
+          <%= render "chores/sort_header", column: "name", label: "Chore", first: true, **sorting %>
+          <%= render "chores/sort_header", column: "tasks", label: "Tasks", **sorting %>
+          <%= render "chores/sort_header", column: "category", label: "Category", **sorting %>
+          <%= render "chores/sort_header", column: "frequency", label: "Frequency", **sorting %>
+          <%= render "chores/sort_header", column: "day", label: "Day", **sorting %>
           <% if current_household.assignable? %>
-            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Assigned to</th>
+            <%= render "chores/sort_header", column: "assignee", label: "Assigned to", **sorting %>
           <% end %>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Last done</th>
-          <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white">Next due</th>
+          <%= render "chores/sort_header", column: "last_done", label: "Last done", **sorting %>
+          <%= render "chores/sort_header", column: "next_due", label: "Next due", **sorting %>
           <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
         </tr>
       </thead>

@@ -20,7 +20,7 @@ class IngredientTest < ActiveSupport::TestCase
                                            unit_price: 1.5, unit_servings: 3, favorite: true)
       @beans.create_nutrition_fact!(serving_size: 130, serving_unit: "g", calories: 110,
                                     protein: 7, total_fat: 0.5, total_carb: 20)
-      @beans.tags << users(:three).tags.create!(tag: "Pantry", color: "#5f734c")
+      @beans.tags << households(:two).tags.create!(tag: "Pantry", color: "#5f734c")
     end
 
     test "an ingredient already in the household is returned as-is" do
@@ -38,7 +38,7 @@ class IngredientTest < ActiveSupport::TestCase
       refute copy.favorite, "favorites are the household's own choice"
       assert_equal 110, copy.nutrition_fact.calories
       refute_equal @beans.nutrition_fact, copy.nutrition_fact
-      assert_equal [["Pantry", @alice.id]], copy.tags.map { |t| [t.tag, t.user_id] }
+      assert_equal [["Pantry", @ours.id]], copy.tags.map { |t| [t.tag, t.household_id] }
     end
 
     test "copying the same ingredient twice reuses the first copy" do

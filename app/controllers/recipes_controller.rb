@@ -20,7 +20,7 @@ class RecipesController < ApplicationController
     @recipes = @recipes.order(featured: :desc) if @scope == "public"
 
     if params[:filter].present?
-      tag = Tag.find_by(id: params[:filter])
+      tag = current_household.tags.find_by(id: params[:filter])
       @recipes = @recipes.joins(:recipe_tags).where(recipe_tags: { tag_id: tag&.id })
     end
 

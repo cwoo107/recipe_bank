@@ -107,7 +107,7 @@
         <div class="hidden mt-4 border-t border-gray-200 pt-4 dark:border-white/10" data-edit-mode-target="editOnlyItems">
           <%= form_with model: [@recipe, @recipe.recipe_tags.build], class: "flex gap-x-3" do |form| %>
             <%= form.select :tag_id,
-                            options_from_collection_for_select(Tag.all, :id, :tag),
+                            options_from_collection_for_select(current_household.tags.ordered.where.not(id: @recipe.tags.ids), :id, :tag),
                             { prompt: "Select a tag" },
                             class: "block rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]" %>
             <%= form.submit "Add Tag",
