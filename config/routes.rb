@@ -35,6 +35,9 @@ Rails.application.routes.draw do
     collection do
       get :week_stats
     end
+    member do
+      post :move
+    end
   end
   resource  :preferences, only: :update
   resources :recurring_meals, only: [:index, :edit, :update, :destroy]

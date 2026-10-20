@@ -18,6 +18,12 @@
 //     new day applies going forward or just this week.
 // Cancelling either puts the card back where it came from.
 //
+// A daily chore has a card on every day, so dropping one onto a day that
+// already has another of its cards is stopped with a warning
+// (weekly_chores/_already_scheduled_dialog) and the card goes back. Moving
+// it into another category's row works like any other chore. Daily cards
+// can't be dragged into "Coming up" — the board would just put the day back.
+//
 // The category rows themselves are also sortable, dragged by their heading.
 
 import { Controller } from "@hotwired/stimulus"
@@ -33,7 +39,8 @@ export default class extends Controller {
         "dueList", "column", "rows",
         "moveDialog", "moveDay", "moveDayAgain", "moveChoreName",
         "categoryDialog", "categoryChoreName", "categoryFrom", "categoryTo", "categoryToAgain",
-        "removeDialog", "removeChoreName", "removeFrequency"
+        "removeDialog", "removeChoreName", "removeFrequency",
+        "conflictDialog", "conflictChoreName", "conflictDay", "conflictDayAgain"
     ]
     static values = {
         weekStart: String,
@@ -54,7 +61,7 @@ export default class extends Controller {
                 group: {
                     name: "chore-board",
                     pull: "clone",
-                    put: (_to, _from, dragEl) => Boolean(dragEl.dataset.weeklyChoreId)
+                    put: (_to, _from, dragEl) => Boolean(dragEl.dataset.weeklyChoreId) && !dragEl.dataset.dailyChoreId
                 },
                 handle: ".sortable-handle",
                 draggable: DRAGGABLE_SELECTOR,
@@ -102,6 +109,12 @@ export default class extends Controller {
         const item = to.querySelectorAll(DRAGGABLE_SELECTOR)[event.newIndex] || event.item
         if (!item) return
 
+        if (this.#dailyConflict(item, event.from, to)) {
+            await this.warnAlreadyScheduled(item, scheduledDate)
+            this.#revert(event, item)
+            return
+        }
+
         const categoryChanged = item.dataset.categoryKey !== to.dataset.categoryKey
         if (categoryChanged && this.hasCategoryDialogTarget) {
             const answer = await this.askCategoryChange(item, to)
@@ -130,7 +143,7 @@ export default class extends Controller {
                 headers: this.#headers(),
                 body: JSON.stringify(body)
             }).then((response) => {
-                if (response.ok && categoryChanged) item.dataset.categoryKey = to.dataset.categoryKey
+                if (response.ok && categoryChanged) this.#refile(item, to.dataset.categoryKey)
                 this.#persistOrder(to)
             })
             return
@@ -238,6 +251,18 @@ export default class extends Controller {
         return this.#ask(this.categoryDialogTarget)
     }
 
+    // Resolves once the warning is dismissed.
+    warnAlreadyScheduled(item, isoDate) {
+        if (!this.hasConflictDialogTarget) return Promise.resolve()
+
+        const [year, month, day] = isoDate.split("-").map(Number)
+        const dayName = new Date(year, month - 1, day).toLocaleDateString(undefined, { weekday: "long" })
+        this.conflictDayTargets.concat(this.conflictDayAgainTargets).forEach((el) => { el.textContent = dayName })
+        if (this.hasConflictChoreNameTarget) this.conflictChoreNameTarget.textContent = item.dataset.choreName || "This chore"
+
+        return this.#ask(this.conflictDialogTarget)
+    }
+
     // Resolves to "forward", "week", or null (cancelled).
     askMoveScope(choreName, isoDate) {
         const [year, month, day] = isoDate.split("-").map(Number)
@@ -284,6 +309,38 @@ export default class extends Controller {
     #categoryName(key) {
         const cell = this.columnTargets.find((column) => column.dataset.categoryKey === key)
         return cell?.dataset.categoryName || "Uncategorized"
+    }
+
+    // A daily chore's card dropped on another day that already has one of
+    // its cards (in any category row — they all move together).
+    #dailyConflict(item, from, to) {
+        const choreId = item.dataset.dailyChoreId
+        if (!choreId || !to.dataset.date || from.dataset.date === to.dataset.date) return false
+
+        return this.columnTargets
+            .filter((column) => column.dataset.date === to.dataset.date)
+            .some((column) => Array.from(column.querySelectorAll(`[data-daily-chore-id="${choreId}"]`)).some((el) => el !== item))
+    }
+
+    // After a category change, every other card for the chore follows the
+    // dropped one into the new category's row: the dragged card's mobile
+    // copy, and for a daily chore its cards on the other days too. Each stays
+    // on its own day (cells are weekly_chores_cell_<desktop|mobile>_<date>_<key>).
+    #refile(item, categoryKey) {
+        const selector = item.dataset.dailyChoreId
+            ? `[data-daily-chore-id="${item.dataset.dailyChoreId}"]`
+            : `.weekly-chore-${item.dataset.weeklyChoreId}`
+
+        this.element.querySelectorAll(selector).forEach((card) => {
+            card.dataset.categoryKey = categoryKey
+            if (card === item) return
+
+            const match = card.parentElement?.id.match(/^weekly_chores_cell_(desktop|mobile)_(\d{4}-\d{2}-\d{2})_/)
+            if (!match) return
+
+            const cell = document.getElementById(`weekly_chores_cell_${match[1]}_${match[2]}_${categoryKey}`)
+            if (cell && cell !== card.parentElement) cell.appendChild(card)
+        })
     }
 
     #dueLeftover(choreId, item) {

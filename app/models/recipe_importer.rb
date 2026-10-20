@@ -287,7 +287,7 @@ class RecipeImporter
         end
 
         # Use AI's family suggestion if available
-        result[:family] = resolution['family'] if resolution['family']
+        result[:family] = resolution['family'] if Ingredient::FAMILIES.key?(resolution['family'])
       end
     end
   end
@@ -310,7 +310,7 @@ class RecipeImporter
       next if result[:family].present?
 
       classification = family_classifications.find { |c| c['name'] == result[:parsed][:name] }
-      if classification
+      if Ingredient::FAMILIES.key?(classification&.dig('family'))
         result[:family] = classification['family']
       else
         # Use programmatic fallback if AI didn't classify
@@ -420,7 +420,7 @@ class RecipeImporter
 
     ingredient = Ingredient.create!(
       ingredient: parsed[:name],
-      family: family || 'produce',
+      family: family || 'grocery',
       unit_price: nutrition&.dig(:unit_price),
       unit_servings: nutrition&.dig(:unit_servings),
       created_by: @job.user,

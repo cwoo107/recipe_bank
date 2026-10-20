@@ -1,44 +1,66 @@
 <%# locals: (chore:, from:, adding: false) %>
-<%# A chore's tasks on Manage Chores — the Tasks column (from: "desktop")
-    or the mobile edit modal (from: "mobile"). For admins each task reads as
+<%# A chore's tasks — the Table View's Tasks column (from: "desktop"), its
+    mobile edit modal (from: "mobile"), or a Week View card (from: "board",
+    in smaller type to fit the card, where clicking a task removes it after
+    a confirm). Otherwise, for admins each task reads as
     text until clicked (inline-cell, like the other columns), with a
     "Remove" link, and an "Add a task" link opens a field below; `adding`
     re-opens that field after a task was just added so the next one can be
     typed straight away. Re-rendered in place by
     chore_tasks/refresh.turbo_stream.erb. %>
 <% tasks = chore.chore_tasks %>
-<% input = "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-2 py-1 text-xs text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+<% board = from == "board" %>
+<% input = "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-2 py-1 #{board ? 'text-[11px]' : 'text-xs'} text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
 <% if household_admin? %>
-  <ul class="space-y-0.5 text-xs text-gray-600 dark:text-gray-300">
-    <% tasks.each do |task| %>
-      <li class="group/task flex items-start gap-2">
-        <%= form_with model: [ chore, task ], id: nil, class: "min-w-0 flex-1" do %>
-          <%= hidden_field_tag :from, from, id: nil %>
-          <div data-controller="inline-cell">
-            <div data-inline-cell-target="display" role="button" tabindex="0"
-                 data-action="click->inline-cell#edit keydown.enter->inline-cell#edit keydown.space->inline-cell#edit:prevent"
-                 class="-mx-1 px-1 py-0.5 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#5f734c] break-words">
-              <span aria-hidden="true" class="text-gray-400">•</span>
-              <span data-inline-cell-target="text"><%= task.name %></span>
+  <ul class="<%= board ? 'space-y-px text-[10px] leading-snug' : 'space-y-0.5 text-xs' %> text-gray-600 dark:text-gray-300">
+    <% if board %>
+      <%# On a card, clicking a task removes it (after the app's confirm
+          dialog) — no rename and no "Remove" link, to keep cards clean. %>
+      <% tasks.each do |task| %>
+        <li>
+          <%= button_to chore_chore_task_path(chore, task, from: from), method: :delete,
+                form_class: "min-w-0",
+                title: "Remove this task",
+                data: { turbo_confirm: "Remove the task \"#{task.name}\" from #{chore.name}?" },
+                class: "w-full -mx-1 px-1 py-0.5 rounded text-left break-words cursor-pointer bg-transparent border-0 hover:bg-dusty-rose-100/70 hover:text-dusty-rose-700 dark:hover:bg-dusty-rose-900/30 dark:hover:text-dusty-rose-300 focus-visible:outline-2 focus-visible:outline-[#5f734c] transition-colors" do %>
+            <span aria-hidden="true" class="text-gray-400">•</span>
+            <%= task.name %><span class="sr-only"> — remove this task</span>
+          <% end %>
+        </li>
+      <% end %>
+    <% else %>
+      <% tasks.each do |task| %>
+        <li class="group/task flex items-start gap-2">
+          <%= form_with model: [ chore, task ], id: nil, class: "min-w-0 flex-1" do %>
+            <%= hidden_field_tag :from, from, id: nil %>
+            <div data-controller="inline-cell">
+              <div data-inline-cell-target="display" role="button" tabindex="0"
+                   data-action="click->inline-cell#edit keydown.enter->inline-cell#edit keydown.space->inline-cell#edit:prevent"
+                   class="-mx-1 px-1 py-0.5 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-[#5f734c] break-words">
+                <span aria-hidden="true" class="text-gray-400">•</span>
+                <span data-inline-cell-target="text"><%= task.name %></span>
+              </div>
+              <div data-inline-cell-target="editor" class="hidden">
+                <%= label_tag "chore_task_#{task.id}_#{from}_name", "Task name", class: "sr-only" %>
+                <%= text_field_tag "chore_task[name]", task.name, id: "chore_task_#{task.id}_#{from}_name", required: true, maxlength: 100, class: input,
+                      data: { inline_cell_target: "field", action: "blur->inline-cell#commit keydown.enter->inline-cell#commitOnEnter keydown.esc->inline-cell#cancel" } %>
+              </div>
             </div>
-            <div data-inline-cell-target="editor" class="hidden">
-              <%= label_tag "chore_task_#{task.id}_#{from}_name", "Task name", class: "sr-only" %>
-              <%= text_field_tag "chore_task[name]", task.name, id: "chore_task_#{task.id}_#{from}_name", required: true, maxlength: 100, class: input,
-                    data: { inline_cell_target: "field", action: "blur->inline-cell#commit keydown.enter->inline-cell#commitOnEnter keydown.esc->inline-cell#cancel" } %>
-            </div>
-          </div>
-        <% end %>
-        <%= button_to "Remove", chore_chore_task_path(chore, task, from: from), method: :delete,
-              form_class: from == "desktop" ? "shrink-0 opacity-0 group-hover/task:opacity-100 focus-within:opacity-100 transition-opacity" : "shrink-0",
-              aria: { label: "Remove the task #{task.name}" },
-              class: "py-0.5 text-[11px] font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer" %>
-      </li>
+          <% end %>
+          <%= button_to "Remove", chore_chore_task_path(chore, task, from: from), method: :delete,
+                form_class: from == "mobile" ? "shrink-0" : "shrink-0 opacity-0 group-hover/task:opacity-100 focus-within:opacity-100 transition-opacity",
+                aria: { label: "Remove the task #{task.name}" },
+                class: "py-0.5 text-[11px] font-medium text-dusty-rose-600 dark:text-dusty-rose-400 hover:underline bg-transparent p-0 border-0 cursor-pointer" %>
+        </li>
+      <% end %>
     <% end %>
   </ul>
 
   <div data-controller="task-adder" data-task-adder-open-value="<%= adding %>" class="<%= 'mt-1' if tasks.any? %>">
+    <%# On a board card "+ Add a task" only shows while hovering the card
+        (cards are small), except on touch-sized screens. %>
     <button type="button" data-task-adder-target="button" data-action="task-adder#open"
-            class="<%= 'hidden' if adding %> text-xs font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline cursor-pointer">
+            class="<%= 'hidden' if adding %> <%= board ? 'text-[10px] sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-opacity' : 'text-xs' %> font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline cursor-pointer">
       + Add a task
     </button>
     <%= form_with model: [ chore, ChoreTask.new ], id: nil,

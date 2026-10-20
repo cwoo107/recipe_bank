@@ -18,6 +18,31 @@ class Ingredient < ApplicationRecord
   has_many :tags, through: :ingredient_tags
   has_many :grocery_lists, dependent: :destroy
 
+  # Ingredient families (the "family" column) — the one list everything else
+  # reads from: the family select, filter chips and tags (IngredientsHelper,
+  # which adds each one's colors), the CSV catalog import, the week plan PDF's
+  # grocery headings, and the AI classification prompts (OllamaAssistant),
+  # which get each family's description. "grocery" is the catch-all.
+  FAMILIES = {
+    'protein'    => { label: 'Protein',         description: 'meat, poultry, fish, eggs, tofu, dried beans, legumes' },
+    'produce'    => { label: 'Produce',         description: 'fresh fruits, vegetables, fresh herbs' },
+    'dairy'      => { label: 'Dairy',           description: 'milk, cheese, yogurt, butter, cream' },
+    'grain'      => { label: 'Grain',           description: 'bread, pasta, rice, flour, oats, cereal, tortillas' },
+    'fat'        => { label: 'Fat',             description: 'cooking oils, lard, shortening, cooking spray' },
+    'spices'     => { label: 'Spices',          description: 'dried herbs, spices, seasonings, salt, pepper' },
+    'condiments' => { label: 'Condiments',      description: 'sauces, dressings, vinegars, ketchup, mustard, mayonnaise, soy sauce, salsa, hot sauce, honey, jams' },
+    'canned'     => { label: 'Canned & Jarred', description: 'canned vegetables and tomatoes, tomato paste, canned beans, coconut milk, stock, broth' },
+    'baking'     => { label: 'Baking',          description: 'sugar, baking soda, baking powder, yeast, cornstarch, cocoa, chocolate chips, extracts' },
+    'nuts'       => { label: 'Nuts & Seeds',    description: 'nuts, seeds, nut butters, dried fruit' },
+    'frozen'     => { label: 'Frozen',          description: 'frozen fruits and vegetables, frozen meals, ice cream' },
+    'beverages'  => { label: 'Beverages',       description: 'coffee, tea, juice, soda, wine and beer' },
+    'grocery'    => { label: 'Grocery',         description: 'anything that fits none of the above (snacks, packaged foods, paper goods)' }
+  }.freeze
+
+  def self.family_label(family)
+    FAMILIES.dig(family.to_s.downcase, :label) || family.to_s.titleize
+  end
+
   validates :ingredient, presence: true
 
   before_validation :capitalize_ingredient

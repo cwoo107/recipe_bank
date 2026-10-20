@@ -30,8 +30,7 @@
           <div>
             <%= f.label :family, class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
             <%= f.select :family,
-                  [["Protein", "protein"], ["Produce", "produce"], ["Dairy", "dairy"],
-                   ["Grain", "grain"], ["Fat", "fat"], ["Spices", "spices"]],
+                  ingredient_family_options,
                   { include_blank: "Select family" },
                   class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
           </div>

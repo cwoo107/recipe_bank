@@ -1,0 +1,19 @@
+<%# Shown when a daily chore's card is dragged onto a day that already has
+    one of its cards — see chore_board_controller.js. The card goes back
+    where it came from. Styled like the board's other prompts. %>
+<dialog data-chore-board-target="conflictDialog"
+        data-action="cancel->chore-board#dismiss click->chore-board#dialogBackdrop"
+        class="dark:bg-[#1a1f16] w-11/12 sm:w-96 rounded-lg p-6 shadow-xl backdrop:bg-black/50 m-auto">
+  <h3 class="text-base font-semibold text-gray-900 dark:text-white">Already on <span data-chore-board-target="conflictDay">that day</span></h3>
+  <p class="mt-3 text-sm text-gray-600 dark:text-gray-300">
+    <span class="font-medium text-gray-900 dark:text-white" data-chore-board-target="conflictChoreName">This chore</span>
+    is a daily chore and already has a card on <span data-chore-board-target="conflictDayAgain">that day</span>, so it can't be moved there.
+  </p>
+
+  <div class="mt-5 flex flex-col gap-2">
+    <button type="button" data-action="chore-board#dismiss" autofocus
+            class="w-full rounded-lg px-4 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white text-sm font-medium cursor-pointer transition">
+      OK
+    </button>
+  </div>
+</dialog>

@@ -10,7 +10,9 @@ class WeeklyChore < ApplicationRecord
   acts_as_list scope: [ :household_id, :week_start, :scheduled_date ]
 
   validates :week_start, presence: true
-  validates :chore_id, uniqueness: { scope: :week_start }
+  # Once a week per chore — once a day for a daily one.
+  validates :chore_id, uniqueness: { scope: :week_start }, unless: -> { chore&.daily? }
+  validates :chore_id, uniqueness: { scope: %i[week_start scheduled_date] }, if: -> { chore&.daily? }
   validate :scheduled_date_within_week
 
   # Set for a move that should only affect this one week (the board's "Just

@@ -16,7 +16,7 @@
 <% if household_admin? %>
 <% placeholder = local_assigns.fetch(:placeholder, false) %>
 <div data-controller="dialog" data-action="click->dialog#backdropClose"
-     class="<%= placeholder ? 'flex-1 flex flex-col' : '' %>">
+     class="<%= placeholder ? 'flex-1 flex flex-col' : '' %> in-data-meal-dragging:hidden">
   <dialog data-dialog-target="dialog" class="text-base text-left dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
     <%= turbo_frame_tag "new_meal", src: new_meal_path(date: date.strftime("%Y-%m-%d"), meal_name: meal_name), loading: "lazy" do %>
     <% end %>

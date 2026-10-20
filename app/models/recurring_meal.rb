@@ -72,6 +72,77 @@ class RecurringMeal < ApplicationRecord
     created
   end
 
+  # "Move this and all later ones" from the meals board drag and drop (see
+  # MealsController#move). The dragged meal goes to to_date / to_meal_name,
+  # and the rule follows from the dragged meal's date on:
+  #   - the whole sequence takes the new meal type;
+  #   - a days-of-week rule swaps the dragged weekday for the new one
+  #     (Mon/Wed/Fri, Wed dragged to Thu → Mon/Thu/Fri);
+  #   - an every-N-days rule shifts its cycle by the same number of days.
+  # Like editing the rule, earlier meals it already created are left alone.
+  # Later ones it created (and the occurrence tombstones, so a meal someone
+  # removed stays removed) shift along with it. Where a shifted occurrence
+  # lands on a date the rule already covers, the duplicate is dropped —
+  # except the dragged meal itself, which stays where it was put.
+  def move_sequence!(meal, to_date:, to_meal_name:)
+    from   = meal.date
+    offset = (to_date - from).to_i
+    # A whole number of cycles (a daily rule moved a day) leaves every date
+    # where it was — only the meal type changes.
+    shifts = lambda do |date|
+      if pattern_type == "interval"
+        (offset % interval_days).nonzero?
+      else
+        offset.nonzero? && date.wday == from.wday
+      end
+    end
+
+    transaction do
+      # Later dates move first (or earlier first, moving back) so a shifted
+      # occurrence never trips over one that's about to move out of its way.
+      later = recurring_meal_occurrences.includes(:meal).where(date: from..).order(date: offset.positive? ? :desc : :asc)
+
+      later.each do |occurrence|
+        attached = occurrence.meal if occurrence.meal&.recurring_meal_id == id
+        next if attached == meal
+
+        if shifts.(occurrence.date)
+          new_date = occurrence.date + offset
+          if recurring_meal_occurrences.where(date: new_date).where.not(id: occurrence.id).exists?
+            occurrence.destroy!
+            attached&.destroy!
+            next
+          end
+          occurrence.update!(date: new_date)
+          attached&.update!(date: new_date, meal_name: to_meal_name)
+        else
+          attached&.update!(meal_name: to_meal_name)
+        end
+      end
+
+      # The dragged meal's own occurrence — dropped instead when the rule
+      # already has one on the new date (the meal stays attached regardless).
+      # When the rule's dates don't shift it stays put, so the old date isn't
+      # generated again.
+      if (own = recurring_meal_occurrences.find_by(meal: meal)) && shifts.(from)
+        if recurring_meal_occurrences.where(date: to_date).where.not(id: own.id).exists?
+          own.destroy!
+        else
+          own.update!(date: to_date)
+        end
+      end
+      meal.update!(date: to_date, meal_name: to_meal_name)
+
+      self.meal_name = to_meal_name
+      if pattern_type == "interval"
+        self.start_date += offset if shifts.(from)
+      elsif shifts.(from)
+        self.days_of_week = (days_of_week - [ from.wday ] + [ to_date.wday ]).uniq.sort
+      end
+      save!
+    end
+  end
+
   def description
     case pattern_type
     when "interval"

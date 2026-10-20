@@ -5,12 +5,21 @@ class WeeklyChoresController < ApplicationController
   before_action :require_household_admin!, only: %i[create move reorder destroy]
   before_action :require_completion_only!, only: :update
 
+  # The Chore Chart, in one of two views: Week View (the default — the
+  # board for one week) or Table View (view=table — every chore, edited in
+  # place; what used to be the separate Manage Chores page).
   def index
+    @view       = params[:view] == "table" ? "table" : "week"
     @week_start = week_start_from_params
-    Chore.auto_schedule_recurring!(current_household, week_start: @week_start)
-    @weekly_chores = current_household.weekly_chores.for_week(@week_start).includes(:assignee, chore: %i[chore_category chore_tasks])
-    @due_chores = Chore.due_soon(current_household, week_start: @week_start)
     @categories = current_household.chore_categories.ordered
+
+    if @view == "table"
+      @chores = current_household.chores.ordered.includes(:assignee, :chore_category, :chore_tasks)
+    else
+      Chore.auto_schedule_recurring!(current_household, week_start: @week_start)
+      @weekly_chores = current_household.weekly_chores.for_week(@week_start).includes(:assignee, chore: %i[chore_category chore_tasks])
+      @due_chores = Chore.due_soon(current_household, week_start: @week_start)
+    end
   end
 
   def create
@@ -51,6 +60,12 @@ class WeeklyChoresController < ApplicationController
   def move
     @week_start = @weekly_chore.week_start
     scheduled_date = params[:scheduled_date].presence && Date.parse(params[:scheduled_date])
+    # A daily chore can't land on a day that already has one of its cards
+    # (the board warns before it gets here).
+    if @weekly_chore.chore.daily? && scheduled_date != @weekly_chore.scheduled_date &&
+       @weekly_chore.chore.weekly_chores.where(week_start: @week_start, scheduled_date: scheduled_date).exists?
+      return head :unprocessable_entity
+    end
     recategorize!(@weekly_chore.chore)
     @weekly_chore.move_to_day!(scheduled_date, params[:position], this_week_only: params[:scope] == "week")
 

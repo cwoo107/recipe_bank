@@ -22,4 +22,5 @@ module ApplicationHelper
       icon + tag.span(label, class: "text-sm #{is_complete ? 'text-gray-900' : 'text-gray-500'}")
     end
   end
+
 end

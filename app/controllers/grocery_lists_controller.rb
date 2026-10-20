@@ -5,15 +5,6 @@ class GroceryListsController < ApplicationController
   before_action :set_date, only: [:index, :generate]
 
   def index
-    @ingredient_families = [
-      { color: 'mauve',      label: 'Protein' },
-      { color: 'mist',       label: 'Produce' },
-      { color: 'taupe',      label: 'Dairy' },
-      { color: 'honey',      label: 'Grain' },
-      { color: 'terracotta', label: 'Fat' },
-      { color: 'mist',       label: 'Spices' }
-    ]
-
     @grocery_lists = current_household.grocery_lists
                                  .where("week_of >= ?", @date)
                                  .where("week_of < ?", @date + 7)

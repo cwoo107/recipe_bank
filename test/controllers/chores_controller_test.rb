@@ -6,9 +6,9 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one) # alice
   end
 
-  test "should get index" do
+  test "the old Manage Chores page redirects to the Chore Chart's Table View" do
     get chores_url
-    assert_response :success
+    assert_redirected_to weekly_chores_url(view: "table")
   end
 
   test "should create chore" do
@@ -21,7 +21,7 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
 
   test "should update chore" do
     patch chore_url(@chore), params: { chore: { name: "Updated" } }
-    assert_redirected_to chores_url
+    assert_redirected_to weekly_chores_url(view: "table")
     assert_equal "Updated", @chore.reload.name
   end
 
@@ -32,7 +32,7 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
 
   test "update ignores an external return_to to avoid an open redirect" do
     patch chore_url(@chore), params: { chore: { name: "Updated" }, return_to: "https://evil.example.com/phish" }
-    assert_redirected_to chores_url
+    assert_redirected_to weekly_chores_url(view: "table")
   end
 
   test "should destroy chore" do
@@ -73,13 +73,13 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index renders the inline editor and category manager" do
-    get chores_url
+    get weekly_chores_url(view: "table")
     assert_select "form#chore_inline_form_#{@chore.id}[action=?]", chore_path(@chore)
     assert_select "input[value=?]", "Standard Cleaning"
   end
 
   test "the desktop table shows plain text that swaps to fields tied to the row's form" do
-    get chores_url
+    get weekly_chores_url(view: "table")
 
     assert_select "tr#chore_#{@chore.id}" do
       assert_select "[data-inline-cell-target=text]", text: "Take out trash"
@@ -101,7 +101,7 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
 
   test "a limited member sees the table without editable cells" do
     sign_in users(:two) # bob, a limited member of household :one
-    get chores_url
+    get weekly_chores_url(view: "table")
 
     assert_select "tr#chore_#{@chore.id}" do
       assert_select "[data-controller=inline-cell]", 0
@@ -111,9 +111,44 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
 
   test "the table has no Mark done or Undo buttons" do
     @chore.update!(last_completed_at: 1.day.ago)
-    get chores_url
+    get weekly_chores_url(view: "table")
 
     assert_select "button", text: /Mark done/, count: 0
     assert_select "button", text: /Undo last/, count: 0
+  end
+
+  test "the table's Last done cell edits the date" do
+    get weekly_chores_url(view: "table")
+
+    assert_select "#chore_last_done_#{@chore.id} input[type=date][name=?][form=?]", "chore[last_completed_at]", "chore_inline_form_#{@chore.id}"
+  end
+
+  test "editing Last done moves Next due along with it" do
+    @chore.update!(frequency: "monthly")
+
+    patch chore_url(@chore), params: { inline: 1, from: "desktop", chore: { last_completed_at: "2026-09-01" } }, as: :turbo_stream
+
+    assert_response :success
+    assert_equal Date.new(2026, 9, 1), @chore.reload.last_completed_at.to_date
+    assert_equal Date.new(2026, 10, 1), @chore.next_due_date
+    assert_match "Tue, Sep 1", response.body
+  end
+
+  test "clearing Last done sets it back to never" do
+    @chore.update!(last_completed_at: 3.days.ago)
+
+    patch chore_url(@chore), params: { inline: 1, from: "desktop", chore: { last_completed_at: "" } }, as: :turbo_stream
+
+    assert_nil @chore.reload.last_completed_at
+  end
+
+  test "Last done can't be in the future" do
+    @chore.update!(last_completed_at: 3.days.ago)
+
+    patch chore_url(@chore), params: { inline: 1, from: "desktop", chore: { last_completed_at: (Date.current + 2).iso8601 } }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    assert_match "Last done can&#39;t be in the future", response.body
+    assert_equal 3.days.ago.to_date, @chore.reload.last_completed_at.to_date
   end
 end

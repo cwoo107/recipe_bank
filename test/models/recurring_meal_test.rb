@@ -80,4 +80,75 @@ class RecurringMealTest < ActiveSupport::TestCase
     assert Meal.exists?(meal.id)
     assert_nil meal.reload.recurring_meal_id
   end
+
+  # Mon/Wed/Fri dinners, materialized for two weeks (Jan 5 – 18, 2026).
+  def build_weekly_rule(days: [ 1, 3, 5 ])
+    rule = households(:one).recurring_meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner",
+                                                    pattern_type: "days_of_week", days_of_week: days,
+                                                    start_date: Date.new(2026, 1, 5), end_date: Date.new(2026, 1, 31))
+    rule.materialize_week!(Date.new(2026, 1, 5))
+    rule.materialize_week!(Date.new(2026, 1, 12))
+    rule
+  end
+
+  test "move_sequence! swaps the dragged weekday and moves later meals with it" do
+    rule = build_weekly_rule
+    wed = rule.meals.find_by!(date: Date.new(2026, 1, 7))
+
+    rule.move_sequence!(wed, to_date: Date.new(2026, 1, 8), to_meal_name: "Lunch")
+
+    assert_equal [ 1, 4, 5 ], rule.reload.days_of_week
+    assert_equal "Lunch", rule.meal_name
+    assert_equal [ Date.new(2026, 1, 8), "Lunch" ], [ wed.reload.date, wed.meal_name ]
+
+    # Earlier meals stay as they were; later ones follow the new shape.
+    assert_equal "Dinner", rule.meals.find_by!(date: Date.new(2026, 1, 5)).meal_name
+    later = rule.meals.where(date: Date.new(2026, 1, 9)..).order(:date).pluck(:date, :meal_name)
+    assert_equal [ [ Date.new(2026, 1, 9), "Lunch" ], [ Date.new(2026, 1, 12), "Lunch" ],
+                   [ Date.new(2026, 1, 15), "Lunch" ], [ Date.new(2026, 1, 16), "Lunch" ] ], later
+    assert_not rule.recurring_meal_occurrences.exists?(date: Date.new(2026, 1, 14))
+
+    # Nothing regenerates on the old weekday.
+    assert_empty rule.materialize_week!(Date.new(2026, 1, 12))
+  end
+
+  test "move_sequence! drops the duplicates when the new weekday is already in the rule" do
+    rule = build_weekly_rule(days: [ 1, 2 ])
+    mon = rule.meals.find_by!(date: Date.new(2026, 1, 5))
+
+    rule.move_sequence!(mon, to_date: Date.new(2026, 1, 6), to_meal_name: "Dinner")
+
+    assert_equal [ 2 ], rule.reload.days_of_week
+    # This week keeps both (the dragged one went where it was put); next week has one.
+    assert_equal 2, rule.meals.where(date: Date.new(2026, 1, 6)).count
+    assert_equal [ Date.new(2026, 1, 13) ], rule.meals.where(date: Date.new(2026, 1, 12)..).pluck(:date)
+  end
+
+  test "move_sequence! shifts an interval rule's cycle" do
+    rule = households(:one).recurring_meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner",
+                                                    pattern_type: "interval", interval_days: 3,
+                                                    start_date: Date.new(2026, 1, 5), end_date: Date.new(2026, 1, 31))
+    rule.materialize_week!(Date.new(2026, 1, 5)) # Jan 5, 8, 11
+    eighth = rule.meals.find_by!(date: Date.new(2026, 1, 8))
+
+    rule.move_sequence!(eighth, to_date: Date.new(2026, 1, 9), to_meal_name: "Dinner")
+
+    assert_equal Date.new(2026, 1, 6), rule.reload.start_date
+    assert_equal [ Date.new(2026, 1, 5), Date.new(2026, 1, 9), Date.new(2026, 1, 12) ], rule.meals.order(:date).pluck(:date)
+  end
+
+  test "move_sequence! on a daily rule only changes the meal type" do
+    rule = households(:one).recurring_meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner",
+                                                    pattern_type: "interval", interval_days: 1,
+                                                    start_date: Date.new(2026, 1, 5), end_date: Date.new(2026, 1, 11))
+    rule.materialize_week!(Date.new(2026, 1, 5))
+    wed = rule.meals.find_by!(date: Date.new(2026, 1, 7))
+
+    rule.move_sequence!(wed, to_date: Date.new(2026, 1, 8), to_meal_name: "Lunch")
+
+    assert_equal Date.new(2026, 1, 5), rule.reload.start_date
+    assert_equal "Lunch", rule.meal_name
+    assert_equal %w[Dinner Dinner Lunch Lunch Lunch Lunch Lunch], rule.meals.order(:date, :id).pluck(:meal_name)
+    assert_empty rule.materialize_week!(Date.new(2026, 1, 5)) # Wed isn't regenerated
+  end
 end

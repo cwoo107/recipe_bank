@@ -7,7 +7,7 @@ class Chore < ApplicationRecord
   has_many :weekly_chores, dependent: :destroy
   has_many :chore_tasks, -> { order(:position) }, dependent: :destroy, inverse_of: :chore
 
-  FREQUENCIES = %w[weekly biweekly monthly quarterly semiannually annually].freeze
+  FREQUENCIES = %w[daily weekly biweekly monthly quarterly semiannually annually].freeze
 
   # Only these two frequencies get a "remembered day" that auto-replicates
   # onto the board every week (or every other week) — see
@@ -22,6 +22,7 @@ class Chore < ApplicationRecord
   DUE_SOON_HORIZON = 1.month
 
   FREQUENCY_INTERVALS = {
+    "daily"        => 1.day,
     "weekly"       => 1.week,
     "biweekly"     => 2.weeks,
     "monthly"      => 1.month,
@@ -31,6 +32,7 @@ class Chore < ApplicationRecord
   }.freeze
 
   FREQUENCY_LABELS = {
+    "daily"        => "Daily",
     "weekly"       => "Weekly",
     "biweekly"     => "Every 2 weeks",
     "monthly"      => "Monthly",
@@ -41,6 +43,7 @@ class Chore < ApplicationRecord
 
   # Short enough to fit a pill on a compact board card.
   FREQUENCY_SHORT_LABELS = {
+    "daily"        => "Daily",
     "weekly"       => "Weekly",
     "biweekly"     => "2 wks",
     "monthly"      => "Monthly",
@@ -53,6 +56,7 @@ class Chore < ApplicationRecord
   # priority colors) so a frequency pill reads consistently with the rest
   # of the UI rather than introducing new colors.
   FREQUENCY_PILL_CLASSES = {
+    "daily"        => "bg-sage-100 text-sage-800 dark:bg-sage-900/30 dark:text-sage-300",
     "weekly"       => "bg-seafoam-100 text-seafoam-800 dark:bg-seafoam-900/30 dark:text-seafoam-300",
     "biweekly"     => "bg-mist-100 text-mist-800 dark:bg-mist-900/30 dark:text-mist-300",
     "monthly"      => "bg-honey-100 text-honey-800 dark:bg-honey-900/30 dark:text-honey-300",
@@ -65,10 +69,13 @@ class Chore < ApplicationRecord
   validates :frequency, inclusion: { in: FREQUENCIES }
   validates :default_weekday, inclusion: { in: 0..6 }, allow_nil: true
   validate :chore_category_in_same_household
+  validate :last_completed_not_in_future
 
   # A remembered day only means anything for weekly/biweekly chores (see
   # RECURRING_FREQUENCIES above), so switching to a less frequent one drops it.
   before_save :forget_default_weekday, if: -> { will_save_change_to_frequency? && !recurring? }
+  before_save :start_daily, if: -> { will_save_change_to_frequency? && daily? }
+  after_update :clear_upcoming_for_new_schedule, if: -> { saved_change_to_frequency? && saved_change_to_frequency.include?("daily") }
   after_update :reassign_upcoming_weekly_chores, if: :saved_change_to_assignee_id?
 
   scope :ordered, -> { order(:name) }
@@ -124,6 +131,14 @@ class Chore < ApplicationRecord
     RECURRING_FREQUENCIES.include?(frequency)
   end
 
+  # A daily chore is on the board every day from daily_since on — one
+  # weekly_chores row per day (see schedule_into_week!), each checked off on
+  # its own. It has no remembered day, never shows in Due soon, and its
+  # cards stay on their day (the board doesn't let them be dragged).
+  def daily?
+    frequency == "daily"
+  end
+
   # For a biweekly chore, is `week_start` an "on" week (vs. the alternating
   # "off" week it should skip)? Counts in 2-week steps from
   # default_weekday_started_on, the week the chore was (most recently)
@@ -158,6 +173,7 @@ class Chore < ApplicationRecord
   # Puts this chore on the given week on its remembered day, unless it's not
   # scheduled for that week or is already there.
   def schedule_into_week!(week_start)
+    return schedule_daily_into_week!(week_start) if daily?
     return unless scheduled_on_week?(week_start)
     return if weekly_chores.exists?(week_start: week_start)
 
@@ -209,7 +225,7 @@ class Chore < ApplicationRecord
 
   # Belongs in the week's Due soon row (when it isn't already on the board).
   def due_soon?(week_start:)
-    default_weekday.blank? && due?(as_of: week_start + DUE_SOON_HORIZON)
+    !daily? && default_weekday.blank? && due?(as_of: week_start + DUE_SOON_HORIZON)
   end
 
   # Once a weekly/biweekly chore has been dragged onto a day, it "remembers"
@@ -220,7 +236,7 @@ class Chore < ApplicationRecord
   # WeeklyChore#sync_chore_default_weekday), so they never reach here; they
   # only ever resurface via the Due soon list above.
   def self.auto_schedule_recurring!(household, week_start:)
-    household.chores.where.not(default_weekday: nil).find_each do |chore|
+    household.chores.where.not(default_weekday: nil).or(household.chores.where(frequency: "daily")).find_each do |chore|
       chore.schedule_into_week!(week_start)
     end
   end
@@ -245,9 +261,41 @@ class Chore < ApplicationRecord
     self.default_weekday_started_on = nil
   end
 
+  # Fills in this week's days from daily_since on, skipping any that already
+  # have a row (including one taken off just that day).
+  def schedule_daily_into_week!(week_start)
+    days = (week_start...(week_start + 7)).select { |day| daily_since.nil? || day >= daily_since }
+    return if days.empty?
+
+    taken = weekly_chores.where(week_start: week_start).pluck(:scheduled_date).to_set
+    days.reject { |day| taken.include?(day) }.each do |day|
+      household.weekly_chores.create!(chore: self, week_start: week_start, scheduled_date: day)
+    end
+  end
+
+  def start_daily
+    self.daily_since = Date.current
+  end
+
+  # Switching to or from daily changes how many cards the chore gets a week,
+  # so its unfinished ones from today on go; the board puts the right ones
+  # back the next time a week is viewed. Finished ones keep the history.
+  def clear_upcoming_for_new_schedule
+    weekly_chores.where(completed: false)
+                 .where(week_start: Date.current.beginning_of_week..)
+                 .where("scheduled_date IS NULL OR scheduled_date >= ?", Date.current)
+                 .delete_all
+  end
+
   def chore_category_in_same_household
     return if chore_category.nil? || chore_category.household_id == household_id
     errors.add(:chore_category, "must belong to this household")
+  end
+
+  # Last done is editable by hand on the Chore Chart's Table View.
+  def last_completed_not_in_future
+    return if last_completed_at.blank? || last_completed_at.to_date <= Date.current
+    errors.add(:base, "Last done can't be in the future")
   end
 
   # Reassigning a chore carries over to this week's and future unfinished

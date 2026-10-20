@@ -9,7 +9,7 @@ class ChoreCategoriesControllerTest < ActionDispatch::IntegrationTest
     assert_difference("households(:one).chore_categories.count") do
       post chore_categories_url, params: { chore_category: { name: "Yard" } }
     end
-    assert_redirected_to chores_url
+    assert_redirected_to weekly_chores_url(view: "table")
   end
 
   test "update renames a category" do
@@ -48,7 +48,7 @@ class ChoreCategoriesControllerTest < ActionDispatch::IntegrationTest
 
   test "create ignores an external return_to" do
     post chore_categories_url, params: { chore_category: { name: "Yard" }, return_to: "https://evil.example.com" }
-    assert_redirected_to chores_url
+    assert_redirected_to weekly_chores_url(view: "table")
   end
 
   test "the board shows the add-category tile and clickable category names to admins" do

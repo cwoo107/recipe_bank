@@ -1,7 +1,7 @@
 class MealsController < ApplicationController
   # Limited members can look but not change these (see ApplicationController).
   before_action :require_household_admin!, except: %i[index show week_stats]
-  before_action :set_meal, only: %i[show edit update destroy]
+  before_action :set_meal, only: %i[show edit update destroy move]
 
   def index
     @date = week_start_from_params
@@ -76,6 +76,38 @@ class MealsController < ApplicationController
         format.json { render json: @meal.errors, status: :unprocessable_entity }
       end
     end
+  end
+
+  # POST /meals/:id/move — drag and drop on the meals board (see
+  # meal_board_controller.js). Params: { meal_name: "Lunch", date: "2026-10-21" }.
+  # Snacks and desserts belong to the week, not a day, so dropping into one
+  # of those sections sends no date and the meal lands on the week start.
+  #
+  # A meal a recurring rule generated asks first (meals/_move_dialog):
+  # scope=sequence moves it and every later one, reshaping the rule (see
+  # RecurringMeal#move_sequence!) — other cards on the board can move too,
+  # so the page refreshes. Otherwise, like an edit, moving it detaches it.
+  def move
+    @date         = @meal.date.beginning_of_week
+    @old_type     = @meal.meal_name.downcase
+    new_type      = params[:meal_name].to_s.downcase
+    new_date      = params[:date].present? ? Date.parse(params[:date]) : @date
+
+    if params[:scope] == "sequence" && @meal.recurring_meal && Meal::CALENDAR_TYPES.include?(new_type)
+      @meal.recurring_meal.move_sequence!(@meal, to_date: new_date, to_meal_name: new_type.capitalize)
+      render turbo_stream: turbo_stream.refresh
+    elsif @meal.update(meal_name: new_type.capitalize, date: new_date, recurring_meal_id: nil)
+      meals = week_meals(@date)
+      @week_stats = MealWeekStats.new(meals).to_h
+      @person_stats_available = person_stats_available?(meals)
+      @old_extras_left = meals.count { |m| m.meal_name.downcase == @old_type }
+
+      render :move, formats: :turbo_stream
+    else
+      head :unprocessable_entity
+    end
+  rescue Date::Error, ActiveRecord::RecordInvalid
+    head :unprocessable_entity
   end
 
   def destroy

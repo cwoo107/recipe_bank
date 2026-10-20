@@ -211,4 +211,75 @@ class MealsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/turbo-stream action="remove" target="empty_cell/, response.body)
     assert_match(/turbo-stream action="append" target="desktop_cell_1_lunch"/, response.body)
   end
+
+  test "moving a meal to another day and meal type re-renders it in the new colors" do
+    post move_meal_url(@meal), params: { meal_name: "Breakfast", date: "2026-01-08" }, as: :json
+
+    assert_response :success
+    assert_equal "text/vnd.turbo-stream.html", response.media_type
+    @meal.reload
+    assert_equal "Breakfast", @meal.meal_name
+    assert_equal Date.new(2026, 1, 8), @meal.date
+    assert_includes response.body, "bg-seafoam-300"
+    assert_includes response.body, "mobile_cell_3_breakfast"
+  end
+
+  test "moving a meal into desserts files it under the week start" do
+    post move_meal_url(@meal), params: { meal_name: "Dessert", date: "" }, as: :json
+
+    assert_response :success
+    @meal.reload
+    assert_equal "Dessert", @meal.meal_name
+    assert_equal Date.new(2026, 1, 5), @meal.date
+  end
+
+  test "moving the last snack out of snacks puts the empty message back" do
+    @meal.update!(meal_name: "Snack", date: Date.new(2026, 1, 5))
+
+    post move_meal_url(@meal), params: { meal_name: "Lunch", date: "2026-01-06" }, as: :json
+
+    assert_response :success
+    assert_includes response.body, "no_snack_message"
+  end
+
+  test "moving a meal rejects an unknown meal type" do
+    post move_meal_url(@meal), params: { meal_name: "Brunch", date: "2026-01-08" }, as: :json
+
+    assert_response :unprocessable_entity
+    assert_equal "Dinner", @meal.reload.meal_name
+  end
+
+  test "a user in a different household cannot move the meal" do
+    sign_in users(:three) # carol, household :two
+
+    post move_meal_url(@meal), params: { meal_name: "Lunch", date: "2026-01-08" }, as: :json
+    assert_response :not_found
+  end
+
+  test "moving a recurring meal and every later one reshapes the rule and refreshes the board" do
+    rule = households(:one).recurring_meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner",
+                                                    pattern_type: "days_of_week", days_of_week: [ 3 ],
+                                                    start_date: Date.new(2026, 1, 5), end_date: Date.new(2026, 1, 31))
+    meal = rule.materialize_week!(Date.new(2026, 1, 5)).first
+
+    post move_meal_url(meal), params: { meal_name: "Lunch", date: "2026-01-08", scope: "sequence" }, as: :json
+
+    assert_response :success
+    assert_includes response.body, 'action="refresh"'
+    assert_equal [ [ 4 ], "Lunch" ], [ rule.reload.days_of_week, rule.meal_name ]
+    assert_equal rule, meal.reload.recurring_meal
+  end
+
+  test "moving just one recurring meal detaches it" do
+    rule = households(:one).recurring_meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner",
+                                                    pattern_type: "days_of_week", days_of_week: [ 3 ],
+                                                    start_date: Date.new(2026, 1, 5), end_date: Date.new(2026, 1, 31))
+    meal = rule.materialize_week!(Date.new(2026, 1, 5)).first
+
+    post move_meal_url(meal), params: { meal_name: "Lunch", date: "2026-01-08", scope: "one" }, as: :json
+
+    assert_response :success
+    assert_nil meal.reload.recurring_meal_id
+    assert_equal [ 3 ], rule.reload.days_of_week
+  end
 end

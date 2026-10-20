@@ -165,6 +165,10 @@ namespace :products do
       return 'dairy' if category_lower.match?(/dairy|cheese|milk/)
       return 'grain' if category_lower.match?(/bread|bakery|grain/)
       return 'spices' if category_lower.match?(/spice|seasoning/)
+      return 'frozen' if category_lower.match?(/frozen/)
+      return 'beverages' if category_lower.match?(/beverage|drink|coffee|tea|wine|beer/)
+      return 'nuts' if category_lower.match?(/nut|seed|dried fruit/)
+      return 'condiments' if category_lower.match?(/condiment|sauce|dressing/)
     end
 
     family

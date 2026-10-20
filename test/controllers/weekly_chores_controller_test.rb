@@ -327,4 +327,46 @@ class WeeklyChoresControllerTest < ActionDispatch::IntegrationTest
     assert_select "#due_chore_#{@chore.id}", text: /Weekly/
     assert_select "#due_chore_#{@chore.id}[title=?]", "Assigned to #{household_members(:one).name}"
   end
+
+  test "a daily chore's cards can be dragged, but not onto a day that already has one" do
+    week_start = Date.current.beginning_of_week
+    chore = households(:one).chores.create!(name: "Feed the dog", frequency: "daily")
+    chore.update_column(:daily_since, week_start) # on the board all week, whatever today is
+    get weekly_chores_url
+    card = chore.weekly_chores.find_by!(scheduled_date: week_start)
+
+    assert_select "#weekly_chore_#{card.id}[data-daily-chore-id=?] .sortable-handle", chore.id.to_s
+    assert_select "dialog[data-chore-board-target=conflictDialog]"
+
+    post move_weekly_chore_url(card), params: { scheduled_date: (week_start + 1).iso8601 }, as: :json
+    assert_response :unprocessable_entity
+    assert_equal week_start, card.reload.scheduled_date
+  end
+
+  test "a daily chore's card can move into another category's row like any chore" do
+    week_start = Date.current.beginning_of_week
+    chore = households(:one).chores.create!(name: "Feed the dog", frequency: "daily", chore_category: chore_categories(:chores_one))
+    chore.update_column(:daily_since, week_start)
+    Chore.auto_schedule_recurring!(households(:one), week_start: week_start)
+    card = chore.weekly_chores.find_by!(scheduled_date: week_start)
+
+    post move_weekly_chore_url(card), params: { scheduled_date: week_start.iso8601, category_key: "none" }, as: :json
+
+    assert_response :success
+    assert_nil chore.reload.chore_category
+    assert_equal week_start, card.reload.scheduled_date
+  end
+
+  test "a daily chore's card can move to a day it isn't on yet" do
+    travel_to Date.current.beginning_of_week + 3 do # daily from Thursday
+      chore = households(:one).chores.create!(name: "Feed the dog", frequency: "daily")
+      Chore.auto_schedule_recurring!(households(:one), week_start: Date.current.beginning_of_week)
+      card = chore.weekly_chores.find_by!(scheduled_date: Date.current)
+
+      post move_weekly_chore_url(card), params: { scheduled_date: (Date.current - 1).iso8601 }, as: :json
+
+      assert_response :success
+      assert_equal Date.current - 1, card.reload.scheduled_date
+    end
+  end
 end

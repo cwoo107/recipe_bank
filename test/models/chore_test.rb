@@ -241,4 +241,65 @@ class ChoreTest < ActiveSupport::TestCase
 
     refute chore.valid?
   end
+
+  test "a daily chore gets a card on every day from the day it became daily" do
+    travel_to Date.new(2026, 10, 21) do # a Wednesday
+      week_start = Date.current.beginning_of_week
+      chore = households(:one).chores.create!(name: "Feed the dog", frequency: "daily")
+      assert_equal Date.current, chore.daily_since
+
+      Chore.auto_schedule_recurring!(households(:one), week_start: week_start)
+      assert_equal (Date.current..week_start + 6).to_a, chore.weekly_chores.order(:scheduled_date).pluck(:scheduled_date)
+
+      # Idempotent, and a full week ahead gets all seven days.
+      Chore.auto_schedule_recurring!(households(:one), week_start: week_start)
+      Chore.auto_schedule_recurring!(households(:one), week_start: week_start + 7)
+      assert_equal 5 + 7, chore.weekly_chores.count
+    end
+  end
+
+  test "each day of a daily chore is checked off on its own" do
+    travel_to Date.new(2026, 10, 21) do
+      chore = households(:one).chores.create!(name: "Feed the dog", frequency: "daily")
+      Chore.auto_schedule_recurring!(households(:one), week_start: Date.current.beginning_of_week)
+
+      chore.weekly_chores.find_by!(scheduled_date: Date.current).mark_complete!
+
+      assert chore.reload.weekly_chores.find_by!(scheduled_date: Date.current).completed?
+      assert_not chore.weekly_chores.find_by!(scheduled_date: Date.current + 1).completed?
+      assert_equal Date.current + 1, chore.next_due_date
+    end
+  end
+
+  test "a daily chore never shows in Due soon" do
+    chore = households(:one).chores.create!(name: "Feed the dog", frequency: "daily")
+    assert_not chore.due_soon?(week_start: Date.current.beginning_of_week)
+  end
+
+  test "switching to daily swaps the chore's upcoming card for daily ones" do
+    travel_to Date.new(2026, 10, 21) do
+      week_start = Date.current.beginning_of_week
+      chore = chores(:one) # weekly
+      chore.weekly_chores.destroy_all
+      households(:one).weekly_chores.create!(chore: chore, week_start: week_start, scheduled_date: week_start + 4)
+
+      chore.update!(frequency: "daily")
+      assert_empty chore.weekly_chores
+
+      Chore.auto_schedule_recurring!(households(:one), week_start: week_start)
+      assert_equal 5, chore.weekly_chores.count
+    end
+  end
+
+  test "switching away from daily clears its upcoming days" do
+    travel_to Date.new(2026, 10, 21) do
+      chore = households(:one).chores.create!(name: "Feed the dog", frequency: "daily")
+      Chore.auto_schedule_recurring!(households(:one), week_start: Date.current.beginning_of_week)
+      chore.weekly_chores.find_by!(scheduled_date: Date.current).mark_complete!
+
+      chore.update!(frequency: "weekly")
+
+      assert_equal [ Date.current ], chore.weekly_chores.pluck(:scheduled_date) # the finished one stays
+    end
+  end
 end

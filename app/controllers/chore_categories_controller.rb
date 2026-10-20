@@ -66,7 +66,7 @@ class ChoreCategoriesController < ApplicationController
   def return_path
     return_to = params[:return_to].to_s
     uri = URI.parse(return_to) rescue nil
-    return chores_path unless uri && uri.host.nil? && return_to.start_with?("/")
+    return weekly_chores_path(view: "table") unless uri && uri.host.nil? && return_to.start_with?("/")
 
     return_to
   end

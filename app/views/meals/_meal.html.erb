@@ -2,9 +2,11 @@
 <%# Per-user display setting (see PreferencesController) — compact cards show
     only the recipe title so the week fits on one screen. %>
 <% compact = current_user&.compact_meals_view? %>
-<div id="meal_<%= meal.id %>" class="meal-card group block rounded-lg <%= colors[:bg] %> <%= compact ? 'px-3 py-2' : 'p-3' %> text-xs/5 <%= colors[:hover] %> inset-ring <%= colors[:ring] %> <%= colors[:dark_bg] %> <%= colors[:dark_ring] %> relative">
+<%# .meal-card is also what meal_board_controller.js drags (admins only). %>
+<div id="meal_<%= meal.id %>" data-meal-id="<%= meal.id %>" data-meal-title="<%= meal.title %>"
+     data-recurring="<%= meal.recurring_meal_id.present? %>" class="meal-card group block rounded-lg <%= colors[:bg] %> <%= compact ? 'px-3 py-2' : 'p-3' %> text-xs/5 <%= colors[:hover] %> inset-ring <%= colors[:ring] %> <%= colors[:dark_bg] %> <%= colors[:dark_ring] %> relative">
   <% unless meal.note_only? %>
-    <%= link_to recipe_path(meal.recipe), class: "absolute inset-0 z-0 rounded-lg" do %>
+    <%= link_to recipe_path(meal.recipe), class: "absolute inset-0 z-0 rounded-lg", draggable: "false" do %>
       <span class="sr-only"><%= meal.title %></span>
     <% end %>
   <% end %>

@@ -12,11 +12,10 @@ class WeekPlanPdf
   SECTIONS = {
     "meals"     => { label: "Meal plan",          hint: "Breakfast, lunch and dinner for each day, plus snacks and desserts" },
     "recipes"   => { label: "Recipes",            hint: "Ingredients and steps for every recipe on this week's meal plan" },
-    "groceries" => { label: "Grocery list",       hint: "The week's grocery list with check-off boxes" },
-    "restock"   => { label: "Restock list",       hint: "Everything marked Restock, by store" },
+    "shopping"  => { label: "Shopping list",      hint: "The week's grocery list and restock items" },
     "chores"    => { label: "Chore chart",        hint: "Each day's chores and who's doing them" },
     "todos"     => { label: "To-dos",             hint: "What's in progress" },
-    "calendar"  => { label: "Calendar",           hint: "The week's events, day by day" }
+    "calendar"  => { label: "Calendar",           hint: "All events coming up this week" }
   }.freeze
 
   # The meal planner's card colors (MealsHelper#meal_color_classes): the
@@ -32,28 +31,51 @@ class WeekPlanPdf
   NOTE_MEAL_COLORS = { bg: "e3dedb", title: "3d3633", detail: "6b625d" }.freeze # taupe — not cooked
 
 
+  # Sections that share a page when both are picked (each can still be
+  # printed on its own): the chore chart with the to-dos underneath, in the
+  # chore chart's orientation. See #pages.
+  SHARED_PAGES = { "chores_and_todos" => %w[chores todos] }.freeze
+
   # These print on exactly one page each, shrunk to fit when they run long
   # (see #fit_to_page). Recipes are left to run across as many pages as
   # they need — shrinking a week of recipes onto one page would be unreadable.
-  FIT_TO_PAGE = SECTIONS.keys - %w[recipes]
+  FIT_TO_PAGE = SECTIONS.keys - %w[recipes] + SHARED_PAGES.keys
 
   # Single-column lists that switch to two columns once they'd run past one
   # page, so a long week fills the page rather than shrinking into a thin
   # strip of tiny text down the left side.
-  TWO_COLUMNS_WHEN_LONG = %w[chores todos].freeze
+  TWO_COLUMNS_WHEN_LONG = %w[chores todos chores_and_todos].freeze
 
   MARGIN = [ 64, 48, 56, 48 ].freeze
+
+  # Pages that print either way round, picked on the print page — each
+  # with its own default. The chore chart in landscape is laid out like the
+  # Chore Chart's Week View — a row per category, a column per day — and in
+  # portrait lists each day's chores down the page. The shopping list keeps
+  # its order either way and just fits more columns across in landscape.
+  # Every other page stays portrait.
+  DEFAULT_LAYOUTS = { "chores" => "landscape", "shopping" => "portrait" }.freeze
+  ORIENTABLE      = DEFAULT_LAYOUTS.keys.freeze
+  LAYOUTS         = %w[landscape portrait].freeze
+
+  # Each orientable page's layout from the print page's layouts[...]
+  # params, falling back to its default.
+  def self.layouts_from(params)
+    params = params.respond_to?(:to_unsafe_h) ? params.to_unsafe_h : params.to_h
+    DEFAULT_LAYOUTS.to_h { |key, default| [ key, LAYOUTS.include?(params[key].to_s) ? params[key].to_s : default ] }
+  end
 
   include Prawn::View
   include PdfBasics
 
   # page_size and list_columns are only overridden for the tall scratch
   # document #fit_to_page measures a section in.
-  def initialize(household:, week_start:, sections:, page_size: "LETTER", list_columns: 1)
+  def initialize(household:, week_start:, sections:, layouts: {}, page_size: "LETTER", list_columns: 1)
     @household    = household
     @week_start   = week_start
     @week         = week_start...(week_start + 7)
     @sections     = SECTIONS.keys & Array(sections)
+    @layouts      = self.class.layouts_from(layouts)
     @page_size    = page_size
     @list_columns = list_columns
   end
@@ -61,6 +83,7 @@ class WeekPlanPdf
   def document
     @document ||= Prawn::Document.new(
       page_size: @page_size,
+      page_layout: page_layout_for(pages.first),
       margin: MARGIN,
       info: { Title: "#{week_title} — #{@household.family_name}", Creator: "HomemakersHaven" }
     )
@@ -73,8 +96,8 @@ class WeekPlanPdf
 
     # No title block on page one: the brand, household and week already run
     # along the top of every page (page_furniture).
-    @sections.each_with_index do |key, index|
-      start_new_page if index.positive?
+    pages.each_with_index do |key, index|
+      start_new_page(layout: page_layout_for(key)) if index.positive?
       FIT_TO_PAGE.include?(key) ? fit_to_page(key) : send("#{key}_section")
     end
 
@@ -95,6 +118,26 @@ class WeekPlanPdf
   private
 
   # ── Page layout ──────────────────────────────────────────────────────
+
+  def landscape?(key) = @layouts[key] == "landscape"
+
+  # The picked sections as pages, in order — two that share a page
+  # (SHARED_PAGES) become that page when both are picked.
+  def pages
+    SHARED_PAGES.reduce(@sections) do |keys, (page, parts)|
+      next keys unless (parts - keys).empty?
+
+      keys.flat_map { |key| key == parts.first ? [ page ] : (parts.include?(key) ? [] : [ key ]) }
+    end
+  end
+
+  # A custom page size is the measuring scratch document (#natural_height),
+  # which is already the right width — turning it would swap its sides.
+  def page_layout_for(key)
+    return :portrait if @page_size.is_a?(Array)
+
+    landscape?(key == "chores_and_todos" ? "chores" : key) ? :landscape : :portrait
+  end
 
   def week_title
     week_end = @week_start + 6
@@ -135,7 +178,7 @@ class WeekPlanPdf
 
   def natural_height(key)
     width   = document.bounds.width + MARGIN[1] + MARGIN[3]
-    scratch = self.class.new(household: @household, week_start: @week_start, sections: [ key ],
+    scratch = self.class.new(household: @household, week_start: @week_start, sections: [ key ], layouts: @layouts,
                              page_size: [ width, MEASURE_PAGE_HEIGHT ], list_columns: @list_columns)
     scratch.send(:measure_section, key)
   end
@@ -149,16 +192,19 @@ class WeekPlanPdf
     (page_count - 1) * bounds.height + (bounds.top - cursor)
   end
 
-  # Brand + week on every page, page numbers at the bottom.
+  # Brand + week on every page, page numbers at the bottom. Drawn page by
+  # page (dynamic), against each page's own size — a landscape chore chart
+  # can sit between portrait pages.
   def page_furniture
-    repeat(:all) do
+    total = page_count
+    repeat(:all, dynamic: true) do
       canvas do
         fill_color MUTED
         text_box clean("HomemakersHaven  ·  #{@household.family_name}  ·  #{week_title}"),
                  at: [ 48, bounds.top - 28 ], width: bounds.width - 96, size: 8
+        text_box "Page #{page_number} of #{total}", at: [ bounds.right - 168, 32 ], width: 120, align: :right, size: 8
       end
     end
-    number_pages "Page <page> of <total>", at: [ bounds.right - 120, -24 ], width: 120, align: :right, size: 8, color: MUTED
     fill_color INK
   end
 
@@ -474,38 +520,58 @@ class WeekPlanPdf
     end
   end
 
-  def groceries_section
-    section_heading "Grocery list"
+  # ── Shopping list: the week's groceries, then the restock list ──
+  # One page. The restock half only appears when something's marked
+  # Restock. Landscape fits three columns of items across, portrait (the
+  # default) two.
 
-    items = @household.grocery_lists.where(week_of: @week).includes(:ingredient).joins(:ingredient)
-                      .order("ingredients.family ASC, ingredients.ingredient ASC")
+  def shopping_section
+    section_heading "Shopping list"
+
+    groceries = @household.grocery_lists.where(week_of: @week).includes(:ingredient).joins(:ingredient)
+                          .order("ingredients.family ASC, ingredients.ingredient ASC").to_a
+    restock   = RestockItem.shopping_list(@household)
+    return empty_note("No grocery list has been made for this week yet, and nothing is marked Restock.") if groceries.empty? && restock.empty?
+
+    columns = landscape?("shopping") ? 3 : 2
+    grocery_part(groceries, columns)
+    restock_part(restock, columns) if restock.any?
+  end
+
+  # A heading within a page, optionally with a figure (the grocery total)
+  # set on the same line at the far right.
+  def part_heading(label, aside = nil)
+    ensure_room(64)
+    top = cursor
+    font(SERIF) { text clean(label), size: 16, color: SAGE_DARK }
+    text_box(aside, at: [ 0, top - 5 ], width: bounds.width, align: :right, size: 11, style: :bold) if aside
+    move_down 2
+  end
+
+  def grocery_part(items, columns)
+    subtotal = items.sum { |item| item.ingredient.unit_price.to_f * item.units.to_i }
+    part_heading "Groceries", (format("Estimated total: $%.2f", subtotal) if items.any?)
     return empty_note("No grocery list has been made for this week yet.") if items.empty?
 
     items.group_by { |item| item.ingredient.family.presence || "Other" }.each do |family, family_items|
-      subheading family.to_s.titleize
+      subheading Ingredient.family_label(family)
       checkbox_columns(family_items.map do |item|
         price = item.ingredient.unit_price.present? ? format("$%.2f", item.ingredient.unit_price * item.units.to_i) : nil
         [ item.ingredient.ingredient, [ "#{item.units.to_i} #{'unit'.pluralize(item.units.to_i)}", price ].compact.join("  ·  "), item.checked? ]
-      end)
+      end, columns:)
     end
-
-    subtotal = items.sum { |item| item.ingredient.unit_price.to_f * item.units.to_i }
-    move_down 8
-    text format("Estimated total: $%.2f", subtotal), size: 11, style: :bold, align: :right
   end
 
-  def restock_section
-    section_heading "Restock list"
-
-    list = RestockItem.shopping_list(@household)
-    return empty_note("Nothing is marked Restock right now.") if list.empty?
+  def restock_part(list, columns)
+    move_down 14
+    part_heading "Restock"
 
     list.each do |store, categories|
       subheading store
       categories.each do |category, items|
         text clean(category.name.upcase), size: 8, color: MUTED, character_spacing: 0.5
         move_down 3
-        checkbox_columns(items.map { |item| [ item.name, item.brand.presence, false ] })
+        checkbox_columns(items.map { |item| [ item.name, item.brand.presence, false ] }, columns:)
         move_down 4
       end
     end
@@ -515,10 +581,13 @@ class WeekPlanPdf
     section_heading "Chore chart"
 
     Chore.auto_schedule_recurring!(@household, week_start: @week_start)
-    chores = @household.weekly_chores.for_week(@week_start).includes(:assignee, chore: :chore_tasks).group_by(&:scheduled_date)
-    return empty_note("No chores on the chart this week.") if chores.values.flatten.empty?
+    weekly_chores = @household.weekly_chores.for_week(@week_start).includes(:assignee, chore: :chore_tasks).to_a
+    return empty_note("No chores on the chart this week.") if weekly_chores.empty?
 
-    people_legend(chores.values.flatten.map(&:assignee))
+    people_legend(weekly_chores.map(&:assignee))
+    return chore_board(weekly_chores) if landscape?("chores")
+
+    chores = weekly_chores.group_by(&:scheduled_date)
 
     @week.each do |date|
       day_chores = chores[date] || []
@@ -537,6 +606,127 @@ class WeekPlanPdf
     end
   end
 
+  # ── Chore chart, landscape: the Week View's board ──
+  # A row per category (all of them, plus Uncategorized when something's
+  # in it — ChoresHelper#chore_board_rows), a column per day, and the
+  # chores as cards in their person's color, each with a tick box and its
+  # tasks underneath.
+
+  BOARD_LABEL_WIDTH = 78
+  BOARD_HEADER_HEIGHT = 18
+
+  def chore_board(weekly_chores)
+    rows = @household.chore_categories.ordered.map { |category| [ category.id, category.name ] }
+    rows << [ nil, "Uncategorized" ] if weekly_chores.any? { |wc| wc.chore.chore_category_id.nil? }
+    day_width = (bounds.width - BOARD_LABEL_WIDTH) / 7
+    grouped   = weekly_chores.group_by { |wc| [ wc.scheduled_date, wc.chore.chore_category_id ] }
+
+    chore_board_header(day_width)
+    rows.each do |category_id, name|
+      cells  = @week.map { |date| grouped[[ date, category_id ]] || [] }
+      height = [ cells.map { |items| chore_card_stack_height(items, day_width - 6) }.max, 28 ].max + 6
+
+      if cursor < height
+        start_new_page
+        chore_board_header(day_width)
+      end
+
+      top = cursor
+      stroke_color RULE
+      stroke_rectangle [ 0, top ], BOARD_LABEL_WIDTH, height
+      colored_text_box clean(name), at: [ 5, top - 5 ], width: BOARD_LABEL_WIDTH - 10, size: 8.5, style: :bold, color: INK
+      cells.each_with_index do |items, i|
+        x = BOARD_LABEL_WIDTH + day_width * i
+        stroke_color RULE
+        stroke_rectangle [ x, top ], day_width, height
+        draw_chore_card_stack(items, x + 3, top - 3, day_width - 6)
+      end
+      move_cursor_to top - height
+    end
+
+    unscheduled = weekly_chores.select { |wc| wc.scheduled_date.nil? }
+    return if unscheduled.empty?
+
+    move_down 8
+    subheading "Any day"
+    checkbox_columns(unscheduled.map { |wc| chore_item(wc) }, columns: 4, padded: true)
+  end
+
+  def chore_board_header(day_width)
+    top = cursor
+    fill_color SAGE_LIGHT
+    fill_rectangle [ 0, top ], BOARD_LABEL_WIDTH + day_width * 7, BOARD_HEADER_HEIGHT
+    @week.each_with_index do |date, i|
+      colored_text_box date.strftime("%a %-d"), at: [ BOARD_LABEL_WIDTH + day_width * i + 5, top - 5 ],
+                       width: day_width - 10, size: 8.5, style: :bold, color: SAGE_DARK
+    end
+    stroke_color RULE
+    stroke_rectangle [ 0, top ], BOARD_LABEL_WIDTH + day_width * 7, BOARD_HEADER_HEIGHT
+    move_cursor_to top - BOARD_HEADER_HEIGHT
+  end
+
+  CHORE_CARD_PAD = 4
+  CHORE_CARD_BOX = 7
+
+  # The card's name, and its tasks one per line.
+  def chore_card_lines(weekly_chore)
+    [ clean(weekly_chore.chore.name), weekly_chore.chore.chore_tasks.map { |task| clean("• #{task.name}") } ]
+  end
+
+  def chore_card_height(weekly_chore, width)
+    name, tasks = chore_card_lines(weekly_chore)
+    text_width = width - CHORE_CARD_PAD * 2 - CHORE_CARD_BOX - 4
+    height = height_of(name, width: text_width, size: 8)
+    height += tasks.sum { |task| height_of(task, width: text_width, size: 6.5) } + 1 if tasks.any?
+    height + CHORE_CARD_PAD * 2
+  end
+
+  def chore_card_stack_height(weekly_chores, width)
+    return 0 if weekly_chores.empty?
+
+    weekly_chores.sum { |wc| chore_card_height(wc, width) } + CARD_GAP * (weekly_chores.size - 1)
+  end
+
+  def draw_chore_card_stack(weekly_chores, x, top, width)
+    weekly_chores.each do |weekly_chore|
+      height = chore_card_height(weekly_chore, width)
+      colors = weekly_chore.assignee && Palette.print_colors(weekly_chore.assignee.color)
+      done   = weekly_chore.completed?
+
+      # A person's color, or white with a rule like the board's unassigned cards.
+      fill_color colors ? colors[:card] : "ffffff"
+      fill_rounded_rectangle [ x, top ], width, height, 3
+      unless colors
+        stroke_color RULE
+        stroke_rounded_rectangle [ x, top ], width, height, 3
+      end
+
+      box_x = x + CHORE_CARD_PAD
+      box_top = top - CHORE_CARD_PAD - 1
+      stroke_color MUTED
+      stroke_rectangle [ box_x, box_top ], CHORE_CARD_BOX, CHORE_CARD_BOX
+      if done
+        fill_color SAGE
+        fill_rectangle [ box_x + 1.5, box_top - 1.5 ], CHORE_CARD_BOX - 3, CHORE_CARD_BOX - 3
+      end
+
+      name, tasks = chore_card_lines(weekly_chore)
+      text_x = box_x + CHORE_CARD_BOX + 4
+      text_width = width - CHORE_CARD_PAD * 2 - CHORE_CARD_BOX - 4
+      ink = done ? MUTED : (colors ? colors[:text] : INK)
+      line_top = top - CHORE_CARD_PAD
+      colored_text_box name, at: [ text_x, line_top ], width: text_width, size: 8, style: :bold, color: ink
+      line_top -= height_of(name, width: text_width, size: 8) + 1
+      tasks.each do |task|
+        colored_text_box task, at: [ text_x, line_top ], width: text_width, size: 6.5, color: done ? MUTED : (colors ? colors[:text] : MUTED)
+        line_top -= height_of(task, width: text_width, size: 6.5)
+      end
+
+      top -= height + CARD_GAP
+    end
+    fill_color INK
+  end
+
   # "Clean bathroom - Bob" on one line, with the chore's tasks (if any)
   # underneath: "Clean toilet · Mop floors · Wipe sink". A checkbox_columns
   # item.
@@ -546,19 +736,28 @@ class WeekPlanPdf
     [ label, tasks, weekly_chore.completed?, weekly_chore.assignee ]
   end
 
-  def todos_section
+  # columns: overrides the usual one (or two, once the list would run past
+  # a page — @list_columns, see #fit_to_page).
+  def todos_section(columns: @list_columns)
     section_heading "To-dos"
 
     todos = printed_todos
     return empty_note("Nothing in progress right now.") if todos.empty?
 
     people_legend(todos.map(&:assignee))
-    # One column normally; two once the list would run past a page
-    # (@list_columns — see #fit_to_page).
     checkbox_columns(todos.map do |todo|
       dates = todo.start_date && todo.end_date ? "#{todo.start_date.strftime('%b %-d')} – #{todo.end_date.strftime('%b %-d')}" : nil
       [ todo.title, [ todo.assignee&.name, todo.priority_label, dates ].compact.join("  ·  "), false, todo.assignee ]
-    end, columns: @list_columns, padded: true)
+    end, columns:, padded: true)
+  end
+
+  # The chore chart, then the to-dos, on one page (SHARED_PAGES). A
+  # landscape page spreads the to-dos three across rather than leaving them
+  # in a strip down the left.
+  def chores_and_todos_section
+    chores_section
+    move_down 20
+    todos_section(columns: landscape?("chores") ? 3 : @list_columns)
   end
 
   def calendar_section

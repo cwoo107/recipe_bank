@@ -41,7 +41,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
 
   test "only the chosen pages go in" do
     all_pages = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: WeekPlanPdf::SECTIONS.keys).render
-    one_page  = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[groceries]).render
+    one_page  = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render
 
     assert_operator page_count(all_pages), :>, page_count(one_page)
     assert_equal 1, page_count(one_page)
@@ -53,7 +53,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
   end
 
   test "empty weeks still print, with a note on each page" do
-    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY + 70, sections: WeekPlanPdf::SECTIONS.keys - %w[restock todos])
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY + 70, sections: WeekPlanPdf::SECTIONS.keys - %w[todos])
     assert pdf.render.start_with?("%PDF")
   end
 
@@ -126,12 +126,12 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     /#{r}\d* #{g}\d* #{b}\d* scn/
   end
 
-  test "the printed chore chart puts the assignee after the title and lists the chore's tasks" do
+  test "the portrait chore chart puts the assignee after the title and lists the chore's tasks" do
     chore = chores(:one) # "Take out trash", assigned to Bob
     chore.chore_tasks.create!(name: "Rinse bins")
     chore.chore_tasks.create!(name: "Wheel to curb")
 
-    lines = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render)
+    lines = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores], layouts: { "chores" => "portrait" }).render)
 
     assert_includes lines, "Take out trash - #{household_members(:one).name}"
     assert(lines.any? { |line| line.include?("Rinse bins") && line.include?("Wheel to curb") }, "tasks listed: #{lines.inspect}")
@@ -154,8 +154,8 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
       assert(lines.any? { |line| line.include?("number 79") }, "#{section} still includes the last item")
     end
 
-    # Each chosen section still gets its own page.
-    assert_equal 2, page_count(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores todos]).render)
+    # Picked together, they share the one page.
+    assert_equal 1, page_count(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores todos]).render)
   end
 
   test "a long chore chart and to-do list switch to two columns; short ones stay in one" do
@@ -196,7 +196,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
 
     { "chores" => [ "Take out trash - #{bob.name}", "Sweep porch" ],
       "todos"  => [ "Assigned job", "Unassigned job" ] }.each do |section, (assigned, unassigned_label)|
-      positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: [ section ]).render)
+      positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: [ section ], layouts: { "chores" => "portrait" }).render)
       x_of = ->(label) { positions.find { |_, text| text == label }&.first }
 
       assert x_of.(assigned), "#{section}: found #{assigned.inspect} in #{positions.map(&:last).inspect}"
@@ -228,5 +228,195 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
       next unless x
       [ shift + x.to_f * factor, pdf_text_lines(block).join ]
     end
+  end
+
+  # Each page's [width, height] in points, in order.
+  def page_sizes(pdf) = pdf.scan(%r{/MediaBox \[0 0 ([\d.]+) ([\d.]+)\]}).map { |w, h| [ w.to_f, h.to_f ] }
+
+  LETTER_PORTRAIT  = [ 612.0, 792.0 ].freeze
+  LETTER_LANDSCAPE = [ 792.0, 612.0 ].freeze
+
+  test "the print page offers the chore chart landscape (the default) or portrait" do
+    get new_week_print_url(week: MONDAY.iso8601)
+
+    assert_select "input[type=radio][name='layouts[chores]'][value=landscape][checked]"
+    assert_select "input[type=radio][name='layouts[chores]'][value=portrait]:not([checked])"
+  end
+
+  test "the chore chart prints landscape by default, between portrait pages" do
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[meals chores calendar]).render
+
+    assert_equal [ LETTER_PORTRAIT, LETTER_LANDSCAPE, LETTER_PORTRAIT ], page_sizes(pdf)
+  end
+
+  test "a landscape chore chart can be the first page" do
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores calendar]).render
+
+    assert_equal [ LETTER_LANDSCAPE, LETTER_PORTRAIT ], page_sizes(pdf)
+  end
+
+  test "portrait keeps the chore chart as the list by day" do
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores], layouts: { "chores" => "portrait" }).render
+
+    assert_equal [ LETTER_PORTRAIT ], page_sizes(pdf)
+  end
+
+  test "the landscape chore chart is laid out like the Week View: categories down, days across" do
+    chore = chores(:one) # "Take out trash", assigned to Bob, in "Chores"
+    chore.chore_tasks.create!(name: "Rinse bins")
+
+    positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render)
+    x_of = ->(label) { positions.find { |_, text| text == label }&.first }
+    texts = positions.map(&:last)
+
+    assert_includes texts, "Mon 5"
+    assert_includes texts, "Sun 11"
+    assert(texts.any? { |text| text.include?("Rinse bins") }, "tasks on the card: #{texts.inspect}")
+    # The chore sits in Tuesday's column (it's scheduled Mon + 1).
+    assert_operator x_of.("Take out trash"), :>, x_of.("Tue 6") - 1
+    assert_operator x_of.("Take out trash"), :<, x_of.("Wed 7")
+  end
+
+  test "a landscape chore chart with lots of chores still fits on one page" do
+    category = @household.chore_categories.create!(name: "Kitchen")
+    15.times do |n|
+      chore = @household.chores.create!(name: "Chore #{n}", frequency: "monthly", chore_category: category, assignee: household_members(:one))
+      3.times { |t| chore.chore_tasks.create!(name: "Step #{t} of a fairly long task description") }
+      @household.weekly_chores.create!(chore:, week_start: MONDAY, scheduled_date: MONDAY + (n % 7))
+    end
+
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render
+    assert_equal [ LETTER_LANDSCAPE ], page_sizes(pdf)
+  end
+
+  test "the orientation picked on the print page reaches the PDF" do
+    get week_print_url(format: :pdf, week: MONDAY.iso8601, sections: %w[chores], layouts: { chores: "portrait" })
+    assert_equal [ LETTER_PORTRAIT ], page_sizes(response.body)
+
+    get week_print_url(format: :pdf, week: MONDAY.iso8601, sections: %w[chores])
+    assert_equal [ LETTER_LANDSCAPE ], page_sizes(response.body)
+  end
+
+  # ── Shopping list: groceries, then restock, on one page ──
+
+  test "the print page has one Shopping list in place of the grocery and restock pages" do
+    get new_week_print_url(week: MONDAY.iso8601)
+
+    assert_select "input[name='sections[]'][value=shopping][checked]"
+    assert_select "input[name='sections[]'][value=groceries]", 0
+    assert_select "input[name='sections[]'][value=restock]", 0
+    assert_select "input[type=radio][name='layouts[shopping]'][value=portrait][checked]"
+    assert_select "input[type=radio][name='layouts[shopping]'][value=landscape]:not([checked])"
+  end
+
+  test "older links naming the grocery or restock page get the shopping list" do
+    get new_week_print_url(week: MONDAY.iso8601, sections: %w[groceries])
+    assert_select "input[name='sections[]'][value=shopping][checked]"
+
+    get week_print_url(format: :pdf, week: MONDAY.iso8601, sections: %w[restock])
+    assert_equal 1, page_count(response.body)
+  end
+
+  test "the shopping list is the groceries, then the restock list, on one page" do
+    lines = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render)
+
+    groceries = lines.index("Groceries")
+    restock   = lines.index("Restock")
+    assert groceries, "groceries heading in #{lines.inspect}"
+    assert restock, "restock heading in #{lines.inspect}"
+    assert_operator groceries, :<, restock
+    assert_includes lines, restock_items(:one).name
+  end
+
+  test "with nothing marked Restock, the shopping list is just the groceries" do
+    restock_items(:one).mark_stocked! # the only one setup marked Restock
+    assert_empty RestockItem.shopping_list(@household)
+
+    lines = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render)
+
+    assert_includes lines, "Groceries"
+    assert_not_includes lines, "Restock"
+  end
+
+  test "the shopping list prints portrait by default, landscape when picked" do
+    portrait  = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render
+    landscape = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping], layouts: { "shopping" => "landscape" }).render
+
+    assert_equal [ LETTER_PORTRAIT ], page_sizes(portrait)
+    assert_equal [ LETTER_LANDSCAPE ], page_sizes(landscape)
+
+    get week_print_url(format: :pdf, week: MONDAY.iso8601, sections: %w[shopping], layouts: { shopping: "landscape" })
+    assert_equal [ LETTER_LANDSCAPE ], page_sizes(response.body)
+  end
+
+  test "the grocery total sits on the Groceries heading's line, at the far right" do
+    positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render)
+    heading = positions.find { |_, text| text == "Groceries" }
+    total   = positions.find { |_, text| text.start_with?("Estimated total") }
+
+    assert heading && total, positions.map(&:last).inspect
+    assert_operator total.first, :>, 300 # right-hand side of the page
+  end
+
+  test "the shopping list stays on the print page unless both grocery and restock steps are left out" do
+    @household.update!(excluded_planner_sections: %w[groceries])
+    assert_includes @household.default_print_sections, "shopping"
+
+    @household.update!(excluded_planner_sections: %w[groceries restock])
+    assert_not_includes @household.default_print_sections, "shopping"
+  end
+
+  # ── Chore chart + to-dos on one page ──
+
+  test "the chore chart and to-dos share a page when both are picked" do
+    @household.todos.create!(title: "Paint the shed", priority: :medium, status: "in_progress", user: users(:one))
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[meals chores todos calendar]).render
+
+    # Meals, then chores + to-dos on one landscape page, then the calendar.
+    assert_equal [ LETTER_PORTRAIT, LETTER_LANDSCAPE, LETTER_PORTRAIT ], page_sizes(pdf)
+
+    lines = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores todos]).render)
+    assert_operator lines.index("Chore chart"), :<, lines.index("To-dos")
+    assert_includes lines, "Paint the shed"
+  end
+
+  test "the shared page follows the chore chart's orientation" do
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores todos], layouts: { "chores" => "portrait" }).render
+    assert_equal [ LETTER_PORTRAIT ], page_sizes(pdf)
+  end
+
+  test "either one still prints on its own" do
+    only_chores = pdf_text_lines(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render)
+    only_todos  = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[todos]).render
+
+    assert_not_includes only_chores, "To-dos"
+    assert_equal [ LETTER_PORTRAIT ], page_sizes(only_todos)
+  end
+
+  test "a long chore chart and to-do list still fit on their one page" do
+    20.times { |n| @household.todos.create!(title: "In-progress job #{n} with a longer title", priority: :medium, status: "in_progress", user: users(:one)) }
+    category = @household.chore_categories.create!(name: "Kitchen")
+    12.times do |n|
+      chore = @household.chores.create!(name: "Chore #{n}", frequency: "monthly", chore_category: category)
+      @household.weekly_chores.create!(chore:, week_start: MONDAY, scheduled_date: MONDAY + (n % 7))
+    end
+
+    %w[landscape portrait].each do |layout|
+      pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores todos], layouts: { "chores" => layout }).render
+      assert_equal 1, page_count(pdf), "#{layout} fits one page"
+    end
+  end
+
+  test "the print page groups the chore chart and to-dos, each with its own tick box, under one orientation" do
+    get new_week_print_url(week: MONDAY.iso8601)
+
+    assert_select "#print_options_chores_and_todos" do
+      assert_select "input[type=checkbox][name='sections[]'][value=chores][checked]"
+      assert_select "input[type=checkbox][name='sections[]'][value=todos][checked]"
+      assert_select "[role=radiogroup][aria-label=?]", "Chore chart and to-dos orientation", 1
+      assert_select "input[type=radio][name='layouts[chores]']", 2
+    end
+    assert_select "input[name='sections[]'][value=chores]", 1
+    assert_select "input[name='sections[]'][value=todos]", 1
   end
 end

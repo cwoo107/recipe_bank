@@ -85,7 +85,7 @@
   <% end %>
 
   <td id="chore_last_done_<%= chore.id %>" class="<%= cell %> whitespace-nowrap">
-    <div class="py-1.5"><%= render "chores/last_done", chore: chore %></div>
+    <%= render "chores/last_done_cell", chore: chore %>
   </td>
   <td id="chore_next_due_<%= chore.id %>" class="<%= cell %> whitespace-nowrap">
     <div class="py-1.5"><%= render "chores/next_due", chore: chore %></div>

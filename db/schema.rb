@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_03_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -138,6 +138,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_200000) do
     t.integer "assignee_id"
     t.integer "chore_category_id"
     t.datetime "created_at", null: false
+    t.date "daily_since"
     t.integer "default_weekday"
     t.date "default_weekday_started_on"
     t.text "description"
@@ -517,7 +518,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_03_200000) do
     t.datetime "updated_at", null: false
     t.date "week_start", null: false
     t.index ["assignee_id"], name: "index_weekly_chores_on_assignee_id"
-    t.index ["chore_id", "week_start"], name: "index_weekly_chores_on_chore_id_and_week_start", unique: true
+    t.index ["chore_id", "week_start", "scheduled_date"], name: "index_weekly_chores_on_chore_week_and_date", unique: true
     t.index ["chore_id"], name: "index_weekly_chores_on_chore_id"
     t.index ["household_id", "week_start", "scheduled_date"], name: "idx_on_household_id_week_start_scheduled_date_a8aa11feb7"
     t.index ["household_id", "week_start"], name: "index_weekly_chores_on_household_id_and_week_start"

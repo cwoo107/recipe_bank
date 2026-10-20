@@ -157,13 +157,16 @@ class Household < ApplicationRecord
   end
 
   # Print pages that follow a planner step when it's left out — the recipes
-  # page belongs to the meal plan.
-  PRINT_SECTIONS_FOR_PLANNER = { "meals" => %w[meals recipes] }.freeze
+  # page belongs to the meal plan. Groceries and restocking share the
+  # shopping list page, which only goes when both are left out.
+  PRINT_SECTIONS_FOR_PLANNER = { "meals" => %w[meals recipes], "groceries" => [], "restock" => [] }.freeze
 
   # What the print page ticks by default: every page, minus those belonging
   # to steps left out of the planner.
   def default_print_sections
-    left_out = Array(excluded_planner_sections).flat_map { |key| PRINT_SECTIONS_FOR_PLANNER.fetch(key, [ key ]) }
+    excluded = Array(excluded_planner_sections)
+    left_out = excluded.flat_map { |key| PRINT_SECTIONS_FOR_PLANNER.fetch(key, [ key ]) }
+    left_out << "shopping" if (%w[groceries restock] - excluded).empty?
     WeekPlanPdf::SECTIONS.keys - left_out
   end
 

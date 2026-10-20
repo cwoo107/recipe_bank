@@ -23,7 +23,7 @@ require "csv"
 #
 # Households' own copies are never touched — only the catalog.
 class Ingredient::CatalogImport
-  FAMILIES = IngredientsHelper::INGREDIENT_FAMILIES.keys.freeze
+  FAMILIES = Ingredient::FAMILIES.keys.freeze
 
   INGREDIENT_COLUMNS = %w[ingredient brand family organic unit_price unit_servings].freeze
   NUTRITION_COLUMNS  = %w[serving_size serving_unit calories protein total_fat total_carb].freeze

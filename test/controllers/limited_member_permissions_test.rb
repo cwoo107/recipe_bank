@@ -189,7 +189,7 @@ class LimitedMemberPermissionsTest < ActionDispatch::IntegrationTest
 
   test "every page still renders for a limited member" do
     [ dashboard_url, recipes_url, meals_url, grocery_lists_url, grocery_lists_url(list: "restock"), restock_items_url,
-      chores_url, weekly_chores_url, todos_url, month_calendars_url(year: 2026, month: 1),
+      weekly_chores_url(view: "table"), weekly_chores_url, todos_url, month_calendars_url(year: 2026, month: 1),
       week_calendars_url, day_calendars_url, household_url, household_member_url(@bob_member) ].each do |url|
       get url
       assert_response :success, "expected #{url} to render"
@@ -199,7 +199,7 @@ class LimitedMemberPermissionsTest < ActionDispatch::IntegrationTest
   test "and for an admin, with every control in place" do
     sign_in @alice
     [ dashboard_url, recipes_url, meals_url, grocery_lists_url(list: "restock"), restock_items_url,
-      chores_url, weekly_chores_url, todos_url, month_calendars_url(year: 2026, month: 1),
+      weekly_chores_url(view: "table"), weekly_chores_url, todos_url, month_calendars_url(year: 2026, month: 1),
       week_calendars_url, day_calendars_url ].each do |url|
       get url
       assert_response :success, "expected #{url} to render"

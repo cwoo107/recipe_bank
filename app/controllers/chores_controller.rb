@@ -3,9 +3,9 @@ class ChoresController < ApplicationController
   before_action :require_household_admin!, except: :index
   before_action :set_chore, only: %i[edit update destroy]
 
+  # Manage Chores is now the Chore Chart's Table View.
   def index
-    @chores = current_household.chores.ordered.includes(:assignee, :chore_category, :chore_tasks)
-    @categories = current_household.chore_categories.ordered
+    redirect_to weekly_chores_path(view: "table")
   end
 
   def new
@@ -22,7 +22,7 @@ class ChoresController < ApplicationController
 
     if @chore.save
       reschedule_from_params
-      redirect_to safe_return_to || chores_path, notice: "Chore was successfully created."
+      redirect_to safe_return_to || weekly_chores_path(view: "table"), notice: "Chore was successfully created."
     else
       render :new, status: :unprocessable_entity
     end
@@ -34,13 +34,16 @@ class ChoresController < ApplicationController
   def update
     saved = @chore.update(chore_params.except(:default_weekday))
     reschedule_from_params if saved
+    # A rejected Last done (a future date) shows its error but goes back to
+    # the saved date, so Next due isn't worked out from it.
+    @chore.restore_attributes([ :last_completed_at ]) unless saved
 
     if params[:inline].present?
       render :refresh_row, formats: :turbo_stream, status: saved ? :ok : :unprocessable_entity
     elsif saved
       # An edit that started somewhere else (return_to) lands back there
-      # rather than on the Manage Chores page.
-      redirect_to safe_return_to || chores_path, notice: "Chore was successfully updated.", status: :see_other
+      # rather than on the Table View.
+      redirect_to safe_return_to || weekly_chores_path(view: "table"), notice: "Chore was successfully updated.", status: :see_other
     else
       render :edit, status: :unprocessable_entity
     end
@@ -48,7 +51,7 @@ class ChoresController < ApplicationController
 
   def destroy
     @chore.destroy!
-    redirect_to chores_path, notice: "Chore was successfully deleted.", status: :see_other
+    redirect_to weekly_chores_path(view: "table"), notice: "Chore was successfully deleted.", status: :see_other
   end
 
   private
@@ -58,7 +61,7 @@ class ChoresController < ApplicationController
   end
 
   def chore_params
-    permitted = scoped_assignee_params(params.require(:chore).permit(:name, :description, :frequency, :assignee_id, :chore_category_id, :default_weekday))
+    permitted = scoped_assignee_params(params.require(:chore).permit(:name, :description, :frequency, :assignee_id, :chore_category_id, :default_weekday, :last_completed_at))
     # Only this household's categories — anything else is quietly dropped
     # rather than surfacing another household's record.
     if permitted[:chore_category_id].present? && !current_household.chore_categories.exists?(permitted[:chore_category_id])

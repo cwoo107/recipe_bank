@@ -62,7 +62,7 @@
   <div class="flex gap-3">
     <%= f.submit chore.persisted? ? "Save changes" : "Create chore",
           class: "inline-flex items-center rounded-md bg-[#5f734c] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer transition-colors" %>
-    <%= link_to "Cancel", params[:return_to].presence || chores_path,
+    <%= link_to "Cancel", params[:return_to].presence || weekly_chores_path(view: "table"),
           class: "inline-flex items-center rounded-md bg-white px-4 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
   </div>
 <% end %>

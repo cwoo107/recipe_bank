@@ -33,6 +33,11 @@
   <%= f.select :default_weekday, chore_weekday_options, { include_blank: "No set day" }, class: input_class %>
 </div>
 
+<div>
+  <%= f.label :last_completed_at, "Last done", class: label_class %>
+  <%= f.date_field :last_completed_at, value: chore.last_completed_at&.to_date, max: Date.current, class: input_class %>
+</div>
+
 <% if current_household.assignable? %>
   <div>
     <%= f.label :assignee_id, "Assigned to", class: label_class %>

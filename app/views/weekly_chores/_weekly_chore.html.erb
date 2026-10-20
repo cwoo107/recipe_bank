@@ -6,6 +6,9 @@
      data-recurring="<%= chore.recurring? %>"
      data-chore-name="<%= chore.name %>"
      data-frequency-label="<%= chore.frequency_label %>"
+     <%# A daily chore has a card on every day — the board won't drop one onto
+         a day that already has another (see chore_board_controller.js). %>
+     <%= tag.attributes(data: { daily_chore_id: (chore.id if chore.daily?) }) %>
      data-controller="chore-item"
      title="<%= chore_card_assignee_label(weekly_chore.assignee) %>"
      class="chore-card weekly-chore-<%= weekly_chore.id %> group relative rounded-md border <%= chore_card_color_classes(weekly_chore.assignee) %> p-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
@@ -40,7 +43,15 @@
           <%= chore.name %>
           <span class="sr-only">· <%= chore_card_assignee_label(weekly_chore.assignee) %></span>
         </p>
-        <% if chore.chore_tasks.any? %>
+        <% if household_admin? %>
+          <%# Add, rename and remove tasks right on the card (the same controls
+              as the Table View's Tasks column). They opt back into pointer
+              events, so dragging starts from the rest of the card. Refreshed
+              in every copy of the card by chore_tasks/refresh.turbo_stream.erb. %>
+          <div class="chore-tasks-board-<%= chore.id %> pointer-events-auto mt-0.5 <%= 'opacity-50' if weekly_chore.completed? %>">
+            <%= render "chore_tasks/list", chore: chore, from: "board" %>
+          </div>
+        <% elsif chore.chore_tasks.any? %>
           <ul class="mt-0.5 space-y-px text-[10px] leading-snug text-gray-600 dark:text-gray-300 <%= 'opacity-50' if weekly_chore.completed? %>"
               aria-label="Tasks">
             <% chore.chore_tasks.each do |task| %>

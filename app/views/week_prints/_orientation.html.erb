@@ -1,0 +1,15 @@
+<%# locals: (key:, current:, label:) %>
+<%# Which way round a page prints (WeekPlanPdf::ORIENTABLE). `label` names
+    what it applies to, for screen readers. %>
+<div role="radiogroup" aria-label="<%= label %>" class="inline-flex rounded-lg bg-gray-100 dark:bg-white/5 p-1 gap-1">
+  <% { "landscape" => "Landscape", "portrait" => "Portrait" }.each do |layout, text| %>
+    <label class="cursor-pointer">
+      <%= radio_button_tag "layouts[#{key}]", layout, current == layout, id: "layouts_#{key}_#{layout}", class: "peer sr-only" %>
+      <span class="inline-flex items-center rounded-md px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white
+                   peer-checked:bg-white peer-checked:text-gray-900 peer-checked:shadow-xs dark:peer-checked:bg-white/15 dark:peer-checked:text-white
+                   peer-focus-visible:outline-2 peer-focus-visible:outline-[#5f734c]">
+        <%= text %>
+      </span>
+    </label>
+  <% end %>
+</div>

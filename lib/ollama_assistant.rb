@@ -204,24 +204,21 @@ class OllamaAssistant
       #{ingredients.map { |i| "- #{i[:name]}" }.join("\n")}
       
       Available families:
-      - protein: meat, poultry, fish, eggs, tofu, beans, legumes
-      - produce: fruits, vegetables, fresh herbs
-      - dairy: milk, cheese, yogurt, butter, cream
-      - grain: bread, pasta, rice, flour, oats, cereal
-      - fat: cooking oils, butter, lard, shortening
-      - spices: dried herbs, spices, seasonings, salt, pepper
+      #{family_descriptions}
       
       Rules:
       - Salt, pepper, and all dried seasonings = spices
       - Fresh herbs (basil, cilantro, parsley) = produce
       - Butter and cream can be either dairy or fat, choose dairy
-      - Stock/broth = protein
+      - Stock/broth and canned beans = canned; dried beans and lentils = protein
+      - Frozen versions of anything (frozen peas, frozen chicken) = frozen
+      - Use grocery only when nothing else fits
       
       Respond with ONLY valid JSON array (no markdown, no explanation):
       [
         {
           "name": "ingredient name",
-          "family": "one of: protein, produce, dairy, grain, fat, spices"
+          "family": "one of: #{Ingredient::FAMILIES.keys.join(', ')}"
         }
       ]
     PROMPT
@@ -244,12 +241,7 @@ class OllamaAssistant
       #{items}
 
       Available families:
-      - protein: meat, poultry, fish, eggs, tofu, beans, legumes
-      - produce: fruits, vegetables, fresh herbs
-      - dairy: milk, cheese, yogurt, butter, cream
-      - grain: bread, pasta, rice, flour, oats, cereal
-      - fat: cooking oils, butter, lard, shortening
-      - spices: dried herbs, spices, seasonings, salt, pepper
+      #{family_descriptions}
 
       Respond with ONLY valid JSON array (no markdown, no explanation):
       [
@@ -260,7 +252,7 @@ class OllamaAssistant
           "name": "clean ingredient name",
           "quantity": number,
           "unit": "standardized unit or null",
-          "family": "one of: protein, produce, dairy, grain, fat, spices"
+          "family": "one of: #{Ingredient::FAMILIES.keys.join(', ')}"
         }
       ]
     PROMPT
@@ -315,11 +307,42 @@ class OllamaAssistant
     base.merge(name: name)
   end
 
+  # The prompt's "Available families" list, from Ingredient::FAMILIES.
+  def family_descriptions
+    Ingredient::FAMILIES.map { |key, config| "- #{key}: #{config[:description]}" }.join("\n      ")
+  end
+
   def guess_family_programmatically(name)
     name = name.downcase
 
-    # Protein (check first - most specific)
-    if name.match?(/\b(chicken|beef|pork|turkey|duck|lamb|veal|venison|fish|salmon|tuna|cod|tilapia|trout|shrimp|prawn|lobster|crab|scallop|clam|mussel|oyster|egg|tofu|tempeh|seitan|bean|lentil|chickpea|pea|stock|broth|meat|breast|thigh|drumstick|wing|ground|steak|chop|roast|bacon|sausage|ham)\b/)
+    # Frozen (check first - "frozen peas" is frozen, not produce)
+    return 'frozen' if name.match?(/\b(frozen|ice cream|popsicle|sorbet)\b/)
+
+    # Canned & jarred (before protein/produce - "canned black beans", "chicken broth")
+    if name.match?(/\b(canned|jarred|stock|broth|bouillon|tomato paste|tomato sauce|crushed tomatoes|diced tomatoes|coconut milk|evaporated milk|condensed milk)\b/)
+      return 'canned'
+    end
+
+    # Condiments (before produce - "chili sauce", "apple cider vinegar")
+    if name.match?(/\b(sauce|ketchup|mustard|mayo|mayonnaise|vinegar|dressing|salsa|relish|sriracha|soy sauce|tamari|worcestershire|honey|maple syrup|syrup|jam|jelly|preserves|pesto|hummus|aioli|chutney)\b/)
+      return 'condiments'
+    end
+
+    # Baking (before spices - "vanilla extract")
+    if name.match?(/\b(sugar|baking soda|baking powder|yeast|cornstarch|cocoa|chocolate chips?|chocolate|extract|gelatin|sprinkles|molasses)\b/)
+      return 'baking'
+    end
+
+    # Nuts & seeds
+    if name.match?(/\b(almonds?|walnuts?|pecans?|cashews?|pistachios?|peanuts?|hazelnuts?|macadamia|pine nuts?|nuts?|seeds?|chia|flax|flaxseed|peanut butter|almond butter|raisins?|dried fruit)\b/)
+      return 'nuts'
+    end
+
+    # Beverages
+    return 'beverages' if name.match?(/\b(coffee|espresso|tea|juice|soda|wine|beer|sparkling water|kombucha)\b/)
+
+    # Protein
+    if name.match?(/\b(chicken|beef|pork|turkey|duck|lamb|veal|venison|fish|salmon|tuna|cod|tilapia|trout|shrimp|prawn|lobster|crab|scallop|clam|mussel|oyster|egg|tofu|tempeh|seitan|beans?|lentils?|chickpeas?|peas?|meat|breast|thigh|drumstick|wing|ground|steak|chop|roast|bacon|sausage|ham)\b/)
       return 'protein'
     end
 
@@ -348,7 +371,7 @@ class OllamaAssistant
       return 'produce'
     end
 
-    # Default to produce if unclear
-    'produce'
+    # Default to the catch-all if unclear
+    'grocery'
   end
 end

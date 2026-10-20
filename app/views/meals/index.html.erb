@@ -1,6 +1,9 @@
 <% content_for :title, "Meals" %>
 
-<div class="w-full" data-controller="meal-calendar week-stats">
+<%# meal-board: drag a meal to another day or meal type (admins only). %>
+<div class="w-full"
+     data-controller="meal-calendar week-stats <%= 'meal-board' if household_admin? %>">
+  <%= render "meals/move_dialog" if household_admin? %>
   <div class="sm:flex sm:items-center sm:justify-between">
     <div>
       <h1 class="text-5xl  tracking-tight text-olive-800 dark:text-[#e8ede3]">
@@ -141,7 +144,13 @@
           <% %w[breakfast lunch dinner].each_with_index do |type, col_i| %>
             <% meals_for_cell = @calendar_meals[[i, type]] || [] %>
             <div class="group/cell flex flex-col p-2 min-h-32 <%= col_i < 2 ? 'border-r border-gray-200 dark:border-white/10' : '' %>">
-              <div id="desktop_cell_<%= i %>_<%= type %>" class="flex flex-col gap-2">
+              <%# While a meal's being dragged the add buttons hide and this
+                  list fills the cell, so an empty cell is still a drop target. %>
+              <div id="desktop_cell_<%= i %>_<%= type %>"
+                   class="flex flex-col gap-2 in-data-meal-dragging:flex-1 in-data-meal-dragging:min-h-20"
+                   data-meal-board-target="list"
+                   data-meal-name="<%= type.capitalize %>"
+                   data-date="<%= current_date.iso8601 %>">
                 <% meals_for_cell.each do |meal| %>
                   <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
                 <% end %>
@@ -247,13 +256,14 @@
             </h2>
           </div>
 
-          <div id="extra_meals_<%= type %>" class="flex flex-col gap-2 p-3 min-h-24">
+          <div id="extra_meals_<%= type %>" class="flex flex-col gap-2 p-3 min-h-24"
+               data-meal-board-target="list" data-meal-name="<%= type.capitalize %>">
             <% (@extra_meals[type] || []).each do |meal| %>
               <%= render partial: "meals/meal", locals: { meal: meal, date: @date } %>
             <% end %>
 
             <% if (@extra_meals[type] || []).empty? %>
-              <p id="no_<%= type %>_message" class="text-sm text-gray-400 dark:text-gray-500 italic py-2 px-1">No <%= type.pluralize %> this week.</p>
+              <%= render "meals/no_extra_meals", type: type %>
             <% end %>
           </div>
           <div class="px-3 pb-2 -mt-2">

@@ -1,0 +1,29 @@
+<%# A meal dragged to another day or meal type (see MealsController#move).
+    The dragged card is already sitting where it was dropped — re-render
+    every copy in place so it picks up the new meal type's colors. A day's
+    meal shows twice (desktop grid + mobile list) and the mobile copy didn't
+    move with the drag, so it's taken out of its old cell and put in its new
+    one. %>
+<% type = @meal.meal_name.downcase %>
+
+<%= turbo_stream.replace_all "#meal_#{@meal.id}", partial: "meals/meal", locals: { meal: @meal, date: @date } %>
+
+<%= turbo_stream.remove_all "[id^='mobile_cell_'] > #meal_#{@meal.id}" %>
+<% if @meal.calendar_meal? %>
+  <%= turbo_stream.append "mobile_cell_#{(@meal.date - @date).to_i}_#{type}",
+        partial: "meals/meal", locals: { meal: @meal, date: @date } %>
+<% else %>
+  <%= turbo_stream.remove "no_#{type}_message" %>
+<% end %>
+
+<%# Dragged out of the snacks or desserts section, leaving it empty. %>
+<% if Meal::EXTRA_TYPES.include?(@old_type) && @old_type != type && @old_extras_left.zero? %>
+  <%= turbo_stream.append "extra_meals_#{@old_type}" do %>
+    <%= render "meals/no_extra_meals", type: @old_type %>
+  <% end %>
+<% end %>
+
+<%= turbo_stream.update "week_stats_body" do %>
+  <%= render "meals/week_stats_body", week_stats: @week_stats, date: @date, member: nil,
+             person_stats: @person_stats_available %>
+<% end %>

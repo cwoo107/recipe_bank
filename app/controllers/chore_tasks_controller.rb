@@ -1,6 +1,7 @@
-# Adds, renames and removes a chore's tasks from Manage Chores (the Tasks
-# column on desktop, the edit modal on mobile). Every response re-renders
-# the chore's task lists in place — see chore_tasks/refresh.turbo_stream.erb.
+# Adds, renames and removes a chore's tasks — from the Chore Chart's Table
+# View (the Tasks column on desktop, the edit modal on mobile) and from the
+# cards on its Week View (from: "board"). Every response re-renders the
+# chore's task lists in place — see chore_tasks/refresh.turbo_stream.erb.
 class ChoreTasksController < ApplicationController
   # Limited members can look but not change these (see ApplicationController).
   before_action :require_household_admin!
@@ -42,14 +43,14 @@ class ChoreTasksController < ApplicationController
   end
 
   def from
-    params[:from] == "mobile" ? "mobile" : "desktop"
+    %w[mobile board].include?(params[:from]) ? params[:from] : "desktop"
   end
 
   def refresh
     @chore.chore_tasks.reset
     respond_to do |format|
       format.turbo_stream { render :refresh, status: @chore_task.errors.any? ? :unprocessable_entity : :ok }
-      format.html { redirect_to chores_path, status: :see_other }
+      format.html { redirect_to weekly_chores_path(view: "table"), status: :see_other }
     end
   end
 end

@@ -31,7 +31,7 @@ class IngredientEnrichmentJob < ApplicationJob
     classification = ai.classify_ingredient_families([{ name: ingredient.ingredient }])
                        .find { |c| c.is_a?(Hash) && c["name"] == ingredient.ingredient }
 
-    classification&.dig("family").presence ||
+    classification&.dig("family").presence_in(Ingredient::FAMILIES.keys) ||
       ai.send(:guess_family_programmatically, ingredient.ingredient)
   end
 

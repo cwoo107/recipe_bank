@@ -3,15 +3,6 @@ class IngredientsController < ApplicationController
   before_action :require_edit_permission!, only: %i[edit update destroy]
 
   def index
-    @ingredient_families = [
-      { color: 'mauve',      label: 'Protein' },
-      { color: 'mist',       label: 'Produce' },
-      { color: 'taupe',      label: 'Dairy' },
-      { color: 'honey',      label: 'Grain' },
-      { color: 'terracotta', label: 'Fat' },
-      { color: 'mist',       label: 'Spices' }
-    ]
-
     @ingredients = current_household.ingredients.includes(:nutrition_fact)
 
     if params[:filter].present?

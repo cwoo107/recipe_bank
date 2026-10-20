@@ -1,0 +1,13 @@
+<%# locals: (chore:) %>
+<%# The Table View's Last done cell — click to pick the date by hand. Saving
+    re-renders this cell and Next due (chores/refresh_row), since for most
+    chores the next due date counts on from the last one. %>
+<div class="py-1.5">
+  <%= render layout: "chores/inline_cell", locals: { text: render("chores/last_done", chore: chore), editable: household_admin? } do %>
+    <%= label_tag "chore_#{chore.id}_inline_last_completed_at", "Last done", class: "sr-only" %>
+    <%= date_field_tag "chore[last_completed_at]", chore.last_completed_at&.to_date,
+          id: "chore_#{chore.id}_inline_last_completed_at", form: "chore_inline_form_#{chore.id}", max: Date.current,
+          class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] -mx-2 px-2 py-1 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none",
+          data: { inline_cell_target: "field", action: "change->inline-cell#commit blur->inline-cell#commit keydown.enter->inline-cell#commitOnEnter keydown.esc->inline-cell#cancel" } %>
+  <% end %>
+</div>
