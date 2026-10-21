@@ -19,6 +19,10 @@ export default class extends Controller {
     }
 
     connect() {
+        // Still set up from before a move mid-drag (see disconnect) — reuse it.
+        this.sortable = Sortable.get(this.element)
+        if (this.sortable) return
+
         this.sortable = Sortable.create(this.element, {
             group:     "kanban",          // shared group enables cross-column drag
             handle:    ".sortable-handle",
@@ -65,7 +69,14 @@ export default class extends Controller {
         }
     }
 
+    // Stimulus also disconnects (then reconnects) this column when it's only
+    // moved in the page — e.g. the restock checklist's cards being dragged
+    // into a new order (reorder_controller.js). SortableJS's destroy() ends
+    // whatever drag is in progress on the page, which froze that drag mid-way
+    // and dropped nothing. So while a drag is going on, leave the instance in
+    // place; connect() picks it back up.
     disconnect() {
+        if (Sortable.dragged) return
         if (this.sortable) this.sortable.destroy()
     }
 

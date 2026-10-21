@@ -184,4 +184,25 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
     assert_equal "chore_#{Chore.find_by!(name: 'Zebra brushing').id}", rows.first
     assert_equal "chore_#{Chore.find_by!(name: 'Aardvark wash').id}", rows.last
   end
+
+  test "the Filter panel narrows the table and keeps the sort" do
+    households(:one).chores.create!(name: "Monthly job", frequency: "monthly")
+
+    get weekly_chores_url(view: "table", frequency: "monthly", sort: "name", direction: "desc")
+
+    rows = css_select("tbody tr").map { |tr| tr["id"] }
+    assert_equal [ "chore_#{Chore.find_by!(name: 'Monthly job').id}" ], rows
+    assert_select "select[name=frequency] option[selected][value=monthly]"
+    assert_select "form input[type=hidden][name=sort][value=name]"
+    assert_select "button", text: /Filter\s*1/
+    # Sorting another column keeps the filter.
+    assert_select "th a[href*='frequency=monthly'][href*='sort=next_due']"
+  end
+
+  test "filters with no matches say so, with a way back" do
+    get weekly_chores_url(view: "table", frequency: "annually")
+
+    assert_select "p", text: "No chores match these filters."
+    assert_select "a", text: "Clear filters"
+  end
 end

@@ -1,10 +1,13 @@
 <%# locals: (category:) %>
 
-<div id="restock_category_<%= category.id %>"
+<div id="restock_category_<%= category.id %>" data-reorder-id="<%= category.id %>"
      class="flex flex-col rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
   <%# List header %>
   <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 dark:border-white/10">
-    <div class="flex items-center gap-2 min-w-0">
+    <%# The name is the handle for dragging the whole list into a new
+        order (admins — see restock_items/index). %>
+    <div class="flex items-center gap-2 min-w-0 <%= '-mx-1.5 px-1.5 -my-1 py-1 reorder-handle cursor-grab active:cursor-grabbing rounded-md hover:bg-[#5f734c]/5 dark:hover:bg-[#7a8f62]/10' if household_admin? %>"
+         <%= tag.attributes(title: ("Drag to reorder lists" if household_admin?)) %>>
       <%= render "restock_items/category_name", category: category %>
       <span class="inline-flex items-center rounded-full bg-gray-100 dark:bg-white/10 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 shrink-0">
         <%= category.restock_items.count %>

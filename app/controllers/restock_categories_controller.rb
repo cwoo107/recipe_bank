@@ -23,6 +23,21 @@ class RestockCategoriesController < ApplicationController
 
   def edit; end
 
+  # POST /restock_categories/reorder — the checklist's cards dragged into a
+  # new order (reorder_controller.js). Mirrors ChoreCategoriesController#reorder.
+  def reorder
+    ids = Array(params[:order]).map(&:to_i)
+    categories = current_household.restock_categories.where(id: ids).index_by(&:id)
+
+    RestockCategory.transaction do
+      ids.each_with_index do |id, index|
+        categories[id]&.update_column(:position, index + 1)
+      end
+    end
+
+    head :ok
+  end
+
   def update
     if @restock_category.update(restock_category_params)
       respond_to do |format|

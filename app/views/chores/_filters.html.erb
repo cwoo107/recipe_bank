@@ -1,0 +1,75 @@
+<%# locals: (filters:, sort:, direction:, categories:) %>
+<%# The Table View's Filter button: a panel narrowing the table (and the
+    mobile list) by category, frequency, day and who it's assigned to
+    (Chore::TABLE_FILTERS). A plain GET, so the filters live in the page's
+    address alongside the sort. %>
+<% select_class = "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-2.5 py-1.5 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+<% label_class  = "block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+<% none = [ [ "Any", "" ] ] %>
+
+<div class="mb-4 flex items-center justify-end gap-3">
+  <% if filters.any? %>
+    <%= link_to "Clear", weekly_chores_path(view: "table", date: params[:date].presence, sort:, direction:),
+          class: "text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" %>
+  <% end %>
+
+  <div class="relative" data-controller="dropdown" data-action="click@window->dropdown#closeOnOutsideClick">
+    <button type="button" data-action="click->dropdown#toggle" aria-haspopup="true"
+            class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
+      <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-4 text-gray-400" aria-hidden="true">
+        <path fill-rule="evenodd" d="M2.628 1.601C5.028 1.206 7.49 1 10 1s4.973.206 7.372.601a.75.75 0 0 1 .628.74v2.288a2.25 2.25 0 0 1-.659 1.59l-4.682 4.683a2.25 2.25 0 0 0-.659 1.59v3.037c0 .684-.31 1.33-.844 1.757l-1.937 1.55A.75.75 0 0 1 8 18.25v-5.757a2.25 2.25 0 0 0-.659-1.591L2.659 6.22A2.25 2.25 0 0 1 2 4.629V2.34a.75.75 0 0 1 .628-.74Z" clip-rule="evenodd" />
+      </svg>
+      Filter
+      <% if filters.any? %>
+        <span class="inline-flex items-center justify-center rounded-full bg-[#5f734c] dark:bg-[#7a8f62] px-1.5 min-w-5 text-xs font-semibold text-white"><%= filters.size %></span>
+      <% end %>
+    </button>
+
+    <div data-dropdown-target="menu"
+         class="hidden absolute right-0 z-30 mt-2 w-72 rounded-lg bg-white dark:bg-[#242b1e] p-4 shadow-lg inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10">
+      <%= form_with url: weekly_chores_path, method: :get, local: true, class: "space-y-3" do %>
+        <%= hidden_field_tag :view, "table", id: nil %>
+        <%= hidden_field_tag :date, params[:date], id: nil if params[:date].present? %>
+        <%= hidden_field_tag :sort, sort, id: nil %>
+        <%= hidden_field_tag :direction, direction, id: nil %>
+
+        <div>
+          <%= label_tag :filter_category, "Category", class: label_class %>
+          <%= select_tag :category,
+                options_for_select(none + categories.map { |c| [ c.name, c.id ] } + [ [ "Uncategorized", "none" ] ], filters["category"]),
+                id: :filter_category, class: select_class %>
+        </div>
+
+        <div>
+          <%= label_tag :filter_frequency, "Frequency", class: label_class %>
+          <%= select_tag :frequency,
+                options_for_select(none + Chore::FREQUENCIES.map { |freq| [ Chore::FREQUENCY_LABELS[freq], freq ] }, filters["frequency"]),
+                id: :filter_frequency, class: select_class %>
+        </div>
+
+        <div>
+          <%= label_tag :filter_day, "Day", class: label_class %>
+          <%= select_tag :day,
+                options_for_select(none + chore_weekday_options + [ [ "No set day", "none" ] ], filters["day"]),
+                id: :filter_day, class: select_class %>
+        </div>
+
+        <% if current_household.assignable? %>
+          <div>
+            <%= label_tag :filter_assignee, "Assigned to", class: label_class %>
+            <%= select_tag :assignee,
+                  options_for_select(none + current_household.people.map { |person| [ person.name, person.id ] } + [ [ "Unassigned", "none" ] ], filters["assignee"]),
+                  id: :filter_assignee, class: select_class %>
+          </div>
+        <% end %>
+
+        <div class="flex items-center justify-between pt-1">
+          <%= link_to "Clear", weekly_chores_path(view: "table", date: params[:date].presence, sort:, direction:),
+                class: "text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" %>
+          <%= submit_tag "Apply", name: nil,
+                class: "inline-flex items-center rounded-md bg-[#5f734c] px-3 py-1.5 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>

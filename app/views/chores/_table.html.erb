@@ -1,4 +1,4 @@
-<%# locals: (chores:, categories:, sort: "next_due", direction: "asc") %>
+<%# locals: (chores:, categories:, sort: "next_due", direction: "asc", filters: {}) %>
 <%# The Chore Chart's Table View (weekly_chores/index, view=table): manage
     categories, then every chore — a click-to-edit table on desktop
     (chores/_table_row), a list with an edit modal on mobile (chores/_chore). %>
@@ -42,7 +42,15 @@
   </details>
 <% end %>
 
-<% if chores.empty? %>
+<%= render "chores/filters", filters:, sort:, direction:, categories: %>
+
+<% if chores.empty? && filters.any? %>
+  <div class="rounded-lg border border-dashed border-gray-300 dark:border-white/15 p-8 text-center">
+    <p class="text-sm text-gray-500 dark:text-gray-400 italic">No chores match these filters.</p>
+    <%= link_to "Clear filters", weekly_chores_path(view: "table", date: params[:date].presence, sort:, direction:),
+          class: "mt-2 inline-block text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline" %>
+  </div>
+<% elsif chores.empty? %>
   <div class="rounded-lg border border-dashed border-gray-300 dark:border-white/15 p-8 text-center">
     <p class="text-sm text-gray-500 dark:text-gray-400 italic">No chores yet. Add the recurring chores your household needs to keep up with.</p>
   </div>
@@ -50,7 +58,7 @@
   <%# ── DESKTOP: table — click a cell to edit it (chores/_table_row) ── %>
   <div class="hidden md:block overflow-x-auto bg-white shadow-sm inset-ring inset-ring-gray-900/5 rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
     <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
-      <% sorting = { sort:, direction: } %>
+      <% sorting = { sort:, direction:, filters: } %>
       <thead class="bg-gray-50 dark:bg-white/5">
         <tr>
           <%= render "chores/sort_header", column: "name", label: "Chore", first: true, **sorting %>

@@ -43,4 +43,49 @@ class RestockCategoriesControllerTest < ActionDispatch::IntegrationTest
     patch restock_category_url(@category), params: { restock_category: { name: "Should not work" } }
     assert_response :not_found
   end
+
+  # ── Drag-to-reorder ──
+
+  test "reordering saves the household's categories in the dropped order" do
+    categories = households(:one).restock_categories.ordered.to_a
+    reversed   = categories.reverse.map(&:id)
+
+    post reorder_restock_categories_url, params: { order: reversed }, as: :json
+
+    assert_response :success
+    assert_equal reversed, households(:one).restock_categories.ordered.pluck(:id)
+  end
+
+  test "reordering ignores another household's categories" do
+    theirs = households(:two).restock_categories.create!(name: "Garage")
+    before = theirs.position
+
+    post reorder_restock_categories_url, params: { order: [ theirs.id, @category.id ] }, as: :json
+
+    assert_equal before, theirs.reload.position
+  end
+
+  test "a limited member can't reorder" do
+    sign_in users(:two) # bob, limited
+    order_before = households(:one).restock_categories.ordered.pluck(:id)
+
+    post reorder_restock_categories_url, params: { order: order_before.reverse }, as: :json
+
+    assert_response :forbidden
+    assert_equal order_before, households(:one).restock_categories.ordered.pluck(:id)
+  end
+
+  test "the checklist's cards are draggable by their headers, for admins" do
+    get restock_items_url
+
+    assert_select "[data-controller=reorder][data-reorder-url-value=?]", reorder_restock_categories_path do
+      assert_select "#restock_category_#{@category.id}[data-reorder-id=?] .reorder-handle", @category.id.to_s
+    end
+    assert_select "#add_restock_category_tile[data-reorder-id]", 0
+
+    sign_in users(:two) # bob, limited
+    get restock_items_url
+    assert_select "[data-controller=reorder]", 0
+    assert_select ".reorder-handle", 0
+  end
 end

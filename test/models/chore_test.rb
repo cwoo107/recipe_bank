@@ -344,4 +344,24 @@ class ChoreTest < ActiveSupport::TestCase
   test "an unknown column sorts by name" do
     assert_equal sorted("name"), sorted("nonsense")
   end
+
+  # ── Table View filters ──
+
+  test "the table filters by category, frequency, day and assignee — or their absence" do
+    household = households(:one)
+    category  = chore_categories(:chores_one)
+    bob       = household_members(:one)
+    household.chores.update_all(chore_category_id: nil, assignee_id: nil)
+    match = household.chores.create!(name: "Match", frequency: "weekly", default_weekday: 3, chore_category: category, assignee: bob)
+    other = household.chores.create!(name: "Other", frequency: "monthly")
+
+    filtered = ->(filters) { Chore.filter_for_table(household.chores, filters).pluck(:name).sort }
+
+    assert_equal [ "Match" ], filtered.({ "category" => category.id.to_s })
+    assert_equal [ "Match" ], filtered.({ "frequency" => "weekly", "day" => "3", "assignee" => bob.id.to_s })
+    assert_includes filtered.({ "category" => "none" }), "Other"
+    assert_not_includes filtered.({ "category" => "none" }), "Match"
+    assert_includes filtered.({ "assignee" => "none", "day" => "none" }), "Other"
+    assert_equal household.chores.count, Chore.filter_for_table(household.chores, { "frequency" => "hourly", "day" => "" }).count # unknown/blank ignored
+  end
 end

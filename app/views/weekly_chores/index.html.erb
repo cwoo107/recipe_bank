@@ -8,7 +8,11 @@
       </h1>
       <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
         <% if @view == "table" %>
-          <%= pluralize(@chores.size, "recurring chore") %>
+          <% if @filters.any? %>
+            <%= @chores.size %> of <%= pluralize(@total, "recurring chore") %>
+          <% else %>
+            <%= pluralize(@chores.size, "recurring chore") %>
+          <% end %>
         <% else %>
           Week of <%= @week_start.strftime("%b %-d, %Y") %>
         <% end %>
@@ -39,7 +43,7 @@
 
   <% if @view == "table" %>
     <div class="mt-6">
-      <%= render "chores/table", chores: @chores, categories: @categories, sort: @sort, direction: @direction %>
+      <%= render "chores/table", chores: @chores, categories: @categories, sort: @sort, direction: @direction, filters: @filters %>
     </div>
   <% else %>
   <div class="mt-6 mb-8">

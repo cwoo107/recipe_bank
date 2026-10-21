@@ -1,11 +1,11 @@
-<%# locals: (column:, label:, sort:, direction:, first: false) %>
+<%# locals: (column:, label:, sort:, direction:, filters: {}, first: false) %>
 <%# A Table View column heading that sorts by that column
     (Chore::TABLE_SORTS); clicking the current one flips its direction. %>
 <% active = sort == column %>
 <% next_direction = active && direction == "asc" ? "desc" : "asc" %>
 <th scope="col" aria-sort="<%= active ? (direction == "asc" ? "ascending" : "descending") : "none" %>"
     class="<%= first ? "py-3.5 pl-4 pr-3 sm:pl-6" : "px-3 py-3.5" %> text-left text-sm font-semibold text-gray-900 dark:text-white whitespace-nowrap">
-  <%= link_to weekly_chores_path(view: "table", date: params[:date].presence, sort: column, direction: next_direction),
+  <%= link_to weekly_chores_path(view: "table", date: params[:date].presence, sort: column, direction: next_direction, **filters.symbolize_keys),
         class: "group/sort inline-flex items-center gap-1 hover:text-[#5f734c] dark:hover:text-[#7a8f62]" do %>
     <%= label %>
     <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"

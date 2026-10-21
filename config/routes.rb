@@ -126,7 +126,11 @@ Rails.application.routes.draw do
     end
   end
 
-  resources :restock_categories, only: [ :new, :create, :edit, :update, :destroy ]
+  resources :restock_categories, only: [ :new, :create, :edit, :update, :destroy ] do
+    collection do
+      post :reorder
+    end
+  end
 
   resources :chore_categories, only: [ :new, :create, :edit, :update, :destroy ] do
     collection do

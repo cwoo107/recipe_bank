@@ -130,6 +130,25 @@ class Chore < ApplicationRecord
     "next_due"  => ->(chore, _) { chore.next_due_date }
   }.freeze
 
+  # The Table View's filters — each value is an id (or weekday 0–6, or a
+  # frequency), or "none" for chores without one. Blank or unknown values
+  # are ignored.
+  TABLE_FILTERS = %w[category frequency day assignee].freeze
+
+  def self.filter_for_table(scope, filters)
+    filters = filters.to_h.stringify_keys.slice(*TABLE_FILTERS).compact_blank
+    {
+      "category" => :chore_category_id,
+      "day"      => :default_weekday,
+      "assignee" => :assignee_id
+    }.each do |key, column|
+      next unless (value = filters[key])
+      scope = scope.where(column => (value == "none" ? nil : value.to_i))
+    end
+    scope = scope.where(frequency: filters["frequency"]) if FREQUENCIES.include?(filters["frequency"])
+    scope
+  end
+
   # Sorts chores for the Table View by one of TABLE_SORTS (by name when the
   # column isn't one of them), ties broken by name.
   def self.sort_for_table(chores, column, direction, week_start:)

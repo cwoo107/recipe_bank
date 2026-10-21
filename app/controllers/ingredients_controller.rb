@@ -10,7 +10,8 @@ class IngredientsController < ApplicationController
     end
 
     if params[:query].present?
-      @ingredients = @ingredients.where("ingredient LIKE ?", "%#{params[:query]}%")
+      # LOWER on both sides: Postgres's LIKE (production) is case-sensitive.
+      @ingredients = @ingredients.where("LOWER(ingredients.ingredient) LIKE ?", "%#{Ingredient.sanitize_sql_like(params[:query].to_s.strip.downcase)}%")
     end
 
     @ingredients = apply_sort(@ingredients)

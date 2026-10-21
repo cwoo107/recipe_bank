@@ -37,8 +37,10 @@
     <% end %>
   </div>
 
-  <%# Restock lists %>
-  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+  <%# Restock lists — admins can drag them into a new order by their
+      headers (reorder_controller.js). %>
+  <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
+       <%= tag.attributes(data: household_admin? ? { controller: "reorder", reorder_url_value: reorder_restock_categories_path } : {}) %>>
     <% @categories.each do |category| %>
       <%= render "restock_items/column", category: category %>
     <% end %>
