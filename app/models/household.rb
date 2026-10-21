@@ -145,9 +145,9 @@ class Household < ApplicationRecord
   # Stored as the excluded keys (excluded_planner_sections), so an area added
   # later is included by default.
 
-  # The planner's steps, in Dashboard order.
+  # The planner's steps, in the planner's order (Dashboard.planner_sections).
   def planner_section_keys
-    Dashboard.section_keys - Array(excluded_planner_sections)
+    Dashboard.planner_section_keys - Array(excluded_planner_sections)
   end
 
   def plans_section?(key) = planner_section_keys.include?(key.to_s)
@@ -163,13 +163,17 @@ class Household < ApplicationRecord
   # shopping list page, which only goes when both are left out.
   PRINT_SECTIONS_FOR_PLANNER = { "meals" => %w[meals recipes], "groceries" => [], "restock" => [] }.freeze
 
+  # Pages the print page leaves unticked even when their step is planned —
+  # a week of full recipes is a lot of paper. They can still be ticked.
+  PRINT_SECTIONS_OFF_BY_DEFAULT = %w[recipes].freeze
+
   # What the print page ticks by default: every page, minus those belonging
-  # to steps left out of the planner.
+  # to steps left out of the planner and the ones off by default.
   def default_print_sections
     excluded = Array(excluded_planner_sections)
     left_out = excluded.flat_map { |key| PRINT_SECTIONS_FOR_PLANNER.fetch(key, [ key ]) }
     left_out << "shopping" if (%w[groceries restock] - excluded).empty?
-    WeekPlanPdf::SECTIONS.keys - left_out
+    WeekPlanPdf::SECTIONS.keys - left_out - PRINT_SECTIONS_OFF_BY_DEFAULT
   end
 
   def owner?(user)

@@ -13,11 +13,12 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
 
   test "start resumes at the first incomplete section" do
     get plan_week_url
-    assert_redirected_to plan_week_step_url(section: "meals", week: @this_week)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
   end
 
   test "resumes past sections already marked done or skipped" do
     plan = WeeklyPlan.current_for(households(:one))
+    plan.section("calendar").mark!("done", by: users(:one))
     plan.section("meals").mark!("done", by: users(:one))
     plan.section("restock").mark!("done", by: users(:one))
     plan.section("groceries").mark!("skipped", by: users(:one))
@@ -30,28 +31,28 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
     complete_all(WeeklyPlan.current_for(households(:one)))
 
     get plan_week_url(week: @this_week)
-    assert_redirected_to plan_week_step_url(section: "meals", week: @this_week)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
   end
 
   test "once this week is planned, planning moves on to next week" do
     complete_all(WeeklyPlan.current_for(households(:one)))
 
     get plan_week_url
-    assert_redirected_to plan_week_step_url(section: "meals", week: @next_week)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @next_week)
   end
 
   test "a finished wizard counts as planned even with steps left open" do
     WeeklyPlan.current_for(households(:one)).update!(planning_completed_at: 1.day.ago)
 
     get plan_week_url
-    assert_redirected_to plan_week_step_url(section: "meals", week: @next_week)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @next_week)
   end
 
   test "an in-progress week is resumed ahead of the default" do
     WeeklyPlan.current_for(households(:one), week_start: @next_week + 7).update!(currently_planning: true)
 
     get plan_week_url
-    assert_redirected_to plan_week_step_url(section: "meals", week: @next_week + 7)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @next_week + 7)
   end
 
   test "the step page says which week is being planned" do
@@ -82,13 +83,13 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
 
   test "past or far-off weeks fall back to the week that needs planning" do
     get plan_week_url(week: @this_week - 7)
-    assert_redirected_to plan_week_step_url(section: "meals", week: @this_week)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
 
     get plan_week_url(week: @this_week + (7 * (WeeklyPlan::WEEKS_AHEAD + 1)))
-    assert_redirected_to plan_week_step_url(section: "meals", week: @this_week)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
 
     get plan_week_url(week: "not-a-date")
-    assert_redirected_to plan_week_step_url(section: "meals", week: @this_week)
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
   end
 
   test "each step is reachable directly, not just from the start of the wizard" do
@@ -106,9 +107,9 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
 
   test "update on the last section redirects to the dashboard" do
     plan = WeeklyPlan.current_for(households(:one))
-    %w[meals todos groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    %w[calendar meals groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
 
-    patch plan_week_step_url(section: "calendar"), params: { status: "done" }
+    patch plan_week_step_url(section: "todos"), params: { status: "done" }
     assert_redirected_to dashboard_url
   end
 
@@ -142,10 +143,10 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
 
   test "finishing the wizard turns currently_planning back off" do
     plan = WeeklyPlan.current_for(households(:one))
-    %w[meals todos groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    %w[calendar meals groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
     plan.update!(currently_planning: true)
 
-    patch plan_week_step_url(section: "calendar"), params: { status: "done" }
+    patch plan_week_step_url(section: "todos"), params: { status: "done" }
     refute plan.reload.currently_planning?
   end
 
@@ -160,11 +161,70 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
   test "finishing the wizard stamps planning_completed_at and flashes elapsed time" do
     plan = WeeklyPlan.current_for(households(:one))
     plan.update!(currently_planning: true, planning_started_at: 3.minutes.ago)
-    %w[meals todos groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    %w[calendar meals groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
 
-    patch plan_week_step_url(section: "calendar"), params: { status: "done" }
+    patch plan_week_step_url(section: "todos"), params: { status: "done" }
 
     assert_not_nil plan.reload.planning_completed_at
     assert_match(/Congrats! It just took you 3 minutes to plan this week\./, flash[:notice])
+  end
+
+  # ── Mobile layout ──
+
+  test "on mobile the steps are an accordion: the current one open, with its content between the others" do
+    plan = WeeklyPlan.current_for(households(:one), week_start: @this_week)
+    plan.section("meals").mark!("done", by: users(:one))
+
+    get plan_week_step_url(section: "restock", week: @this_week)
+
+    headers = css_select("a[aria-expanded]")
+    keys    = headers.map { |a| a["href"][%r{/plan-week/([a-z]+)}, 1] }
+    assert_equal households(:one).planner_section_keys, keys
+    assert_equal [ "restock" ], headers.select { |a| a["aria-expanded"] == "true" }.map { |a| a["href"][%r{/plan-week/([a-z]+)}, 1] }
+
+    # The step's content sits after the open header and before the next one —
+    # rendered once, not per layout.
+    body = response.body
+    open_at    = body.index(%(aria-expanded="true"))
+    content_at = body.index("Go to Restock Checklist")
+    next_at    = body.index(plan_week_step_path(section: "groceries", week: @this_week), open_at)
+    assert_operator open_at, :<, content_at
+    assert_operator content_at, :<, next_at
+  end
+
+  test "the desktop step bar is hidden on mobile" do
+    get plan_week_step_url(section: "meals", week: @this_week)
+    assert_select "nav[aria-label=Progress].hidden.md\\:block"
+  end
+
+  test "mobile shows only the first three weeks to choose from" do
+    get plan_week_step_url(section: "meals", week: @this_week)
+
+    pills = css_select("nav[aria-label='Choose a week to plan'] li")
+    assert_operator pills.size, :>, 3
+    assert pills.first(3).none? { |li| li["class"].include?("hidden") }
+    assert pills.drop(3).all? { |li| li["class"].include?("hidden sm:block") }
+  end
+
+  # ── The calendar step ──
+
+  test "the calendar step is first and shows the week's events as a week grid" do
+    source = households(:one).calendar_sources.create!(name: "Family", provider: "google", color: "seafoam",
+                                                       ical_url: "https://calendar.example.com/feed.ics", user: users(:one))
+    households(:one).calendar_events.create!(calendar_source: source, user: users(:one), title: "Soccer practice",
+                                             starts_at: (@this_week + 2).in_time_zone.change(hour: 17),
+                                             ends_at: (@this_week + 2).in_time_zone.change(hour: 18))
+    households(:one).calendar_events.create!(calendar_source: source, user: users(:one), title: "Next week's thing",
+                                             starts_at: (@next_week + 1).in_time_zone.change(hour: 9),
+                                             ends_at: (@next_week + 1).in_time_zone.change(hour: 10))
+
+    get plan_week_url
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
+    follow_redirect!
+
+    assert_select "a[href=?]", day_calendars_path(date: (@this_week + 2).to_s) # the grid's day headers
+    assert_select "button", text: /Soccer practice/
+    assert_select "button", text: /Next week's thing/, count: 0
+    assert_select "a[href=?]", week_calendars_path(date: @this_week), text: "Go to Calendar"
   end
 end

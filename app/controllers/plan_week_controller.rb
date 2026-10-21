@@ -80,7 +80,7 @@ class PlanWeekController < ApplicationController
   # Household#planner_section_keys). A left-out step can still be opened
   # directly (set_section doesn't filter); it just isn't in the progress bar.
   def sections
-    @sections ||= Dashboard.sections.select { |klass| current_household.plans_section?(klass::KEY) }.map do |klass|
+    @sections ||= Dashboard.planner_sections.select { |klass| current_household.plans_section?(klass::KEY) }.map do |klass|
       klass.new(household: current_household, week_start: @week_start, weekly_plan: @weekly_plan)
     end
   end

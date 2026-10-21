@@ -61,4 +61,19 @@ class GroceryListsControllerTest < ActionDispatch::IntegrationTest
     get grocery_list_url(@grocery_list)
     assert_response :not_found
   end
+
+  test "the subtotal is wired to follow the rows live" do
+    week = Date.current.beginning_of_week
+    rice = households(:one).ingredients.create!(ingredient: "Rice", unit_price: 2.5)
+    households(:one).grocery_lists.create!(ingredient: rice, user: users(:one), week_of: week, units: 3)
+
+    get grocery_lists_url(date: week.iso8601)
+
+    assert_select "[data-controller=grocery-subtotal]" do
+      # Added items are broadcast into #grocery_lists, above the subtotal.
+      assert_select "#grocery_lists [data-grocery-subtotal-target=row][data-price='2.5'][data-units='3']"
+      assert_select "[data-grocery-subtotal-target=total]", text: /\$\d+\.\d{2}/
+      assert_select "[data-grocery-subtotal-target=count]"
+    end
+  end
 end

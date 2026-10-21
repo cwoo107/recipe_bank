@@ -38,17 +38,17 @@ class WeeklyPlanTest < ActiveSupport::TestCase
 
   test "active_key is the first section that isn't done or skipped" do
     plan = WeeklyPlan.current_for(households(:one))
-    assert_equal "meals", plan.active_key
+    assert_equal "calendar", plan.active_key # the planner starts with the calendar
 
-    plan.section("meals").mark!("done", by: users(:one))
-    assert_equal "restock", plan.reload.active_key
+    plan.section("calendar").mark!("done", by: users(:one))
+    assert_equal "meals", plan.reload.active_key
   end
 
   test "active_key falls back to the first section once everything is done or skipped" do
     plan = WeeklyPlan.current_for(households(:one))
     Dashboard.section_keys.each { |k| plan.section(k).mark!("done", by: users(:one)) }
 
-    assert_equal "meals", plan.reload.active_key
+    assert_equal "calendar", plan.reload.active_key
   end
 
   test "next_key_after finds the next incomplete section, skipping ones already done or skipped" do
@@ -61,7 +61,12 @@ class WeeklyPlanTest < ActiveSupport::TestCase
 
   test "next_key_after returns nil after the last section" do
     plan = WeeklyPlan.current_for(households(:one))
-    assert_nil plan.next_key_after("calendar")
+    assert_nil plan.next_key_after("todos")
+  end
+
+  test "the planner runs calendar first, then the dashboard's order" do
+    assert_equal %w[calendar meals restock groceries chores todos], Dashboard.planner_section_keys
+    assert_equal "meals", Dashboard.section_keys.first, "the dashboard cards keep their order"
   end
 
   test "section_status defaults to not_started for a section never touched" do

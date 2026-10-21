@@ -7,6 +7,12 @@
   <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
     <%= render "recipes/heading", recipe: @recipe %>
 
+    <%# Print for everyone, then whatever this person can do with the recipe. %>
+    <div class="flex shrink-0 flex-wrap items-center gap-3">
+    <div data-edit-mode-target="viewOnlyItems">
+      <%= render "shared/print_button", url: recipe_print_path(@recipe, format: :pdf), label: "Print recipe" %>
+    </div>
+
     <% if !household_admin? %>
       <%# Limited members can read recipes but not change or copy them. %>
     <% elsif @recipe.owned_by?(current_user) %>
@@ -65,6 +71,7 @@
         <% end %>
       </div>
     <% end %>
+    </div>
   </div>
 
   <%# ── Nutrition chart + Tags ──────────────────────────────────────────── %>

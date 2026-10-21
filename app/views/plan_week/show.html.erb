@@ -8,18 +8,43 @@
 
   <%= render "plan_week/progress", sections: @sections, current_key: @dashboard_section.key %>
 
-  <div class="rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
-    <div class="flex items-center gap-2.5 px-4 py-3 border-b border-gray-200 dark:border-white/10">
+  <%# Mobile: the steps are an accordion — the steps up to and including the
+      current one, its content (the card below, rendered just once), then the
+      rest. Desktop: the step bar above, then the card. A step left out of the
+      planner but opened directly has no header; its card shows on its own. %>
+  <% current_index = @sections.index { |section| section.key == @dashboard_section.key } %>
+  <% accordion = current_index ? [ @sections.first(current_index + 1), @sections.drop(current_index + 1) ] : [ [], [] ] %>
+  <% if accordion.first.any? %>
+    <div class="md:hidden rounded-t-lg border border-b-0 border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+      <% accordion.first.each_with_index do |section, index| %>
+        <%= render "plan_week/accordion_header", section:, index:, current_key: @dashboard_section.key %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden
+              <%= accordion.first.any? ? 'border-t-0 md:border-t md:rounded-t-lg' : 'rounded-t-lg' %>
+              <%= accordion.last.any? ? 'border-b-0 md:border-b md:rounded-b-lg' : 'rounded-b-lg' %>">
+    <%# The accordion header already names the step on mobile. %>
+    <div class="<%= current_index ? 'hidden md:flex' : 'flex' %> items-center gap-2.5 px-4 py-3 border-b border-gray-200 dark:border-white/10">
       <%= render "dashboard/icon", name: @dashboard_section.icon_name %>
       <h1 class="text-2xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">
         <%= @dashboard_section.label %>
       </h1>
     </div>
 
-    <div class="p-4 sm:p-6">
+    <div class="p-4 sm:p-6 <%= 'border-b border-gray-200 dark:border-white/10 md:border-b-0' if accordion.last.any? %>">
       <%= render "plan_week/#{@dashboard_section.key}_step", section: @dashboard_section %>
     </div>
   </div>
+
+  <% if accordion.last.any? %>
+    <div class="md:hidden rounded-b-lg border border-t-0 border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden [&>a:last-child]:border-b-0">
+      <% accordion.last.each_with_index do |section, offset| %>
+        <%= render "plan_week/accordion_header", section:, index: current_index + 1 + offset, current_key: @dashboard_section.key %>
+      <% end %>
+    </div>
+  <% end %>
 
   <%# Last step: offer to print the week being planned. (The household's last
       step — later ones may have been left out of the planner.) %>

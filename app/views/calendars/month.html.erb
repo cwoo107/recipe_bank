@@ -37,6 +37,7 @@
       </div>
 
       <%= render "calendars/sync_now_button" %>
+      <%= render "shared/print_button", url: week_section_pdf_path("calendar", calendar_print_week(@date)), label: "Print calendar" %>
       <%# Add event %>
       <% if household_admin? %>
       <%= link_to new_calendar_event_path,

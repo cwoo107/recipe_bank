@@ -15,8 +15,18 @@
     <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Take a look, then mark it reviewed.</p>
   <% end %>
 
+  <%# The week itself, as on the Calendar's Week view — embedded like the
+      chores step embeds the chore board. Seven columns don't fit a phone,
+      so it scrolls sideways there. %>
+  <div class="mt-4 -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+    <div class="min-w-[42rem]">
+      <%= render "calendars/week_grid", date: section.week_start, range_end: section.week_end,
+                 events_by_day: section.events_by_day, all_day_events: section.all_day_events, height: 480 %>
+    </div>
+  </div>
+
   <div class="mt-6 flex flex-wrap gap-3">
-    <%= link_to "Review calendar", calendars_path,
+    <%= link_to "Go to Calendar", week_calendars_path(date: section.week_start),
                 class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
     <%= button_to "Mark as reviewed", plan_week_step_path(section: section.key, week: section.week_start), method: :patch, params: { status: "done" },
                   class: "inline-flex items-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>

@@ -7,6 +7,7 @@ export default class extends Controller {
         event.preventDefault()
         const currentUnits = parseInt(this.unitsTarget.value)
         this.unitsTarget.value = currentUnits + 1
+        this.#announceUnits()
         this.submitForm()
     }
 
@@ -15,8 +16,16 @@ export default class extends Controller {
         const currentUnits = parseInt(this.unitsTarget.value)
         if (currentUnits > 1) {
             this.unitsTarget.value = currentUnits - 1
+            this.#announceUnits()
             this.submitForm()
         }
+    }
+
+    // The quantity's a hidden field, so setting it fires nothing — tell the
+    // list's subtotal (grocery_subtotal_controller.js) straight away rather
+    // than after the row comes back from the server.
+    #announceUnits() {
+        this.unitsTarget.dispatchEvent(new Event("input", { bubbles: true }))
     }
 
     toggleCheck(event) {

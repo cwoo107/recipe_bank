@@ -10,7 +10,8 @@ class GroceryListsController < ApplicationController
                                  .where("week_of < ?", @date + 7)
                                  .includes(:ingredient)
                                  .joins(:ingredient)
-                                 .order("ingredients.family ASC, ingredients.ingredient ASC")
+                                 # Categories in the Ingredients page's order, then A–Z.
+                                 .order(Ingredient.family_order_sql, "ingredients.ingredient ASC")
 
     if params[:filter].present?
       @grocery_lists = @grocery_lists.where(ingredients: { family: params[:filter] })

@@ -16,6 +16,13 @@ module CalendarsHelper
     month_calendars_path(year: d.year, month: d.month)
   end
 
+  # The week the month view's Print button prints: this week while looking at
+  # the current month, otherwise the month's first week.
+  def calendar_print_week(month_start)
+    today = Time.zone.today
+    today.beginning_of_month == month_start.beginning_of_month ? today.beginning_of_week : month_start.beginning_of_week
+  end
+
   def prev_week_path(date)
     week_calendars_path(date: (date - 1.week).to_s)
   end

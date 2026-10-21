@@ -132,4 +132,19 @@ class RecipeTest < ActiveSupport::TestCase
     assert source.owned_by_household?(households(:two))
     refute source.owned_by_household?(@household)
   end
+
+  test "a recipe's ingredients list by family in the Ingredients page's order, keeping the added order within one" do
+    recipe = @alice.recipes.create!(title: "Stir fry")
+    add = ->(name, family) { recipe.recipe_ingredients.create!(ingredient: @household.ingredients.create!(ingredient: name, family: family), quantity: 1) }
+    add.("Soy sauce", "condiments")
+    add.("Rice", "grain")
+    add.("Mystery", nil)
+    add.("Ginger", "produce")
+    add.("Chicken", "protein")
+    add.("Scallions", "produce")
+
+    assert_equal [ "Chicken", "Ginger", "Scallions", "Rice", "Soy sauce", "Mystery" ],
+                 recipe.ingredients_by_family.map { |line| line.ingredient.ingredient }
+    assert_equal recipe.ingredients_by_family.map(&:id), recipe.sections.first.own_ingredients.map { |line| line.recipe_ingredient.id }
+  end
 end

@@ -29,7 +29,7 @@ class CalendarsController < ApplicationController
     @range_end = @date.end_of_week
 
     load_events(@date, @range_end + 1.day)
-    @events_by_day  = group_events_by_day(@events, @date, @range_end)
+    @events_by_day  = CalendarEvent.group_by_start_day(@events, @date, @range_end)
     @all_day_events = @events.select(&:all_day?)
     @timed_events   = @events.reject(&:all_day?)
   end
@@ -65,16 +65,6 @@ class CalendarsController < ApplicationController
       event_start = [event.starts_at.to_date, range_start].max
       event_end   = [event.ends_at.to_date,   range_end  ].min
       (event_start..event_end).each { |d| result[d] << event if result.key?(d) }
-    end
-    result
-  end
-
-  def group_events_by_day(events, range_start, range_end)
-    result = {}
-    (range_start..range_end).each { |d| result[d] = [] }
-    events.each do |event|
-      day = event.starts_at.to_date
-      result[day] << event if result.key?(day)
     end
     result
   end

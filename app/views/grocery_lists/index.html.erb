@@ -8,8 +8,11 @@
       </h1>
       <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">Grocery List for the week of <%= @date.strftime("%b %d, %Y") %>.</p>
     </div>
+    <%# Like the meal planner's header: a row of buttons, then the next
+        line under it. %>
+    <div class="flex flex-col items-start gap-2">
     <% if household_admin? %>
-    <div class="flex flex-col gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <%= button_to generate_grocery_lists_path(date: @date),
                     method: :post,
                     class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]",
@@ -37,6 +40,9 @@
       </div>
     </div>
     <% end %>
+      <%# Groceries, then anything marked Restock — the print plan's Shopping list page. %>
+      <%= render "shared/print_button", url: week_section_pdf_path("shopping", @date), label: "Print shopping list" %>
+    </div>
   </div>
 
   <%# Two lists: groceries from the meal plan, and restock items from the
@@ -94,22 +100,27 @@
     </div>
 
     <div class="p-4 bg-white shadow-sm inset-ring inset-ring-gray-900/5 sm:rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
-      <div role="list" class="divide-y divide-gray-100 dark:divide-white/5">
+      <%# The Subtotal follows the rows live (grocery_subtotal_controller.js). %>
+      <div role="list" class="divide-y divide-gray-100 dark:divide-white/5"
+           data-controller="grocery-subtotal" data-action="input->grocery-subtotal#recalculate">
         <%= turbo_stream_from current_household, 'grocery_lists' %>
-        <%= render @grocery_lists %>
+        <%# Items added to the list are broadcast in here (GroceryListsController#create). %>
+        <div id="grocery_lists" class="divide-y divide-gray-100 dark:divide-white/5">
+          <%= render @grocery_lists %>
+        </div>
 
         <div class="flex justify-between gap-x-6 p-4 bg-[#faf9f7] dark:bg-[#1a1f16]">
           <div class="flex min-w-0 flex-1 gap-x-4 ml-3">
             <div class="min-w-0 flex-auto">
               <p class="text-lg font-bold text-gray-900 dark:text-white">Subtotal</p>
               <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Estimated total for <%= @grocery_lists.count %> items
+                Estimated total for <span data-grocery-subtotal-target="count"><%= pluralize(@grocery_lists.size, "item") %></span>
               </p>
             </div>
           </div>
           <div class="shrink-0 flex items-center">
             <% subtotal = @grocery_lists.sum { |gl| gl.ingredient.unit_price.present? ? (gl.ingredient.unit_price * gl.units) : 0 } %>
-            <p class="text-xl font-bold text-gray-900 dark:text-white">$<%= subtotal.round(2) %></p>
+            <p class="text-xl font-bold text-gray-900 dark:text-white" data-grocery-subtotal-target="total"><%= format("$%.2f", subtotal) %></p>
           </div>
         </div>
       </div>

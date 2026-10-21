@@ -1,0 +1,45 @@
+<%# locals: (section:, index:, current_key:) %>
+<%# One step of the planner as an accordion header — mobile only (desktop has
+    the step bar, plan_week/_progress). The current step is the open one:
+    highlighted, with its content right beneath it (plan_week/show). The
+    others are closed; tapping one opens that step. %>
+<% state = plan_step_state(section, current_key) %>
+<% open  = section.key == current_key %>
+<%= link_to plan_week_step_path(section: section.key, week: section.week_start),
+            "aria-current": open ? "step" : nil,
+            "aria-expanded": open,
+            class: [
+              "flex items-center gap-3 px-4 py-3 border-b",
+              open ? "bg-[#5f734c] dark:bg-[#7a8f62] border-[#4b5a3d] dark:border-[#5f734c] text-white"
+                   : "border-gray-200 dark:border-white/10 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-white/5"
+            ] do %>
+  <% case state
+     when :done %>
+    <span class="flex size-7 shrink-0 items-center justify-center rounded-full <%= open ? 'bg-white/20' : 'bg-[#5f734c] dark:bg-[#7a8f62]' %>">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="size-4 text-white">
+        <path d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.74a.75.75 0 0 1 1.04-.207Z" />
+      </svg>
+    </span>
+  <% when :skipped %>
+    <span class="flex size-7 shrink-0 items-center justify-center rounded-full border-2 <%= open ? 'border-white/60' : 'border-gray-300 dark:border-white/15' %>">
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="size-3.5 <%= open ? 'text-white' : 'text-gray-400 dark:text-gray-500' %>">
+        <path d="M4.25 12a.75.75 0 0 1 .75-.75h14a.75.75 0 0 1 0 1.5H5a.75.75 0 0 1-.75-.75Z" />
+      </svg>
+    </span>
+  <% else %>
+    <span class="flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-medium
+                 <%= open ? 'border-white text-white' : 'border-gray-300 text-gray-500 dark:border-white/15 dark:text-gray-400' %>">
+      <%= format("%02d", index + 1) %>
+    </span>
+  <% end %>
+
+  <span class="flex-1 text-lg font-semibold" style="font-family: 'Instrument Serif', serif">
+    <%= section.label %>
+    <% if state == :skipped %><span class="text-sm font-normal italic <%= open ? 'text-white/80' : 'text-gray-500 dark:text-gray-400' %>">(skipped)</span><% end %>
+  </span>
+
+  <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
+       class="size-5 shrink-0 <%= open ? 'rotate-180 text-white/80' : 'text-gray-400 dark:text-gray-500' %>">
+    <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+  </svg>
+<% end %>

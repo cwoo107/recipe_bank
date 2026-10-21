@@ -43,6 +43,20 @@ class Ingredient < ApplicationRecord
     FAMILIES.dig(family.to_s.downcase, :label) || family.to_s.titleize
   end
 
+  # Where a family falls in FAMILIES' order — lists of ingredients (a
+  # recipe's, the shopping list) sort by it. Blank or unknown families last.
+  def self.family_rank(family)
+    FAMILIES.keys.index(family.to_s.downcase) || FAMILIES.size
+  end
+
+  # The same order in SQL, for ORDER BY.
+  def self.family_order_sql
+    whens = FAMILIES.keys.each_with_index.map { |key, index| "WHEN #{connection.quote(key)} THEN #{index}" }.join(" ")
+    Arel.sql("CASE LOWER(ingredients.family) #{whens} ELSE #{FAMILIES.size} END")
+  end
+
+  def family_rank = self.class.family_rank(family)
+
   validates :ingredient, presence: true
 
   before_validation :capitalize_ingredient

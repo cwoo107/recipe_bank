@@ -39,7 +39,9 @@ class WeekPlanPdf
   # These print on exactly one page each, shrunk to fit when they run long
   # (see #fit_to_page). Recipes are left to run across as many pages as
   # they need — shrinking a week of recipes onto one page would be unreadable.
-  FIT_TO_PAGE = SECTIONS.keys - %w[recipes] + SHARED_PAGES.keys
+  # The shopping list fits itself to its page, column by column
+  # (#shopping_section).
+  FIT_TO_PAGE = SECTIONS.keys - %w[recipes shopping] + SHARED_PAGES.keys
 
   # Single-column lists that switch to two columns once they'd run past one
   # page, so a long week fills the page rather than shrinking into a thin
@@ -521,60 +523,183 @@ class WeekPlanPdf
   end
 
   # ── Shopping list: the week's groceries, then the restock list ──
-  # One page. The restock half only appears when something's marked
-  # Restock. Landscape fits three columns of items across, portrait (the
-  # default) two.
+  # One page, read in columns like a newspaper: the groceries by family
+  # (Protein, Produce, …) run down the left column, the restock list picks
+  # up right where they end, and each column continues into the next. A
+  # column that breaks mid-section repeats that section's title at the top
+  # of the next one. Two columns in portrait (the default), three in
+  # landscape. A long list is drawn scaled down until it fits the page —
+  # wider columns as well as shorter ones, so it re-wraps rather than just
+  # shrinking. The restock part only appears when something's marked
+  # Restock.
+
+  SHOPPING_COLUMN_GAP = 18
 
   def shopping_section
     section_heading "Shopping list"
 
     groceries = @household.grocery_lists.where(week_of: @week).includes(:ingredient).joins(:ingredient)
-                          .order("ingredients.family ASC, ingredients.ingredient ASC").to_a
+                          .order(Ingredient.family_order_sql, "ingredients.ingredient ASC").to_a
     restock   = RestockItem.shopping_list(@household)
     return empty_note("No grocery list has been made for this week yet, and nothing is marked Restock.") if groceries.empty? && restock.empty?
 
-    columns = landscape?("shopping") ? 3 : 2
-    grocery_part(groceries, columns)
-    restock_part(restock, columns) if restock.any?
-  end
-
-  # A heading within a page, optionally with a figure (the grocery total)
-  # set on the same line at the far right.
-  def part_heading(label, aside = nil)
-    ensure_room(64)
-    top = cursor
-    font(SERIF) { text clean(label), size: 16, color: SAGE_DARK }
-    text_box(aside, at: [ 0, top - 5 ], width: bounds.width, align: :right, size: 11, style: :bold) if aside
-    move_down 2
-  end
-
-  def grocery_part(items, columns)
-    subtotal = items.sum { |item| item.ingredient.unit_price.to_f * item.units.to_i }
-    part_heading "Groceries", (format("Estimated total: $%.2f", subtotal) if items.any?)
-    return empty_note("No grocery list has been made for this week yet.") if items.empty?
-
-    items.group_by { |item| item.ingredient.family.presence || "Other" }.each do |family, family_items|
-      subheading Ingredient.family_label(family)
-      checkbox_columns(family_items.map do |item|
-        price = item.ingredient.unit_price.present? ? format("$%.2f", item.ingredient.unit_price * item.units.to_i) : nil
-        [ item.ingredient.ingredient, [ "#{item.units.to_i} #{'unit'.pluralize(item.units.to_i)}", price ].compact.join("  ·  "), item.checked? ]
-      end, columns:)
+    rows    = shopping_rows(groceries, restock)
+    count   = landscape?("shopping") ? 3 : 2
+    top     = cursor
+    factor  = 1.0
+    columns = nil
+    until (columns = layout_shopping_columns(rows, shopping_column_width(count, factor), top / factor, count))
+      factor = (factor - 0.05).round(2)
     end
-  end
 
-  def restock_part(list, columns)
-    move_down 14
-    part_heading "Restock"
-
-    list.each do |store, categories|
-      subheading store
-      categories.each do |category, items|
-        text clean(category.name.upcase), size: 8, color: MUTED, character_spacing: 0.5
-        move_down 3
-        checkbox_columns(items.map { |item| [ item.name, item.brand.presence, false ] }, columns:)
-        move_down 4
+    width = shopping_column_width(count, factor)
+    scale(factor, origin: [ 0, top ]) do
+      # A box as tall as the (unscaled) columns: placed text boxes measure
+      # their room against the bounds' bottom, and drawn shrunk, the lower
+      # rows sit past the page's own (see #draw_checkbox).
+      bounding_box([ 0, top ], width: bounds.width / factor, height: top / factor + 1) do
+        columns.each_with_index do |column, index|
+          x = index * (width + SHOPPING_COLUMN_GAP)
+          y = bounds.top
+          column.each { |row| y -= draw_shopping_row(row, x, y, width) }
+        end
       end
     end
+  end
+
+  def shopping_column_width(count, factor)
+    (bounds.width / factor - SHOPPING_COLUMN_GAP * (count - 1)) / count
+  end
+
+  # The list as rows, top to bottom: [:part, label, aside, space_before],
+  # [:sub, label] (a family or store), [:cat, label] (a restock category),
+  # [:item, label, detail, checked], [:gap, points].
+  def shopping_rows(groceries, restock)
+    rows = []
+
+    subtotal = groceries.sum { |item| item.ingredient.unit_price.to_f * item.units.to_i }
+    rows << [ :part, "Groceries", (format("Estimated total: $%.2f", subtotal) if groceries.any?), 0 ]
+    if groceries.empty?
+      rows << [ :note, "No grocery list has been made for this week yet." ]
+    else
+      groceries.group_by { |item| item.ingredient.family.presence || "Other" }.each do |family, items|
+        rows << [ :sub, Ingredient.family_label(family) ]
+        items.each do |item|
+          price = item.ingredient.unit_price.present? ? format("$%.2f", item.ingredient.unit_price * item.units.to_i) : nil
+          rows << [ :item, item.ingredient.ingredient, [ "#{item.units.to_i} #{'unit'.pluralize(item.units.to_i)}", price ].compact.join("  ·  "), item.checked? ]
+        end
+      end
+    end
+
+    if restock.any?
+      rows << [ :part, "Restock", nil, 14 ]
+      restock.each do |store, categories|
+        rows << [ :sub, store ]
+        categories.each do |category, items|
+          rows << [ :cat, category.name.upcase ]
+          items.each { |item| rows << [ :item, item.name, item.brand.presence, false ] }
+          rows << [ :gap, 4 ]
+        end
+      end
+    end
+
+    rows
+  end
+
+  # Fills the columns top to bottom, or nil if the rows need more than
+  # `count` columns of `height`. A heading never sits alone at the foot of a
+  # column — it moves on with the row after it — and a column that starts
+  # mid-section opens with that section's titles again.
+  def layout_shopping_columns(rows, width, height, count)
+    columns = [ [] ]
+    used    = 0
+    titles  = {} # the section the next row belongs to: { sub:, cat: }
+
+    rows.each_with_index do |row, index|
+      kind  = row.first
+      next if kind == :gap && used.zero?
+
+      row_height = shopping_row_height(row, width)
+      following  = rows[index + 1]
+      needed     = row_height
+      needed    += shopping_row_height(following, width) if shopping_heading?(row) && following && !shopping_heading?(following)
+
+      if used.positive? && used + needed > height
+        columns << []
+        used = 0
+        return nil if columns.size > count
+
+        unless shopping_heading?(row) || kind == :gap
+          titles.values.each do |title|
+            columns.last << title
+            used += shopping_row_height(title, width)
+          end
+        end
+      end
+      next if kind == :gap && used.zero?
+
+      columns.last << row
+      used += row_height
+
+      case kind
+      when :part then titles = {}
+      when :sub  then titles = { sub: row }
+      when :cat  then titles[:cat] = row
+      end
+    end
+
+    columns
+  end
+
+  def shopping_heading?(row) = row.first.in?(%i[part sub cat])
+
+  def shopping_row_height(row, width)
+    kind, label, detail, extra = row
+    case kind
+    when :part then extra + serif_height(label, width, 16) + 4
+    when :sub  then 6 + bold_height(label, width, 11) + 8
+    when :cat  then height_of(clean(label), width:, size: 8, character_spacing: 0.5) + 3
+    when :item then checkbox_height(label, detail, width)
+    when :note then height_of(clean(label), width:, size: 10, style: :italic) + 8
+    when :gap  then label
+    end
+  end
+
+  # Draws one row with its top at `top`; returns the height it took (the
+  # same as #shopping_row_height, so the layout's columns are exact).
+  def draw_shopping_row(row, x, top, width)
+    kind, label, detail, extra = row
+    height = shopping_row_height(row, width)
+    case kind
+    when :part
+      font(SERIF) { colored_text_box clean(label), at: [ x, top - extra ], width:, size: 16, color: SAGE_DARK }
+      colored_text_box(detail, at: [ x, top - extra - 5 ], width:, align: :right, size: 11, style: :bold, color: INK) if detail
+    when :sub
+      label_height = bold_height(label, width, 11)
+      colored_text_box clean(label), at: [ x, top - 6 ], width:, size: 11, style: :bold, color: INK
+      stroke_color RULE
+      stroke_horizontal_line x, x + width, at: top - 6 - label_height - 2
+    when :cat
+      colored_text_box clean(label), at: [ x, top ], width:, size: 8, character_spacing: 0.5, color: MUTED
+    when :item
+      draw_checkbox(x, top, width, height, label, detail, extra)
+    when :note
+      colored_text_box clean(label), at: [ x, top ], width:, size: 10, style: :italic, color: MUTED
+    end
+    height
+  end
+
+  # (Prawn's `font` with a block returns the font, not the block's value.)
+  def serif_height(label, width, size)
+    height = 0
+    font(SERIF) { height = height_of(clean(label), width:, size:) }
+    height
+  end
+
+  def bold_height(label, width, size)
+    height = 0
+    font(SANS, style: :bold) { height = height_of(clean(label), width:, size:) }
+    height
   end
 
   def chores_section

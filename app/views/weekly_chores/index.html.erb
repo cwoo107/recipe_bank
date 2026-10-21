@@ -18,8 +18,11 @@
         <% end %>
       </p>
     </div>
+    <div class="mt-4 sm:ml-16 sm:mt-0 flex flex-wrap items-center gap-2">
+      <%# The week's chart (in the print plan's default, landscape) — from
+          either view. %>
+      <%= render "shared/print_button", url: week_section_pdf_path("chores", @week_start), label: "Print chore chart" %>
     <% if household_admin? %>
-      <div class="mt-4 sm:ml-16 sm:mt-0">
         <%= link_to new_chore_path(return_to: request.fullpath),
                     class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
           <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
@@ -27,8 +30,8 @@
           </svg>
           New chore
         <% end %>
-      </div>
     <% end %>
+    </div>
   </div>
 
   <%# Week View / Table View. Switching keeps the week being looked at. %>

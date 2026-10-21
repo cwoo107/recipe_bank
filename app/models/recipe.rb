@@ -171,7 +171,7 @@ class Recipe < ApplicationRecord
     def directly_on?(other) = component&.parent_recipe_id == other&.id
 
     def own_ingredients
-      recipe.recipe_ingredients.map { |ri| ScaledIngredient.new(recipe_ingredient: ri, multiplier: multiplier) }
+      recipe.ingredients_by_family.map { |ri| ScaledIngredient.new(recipe_ingredient: ri, multiplier: multiplier) }
     end
 
     def own_steps = recipe.steps.to_a
@@ -216,6 +216,13 @@ class Recipe < ApplicationRecord
   # scaled. This is what nutrition, grocery lists and meal costs count.
   def all_ingredients
     sections.flat_map(&:own_ingredients)
+  end
+
+  # This recipe's own ingredient lines grouped by family, in
+  # Ingredient::FAMILIES' order (Protein, Produce, Dairy, …); within a family
+  # they keep the order they were added in.
+  def ingredients_by_family
+    recipe_ingredients.includes(:ingredient).sort_by { |line| [ line.ingredient&.family_rank || Ingredient::FAMILIES.size, line.id.to_i ] }
   end
 
   def components? = recipe_components.any?

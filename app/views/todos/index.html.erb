@@ -31,7 +31,9 @@
         <%= current_household.todos.count %> task<%= current_household.todos.count == 1 ? "" : "s" %> across all columns
       </p>
     </div>
-    <div class="mt-4 sm:ml-16 sm:mt-0">
+    <div class="mt-4 sm:ml-16 sm:mt-0 flex flex-wrap items-center gap-2">
+      <%# What's in progress — the print plan's To-dos page. %>
+      <%= render "shared/print_button", url: week_section_pdf_path("todos", Date.current), label: "Print to-dos" %>
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
         <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
           <%= turbo_frame_tag "new_todo", src: new_todo_path do %><% end %>

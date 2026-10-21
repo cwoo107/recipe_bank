@@ -25,6 +25,17 @@ class CalendarEvent < ApplicationRecord
 
   delegate :color_classes, :name, to: :calendar_source, prefix: :source
 
+  # { date => events starting that day } for every day from range_start to
+  # range_end — the week grid's columns (calendars/_week_grid).
+  def self.group_by_start_day(events, range_start, range_end)
+    result = (range_start..range_end).index_with { [] }
+    events.each do |event|
+      day = event.starts_at.to_date
+      result[day] << event if result.key?(day)
+    end
+    result
+  end
+
   # Came from a calendar feed (vs. added here) — read-only in the app.
   def synced? = external_uid.present?
 

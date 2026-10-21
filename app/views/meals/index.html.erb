@@ -55,6 +55,7 @@
           </svg>
           Week stats
         </button>
+        <%= render "shared/print_button", url: week_section_pdf_path("meals", @date), label: "Print meal plan" %>
       </div>
 
       <div data-controller="dialog" data-action="click->dialog#backdropClose">

@@ -1,6 +1,10 @@
+<%# data-price / data-units feed the list's live Subtotal (grocery_subtotal_controller.js). %>
 <div id="grocery_list_<%= grocery_list.id %>"
      class="flex justify-between gap-x-6 py-5 px-4 hover:bg-[#faf9f7] hover:dark:bg-[#1a1f16] rounded"
-     data-controller="grocery-item">
+     data-controller="grocery-item"
+     data-grocery-subtotal-target="row"
+     data-price="<%= grocery_list.ingredient.unit_price.to_f %>"
+     data-units="<%= grocery_list.units.to_i %>">
 
   <%= form_with model: grocery_list,
                 url: grocery_list_path(grocery_list),

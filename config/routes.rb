@@ -73,6 +73,7 @@ Rails.application.routes.draw do
     resources :recipe_ingredients, only: [:create, :update, :destroy]
     resources :recipe_components, only: [:create, :update, :destroy]
     resources :recipe_tags, only: [:create, :destroy]
+    resource  :print, only: :show, controller: "recipe_prints" # /recipes/:id/print.pdf
     resources :steps do
       collection do
         post :reorder

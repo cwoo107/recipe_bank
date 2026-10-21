@@ -29,7 +29,9 @@ module Dashboard
 
     # "this week" / "next week" / "the week of Oct 12" — for copy, so a step
     # opened for a later week doesn't claim to be about this one.
-    def week_phrase
+    def week_phrase = self.class.week_phrase_for(week_start)
+
+    def self.week_phrase_for(week_start)
       label = WeeklyPlan.week_label(week_start)
       label.start_with?("Week of") ? "the #{label.downcase_first}" : label.downcase
     end

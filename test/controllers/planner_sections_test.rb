@@ -47,7 +47,7 @@ class PlannerSectionsTest < ActionDispatch::IntegrationTest
     get household_url
 
     assert_select "input[name='household[planner_sections][]']", 0
-    assert_match "Meals, Restock checklist, Grocery list, Chores, and Calendar", response.body
+    assert_match "Calendar, Meals, Restock checklist, Grocery list, and Chores", response.body
   end
 
   # ── The planner ──
@@ -62,11 +62,11 @@ class PlannerSectionsTest < ActionDispatch::IntegrationTest
   end
 
   test "finishing the step before a left-out one moves straight past it" do
-    leave_out("todos")
+    leave_out("restock")
 
-    patch plan_week_step_url(section: "chores", week: @this_week), params: { status: "done" }
+    patch plan_week_step_url(section: "meals", week: @this_week), params: { status: "done" }
 
-    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
+    assert_redirected_to plan_week_step_url(section: "groceries", week: @this_week)
   end
 
   test "the week counts as planned without the left-out steps" do
@@ -79,27 +79,27 @@ class PlannerSectionsTest < ActionDispatch::IntegrationTest
   end
 
   test "resuming skips a left-out step" do
-    leave_out("meals")
+    leave_out("calendar") # the planner's first step
 
     get plan_week_url
 
-    assert_redirected_to plan_week_step_url(section: "restock", week: @this_week)
+    assert_redirected_to plan_week_step_url(section: "meals", week: @this_week)
   end
 
   test "a left-out step can still be opened directly, and moves on to the next planned one" do
-    leave_out("todos")
+    leave_out("restock")
 
-    get plan_week_step_url(section: "todos", week: @this_week)
+    get plan_week_step_url(section: "restock", week: @this_week)
     assert_response :success
 
-    patch plan_week_step_url(section: "todos", week: @this_week), params: { status: "done" }
-    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
+    patch plan_week_step_url(section: "restock", week: @this_week), params: { status: "done" }
+    assert_redirected_to plan_week_step_url(section: "groceries", week: @this_week)
   end
 
   test "the print offer moves to the last planned step" do
-    leave_out("calendar")
+    leave_out("todos") # the planner's last step
 
-    get plan_week_step_url(section: "todos", week: @this_week)
+    get plan_week_step_url(section: "chores", week: @this_week)
 
     assert_select "a[href=?]", new_week_print_path(week: @this_week), text: /Print this week's plan/
   end
@@ -139,7 +139,7 @@ class PlannerSectionsTest < ActionDispatch::IntegrationTest
 
     get dashboard_url
 
-    assert_match "Walk through meals, restocking, groceries, chores, and your calendar in a few minutes.", response.body
+    assert_match "Walk through your calendar, meals, restocking, groceries, and chores in a few minutes.", response.body
     assert_select "section[aria-labelledby=section-todos-heading]" # its card is still there
   end
 end

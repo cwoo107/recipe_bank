@@ -20,7 +20,9 @@
       <% plannable_weeks.each do |week| %>
         <% selected = week == week_start %>
         <% planned  = week_plans[week]&.planned? %>
-        <li class="shrink-0">
+        <%# Mobile shows just the first three weeks (they don't fit across);
+            the rest are desktop only. %>
+        <li class="shrink-0 <%= 'hidden sm:block' if plannable_weeks.index(week) >= 3 %>">
           <%= link_to plan_week_path(week: week),
                       "aria-current": selected ? "true" : nil,
                       title: "#{WeeklyPlan.week_range_label(week)}#{' — planned' if planned}",

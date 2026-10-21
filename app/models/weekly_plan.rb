@@ -111,11 +111,11 @@ class WeeklyPlan < ApplicationRecord
   end
 
   # The next unfinished planner step after `key`. Placed by the full
-  # Dashboard order, so this also works from a step left out of the planner
+  # planner order (Dashboard.planner_section_keys), so this also works from a step left out of the planner
   # that was opened directly (a dashboard card's button): it moves on to the
   # next included one.
   def next_key_after(key)
-    keys = Dashboard.section_keys
+    keys = Dashboard.planner_section_keys
     idx = keys.index(key.to_s)
     return nil unless idx
 
@@ -124,7 +124,7 @@ class WeeklyPlan < ApplicationRecord
 
   # The planner step before `key`, the same way.
   def previous_key_before(key)
-    keys = Dashboard.section_keys
+    keys = Dashboard.planner_section_keys
     idx = keys.index(key.to_s)
     return nil unless idx
 

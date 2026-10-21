@@ -33,6 +33,7 @@
         <% end %>
       </div>
       <%= render "calendars/sync_now_button" %>
+      <%= render "shared/print_button", url: week_section_pdf_path("calendar", @date), label: "Print calendar" %>
       <% if household_admin? %>
       <%= link_to new_calendar_event_path(starts_at: @date.to_s),
             class: "inline-flex items-center gap-x-1.5 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold

@@ -19,13 +19,15 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     @household.weekly_chores.create!(chore: chores(:one), week_start: MONDAY, scheduled_date: MONDAY + 1)
   end
 
-  test "the print page lets you pick a week and pages, all ticked by default" do
+  test "the print page lets you pick a week and pages, all but the recipes ticked by default" do
     get new_week_print_url(week: "2026-01-07")
 
+    ticked = WeekPlanPdf::SECTIONS.keys - %w[recipes]
     assert_response :success
     assert_select "input[name=week][value='2026-01-05']"
-    assert_select "input[type=checkbox][name='sections[]'][checked]", count: WeekPlanPdf::SECTIONS.size
-    assert_select "a[href='#{new_week_print_path(week: MONDAY + 7, sections: WeekPlanPdf::SECTIONS.keys)}']", text: /Next/
+    assert_select "input[type=checkbox][name='sections[]'][checked]", count: ticked.size
+    assert_select "input[type=checkbox][name='sections[]'][value=recipes]:not([checked])"
+    assert_select "a[href='#{new_week_print_path(week: MONDAY + 7, sections: ticked)}']", text: /Next/
     assert_select "form[action='#{week_print_path(format: :pdf)}'][target=_blank]"
   end
 
@@ -72,10 +74,10 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     get dashboard_url
     assert_select "a[href='#{new_week_print_path(week: Date.current.beginning_of_week)}']", text: /Print this week's plan/
 
-    get plan_week_step_url(section: Dashboard.section_keys.last, week: Date.current.beginning_of_week)
+    get plan_week_step_url(section: Dashboard.planner_section_keys.last, week: Date.current.beginning_of_week)
     assert_select "a[href='#{new_week_print_path(week: Date.current.beginning_of_week)}']", text: /Print this week's plan/
 
-    get plan_week_step_url(section: Dashboard.section_keys.first, week: Date.current.beginning_of_week)
+    get plan_week_step_url(section: Dashboard.planner_section_keys.first, week: Date.current.beginning_of_week)
     assert_select "a", text: /Print this week's plan/, count: 0
   end
 
@@ -349,13 +351,60 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     assert_equal [ LETTER_LANDSCAPE ], page_sizes(response.body)
   end
 
-  test "the grocery total sits on the Groceries heading's line, at the far right" do
+  test "the grocery total sits on the Groceries heading's line, at the right of its column" do
     positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render)
     heading = positions.find { |_, text| text == "Groceries" }
     total   = positions.find { |_, text| text.start_with?("Estimated total") }
 
     assert heading && total, positions.map(&:last).inspect
-    assert_operator total.first, :>, 300 # right-hand side of the page
+    assert_operator total.first, :>, heading.first + 100 # pushed right, past the heading
+    assert_operator total.first, :<, 260                 # but within the first of two columns
+  end
+
+  # Enough produce to fill the left column and run into the right one.
+  def fill_produce(count)
+    count.times do |n|
+      ingredient = @household.ingredients.create!(ingredient: "Produce item #{n.to_s.rjust(2, '0')}", family: "produce")
+      @household.grocery_lists.create!(ingredient:, user: users(:one), week_of: MONDAY, units: 1)
+    end
+  end
+
+  test "the shopping list reads down the left column, then the right, repeating a split section's title" do
+    fill_produce(40)
+    positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render)
+    x_of = ->(label) { positions.find { |_, text| text == label }&.first }
+
+    assert_operator x_of.("Produce item 00"), :<, 100   # starts in the left column
+    assert_operator x_of.("Produce item 39"), :>, 200   # ends in the right one
+    produce_titles = positions.select { |_, text| text == "Produce" }
+    assert_equal 2, produce_titles.size, "the split section's title shows at the top of the next column too"
+    assert_operator produce_titles.map(&:first).max, :>, 200
+
+    # The restock list picks up where the groceries end — in the right column here.
+    assert_operator x_of.("Restock"), :>, 200
+  end
+
+  test "a short shopping list stays in the left column, restock right under the groceries" do
+    positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render)
+    x_of = ->(label) { positions.find { |_, text| text == label }&.first }
+
+    assert_in_delta x_of.("Groceries"), x_of.("Restock"), 0.01
+  end
+
+  test "a very long shopping list still fits one page" do
+    fill_produce(140)
+    pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping]).render
+
+    assert_equal 1, page_count(pdf)
+    assert(pdf_text_lines(pdf).any? { |line| line.include?("Produce item 139") })
+  end
+
+  test "landscape spreads the shopping list over three columns" do
+    fill_produce(60)
+    positions = pdf_text_positions(WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[shopping], layouts: { "shopping" => "landscape" }).render)
+
+    column_starts = positions.select { |_, text| text == "Produce" }.map { |x, _| x.round }.uniq
+    assert_equal 3, column_starts.size, positions.map(&:last).inspect
   end
 
   test "the shopping list stays on the print page unless both grocery and restock steps are left out" do
@@ -418,5 +467,73 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     end
     assert_select "input[name='sections[]'][value=chores]", 1
     assert_select "input[name='sections[]'][value=todos]", 1
+  end
+
+  # ── Each page's own Print button ──
+
+  test "each planning page has a Print button straight to its own PDF" do
+    {
+      meals_url(date: MONDAY.iso8601)          => [ "meals", "Print meal plan" ],
+      grocery_lists_url(date: MONDAY.iso8601)  => [ "shopping", "Print shopping list" ],
+      weekly_chores_url(date: MONDAY.iso8601)  => [ "chores", "Print chore chart" ],
+      week_calendars_url(date: MONDAY.iso8601) => [ "calendar", "Print calendar" ]
+    }.each do |page, (section, label)|
+      get page
+      assert_select "a[target=_blank][href=?]", week_print_path(format: :pdf, week: MONDAY.iso8601, sections: [ section ]), text: /#{label}/
+    end
+
+    get todos_url
+    assert_select "a[target=_blank][href=?]", week_print_path(format: :pdf, week: Date.current.beginning_of_week.iso8601, sections: [ "todos" ]), text: /Print to-dos/
+  end
+
+  test "a limited member gets the Print buttons too" do
+    sign_in users(:two) # bob, limited
+    get grocery_lists_url(date: MONDAY.iso8601)
+    assert_select "a", text: /Print shopping list/
+  end
+
+  test "a recipe prints on its own" do
+    recipe = Recipe.find_by!(title: "Chicken Teriyaki Bowls 🍚")
+
+    get recipe_url(recipe)
+    assert_select "a[target=_blank][href=?]", recipe_print_path(recipe, format: :pdf), text: /Print recipe/
+
+    get recipe_print_url(recipe, format: :pdf)
+    assert_response :success
+    assert_equal "application/pdf", response.media_type
+    lines = pdf_text_lines(response.body)
+    assert_includes lines, "Chicken Teriyaki Bowls"
+    assert(lines.any? { |line| line.include?("Steam the rice") }, lines.inspect)
+  end
+
+  test "another household's private recipe can't be printed" do
+    theirs = Recipe.create!(title: "Secret stew", servings: 4, user: users(:three), visibility: "private")
+
+    get recipe_print_url(theirs, format: :pdf)
+    assert_response :not_found
+  end
+
+  test "the dashboard steps between weeks like the meal planner, and its print button follows" do
+    this_week = Date.current.beginning_of_week
+
+    get dashboard_url
+    assert_select "a[href=?]", dashboard_path(date: (this_week - 7).iso8601), text: /Previous Week/
+    assert_select "a[href=?]", dashboard_path(date: (this_week + 7).iso8601), text: /Next Week/
+    assert_select "a[href=?]", new_week_print_path(week: this_week), text: /Print this week's plan/
+
+    later = this_week + 14
+    get dashboard_url(date: (later + 3).iso8601) # any day in the week
+    assert_select "h1", text: /Week of #{later.strftime('%b %-d')}/
+    assert_select "a[href=?]", new_week_print_path(week: later), text: /Print plan for week of #{later.strftime('%b %-d')}/
+    assert_select "a[href=?]", dashboard_path(date: (later - 7).iso8601), text: /Previous Week/
+  end
+
+  test "a week the planner can't plan doesn't offer to plan it" do
+    get dashboard_url(date: (Date.current.beginning_of_week - 7).iso8601)
+
+    assert_response :success
+    assert_select "h1", text: /LastWeek/
+    assert_select "a[href^='/plan-week?week=#{(Date.current.beginning_of_week - 7).iso8601}']", count: 0
+    assert_select "a", text: /Plan your week|Reopen the plan/, count: 0
   end
 end

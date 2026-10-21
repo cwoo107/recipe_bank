@@ -1,20 +1,12 @@
 <%#
   locals: sections (Array<Dashboard::Section>), current_key (String)
+  The step bar — desktop only; on mobile the steps are an accordion
+  instead (plan_week/_accordion_header, in plan_week/show).
 %>
-<nav aria-label="Progress" class="mb-6">
+<nav aria-label="Progress" class="mb-6 hidden md:block">
   <ol role="list" class="divide-y divide-gray-200 rounded-md border border-gray-200 md:flex md:divide-y-0 dark:divide-white/10 dark:border-white/10">
     <% sections.each_with_index do |section, index| %>
-      <%
-        state = if section.status == "done"
-                  :done
-                elsif section.status == "skipped"
-                  :skipped
-                elsif section.key == current_key
-                  :current
-                else
-                  :upcoming
-                end
-      %>
+      <% state = plan_step_state(section, current_key) %>
       <li class="relative md:flex md:flex-1">
         <%= link_to plan_week_step_path(section: section.key, week: section.week_start),
                     "aria-current": state == :current ? "step" : nil,

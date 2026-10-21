@@ -87,4 +87,19 @@ class IngredientTest < ActiveSupport::TestCase
     refute line.valid?
     assert_includes line.errors[:ingredient], "must be one of your household's ingredients"
   end
+
+  test "family_rank follows FAMILIES' order, with blank or unknown families last" do
+    assert_equal 0, Ingredient.family_rank("protein")
+    assert_equal 1, Ingredient.family_rank("Produce")
+    assert_operator Ingredient.family_rank("spices"), :<, Ingredient.family_rank("condiments")
+    assert_equal Ingredient::FAMILIES.size, Ingredient.family_rank(nil)
+    assert_equal Ingredient::FAMILIES.size, Ingredient.family_rank("pantry")
+  end
+
+  test "family_order_sql sorts the same way in the database" do
+    household = households(:two)
+    %w[grocery dairy protein frozen].each { |family| household.ingredients.create!(ingredient: "#{family} thing", family: family) }
+
+    assert_equal %w[protein dairy frozen grocery], household.ingredients.order(Ingredient.family_order_sql).pluck(:family)
+  end
 end

@@ -8,24 +8,25 @@ class PlanWeekBarTest < ActionDispatch::IntegrationTest
 
   test "does not show when nothing is currently being planned" do
     get todos_url
-    assert_select "form[action=?]", plan_week_step_path(section: "meals", week: @week), count: 0
+    assert_select "form[action=?]", plan_week_step_path(section: "calendar", week: @week), count: 0
   end
 
   test "shows the continue/skip bar on an unrelated page while a plan is in progress" do
     WeeklyPlan.current_for(households(:one)).update!(currently_planning: true)
 
     get todos_url
-    assert_select "form[action=?] input[name=status][value=done]", plan_week_step_path(section: "meals", week: @week)
-    assert_select "form[action=?] input[name=status][value=skipped]", plan_week_step_path(section: "meals", week: @week)
+    # The planner's first step is the calendar.
+    assert_select "form[action=?] input[name=status][value=done]", plan_week_step_path(section: "calendar", week: @week)
+    assert_select "form[action=?] input[name=status][value=skipped]", plan_week_step_path(section: "calendar", week: @week)
   end
 
   test "advances to the next active section as steps complete" do
     plan = WeeklyPlan.current_for(households(:one))
-    plan.section("meals").mark!("done", by: users(:one))
+    plan.section("calendar").mark!("done", by: users(:one))
     plan.update!(currently_planning: true)
 
     get todos_url
-    assert_select "form[action=?] input[name=status][value=done]", plan_week_step_path(section: "restock", week: @week)
+    assert_select "form[action=?] input[name=status][value=done]", plan_week_step_path(section: "meals", week: @week)
   end
 
   test "is suppressed on the wizard itself" do
@@ -53,7 +54,7 @@ class PlanWeekBarTest < ActionDispatch::IntegrationTest
     assert_select "#plan_week_bar" do
       assert_select "p", text: /Planning next week/
       assert_select "form[action='#{plan_week_path}'] input[name=_method][value=delete]"
-      assert_select "form[action='#{plan_week_step_path(section: "meals", week: next_week)}']"
+      assert_select "form[action='#{plan_week_step_path(section: "calendar", week: next_week)}']"
     end
   end
 
@@ -76,6 +77,7 @@ class PlanWeekBarTest < ActionDispatch::IntegrationTest
     next_week = @week + 7
     plan = WeeklyPlan.current_for(households(:one), week_start: next_week)
     plan.update!(currently_planning: true, planning_started_at: Time.current)
+    plan.section("calendar").mark!("done", by: users(:one))
     plan.section("meals").mark!("done", by: users(:one))
 
     delete plan_week_url

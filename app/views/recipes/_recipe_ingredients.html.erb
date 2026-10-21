@@ -10,7 +10,8 @@
     <div class="overflow-x-auto -mx-6 px-6">
       <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
         <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5" id="recipe_ingredients">
-        <% recipe.recipe_ingredients.each do |recipe_ingredient| %>
+        <%# By family, in the Ingredients page's category order (Recipe#ingredients_by_family). %>
+        <% recipe.ingredients_by_family.each do |recipe_ingredient| %>
           <%= render "recipes/recipe_ingredient_row", recipe_ingredient: recipe_ingredient, recipe: recipe %>
         <% end %>
         </tbody>
