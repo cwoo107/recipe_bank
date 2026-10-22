@@ -21,7 +21,7 @@ class Ingredient < ApplicationRecord
   # Ingredient families (the "family" column) — the one list everything else
   # reads from: the family select, filter chips and tags (IngredientsHelper,
   # which adds each one's colors), the CSV catalog import, the week plan PDF's
-  # grocery headings, and the AI classification prompts (OllamaAssistant),
+  # grocery headings, and the AI classification prompts (IngredientAssistant),
   # which get each family's description. "grocery" is the catch-all.
   FAMILIES = {
     'protein'    => { label: 'Protein',         description: 'meat, poultry, fish, eggs, tofu, dried beans, legumes' },
@@ -38,6 +38,12 @@ class Ingredient < ApplicationRecord
     'beverages'  => { label: 'Beverages',       description: 'coffee, tea, juice, soda, wine and beer' },
     'grocery'    => { label: 'Grocery',         description: 'anything that fits none of the above (snacks, packaged foods, paper goods)' }
   }.freeze
+
+  # Ingredients recipes list but nobody buys — tap water. Left off grocery
+  # lists (GroceryListsController#generate). Matched by name, any capitals.
+  NOT_SHOPPED = %w[water].freeze
+
+  def not_shopped? = NOT_SHOPPED.include?(ingredient.to_s.squish.downcase)
 
   def self.family_label(family)
     FAMILIES.dig(family.to_s.downcase, :label) || family.to_s.titleize
@@ -80,6 +86,28 @@ class Ingredient < ApplicationRecord
   # several brands of it, since a typed name doesn't say which.
   def self.catalog_entry_named(name)
     catalog.named(name).order(Arel.sql("CASE WHEN COALESCE(ingredients.brand, '') = '' THEN 0 ELSE 1 END"), :id).first
+  end
+
+  # What the ingredient pickers (a recipe's, the grocery list's) offer a
+  # household: its own ingredients, plus the catalog's it doesn't have yet —
+  # by name, or as an earlier copy. Picking one of those copies it in (see
+  # .pick_for). Favorites first, then A–Z.
+  def self.pickable_for(household)
+    own    = household.ingredients.to_a
+    names  = own.map { |ingredient| ingredient.ingredient.to_s.downcase }.to_set
+    copied = own.filter_map(&:source_ingredient_id).to_set
+    extra  = catalog.reject { |entry| copied.include?(entry.id) || names.include?(entry.ingredient.to_s.downcase) }
+
+    (own + extra).sort_by { |ingredient| [ ingredient.favorite? ? 0 : 1, ingredient.ingredient.to_s.downcase ] }
+  end
+
+  # The ingredient a picker's id stands for, in `household`'s library: one of
+  # its own, or a catalog one copied in (saved). Nil for anything else — no
+  # picking another household's ingredients.
+  def self.pick_for(household, id, user:)
+    return if id.blank?
+
+    household.ingredients.find_by(id:) || catalog.find_by(id:)&.copy_for(household, user:)
   end
 
   # Anything IngredientEnrichmentJob would fill in still blank.

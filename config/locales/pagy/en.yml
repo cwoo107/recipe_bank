@@ -1,0 +1,27 @@
+# Pagy's own English dictionary (gem locales/en.yml) with the app's wording:
+# chevron icons for previous/next (screen readers get aria_label's words) and
+# "Showing 1–24 of 315 recipes". Loaded by config/initializers/pagy.rb.
+# See https://ddnexus.github.io/pagy/resources/i18n
+
+en:
+  pagy:
+    p11n: 'OneOther'
+    aria_label:
+      nav:
+        one: "Page"
+        other: "Pages"
+      previous: "Previous"
+      next: "Next"
+    previous: "<svg viewBox=\"0 0 20 20\" fill=\"currentColor\" aria-hidden=\"true\" class=\"size-4\"><path fill-rule=\"evenodd\" d=\"M11.78 5.22a.75.75 0 0 1 0 1.06L8.06 10l3.72 3.72a.75.75 0 1 1-1.06 1.06l-4.25-4.25a.75.75 0 0 1 0-1.06l4.25-4.25a.75.75 0 0 1 1.06 0Z\" clip-rule=\"evenodd\" /></svg>"
+    next: "<svg viewBox=\"0 0 20 20\" fill=\"currentColor\" aria-hidden=\"true\" class=\"size-4\"><path fill-rule=\"evenodd\" d=\"M8.22 5.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L11.94 10 8.22 6.28a.75.75 0 0 1 0-1.06Z\" clip-rule=\"evenodd\" /></svg>"
+    gap: "&hellip;"
+    item_name:
+      one: "item"
+      other: "items"
+    info_tag:
+      no_count: "Page %{page} of %{pages}"
+      no_items: "No %{item_name} found"
+      single_page: "Showing %{count} %{item_name}"
+      multiple_pages: "Showing %{from}–%{to} of %{count} %{item_name}"
+    input_nav_js: "Page %{page_input} of %{pages}"
+    limit_tag_js: "Show %{limit_input} %{item_name} per page"

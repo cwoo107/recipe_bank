@@ -376,3 +376,40 @@
 [data-limited] .admin-only {
   display: none !important;
 }
+
+/* Pagination (Pagy's series_nav — see shared/_pagination): page buttons in
+   the app's white/ringed button style, the current page in sage. */
+@layer components {
+  .pagy.series-nav {
+    @apply flex flex-wrap items-center justify-center gap-1;
+  }
+
+  .pagy.series-nav a {
+    @apply inline-flex h-9 min-w-9 items-center justify-center rounded-md px-2.5 text-sm font-semibold
+    bg-white text-gray-900 shadow-xs inset-ring inset-ring-gray-300 transition-colors
+    dark:bg-white/10 dark:text-white dark:inset-ring-white/5;
+  }
+
+  .pagy.series-nav a[href]:hover {
+    @apply bg-gray-50 text-[#5f734c] dark:bg-white/20 dark:text-[#7a8f62];
+  }
+
+  .pagy.series-nav a[href]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-[#5f734c];
+  }
+
+  /* The page you're on. */
+  .pagy.series-nav a[aria-current] {
+    @apply bg-[#5f734c] text-white inset-ring-[#5f734c] dark:bg-[#7a8f62] dark:inset-ring-[#7a8f62];
+  }
+
+  /* Previous on the first page, next on the last. */
+  .pagy.series-nav a[aria-disabled]:not([aria-current]):not([role="separator"]) {
+    @apply cursor-default opacity-40;
+  }
+
+  /* The "…" between page numbers. */
+  .pagy.series-nav a[role="separator"] {
+    @apply min-w-6 bg-transparent px-0 text-gray-400 shadow-none inset-ring-0 dark:bg-transparent dark:text-gray-500;
+  }
+}

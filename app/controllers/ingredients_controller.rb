@@ -1,4 +1,7 @@
 class IngredientsController < ApplicationController
+  INGREDIENTS_PER_PAGE = 50
+  RECIPES_PER_PAGE     = 10 # the "Used in Recipes" list on an ingredient
+
   before_action :set_ingredient, only: %i[show edit update destroy]
   before_action :require_edit_permission!, only: %i[edit update destroy]
 
@@ -15,9 +18,13 @@ class IngredientsController < ApplicationController
     end
 
     @ingredients = apply_sort(@ingredients)
+    @pagy, @ingredients = pagy(:offset, @ingredients, limit: INGREDIENTS_PER_PAGE)
   end
 
+  # "Used in Recipes" comes a page at a time, by recipe title.
   def show
+    @pagy, @recipe_lines = pagy(:offset, @ingredient.recipe_ingredients.joins(:recipe).includes(:recipe).order("recipes.title"),
+                                limit: RECIPES_PER_PAGE)
   end
 
   def new

@@ -1,4 +1,10 @@
-<%= form_with(model: grocery_list, url: grocery_list.persisted? ? grocery_list_path(grocery_list) : create_grocery_list_path, class: "contents") do |form| %>
+<%# Locals: grocery_list (week_of is the week being viewed) %>
+<% field_class = "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+<% active_tab, inactive_tab = "border-[#5f734c] text-[#5f734c] dark:border-[#7a8f62] dark:text-[#7a8f62]", "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-200" %>
+<% note_entry = grocery_list.note.present? && grocery_list.ingredient_id.blank? %>
+
+<%= form_with(model: grocery_list, url: grocery_list.persisted? ? grocery_list_path(grocery_list) : create_grocery_list_path,
+              class: "contents", data: { controller: "grocery-form" }) do |form| %>
   <% if grocery_list.errors.any? %>
     <div id="error_explanation" class="bg-red-50 text-red-500 px-3 py-2 font-medium rounded-md mt-3">
       <h2><%= pluralize(grocery_list.errors.count, "error") %> prohibited this grocery_list from being saved:</h2>
@@ -11,39 +17,64 @@
     </div>
   <% end %>
 
-    <%= form.hidden_field :week_of,
-                        required: true,
-                        value: Date.today,
-                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border #{grocery_list.errors[:week_of].any? ? 'border-red-400 dark:border-red-600 focus:border-red-500 focus:ring-red-500/20' : 'border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20'} focus:ring-2 outline-none transition" %>
+  <%= form.hidden_field :week_of, value: grocery_list.week_of || Date.current.beginning_of_week %>
 
-  <div class="mb-4" data-controller="searchable-select" data-searchable-select-placeholder-value="Search for an ingredient...">
-    <%= form.label :ingredient_id, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= form.select :ingredient_id,
-                    options_for_select(
-                      Ingredient.order(favorite: :desc, ingredient: :asc).map { |r|
-                        [r.ingredient, r.id, { 'data-favorite' => r.favorite }]
-                      },
-                      grocery_list.ingredient_id
-                    ),
-                    { include_blank: true },
-                    class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
-                    data: {
-                      dynamic_filter_target: "field",
-                      searchable_select_target: "select",
-                      action: "change->dynamic-filter#updateValueField"
-                    }
-    %>
+  <%# An ingredient to buy, or — like a note on the meal plan — a note for
+      something that isn't one of our ingredients. grocery_list[entry] tells
+      the server which. %>
+  <%= hidden_field_tag "grocery_list[entry]", note_entry ? "note" : "ingredient", data: { grocery_form_target: "entryInput" } %>
+  <nav aria-label="Add an ingredient or a note" class="mb-4 flex space-x-8 border-b border-gray-200 dark:border-white/10">
+    <button type="button" data-grocery-form-target="tab" data-entry="ingredient" data-action="grocery-form#choose"
+            class="border-b-2 <%= note_entry ? inactive_tab : active_tab %> px-1 py-3 text-sm font-medium whitespace-nowrap">
+      Add an Ingredient
+    </button>
+    <button type="button" data-grocery-form-target="tab" data-entry="note" data-action="grocery-form#choose"
+            class="border-b-2 <%= note_entry ? active_tab : inactive_tab %> px-1 py-3 text-sm font-medium whitespace-nowrap">
+      Make a Note
+    </button>
+  </nav>
+
+  <div data-grocery-form-target="ingredientSection" class="<%= 'hidden' if note_entry %>">
+    <%# Typing a name that isn't one of our ingredients offers to add it —
+        GroceryListsController#create does, then works out its details. %>
+    <div class="mb-4"
+         data-controller="searchable-select"
+         data-searchable-select-placeholder-value="Search or type a new ingredient..."
+         data-searchable-select-creatable-value="true"
+         data-searchable-select-create-label-value="Add “%s” as a new ingredient">
+      <%= hidden_field_tag "grocery_list[new_ingredient_name]", nil,
+                           id: "grocery_list_new_ingredient_name",
+                           data: { searchable_select_target: "newName" } %>
+      <%= form.label :ingredient_id, "Ingredient", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+      <%= form.select :ingredient_id,
+                      ingredient_picker_options(current_household, grocery_list.ingredient_id),
+                      { include_blank: true },
+                      class: field_class,
+                      data: {
+                        dynamic_filter_target: "field",
+                        searchable_select_target: "select",
+                        action: "change->dynamic-filter#updateValueField"
+                      }
+      %>
+    </div>
+
+    <div class="mb-4">
+      <%= form.label :units, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+      <%= form.number_field :units, value: grocery_list.units || 1, min: 1,
+                            class: [field_class, {"border-red-400 focus:outline-red-600": grocery_list.errors[:units].any?}],
+                            data: { grocery_form_target: "unitsInput" },
+                            disabled: note_entry,
+                            required: true %>
+    </div>
   </div>
 
-  <div class="mb-4">
-    <%= form.label :units, class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= form.number_field :units, value: 1, min: 1,
-                          class: ["block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition", {"": grocery_list.errors[:units].none?, "border-red-400 focus:outline-red-600": grocery_list.errors[:units].any?}],
-    required: true
-    %>
+  <div data-grocery-form-target="noteSection" class="mb-4 <%= 'hidden' unless note_entry %>">
+    <%= form.label :note, "Note", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= form.text_field :note, maxlength: 100, placeholder: "Birthday candles, check if we need foil…",
+                        class: field_class, data: { grocery_form_target: "noteInput" } %>
   </div>
 
-    <%= form.hidden_field :manually_adjusted, value: true %>
+  <%= form.hidden_field :manually_adjusted, value: true %>
 
   <div class="inline">
     <%= form.submit "Add to list", class: "rounded-lg px-6 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-medium cursor-pointer transition shadow-sm" %>

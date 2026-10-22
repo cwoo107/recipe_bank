@@ -96,3 +96,7 @@ gem "ruby_native", "~> 0.15.3"
 gem "icalendar-recurrence", "~> 1.2"
 
 gem "stripe", "~> 19.6"
+
+gem "anthropic", "~> 2.1"
+
+gem "pagy", "~> 43.8"

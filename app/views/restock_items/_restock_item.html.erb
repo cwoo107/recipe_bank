@@ -18,9 +18,9 @@
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
         <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
           <%= turbo_frame_tag "edit_restock_item_#{item.id}", src: edit_restock_item_path(item) do %><% end %>
-          <div class="mt-4">
+          <div class="mt-4 flex justify-end">
             <button type="button" data-action="dialog#close"
-                    class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+                    class="inline-flex items-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
               Close
             </button>
           </div>
@@ -66,6 +66,12 @@
     <% if item.brand.present? || item.store.present? %>
       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
         <%= [ item.brand, item.store ].select(&:present?).join(" · ") %>
+      </p>
+    <% end %>
+
+    <% if item.last_restocked %>
+      <p class="mt-1 text-[11px] text-gray-400 dark:text-gray-500">
+        Last restocked <%= item.last_restocked.strftime(item.last_restocked.year == Date.current.year ? "%b %-d" : "%b %-d, %Y") %>
       </p>
     <% end %>
 

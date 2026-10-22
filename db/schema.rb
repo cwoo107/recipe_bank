@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_20_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_22_190000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -175,9 +175,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_170000) do
     t.boolean "checked"
     t.datetime "created_at", null: false
     t.integer "household_id", null: false
-    t.integer "ingredient_id", null: false
+    t.integer "ingredient_id"
     t.boolean "manually_adjusted"
     t.text "meal_ids"
+    t.string "note"
     t.integer "units"
     t.datetime "updated_at", null: false
     t.integer "user_id"
@@ -414,6 +415,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_20_170000) do
     t.integer "household_id", null: false
     t.datetime "last_date_checked_restocked"
     t.datetime "last_date_checked_stocked"
+    t.date "last_restocked"
     t.string "name", null: false
     t.integer "position", default: 0, null: false
     t.boolean "restock", default: false, null: false

@@ -1,6 +1,6 @@
 require "test_helper"
 require "minitest/mock"
-require_relative "../support/fake_ollama_assistant"
+require_relative "../support/fake_ingredient_assistant"
 
 class ProcessRecipeImportJobTest < ActiveJob::TestCase
   FakeExtractor = Struct.new(:data) do
@@ -21,7 +21,7 @@ class ProcessRecipeImportJobTest < ActiveJob::TestCase
     extractor = ->(io) { seen = [ io.read, io.content_type ]; FakeExtractor.new(SCRAPED) }
 
     RecipeFileExtractor.stub(:new, extractor) do
-      OllamaAssistant.stub(:new, FakeOllamaAssistant.new) do
+      IngredientAssistant.stub(:new, FakeIngredientAssistant.new) do
         ProcessRecipeImportJob.perform_now(job.id, "file")
       end
     end

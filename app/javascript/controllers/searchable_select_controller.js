@@ -30,6 +30,10 @@ export default class extends Controller {
             collectionIds: opt.dataset.collectionIds || ""
         }))
 
+        // A page restored from Turbo's cache (back/forward, or the preview
+        // shown while revisiting) still has the search box built last time.
+        // Clear it out so connecting again doesn't add a second one.
+        this.removeCustomSelect()
         this.buildCustomSelect()
         this.originalSelect.style.display = 'none'
 
@@ -113,6 +117,7 @@ export default class extends Controller {
         wrapper.appendChild(input)
         wrapper.appendChild(dropdown)
         this.originalSelect.parentNode.insertBefore(wrapper, this.originalSelect)
+        this.wrapper = wrapper
 
         // Set initial display value
         const selectedOption = this.options.find(opt => opt.value === this.selectedValue)
@@ -120,8 +125,10 @@ export default class extends Controller {
             input.value = selectedOption.text
         }
 
-        // Close dropdown when clicking outside
-        document.addEventListener('click', this.handleClickOutside.bind(this))
+        // Close dropdown when clicking outside. Keep the bound handler so
+        // disconnect removes the same function it added.
+        this.boundClickOutside = this.handleClickOutside.bind(this)
+        document.addEventListener('click', this.boundClickOutside)
     }
 
     filterOptions() {
@@ -317,6 +324,15 @@ export default class extends Controller {
     }
 
     disconnect() {
-        document.removeEventListener('click', this.handleClickOutside.bind(this))
+        document.removeEventListener('click', this.boundClickOutside)
+        this.removeCustomSelect()
+        this.originalSelect.style.display = ''
+    }
+
+    // The search box buildCustomSelect puts just before the <select>.
+    removeCustomSelect() {
+        this.originalSelect.parentNode
+            ?.querySelectorAll(':scope > [data-searchable-select-target="wrapper"]')
+            .forEach(wrapper => wrapper.remove())
     }
 }

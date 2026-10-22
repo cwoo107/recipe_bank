@@ -1,4 +1,7 @@
 class ApplicationController < ActionController::Base
+  # pagy(:offset, scope, limit:) — paginated lists (see shared/_pagination).
+  include Pagy::Method
+
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?
   around_action :use_time_zone

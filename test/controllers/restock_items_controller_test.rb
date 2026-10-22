@@ -77,4 +77,55 @@ class RestockItemsControllerTest < ActionDispatch::IntegrationTest
     patch restock_item_url(@item), params: { restock_item: { name: "Should not work" } }
     assert_response :not_found
   end
+
+  test "the card shows when the item was last restocked, and the form can set it" do
+    patch restock_item_url(@item), params: { restock_item: { last_restocked: "2025-09-14" } }
+    assert_equal Date.new(2025, 9, 14), @item.reload.last_restocked
+
+    get restock_items_url
+    assert_select "#restock_item_#{@item.id}", text: /Last restocked Sep 14, 2025/
+  end
+
+  test "ticking an item off the shopping list dates last_restocked; the card's buttons don't" do
+    patch mark_restock_restock_item_url(@item), as: :turbo_stream
+    patch mark_stocked_restock_item_url(@item), as: :turbo_stream
+    assert_nil @item.reload.last_restocked
+
+    @item.update!(last_restocked: Date.new(2025, 9, 14))
+    patch mark_restock_restock_item_url(@item), as: :turbo_stream
+    patch mark_stocked_restock_item_url(@item), params: { context: "shopping" }, as: :turbo_stream
+    assert_equal Date.current, @item.reload.last_restocked
+
+    # Unticking it straight away puts back the date it replaced.
+    assert_select "input[name=previous_restocked][value='2025-09-14']"
+    patch mark_restock_restock_item_url(@item), params: { context: "shopping", previous_restocked: "2025-09-14" }, as: :turbo_stream
+    assert_equal Date.new(2025, 9, 14), @item.reload.last_restocked
+    assert @item.restock?
+  end
+
+  test "unticking a first-ever restock clears the date again" do
+    @item.mark_restock!
+    patch mark_stocked_restock_item_url(@item), params: { context: "shopping" }, as: :turbo_stream
+    assert_select "input[name=previous_restocked][value='']"
+
+    patch mark_restock_restock_item_url(@item), params: { context: "shopping", previous_restocked: "" }, as: :turbo_stream
+    assert_nil @item.reload.last_restocked
+  end
+
+  test "adding an item clears the form it came from, keeping its list" do
+    kitchen = restock_categories(:kitchen_one)
+
+    post restock_items_url, params: { restock_item: { name: "Sponges", brand: "Scotch-Brite", restock_category_id: kitchen.id } },
+                            headers: { "Turbo-Frame" => "new_restock_item_#{kitchen.id}" }, as: :turbo_stream
+
+    assert_match %(<turbo-stream action="prepend" target="restock_items_#{kitchen.id}">), response.body
+    assert_select "turbo-stream[action=replace][target=new_restock_item_#{kitchen.id}]" do
+      assert_select "template" do |template|
+        form = Nokogiri::HTML.fragment(template.first.inner_html)
+        assert_equal "", form.at("input[name='restock_item[name]']")["value"].to_s
+        assert_nil form.at("input[name='restock_item[brand]']")["value"]
+        assert_equal kitchen.id.to_s, form.at("select[name='restock_item[restock_category_id]'] option[selected]")["value"]
+      end
+    end
+  end
 end

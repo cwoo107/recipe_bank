@@ -6,8 +6,7 @@
   week_start = local_assigns[:week_start]
   default_date = meal.date || [ week_start, Date.current ].compact.max
 %>
-<%= form_with(model: meal, class: "space-y-6", data: { controller: "meal-form", meal_form_family_size_value: current_household.family_size,
-                              meal_form_new_record_value: meal.new_record?,
+<%= form_with(model: meal, class: "space-y-6", data: { controller: "meal-form",
                               meal_form_slot_data_value: meal_slot_data(current_household, default_date.beginning_of_week, except: meal).to_json,
                               meal_form_original_eaters_value: meal.eater_ids.to_json }) do |form| %>
   <% if meal.errors.any? %>
@@ -139,10 +138,10 @@
 
         <div class="flex-[1]" data-meal-form-target="servingsField">
           <%= form.label :servings, "Servings", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+          <%# Blank until a recipe is picked, which fills in what it makes (meal-form#recipeChanged). %>
           <%= form.number_field :servings,
                                 min: 1,
-                                value: meal[:servings] || current_household.default_servings_for(date: meal.date, meal_name: meal.meal_name, except: meal),
-                                placeholder: current_household.family_size,
+                                value: meal[:servings],
                                 class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition",
                                 data: { meal_form_target: "servingsInput", action: "input->meal-form#servingsEdited" } %>
         </div>

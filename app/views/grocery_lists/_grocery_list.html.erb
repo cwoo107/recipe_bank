@@ -1,6 +1,14 @@
-<%# data-price / data-units feed the list's live Subtotal (grocery_subtotal_controller.js). %>
+<% if grocery_list.note_only? %>
+  <%= render "grocery_lists/note", grocery_list: grocery_list %>
+<% else %>
+<%# data-price / data-units feed the list's live Subtotal (grocery_subtotal_controller.js).
+    On phones the row is a grid — the form below lays its parts straight into
+    it (display: contents) — so the quantity and the trash can stack in the
+    right-hand column; each part names its cell, so a limited member's row
+    (no checkbox or trash) keeps the same columns. From sm up it's the
+    desktop row, where the grid placement has no effect. %>
 <div id="grocery_list_<%= grocery_list.id %>"
-     class="flex justify-between gap-x-6 py-5 px-4 hover:bg-[#faf9f7] hover:dark:bg-[#1a1f16] rounded"
+     class="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 py-3 px-2 sm:flex sm:justify-between sm:gap-x-6 sm:py-5 sm:px-4 hover:bg-[#faf9f7] hover:dark:bg-[#1a1f16] rounded"
      data-controller="grocery-item"
      data-grocery-subtotal-target="row"
      data-price="<%= grocery_list.ingredient.unit_price.to_f %>"
@@ -9,14 +17,23 @@
   <%= form_with model: grocery_list,
                 url: grocery_list_path(grocery_list),
                 method: :patch,
-                class: "flex justify-between gap-x-6 w-full",
+                # Unique field ids per row: after a row is replaced, Turbo
+                # refocuses the checkbox by id — a shared id sent focus (and
+                # the page's scroll) to the first row.
+                namespace: dom_id(grocery_list),
+                # Browsers (Firefox especially) put a checkbox back the way it
+                # was before a reload, whatever was saved — the box then shows
+                # ticked on a row the server drew unticked (no strikethrough).
+                # Off, it always matches what's saved; likewise the hidden units.
+                html: { autocomplete: "off" },
+                class: "contents sm:flex sm:justify-between sm:gap-x-6 sm:w-full",
                 data: {
                   grocery_item_target: "form",
                   format: :turbo_stream
                 } do |f| %>
 
     <!-- Checkbox -->
-    <div class="flex items-center admin-only">
+    <div class="flex items-center admin-only col-start-1 row-start-1 row-span-2">
       <%= f.check_box :checked,
                       checked: grocery_list.checked == true,
                       data: { action: "change->grocery-item#toggleCheck" },
@@ -25,10 +42,10 @@
     </div>
 
     <!-- Item Details -->
-    <div class="flex min-w-0 flex-1 gap-x-4 ml-3">
+    <div class="flex min-w-0 flex-1 gap-x-4 col-start-2 row-start-1 row-span-2 sm:ml-3">
       <div class="min-w-0 flex-auto">
-        <div class="flex items-center gap-x-2">
-  <span class="flex items-center gap-x-2 font-semibold text-gray-900 dark:text-white transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+  <span class="flex items-center gap-x-2 text-sm sm:text-base font-semibold text-gray-900 dark:text-white transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
     <% if grocery_list.ingredient.favorite? %>
       <span class="text-yellow-500">
         <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
@@ -38,13 +55,44 @@
     <% end %>
     <%= link_to grocery_list.ingredient.ingredient, grocery_list.ingredient, class: "color-sage-500" %>
   </span>
+          <%# Its category, beside the name: "Chicken  Protein". %>
+          <%= ingredient_family_tag(grocery_list.ingredient.family) if grocery_list.ingredient.family.present? %>
         </div>
-        <p class="mt-1 truncate text-xs/5 text-gray-500 dark:text-gray-400 transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
-          used in <%= grocery_list.meal_ids.count %> meals
-        </p>
-        <p>
-          <%= ingredient_family_tag(grocery_list.ingredient.family) || "-" %>
-        </p>
+        <%# How much the week's recipes need in all, always shown; hover (or
+            tap/focus) "used in N meals" for which recipes and how many times
+            each is planned (GroceryList::Breakdown). `uses` comes from the
+            list page; a re-rendered row works it out. %>
+        <% breakdown = grocery_list.breakdown(local_assigns[:uses]) %>
+        <% amounts = breakdown.amounts %>
+        <div class="mt-1 flex flex-wrap items-center gap-x-1.5 text-[11px]/4 sm:text-xs/5 text-gray-500 dark:text-gray-400 transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
+          <% if amounts.any? %>
+            <%# Not on phones — too much for the row there. %>
+            <span class="hidden sm:inline font-medium text-gray-700 dark:text-gray-300"><%= amounts.map { |quantity, unit| grocery_amount(quantity, unit) }.join(" + ") %> needed</span>
+            <span class="hidden sm:inline" aria-hidden="true">-</span>
+          <% end %>
+          <span class="group/meals relative">
+            <span class="<%= 'cursor-help underline decoration-dotted underline-offset-2' if breakdown.any? %>"
+                  <%= tag.attributes(tabindex: 0, aria: { describedby: "#{dom_id(grocery_list)}_meals" }) if breakdown.any? %>>
+              used in <%= pluralize(grocery_list.meal_ids.count, "meal") %>
+            </span>
+            <% if breakdown.any? %>
+              <span id="<%= dom_id(grocery_list) %>_meals" role="tooltip"
+                    class="invisible opacity-0 group-hover/meals:visible group-hover/meals:opacity-100 group-focus-within/meals:visible group-focus-within/meals:opacity-100 transition-opacity absolute left-0 top-full z-20 mt-1 block w-64 rounded-lg bg-white p-3 text-xs text-gray-700 no-underline shadow-lg inset-ring inset-ring-gray-900/10 dark:bg-[#242b1e] dark:text-gray-200 dark:inset-ring-white/10">
+                <%# The app's card style (white, ringed), like the restock list's
+                    category headings. %>
+                <span class="block text-[11px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">Planned this week</span>
+                <span class="mt-1.5 block space-y-1">
+                  <% breakdown.recipes.each do |recipe, times| %>
+                    <span class="flex justify-between gap-3">
+                      <span class="truncate font-medium text-gray-900 dark:text-white"><%= recipe.title %></span>
+                      <span class="shrink-0 tabular-nums font-semibold text-[#5f734c] dark:text-[#7a8f62]">× <%= times %></span>
+                    </span>
+                  <% end %>
+                </span>
+              </span>
+            <% end %>
+          </span>
+        </div>
       </div>
     </div>
 
@@ -52,28 +100,28 @@
     <%= f.hidden_field :units, data: { grocery_item_target: "units" } %>
 
     <!-- Quantity Controls & Info -->
-    <div class=" shrink-0 flex flex-col items-center gap-2">
+    <div class="shrink-0 flex flex-col items-center gap-1 sm:gap-2 col-start-3 row-start-1">
       <!-- Quantity Controls -->
-      <div class="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-2 py-1">
+      <div class="flex items-center gap-1 sm:gap-2 bg-gray-100 dark:bg-gray-800 rounded-lg px-1.5 py-0.5 sm:px-2 sm:py-1">
         <button type="button"
                 data-action="click->grocery-item#decrement"
-                class="admin-only text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                class="admin-only text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold size-5 sm:size-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
           −
         </button>
 
-        <span class="text-sm font-semibold text-gray-900 dark:text-white min-w-[2ch] text-center">
+        <span class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-white min-w-[2ch] text-center">
           <%= grocery_list.units %>
         </span>
 
         <button type="button"
                 data-action="click->grocery-item#increment"
-                class="admin-only text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                class="admin-only text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-bold size-5 sm:size-6 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
           +
         </button>
       </div>
 
       <!-- Price Info -->
-      <p class="font-bold text-gray-900 dark:text-white">
+      <p class="text-xs sm:text-base font-bold text-gray-900 dark:text-white">
         <% if grocery_list.ingredient.unit_price.present? %>
           <span>
             $<%= (grocery_list.ingredient.unit_price * grocery_list.units).round(2) %>
@@ -83,7 +131,7 @@
         <% end %>
       </p>
       <% if grocery_list.manually_adjusted? %>
-        <p class="text-xs font-thin italic text-rose-600 dark:text-rose-300">
+        <p class="text-[10px] sm:text-xs font-thin italic text-rose-600 dark:text-rose-300">
           manually adjusted
         </p>
       <% end %>
@@ -96,11 +144,12 @@
                 data: {
                   turbo: true
                 },
-                form_class: "admin-only",
+                form_class: "admin-only col-start-3 row-start-2 justify-self-center",
                 class: "shrink-0 text-dusty-rose-600 hover:text-dusty-rose-500 dark:text-dusty-rose-400",
                 aria: { label: "Remove #{grocery_list.ingredient.ingredient} from grocery list" } do %>
-    <svg viewBox="0 0 20 20" fill="currentColor" class="size-6" aria-hidden="true">
+    <svg viewBox="0 0 20 20" fill="currentColor" class="size-5 sm:size-6" aria-hidden="true">
       <path fill-rule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193V3.75A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clip-rule="evenodd" />
     </svg>
   <% end %>
 </div>
+<% end %>

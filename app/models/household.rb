@@ -34,6 +34,7 @@ class Household < ApplicationRecord
   after_create :create_owner_member
   after_create :seed_default_restock_categories
   after_create :seed_default_chore_categories
+  after_create :seed_starter_chores
   after_create :seed_default_tags!
   after_update :realign_weeks, if: :saved_change_to_week_start_day?
 
@@ -328,6 +329,15 @@ class Household < ApplicationRecord
   def seed_default_chore_categories
     ChoreCategory::DEFAULT_NAMES.each_with_index do |name, index|
       chore_categories.create!(name: name, position: index + 1)
+    end
+  end
+
+  # Runs after the categories are seeded, so each starter lands in its own.
+  def seed_starter_chores
+    categories = chore_categories.index_by(&:name)
+    Chore::STARTERS.each do |starter|
+      chores.create!(name: starter[:name], frequency: starter[:frequency],
+                     chore_category: categories[starter[:category]])
     end
   end
 end

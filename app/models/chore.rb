@@ -65,6 +65,19 @@ class Chore < ApplicationRecord
     "annually"     => "bg-dusty-rose-100 text-dusty-rose-800 dark:bg-dusty-rose-900/30 dark:text-dusty-rose-300"
   }.freeze
 
+  # A few chores every new household starts with, one or two per default
+  # category (ChoreCategory::DEFAULT_NAMES), so the chore chart isn't empty
+  # on day one. Seeded by Household#seed_starter_chores; easy to edit or
+  # delete like any other chore.
+  STARTERS = [
+    { name: "Clean bathrooms",              frequency: "weekly",       category: "Standard Cleaning" },
+    { name: "Take out trash and recycling", frequency: "weekly",       category: "Chores" },
+    { name: "Pay bills",                    frequency: "monthly",      category: "Admin" },
+    { name: "Clean out the fridge",         frequency: "monthly",      category: "Deep Cleaning" },
+    { name: "Replace HVAC filter",          frequency: "quarterly",    category: "Home Maintenance" },
+    { name: "Test smoke detectors",         frequency: "semiannually", category: "Home Maintenance" }
+  ].freeze
+
   validates :name, presence: true
   validates :frequency, inclusion: { in: FREQUENCIES }
   validates :default_weekday, inclusion: { in: 0..6 }, allow_nil: true

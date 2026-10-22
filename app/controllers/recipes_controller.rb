@@ -1,4 +1,6 @@
 class RecipesController < ApplicationController
+  RECIPES_PER_PAGE = 24
+
   # Limited members can look but not change these (see ApplicationController).
   before_action :require_household_admin!, except: %i[index show toggle_favorite]
   before_action :set_recipe,        only: %i[show edit update destroy toggle_favorite toggle_visibility]
@@ -30,6 +32,8 @@ class RecipesController < ApplicationController
     end
 
     @recipes = apply_sort(@recipes)
+    # A page at a time — the public library alone is hundreds of recipes.
+    @pagy, @recipes = pagy(:offset, @recipes, limit: RECIPES_PER_PAGE)
 
     # Lets the browse list show "Saved" instead of offering a second copy.
     @saved_source_ids = saved_source_ids_for(@recipes) if @scope == "public"

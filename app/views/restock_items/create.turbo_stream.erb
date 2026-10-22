@@ -2,3 +2,14 @@
 <%= turbo_stream.prepend "restock_items_#{@restock_item.restock_category_id}" do %>
   <%= render "restock_items/restock_item", item: @restock_item %>
 <% end %>
+
+<%# Clear the form it came from (the page's "Add an item" dialog or a list's
+    quick add) for the next item, keeping the list it was added to. %>
+<% if (frame = request.headers["Turbo-Frame"]).to_s.start_with?("new_restock_item") %>
+  <%= turbo_stream.replace frame do %>
+    <%= turbo_frame_tag frame do %>
+      <%= render "restock_items/form",
+                 restock_item: current_household.restock_items.new(restock_category_id: @restock_item.restock_category_id) %>
+    <% end %>
+  <% end %>
+<% end %>

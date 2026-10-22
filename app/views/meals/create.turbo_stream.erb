@@ -23,7 +23,7 @@
 <% end %>
 
 <%= turbo_stream.replace "new_meal" do %>
-  <%= render partial: "meals/new", locals: { meal: Meal.new(servings: current_household.family_size), week_start: @date } %>
+  <%= render partial: "meals/new", locals: { meal: Meal.new, week_start: @date } %>
 <% end %>
 
 <%# Shared meals whose servings dropped because someone now has their own

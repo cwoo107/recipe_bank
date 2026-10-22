@@ -1,9 +1,9 @@
 require "test_helper"
 
 # The offline fallback for classifying ingredient families (see
-# OllamaAssistant#guess_family_programmatically).
-class OllamaAssistantFamilyTest < ActiveSupport::TestCase
-  setup { @ai = OllamaAssistant.new }
+# IngredientAssistant#guess_family_programmatically).
+class IngredientAssistantFamilyTest < ActiveSupport::TestCase
+  setup { @ai = IngredientAssistant.new }
 
   {
     "frozen peas"          => "frozen",

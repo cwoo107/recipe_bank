@@ -75,4 +75,15 @@ class GroceryListComponentsTest < ActionDispatch::IntegrationTest
 
     assert_operator cream_units, :>, @household.grocery_lists.find_by(ingredient: @cream).units
   end
+
+  test "water a recipe lists never goes on the shopping list" do
+    water = households(:one).ingredients.create!(ingredient: "Water", family: "beverages", unit_price: 0, unit_servings: 1)
+    @chicken.recipe_ingredients.create!(ingredient: water, quantity: 2, unit: "cup")
+    plan_meal
+
+    post generate_grocery_lists_url, params: { date: @week }
+
+    assert_equal [ @breast.id ], @household.grocery_lists.pluck(:ingredient_id)
+    assert water.not_shopped?
+  end
 end

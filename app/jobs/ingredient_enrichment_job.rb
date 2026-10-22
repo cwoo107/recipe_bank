@@ -3,8 +3,8 @@
 #
 # Runs after the ingredient is saved so nobody waits on the AI round trip.
 # Only blanks are filled — anything the user actually typed is left alone —
-# and OllamaAssistant falls back to family-based estimates when the model
-# isn't reachable, so this is safe to run with nothing listening.
+# and IngredientAssistant falls back to family-based estimates when the model
+# can't answer (no API key, an outage), so this is always safe to run.
 class IngredientEnrichmentJob < ApplicationJob
   queue_as :default
 
@@ -12,7 +12,7 @@ class IngredientEnrichmentJob < ApplicationJob
     ingredient = Ingredient.find_by(id: ingredient_id)
     return unless ingredient
 
-    ai = OllamaAssistant.new(model: "llama2")
+    ai = IngredientAssistant.new
 
     ingredient.update!(family: guessed_family(ai, ingredient)) if ingredient.family.blank?
 

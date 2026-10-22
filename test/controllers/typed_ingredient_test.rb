@@ -157,6 +157,27 @@ class TypedIngredientTest < ActionDispatch::IntegrationTest
 
   private
 
+  test "a default (catalog) ingredient can be picked, and is copied into the household" do
+    nutmeg = Ingredient.create!(ingredient: "Nutmeg", family: "spices", unit_price: 3.5)
+
+    get recipe_url(@recipe)
+    assert_select "#new_ingredient option[value='#{nutmeg.id}']", text: "Nutmeg"
+
+    assert_difference("households(:one).ingredients.count") do
+      add_line ingredient_id: nutmeg.id, quantity: 1, unit: "tsp", as: :turbo_stream
+    end
+    copy = @recipe.recipe_ingredients.last.ingredient
+    assert_equal households(:one), copy.household
+    assert_equal nutmeg, copy.source_ingredient
+    assert_match "Added Nutmeg to your ingredients, with its cost and nutrition", response.body
+  end
+
+  test "another household's ingredient can't be picked" do
+    theirs = households(:two).ingredients.create!(ingredient: "Their saffron")
+
+    assert_no_difference("RecipeIngredient.count") { add_line ingredient_id: theirs.id, quantity: 1 }
+  end
+
   def add_line(as: nil, **line)
     post recipe_recipe_ingredients_url(@recipe), params: { recipe_ingredient: line }, as:
   end

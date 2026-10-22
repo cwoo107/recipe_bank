@@ -22,7 +22,8 @@ class RecipeNewIngredientTest < ApplicationSystemTestCase
 
     picker = find("input[placeholder='Search or type a new ingredient...']")
     picker.fill_in with: "chocolate chips"
-    find("div", text: "Add “chocolate chips” as a new ingredient", exact_text: true).click
+    # The wrapper and dropdown around the offer share its text, so match the offer itself.
+    find("[data-action='click->searchable-select#chooseNew']", text: "Add “chocolate chips” as a new ingredient", exact_text: true).click
 
     fill_in "Quantity", with: "2"
     select "cup", from: "Unit (optional)"
@@ -43,5 +44,22 @@ class RecipeNewIngredientTest < ApplicationSystemTestCase
       click_button "Add Ingredient"
       assert_selector "[id^=recipe_ingredient_]", text: "Butter"
     end
+  end
+
+  # Turbo's cache and moved elements connect the picker again; it should
+  # rebuild its one search box, not add a second.
+  test "connecting the picker again keeps a single search box" do
+    boxes = "return document.querySelector(\"[data-controller~='searchable-select']\")" \
+            ".querySelectorAll(\"[data-searchable-select-target='wrapper']\").length"
+    assert_equal 1, page.evaluate_script("(() => { #{boxes} })()")
+
+    page.execute_script(<<~JS)
+      const el = document.querySelector("[data-controller~='searchable-select']")
+      const parent = el.parentNode, next = el.nextSibling
+      el.remove()
+      parent.insertBefore(el, next)
+    JS
+
+    assert_equal 1, page.evaluate_script("(() => { #{boxes} })()")
   end
 end

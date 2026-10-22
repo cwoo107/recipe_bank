@@ -1,14 +1,14 @@
 require "test_helper"
 require "minitest/mock"
-require_relative "../support/fake_ollama_assistant"
+require_relative "../support/fake_ingredient_assistant"
 
 class IngredientEnrichmentJobTest < ActiveSupport::TestCase
   setup do
     @ingredient = Ingredient.create!(household: households(:one), ingredient: "Smoked paprika", created_by: users(:one))
   end
 
-  def enrich(ai = FakeOllamaAssistant.new)
-    OllamaAssistant.stub(:new, ai) { IngredientEnrichmentJob.perform_now(@ingredient.id) }
+  def enrich(ai = FakeIngredientAssistant.new)
+    IngredientAssistant.stub(:new, ai) { IngredientEnrichmentJob.perform_now(@ingredient.id) }
     @ingredient.reload
   end
 
@@ -27,7 +27,7 @@ class IngredientEnrichmentJobTest < ActiveSupport::TestCase
   end
 
   test "it copes with the AI's string-keyed JSON as well as the offline fallback" do
-    string_keyed = Class.new(FakeOllamaAssistant) do
+    string_keyed = Class.new(FakeIngredientAssistant) do
       def estimate_nutrition_facts(_ingredients)
         [{ "calories" => 42, "protein" => 3.0, "total_fat" => 1.0, "total_carb" => 5.0,
            "serving_size" => 100, "serving_unit" => "g",
@@ -60,7 +60,7 @@ class IngredientEnrichmentJobTest < ActiveSupport::TestCase
     @ingredient.destroy!
 
     assert_nothing_raised do
-      OllamaAssistant.stub(:new, FakeOllamaAssistant.new) { IngredientEnrichmentJob.perform_now(id) }
+      IngredientAssistant.stub(:new, FakeIngredientAssistant.new) { IngredientEnrichmentJob.perform_now(id) }
     end
   end
 

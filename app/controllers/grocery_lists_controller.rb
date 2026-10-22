@@ -9,13 +9,20 @@ class GroceryListsController < ApplicationController
                                  .where("week_of >= ?", @date)
                                  .where("week_of < ?", @date + 7)
                                  .includes(:ingredient)
-                                 .joins(:ingredient)
-                                 # Categories in the Ingredients page's order, then A–Z.
-                                 .order(Ingredient.family_order_sql, "ingredients.ingredient ASC")
+                                 .left_joins(:ingredient)
+                                 # Categories in the Ingredients page's order, then A–Z;
+                                 # notes (no ingredient) come last, oldest first.
+                                 .order(Ingredient.family_order_sql, "ingredients.ingredient ASC", :id)
 
     if params[:filter].present?
       @grocery_lists = @grocery_lists.where(ingredients: { family: params[:filter] })
     end
+
+    # What each line is for (the "used in N meals" hover), worked out once
+    # for the whole list.
+    @grocery_uses = GroceryList::Breakdown.uses_by_ingredient(
+      current_household.meals.where(id: @grocery_lists.flat_map(&:meal_ids).uniq).includes(:recipe)
+    )
 
     # Second tab: what's marked Restock on the restock checklist, by store.
     @restock_list = RestockItem.shopping_list(current_household)
@@ -29,9 +36,11 @@ class GroceryListsController < ApplicationController
                         .where.not(recipe_id: nil) # note-only meals have nothing to buy
                         .includes(recipe: { recipe_ingredients: { ingredient: :nutrition_fact } })
 
+    # Notes aren't from the meal plan, so they stay.
     current_household.grocery_lists
                 .where("week_of >= ?", @date)
                 .where("week_of < ?", @date + 7)
+                .where.not(ingredient_id: nil)
                 .destroy_all
 
     ingredient_data = {}
@@ -45,6 +54,7 @@ class GroceryListsController < ApplicationController
         ingredient_id    = line.ingredient_id
         ingredient       = line.ingredient
         next unless ingredient
+        next if ingredient.not_shopped? # tap water, not something to buy
 
         scaled_quantity  = line.quantity * multiplier
 
@@ -86,15 +96,54 @@ class GroceryListsController < ApplicationController
   end
 
   def show; end
-  def new; @grocery_list = GroceryList.new; end
+  # The "Add to list" dialog on the list page, for the week being viewed.
+  def new
+    week = params[:week].present? ? Date.parse(params[:week]).beginning_of_week : Time.zone.today.beginning_of_week
+    @grocery_list = GroceryList.new(week_of: week)
+  end
   def edit; end
 
+  # Adds a picked ingredient, a typed name that isn't in the household's
+  # ingredients yet (added to them, like the recipe page's picker — see
+  # RecipeIngredientsController#create), or — from the "Make a Note" tab — a
+  # note.
   def create
     @grocery_list = current_household.grocery_lists.build(grocery_list_params)
     @grocery_list.user = current_user
+    added = nil # :copied or :created, when the line brings a new ingredient
+
+    note_entry = params.dig(:grocery_list, :entry) == "note"
+    if note_entry
+      @grocery_list.ingredient_id = nil
+      @grocery_list.units = nil
+    else
+      @grocery_list.note = nil
+    end
+
+    saved = GroceryList.transaction do
+      unless note_entry
+        # The household's own ingredient, or a default (catalog) one copied
+        # in — never another household's.
+        if (picked_id = @grocery_list.ingredient_id)
+          @grocery_list.ingredient = Ingredient.pick_for(current_household, picked_id, user: current_user)
+          added = :copied if @grocery_list.ingredient&.previously_new_record?
+        end
+
+        if @grocery_list.ingredient_id.blank? && (typed = typed_ingredient)
+          added = typed.new_record? ? :created : (:copied if typed.previously_new_record?)
+          @grocery_list.ingredient = typed
+        end
+      end
+
+      # Saves a new ingredient first; a failed line rolls back a catalog copy.
+      @grocery_list.save || raise(ActiveRecord::Rollback)
+    end
 
     respond_to do |format|
-      if @grocery_list.save
+      if saved
+        new_ingredient = @grocery_list.ingredient
+        IngredientEnrichmentJob.perform_later(new_ingredient.id) if added && new_ingredient.needs_enrichment?
+
         @grocery_list.broadcast_append_to(
           current_household, "grocery_lists",
           target: "grocery_lists",
@@ -103,8 +152,21 @@ class GroceryListsController < ApplicationController
         )
         format.html { redirect_to @grocery_list, notice: "Grocery list was successfully created." }
         format.json { render :show, status: :created, location: @grocery_list }
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("new_grocery_list", partial: "grocery_lists/new", locals: { grocery_list: GroceryList.new }) }
+        format.turbo_stream do
+          streams = [ turbo_stream.replace("new_grocery_list", partial: "grocery_lists/new",
+                                           locals: { grocery_list: GroceryList.new(week_of: @grocery_list.week_of) }) ]
+          if added
+            notice = added == :copied ? "Added #{new_ingredient.ingredient} to your ingredients, with its cost and nutrition." :
+                                        "Added #{new_ingredient.ingredient} to your ingredients. We're estimating its cost and nutrition now."
+            streams << turbo_stream.update("flash", partial: "shared/flash", locals: { notice: })
+          end
+          render turbo_stream: streams
+        end
       else
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace("new_grocery_list", partial: "grocery_lists/new", locals: { grocery_list: @grocery_list }),
+                 status: :unprocessable_entity
+        end
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @grocery_list.errors, status: :unprocessable_entity }
       end
@@ -112,7 +174,7 @@ class GroceryListsController < ApplicationController
   end
 
   def update
-    if grocery_list_params[:units].to_i != @units
+    if grocery_list_params.key?(:units) && grocery_list_params[:units].to_i != @units
       @grocery_list.manually_adjusted = true
     end
 
@@ -135,7 +197,7 @@ class GroceryListsController < ApplicationController
   end
 
   def destroy
-    @ingredient_name = @grocery_list.ingredient.ingredient
+    @ingredient_name = @grocery_list.title
     @grocery_list.destroy!
 
     respond_to do |format|
@@ -188,6 +250,12 @@ class GroceryListsController < ApplicationController
   end
 
   def grocery_list_params
-    params.expect(grocery_list: [:week_of, :ingredient_id, :units, :checked, :manually_adjusted])
+    params.expect(grocery_list: [:week_of, :ingredient_id, :note, :units, :checked, :manually_adjusted])
+  end
+
+  # What was typed into the ingredient picker when nothing was picked.
+  def typed_ingredient
+    name = params.dig(:grocery_list, :new_ingredient_name).to_s.squish
+    Ingredient.find_or_initialize_for(current_household, name, created_by: current_user) if name.present?
   end
 end

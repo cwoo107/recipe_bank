@@ -1,21 +1,17 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Handles two behaviours in the meal form:
+// Handles these behaviours in the meal form:
 //
-// 1. When a recipe is selected, read its base servings from the option's
-//    data-servings attribute and pre-fill the servings input if it's blank,
-//    and show a hint like "Recipe default: 4 servings".
+// 1. Servings default to what the recipe makes: picking a recipe sets the
+//    servings to its data-servings (the user adjusts from there), with a
+//    hint like "Recipe default: 4". Once servings are typed in by hand, a
+//    different recipe no longer overwrites them. (Who's eating, the date
+//    and the meal type don't change servings.)
 //
-// 2. Keep servings at a sensible default until it's typed in by hand: how
-//    many people are picked under "Who's eating?", or else — for a shared
-//    meal — the family size minus anyone already having their own assigned
-//    meal in the chosen slot (slotDataValue, keyed "YYYY-MM-DD|breakfast").
-//    New meals follow the date and meal type as they change; edits only
-//    recalculate when "Who's eating?" changes.
-//
-//    When someone picked is still counted in a shared meal planned for the
-//    same slot, ask (sharedPrompt) whether to take them out of its servings.
-//    The server applies whatever's ticked when the meal saves.
+// 2. When someone picked under "Who's eating?" is still counted in a shared
+//    meal planned for the same slot (slotDataValue, keyed
+//    "YYYY-MM-DD|breakfast"), ask (sharedPrompt) whether to take them out of
+//    its servings. The server applies whatever's ticked when the meal saves.
 //
 // 3. When Snack or Dessert is selected, hide the date field (these are
 //    week-level entries; the controller sets date = the first day of the week).
@@ -32,12 +28,11 @@ export default class extends Controller {
     static targets = ["dateSection", "dateInput", "servingsInput", "recipeServingsHint",
                        "recurringSection", "recurringCheckbox", "recurringFields", "sharedPrompt",
                        "recipeSection", "noteSection", "noteInput", "entryInput"]
-    static values  = { familySize: Number, newRecord: Boolean, slotData: Object, originalEaters: Array }
+    static values  = { slotData: Object, originalEaters: Array }
 
     connect() {
         // Reflect any pre-selected entry and meal type on load (e.g. edit form)
         this.syncEntry()
-        if (this.newRecordValue) this.updateServings()
     }
 
     // Called by the dialog controller after loading the form with a pre-set date/type
@@ -68,8 +63,8 @@ export default class extends Controller {
             return
         }
 
-        // Pre-fill only when the field is empty (don't override a deliberate edit)
-        if (!this.servingsInputTarget.value) {
+        // The recipe's own servings — unless they've been typed in by hand.
+        if (!this.servingsTouched) {
             this.servingsInputTarget.value = recipeServings
         }
 
@@ -100,13 +95,11 @@ export default class extends Controller {
 
     // Triggered by a "Who's eating?" checkbox changing
     eatersChanged() {
-        this.updateServings()
         this.renderSharedPrompt()
     }
 
     // Triggered by the date picker choosing a day
     slotChanged() {
-        if (this.newRecordValue) this.updateServings()
         this.renderSharedPrompt()
     }
 
@@ -130,20 +123,6 @@ export default class extends Controller {
     }
 
     // ── private ──────────────────────────────────────────────────────────────
-
-    updateServings() {
-        if (this.servingsTouched || !this.hasServingsInputTarget) return
-
-        const picked = this.element.querySelectorAll("input[name='meal[eater_ids][]']:checked").length
-        this.servingsInputTarget.value = picked > 0 ? picked : this.sharedServings()
-    }
-
-    // Family size, minus people eating their own assigned meal in this slot.
-    sharedServings() {
-        const family = this.hasFamilySizeValue ? this.familySizeValue : parseInt(this.servingsInputTarget.value, 10) || 1
-        const assigned = this.currentSlot()?.assigned?.length || 0
-        return Math.max(family - assigned, 1)
-    }
 
     mealType() {
         return this.element.querySelector("input[name*='meal_name']:checked")?.value?.toLowerCase()

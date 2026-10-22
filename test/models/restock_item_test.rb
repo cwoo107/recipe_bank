@@ -77,4 +77,19 @@ class RestockItemTest < ActiveSupport::TestCase
 
     assert_not item.checked_this_week?
   end
+
+  test "only a restock (bought off the shopping list) dates last_restocked" do
+    item = households(:one).restock_items.create!(user: users(:one), name: "Dish soap", restock_category: restock_categories(:kitchen_one))
+
+    item.mark_restock!
+    item.mark_stocked!
+    assert_nil item.last_restocked, "check-ins on the card don't"
+
+    item.mark_restock!
+    item.mark_stocked!(restocked: true)
+    assert_equal Date.current, item.last_restocked
+
+    item.mark_restock!
+    assert_equal Date.current, item.reload.last_restocked, "marking it Restock again keeps the date"
+  end
 end

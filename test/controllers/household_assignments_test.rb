@@ -68,12 +68,12 @@ class HouseholdAssignmentsTest < ActionDispatch::IntegrationTest
 
   # ── Meals ──
 
-  test "new meals default to the family size" do
+  test "new meals default to what the recipe makes, not the family size" do
     get new_meal_url
-    assert_select "input[name='meal[servings]'][value='3']"
+    assert_select "input[name='meal[servings]']:not([value])" # filled in when a recipe is picked
 
     post meals_url, params: { meal: { recipe_id: recipes(:one).id, meal_name: "Lunch", date: "2026-01-06", servings: "" } }
-    assert_equal 3, Meal.last[:servings]
+    assert_equal recipes(:one).servings, Meal.last[:servings]
   end
 
   test "who's eating is optional and only accepts household members" do

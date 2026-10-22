@@ -538,8 +538,8 @@ class WeekPlanPdf
   def shopping_section
     section_heading "Shopping list"
 
-    groceries = @household.grocery_lists.where(week_of: @week).includes(:ingredient).joins(:ingredient)
-                          .order(Ingredient.family_order_sql, "ingredients.ingredient ASC").to_a
+    groceries = @household.grocery_lists.where(week_of: @week).includes(:ingredient).left_joins(:ingredient)
+                          .order(Ingredient.family_order_sql, "ingredients.ingredient ASC", :id).to_a
     restock   = RestockItem.shopping_list(@household)
     return empty_note("No grocery list has been made for this week yet, and nothing is marked Restock.") if groceries.empty? && restock.empty?
 
@@ -577,9 +577,10 @@ class WeekPlanPdf
   def shopping_rows(groceries, restock)
     rows = []
 
+    notes, groceries = groceries.partition(&:note_only?)
     subtotal = groceries.sum { |item| item.ingredient.unit_price.to_f * item.units.to_i }
     rows << [ :part, "Groceries", (format("Estimated total: $%.2f", subtotal) if groceries.any?), 0 ]
-    if groceries.empty?
+    if groceries.empty? && notes.empty?
       rows << [ :note, "No grocery list has been made for this week yet." ]
     else
       groceries.group_by { |item| item.ingredient.family.presence || "Other" }.each do |family, items|
@@ -588,6 +589,11 @@ class WeekPlanPdf
           price = item.ingredient.unit_price.present? ? format("$%.2f", item.ingredient.unit_price * item.units.to_i) : nil
           rows << [ :item, item.ingredient.ingredient, [ "#{item.units.to_i} #{'unit'.pluralize(item.units.to_i)}", price ].compact.join("  ·  "), item.checked? ]
         end
+      end
+      # Notes on the list ("birthday candles") — no units or price.
+      if notes.any?
+        rows << [ :sub, "Notes" ]
+        notes.each { |item| rows << [ :item, item.note, nil, item.checked? ] }
       end
     end
 

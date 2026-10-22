@@ -34,7 +34,7 @@ class MealAssignmentTest < ActiveSupport::TestCase
     assert_empty @meal.reload.meal_assignments
   end
 
-  test "recurring meals copy who's eating and default servings to the family size" do
+  test "recurring meals copy who's eating and default servings to what the recipe makes" do
     rule = @household.recurring_meals.create!(
       user: users(:one), recipe: recipes(:one), meal_name: "Breakfast", pattern_type: "interval",
       interval_days: 1, start_date: Date.new(2026, 1, 5), end_type: "week", eater_ids: [ @bob.id ]
@@ -44,6 +44,6 @@ class MealAssignmentTest < ActiveSupport::TestCase
 
     assert meals.any?
     assert(meals.all? { |m| m.eater_ids == [ @bob.id ] })
-    assert(meals.all? { |m| m[:servings] == 3 })
+    assert(meals.all? { |m| m[:servings] == recipes(:one).servings })
   end
 end

@@ -26,6 +26,17 @@ module IngredientsHelper
     content_tag(:span, Ingredient.family_label(family), class: "inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring #{colors}")
   end
 
+  # The <option>s for an ingredient picker: the household's ingredients and
+  # the catalog's it doesn't have yet (Ingredient.pickable_for).
+  def ingredient_picker_options(household, selected = nil)
+    options_for_select(
+      Ingredient.pickable_for(household).map { |ingredient|
+        [ ingredient.ingredient, ingredient.id, { 'data-favorite' => ingredient.favorite } ]
+      },
+      selected
+    )
+  end
+
   def ingredient_family_options
     Ingredient::FAMILIES.map { |key, config| [config[:label], key] }
   end

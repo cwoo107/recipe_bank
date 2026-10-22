@@ -1,9 +1,24 @@
 # app/models/recipe_file_extractor.rb
+#
+# Reads a recipe out of an uploaded photo or PDF with Claude Haiku (the
+# official SDK), getting back JSON in RECIPE_SCHEMA (structured outputs).
 require 'base64'
-require 'httparty'
 
 class RecipeFileExtractor
-  ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages'
+  MODEL = 'claude-haiku-5-5'
+
+  RECIPE_SCHEMA = {
+    type: 'object',
+    properties: {
+      title:       { type: 'string' },
+      description: { anyOf: [ { type: 'string' }, { type: 'null' } ] },
+      servings:    { anyOf: [ { type: 'integer' }, { type: 'null' } ] },
+      ingredients: { type: 'array', items: { type: 'string' } },
+      steps:       { type: 'array', items: { type: 'string' } }
+    },
+    required: %w[title description servings ingredients steps],
+    additionalProperties: false
+  }.freeze
 
   SUPPORTED_IMAGE_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
   SUPPORTED_TYPES = (SUPPORTED_IMAGE_TYPES + ['application/pdf']).freeze
@@ -27,34 +42,32 @@ class RecipeFileExtractor
 
   private
 
+  # The JSON text of Claude's answer. Raises (the import shows it as failed)
+  # when there isn't one — an API error, a refusal, or a reply cut short.
   def call_claude
-    response = HTTParty.post(
-      ANTHROPIC_API_URL,
-      headers: {
-        'Content-Type'      => 'application/json',
-        'x-api-key'         => ENV.fetch('ANTHROPIC_API_KEY'),
-        'anthropic-version' => '2023-06-01'
-      },
-      body: {
-        model:      'claude-haiku-4-5-20251001',
-        max_tokens: 4096,
-        messages:   [
-          {
-            role:    'user',
-            content: [
-              file_content_block,
-              { type: 'text', text: extraction_prompt }
-            ]
-          }
-        ]
-      }.to_json,
-      timeout: 60
+    response = Anthropic::Client.new(timeout: 120).messages.create(
+      model:         MODEL,
+      max_tokens:    16_000,
+      output_config: { effort: :medium, format_: { type: :json_schema, schema: RECIPE_SCHEMA } },
+      messages:      [
+        {
+          role:    'user',
+          content: [
+            file_content_block,
+            { type: 'text', text: extraction_prompt }
+          ]
+        }
+      ]
     )
 
-    raise "Claude API error: #{response.code} — #{response.body}" unless response.success?
+    unless response.stop_reason == :end_turn
+      raise "Claude couldn't read the recipe (stop_reason #{response.stop_reason}#{" — #{response.stop_details&.category}" if response.stop_reason == :refusal})"
+    end
 
-    body = JSON.parse(response.body)
-    body.dig('content', 0, 'text')
+    # The answer is the text block — Haiku can put thinking blocks first.
+    response.content.find { |block| block.type == :text }&.text
+  rescue Anthropic::Errors::APIStatusError => e
+    raise "Claude API error: #{e.status} — #{e.message}"
   end
 
   def file_content_block
@@ -92,29 +105,19 @@ class RecipeFileExtractor
 
   def extraction_prompt
     <<~PROMPT
-      Extract the recipe from this file and return it as JSON only — no explanation, no markdown fences.
-
-      Return exactly this structure:
-      {
-        "title": "Recipe name",
-        "description": "Brief description or null",
-        "servings": number or null,
-        "ingredients": ["1 cup flour", "2 eggs", ...],
-        "steps": ["Preheat oven to 350F.", "Mix dry ingredients.", ...]
-      }
+      Extract the recipe from this file: its title, description, servings,
+      ingredients and steps.
 
       Rules:
       - ingredients: keep the original text including quantities and units (e.g. "2 cups all-purpose flour")
       - steps: each step as a complete sentence, numbered steps without the number
       - servings: extract as an integer if present, otherwise null
       - description: one sentence summary if not provided in the recipe, otherwise null
-      - Return ONLY the JSON object, nothing else
     PROMPT
   end
 
   def parse_response(text)
-    cleaned = text.to_s.gsub(/```json\n?|\n?```/, '').strip
-    data = JSON.parse(cleaned)
+    data = JSON.parse(text.to_s)
 
     {
       title:       data['title'],

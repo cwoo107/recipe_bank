@@ -43,12 +43,18 @@ class RestockItem < ApplicationRecord
     save!
   end
 
-  def mark_stocked!
-    update!(stocked: true, restock: false, last_date_checked_stocked: Time.current)
+  # restocked: true when it's ticked off the restock shopping list (bought) —
+  # that's what dates last_restocked. A check-in on the card doesn't.
+  def mark_stocked!(restocked: false)
+    attributes = { stocked: true, restock: false, last_date_checked_stocked: Time.current }
+    attributes[:last_restocked] = Date.current if restocked
+    update!(attributes)
   end
 
-  def mark_restock!
-    update!(restock: true, stocked: false, last_date_checked_restocked: Time.current)
+  # last_restocked: puts back the date an untick on the shopping list is
+  # undoing (see RestockItemsController#mark_restock).
+  def mark_restock!(**last_restocked)
+    update!(restock: true, stocked: false, last_date_checked_restocked: Time.current, **last_restocked.slice(:last_restocked))
   end
 
   # A badge only shows while the check that produced it is still fresh (this

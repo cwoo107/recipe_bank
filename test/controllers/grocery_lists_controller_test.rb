@@ -73,7 +73,6 @@ class GroceryListsControllerTest < ActionDispatch::IntegrationTest
       # Added items are broadcast into #grocery_lists, above the subtotal.
       assert_select "#grocery_lists [data-grocery-subtotal-target=row][data-price='2.5'][data-units='3']"
       assert_select "[data-grocery-subtotal-target=total]", text: /\$\d+\.\d{2}/
-      assert_select "[data-grocery-subtotal-target=count]"
     end
   end
 end

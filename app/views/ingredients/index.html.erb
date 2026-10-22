@@ -43,7 +43,9 @@
   </div>
 
   <div id="tags-panel" data-tabs-target="panel" class="mt-6 hidden">
-    <%= turbo_frame_tag "tags-index", src: tags_path, lazy: true %>
+    <%# target: "_top" — links inside (New Tag, edit) open as full pages.
+        Turbo takes only the contents of the frame tags/index sends back, not its target. %>
+    <%= turbo_frame_tag "tags-index", src: tags_path, lazy: true, target: "_top" %>
   </div>
 
   <div id="ingredients-panel" data-tabs-target="panel" class="mt-6 ">
@@ -200,6 +202,7 @@
             </table>
           </div>
 
+          <%= render "shared/pagination", pagy: @pagy, item_name: "ingredients" %>
         </div>
       <% end %>
     <% end %>

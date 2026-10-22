@@ -19,7 +19,7 @@ namespace :products do
       puts "  Category: #{product_data[:category]}"
 
       # Determine family
-      ai = OllamaAssistant.new(model: 'llama2')
+      ai = IngredientAssistant.new
       family = determine_family(product_data[:name], product_data[:category], ai)
 
       # Check if exists
@@ -77,7 +77,7 @@ namespace :products do
       puts "Found #{product_urls.length} products"
       puts "Importing up to #{limit} products...\n"
 
-      ai = OllamaAssistant.new(model: 'llama2')
+      ai = IngredientAssistant.new
       imported = 0
       skipped = 0
       failed = 0

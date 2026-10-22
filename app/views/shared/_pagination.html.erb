@@ -1,0 +1,11 @@
+<%# locals: (pagy:, item_name:) %>
+<%# Page links for a paginated list (Pagy, styled as .pagy in
+    tailwind/application.css): "Showing 25–48 of 315 recipes", then the
+    page buttons. Links keep the page's search, filter and sort. Nothing
+    shows for a single page. %>
+<% if pagy.last > 1 %>
+  <div class="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
+    <p class="text-sm text-gray-500 dark:text-gray-400"><%= raw pagy.info_tag(item_name:) %></p>
+    <%= raw pagy.series_nav(aria_label: "#{item_name.capitalize} pages") %>
+  </div>
+<% end %>

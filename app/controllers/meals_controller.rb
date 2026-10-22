@@ -39,7 +39,8 @@ class MealsController < ApplicationController
   def new
     @meal = Meal.new(date: params[:date].present? ? Date.parse(params[:date]) : nil,
                      meal_name: params[:meal_name].present? ? params[:meal_name] : nil)
-    @meal.servings = current_household.default_servings_for(date: @meal.date, meal_name: @meal.meal_name)
+    # Servings start blank: picking a recipe fills in what it makes (see
+    # meal_form_controller.js).
     @week_start = Date.parse(params[:week]).beginning_of_week if params[:week].present?
   end
 
@@ -131,8 +132,11 @@ class MealsController < ApplicationController
       @meal.date = Time.zone.today.beginning_of_week
     end
 
+    # Left blank: what the recipe makes. A note (no recipe) still holds its
+    # slot for the people eating it.
     if meal_params[:servings].blank?
-      @meal.servings = @meal.eater_ids.any? ? @meal.eater_ids.size : current_household.default_servings_for(date: @meal.date, meal_name: @meal.meal_name)
+      @meal.servings = @meal.recipe&.servings ||
+                       (@meal.eater_ids.any? ? @meal.eater_ids.size : current_household.default_servings_for(date: @meal.date, meal_name: @meal.meal_name))
     end
 
     @date = @meal.date.beginning_of_week

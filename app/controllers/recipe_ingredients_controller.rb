@@ -13,6 +13,12 @@ class RecipeIngredientsController < ApplicationController
     added = nil # :copied or :created, when the line brings a new ingredient
 
     saved = RecipeIngredient.transaction do
+      # The household's own ingredient, or a default (catalog) one copied in.
+      if (picked_id = @recipe_ingredient.ingredient_id)
+        @recipe_ingredient.ingredient = Ingredient.pick_for(current_household, picked_id, user: current_user)
+        added = :copied if @recipe_ingredient.ingredient&.previously_new_record?
+      end
+
       if @recipe_ingredient.ingredient_id.blank? && (typed = typed_ingredient)
         added = typed.new_record? ? :created : (:copied if typed.previously_new_record?)
         @recipe_ingredient.ingredient = typed

@@ -1,6 +1,6 @@
 require "test_helper"
 require "minitest/mock"
-require_relative "../support/fake_ollama_assistant"
+require_relative "../support/fake_ingredient_assistant"
 
 # The user-facing half of the confirmation gate: the paused import renders a
 # form, and submitting it resumes the import with the user's decisions.
@@ -39,7 +39,7 @@ class RecipeImportConfirmationTest < ActionDispatch::IntegrationTest
   # Confirming enqueues the resume on Sidekiq (ProcessRecipeImportJob); run
   # it here so the test sees the finished import.
   def confirm(indexes)
-    OllamaAssistant.stub(:new, FakeOllamaAssistant.new) do
+    IngredientAssistant.stub(:new, FakeIngredientAssistant.new) do
       perform_enqueued_jobs do
         post confirm_ingredients_recipe_import_url(@job), params: { confirmed: indexes }
       end
@@ -114,7 +114,7 @@ class RecipeImportConfirmationTest < ActionDispatch::IntegrationTest
 
   test "a blank confirmed value doesn't sneak through as row zero" do
     assert_difference("Ingredient.count", 2) do
-      OllamaAssistant.stub(:new, FakeOllamaAssistant.new) do
+      IngredientAssistant.stub(:new, FakeIngredientAssistant.new) do
         perform_enqueued_jobs do
           post confirm_ingredients_recipe_import_url(@job), params: { confirmed: [""] }
         end

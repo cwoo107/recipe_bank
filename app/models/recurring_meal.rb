@@ -60,7 +60,7 @@ class RecurringMeal < ApplicationRecord
         user: user,
         recipe: recipe,
         meal_name: meal_name,
-        servings: servings || household.family_size,
+        servings: servings || recipe.servings || household.family_size,
         date: date,
         recurring_meal: self,
         eater_ids: eater_ids

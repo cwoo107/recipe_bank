@@ -1,6 +1,6 @@
 require "test_helper"
 require "minitest/mock"
-require_relative "../support/fake_ollama_assistant"
+require_relative "../support/fake_ingredient_assistant"
 
 # The import pauses after matching so the user can vet each match; these cover
 # the pause, what gets persisted across it, and how the resume honours the
@@ -24,7 +24,7 @@ class RecipeImporterTest < ActiveSupport::TestCase
   end
 
   def run_match_phase
-    OllamaAssistant.stub(:new, FakeOllamaAssistant.new) do
+    IngredientAssistant.stub(:new, FakeIngredientAssistant.new) do
       RecipeScraper.stub(:new, FakeScraper.new(SCRAPED)) do
         RecipeImporter.new(@job).perform
       end
@@ -33,7 +33,7 @@ class RecipeImporterTest < ActiveSupport::TestCase
   end
 
   def run_resume
-    OllamaAssistant.stub(:new, FakeOllamaAssistant.new) do
+    IngredientAssistant.stub(:new, FakeIngredientAssistant.new) do
       RecipeImporter.new(@job).resume_after_confirmation
     end
     @job.reload
@@ -129,7 +129,7 @@ class RecipeImporterTest < ActiveSupport::TestCase
     @job.update!(scraped_data: nil)
 
     assert_raises(NoMethodError) do
-      OllamaAssistant.stub(:new, FakeOllamaAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+      IngredientAssistant.stub(:new, FakeIngredientAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
     end
 
     assert @job.reload.failed?
@@ -196,7 +196,7 @@ class RecipeImporterTest < ActiveSupport::TestCase
       super(attributes)
     end
 
-    recipe = OllamaAssistant.stub(:new, FakeOllamaAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+    recipe = IngredientAssistant.stub(:new, FakeIngredientAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
 
     @job.reload
     assert @job.completed?
@@ -209,15 +209,15 @@ class RecipeImporterTest < ActiveSupport::TestCase
     run_resume
     first = @job.recipe
 
-    assert_equal first, OllamaAssistant.stub(:new, FakeOllamaAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+    assert_equal first, IngredientAssistant.stub(:new, FakeIngredientAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
     assert_equal 1, Recipe.where(title: "Test Bake").count
   end
 
   # ── Nutrition estimates ──
 
-  # What the real Ollama client returns: parsed JSON (string keys), and the
+  # What the real Claude client returns: parsed JSON (string keys), and the
   # model is free to recapitalise the name.
-  class JsonOllamaAssistant < FakeOllamaAssistant
+  class JsonIngredientAssistant < FakeIngredientAssistant
     def estimate_nutrition_facts(ingredients)
       ingredients.map do |i|
         { "name" => i[:name].to_s.titleize, "calories" => 364, "protein" => 10.0, "total_fat" => 1.0,
@@ -228,7 +228,7 @@ class RecipeImporterTest < ActiveSupport::TestCase
 
   test "an AI nutrition estimate (string keys) is saved on the new ingredient" do
     run_match_phase
-    OllamaAssistant.stub(:new, JsonOllamaAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+    IngredientAssistant.stub(:new, JsonIngredientAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
 
     flour = @job.reload.recipe.ingredients.find_by(ingredient: "Zzqqx flour")
     assert_equal 364, flour.nutrition_fact.calories

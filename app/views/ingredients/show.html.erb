@@ -172,12 +172,12 @@
     </div>
 
     <%# Used in Recipes %>
-    <% if @ingredient.recipe_ingredients.any? %>
+    <% if @recipe_lines.any? %>
       <div class="mt-6">
         <div class="rounded-lg bg-white p-4 sm:p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
           <h2 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Used in Recipes</h2>
           <ul class="mt-4 divide-y divide-gray-200 dark:divide-white/10">
-            <% @ingredient.recipe_ingredients.includes(:recipe).each do |recipe_ingredient| %>
+            <% @recipe_lines.each do |recipe_ingredient| %>
               <li class="py-3">
                 <%= link_to recipe_path(recipe_ingredient.recipe), data: {turbo: false}, class: "flex items-center justify-between gap-4 group" do %>
                   <span class="text-sm font-medium text-gray-900 group-hover:text-[#5f734c] dark:text-white dark:group-hover:text-[#7a8f62] min-w-0 truncate">
@@ -190,6 +190,7 @@
               </li>
             <% end %>
           </ul>
+          <%= render "shared/pagination", pagy: @pagy, item_name: "recipes" %>
         </div>
       </div>
     <% end %>

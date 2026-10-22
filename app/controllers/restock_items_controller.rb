@@ -75,8 +75,11 @@ class RestockItemsController < ApplicationController
     head :ok
   end
 
+  # Ticked off the shopping list means bought: that dates last_restocked.
+  # The row keeps the date it replaced so unticking can put it back.
   def mark_stocked
-    @restock_item.mark_stocked!
+    @previous_restocked = @restock_item.last_restocked
+    @restock_item.mark_stocked!(restocked: shopping_list_context?)
     respond_to do |format|
       format.turbo_stream { render shopping_list_context? ? :shopping_item : :update }
       format.html { redirect_to restock_items_path }
@@ -84,7 +87,11 @@ class RestockItemsController < ApplicationController
   end
 
   def mark_restock
-    @restock_item.mark_restock!
+    if shopping_list_context? && params.key?(:previous_restocked)
+      @restock_item.mark_restock!(last_restocked: (Date.iso8601(params[:previous_restocked]) rescue nil))
+    else
+      @restock_item.mark_restock!
+    end
     respond_to do |format|
       format.turbo_stream { render shopping_list_context? ? :shopping_item : :update }
       format.html { redirect_to restock_items_path }
@@ -104,6 +111,6 @@ class RestockItemsController < ApplicationController
   end
 
   def restock_item_params
-    params.require(:restock_item).permit(:name, :brand, :store, :restock_category_id)
+    params.require(:restock_item).permit(:name, :brand, :store, :restock_category_id, :last_restocked)
   end
 end

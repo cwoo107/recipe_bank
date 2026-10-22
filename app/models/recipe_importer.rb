@@ -239,7 +239,7 @@ class RecipeImporter
   # the user confirms the strongest proposal we can make. Runs before the
   # confirmation gate — afterwards the user's decisions are final.
   def resolve_matches_with_ai(matched_results)
-    ai = OllamaAssistant.new(model: 'llama2')
+    ai = IngredientAssistant.new
     own_matcher   = IngredientMatcher.new(household_ingredients)
     other_matcher = IngredientMatcher.new(other_ingredients)
 
@@ -295,7 +295,7 @@ class RecipeImporter
   # Post-confirmation work: every ingredient needs a family, and the ones the
   # user left unconfirmed are about to be created, so they need nutrition too.
   def classify_and_estimate_nutrition(matched_results)
-    ai = OllamaAssistant.new(model: 'llama2')
+    ai = IngredientAssistant.new
 
     # Get all ingredients that need families (both matched and unmatched)
     all_ingredients = matched_results.map { |r| r[:parsed] }

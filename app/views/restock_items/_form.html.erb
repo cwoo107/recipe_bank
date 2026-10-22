@@ -44,6 +44,14 @@
           placeholder: "Optional" %>
   </div>
 
+  <%# Last restocked — filled in when Restock is selected; set or correct
+      it here. %>
+  <div class="mb-4">
+    <%= f.label :last_restocked, "Last restocked", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>
+    <%= f.date_field :last_restocked, max: Date.current,
+          class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-3 py-2 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none" %>
+  </div>
+
   <%# List (pre-selected if set via list quick-add) %>
   <div class="mb-6">
     <%= f.label :restock_category_id, "List", class: "block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" %>

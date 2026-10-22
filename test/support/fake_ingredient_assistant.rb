@@ -1,7 +1,7 @@
-# Stands in for Ollama so the importer's AI steps stay offline and
+# Stands in for Claude (IngredientAssistant) so the importer's AI steps stay offline and
 # deterministic. Answers have the same shape the real client returns;
 # resolve_ingredients declines to add any matches of its own.
-class FakeOllamaAssistant
+class FakeIngredientAssistant
   def resolve_ingredients(_entries) = []
 
   def classify_ingredient_families(ingredients)

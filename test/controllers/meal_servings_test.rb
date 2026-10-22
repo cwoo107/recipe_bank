@@ -9,23 +9,30 @@ class MealServingsTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
   end
 
-  test "a new shared meal defaults to the family minus anyone with their own meal in that slot" do
+  test "a new meal's servings start blank, for the picked recipe to fill in" do
     add_meal("Breakfast", eaters: [ @bob ])
+    chicken = users(:one).recipes.create!(title: "Marry Me Chicken", servings: 4)
 
     get new_meal_url(date: MONDAY.iso8601, meal_name: "Breakfast")
-    assert_select "input[name='meal[servings]'][value='2']"
 
-    get new_meal_url(date: MONDAY.iso8601, meal_name: "Lunch")
-    assert_select "input[name='meal[servings]'][value='3']" # other slots still count everyone
+    assert_select "input[name='meal[servings]']:not([value])"
+    # What each recipe makes, for meal-form#recipeChanged to fill in.
+    assert_select "option[value='#{chicken.id}'][data-servings='4']"
   end
 
-  test "creating without servings uses the slot default, or the number of people picked" do
+  test "creating without servings uses what the recipe makes, whoever's eating" do
     add_meal("Breakfast", eaters: [ @bob ])
 
     post meals_url, params: { meal: { recipe_id: recipes(:two).id, meal_name: "Breakfast", date: MONDAY.iso8601, servings: "" } }
-    assert_equal 2, Meal.last[:servings]
+    assert_equal recipes(:two).servings, Meal.last[:servings]
 
     post meals_url, params: { meal: { recipe_id: recipes(:two).id, meal_name: "Dinner", date: MONDAY.iso8601, servings: "",
+                                      eater_ids: [ @bob.id ] } }
+    assert_equal recipes(:two).servings, Meal.last[:servings]
+  end
+
+  test "a note without servings still counts the people eating it" do
+    post meals_url, params: { meal: { entry: "note", note: "Dinner out", meal_name: "Dinner", date: MONDAY.iso8601, servings: "",
                                       eater_ids: [ @bob.id ] } }
     assert_equal 1, Meal.last[:servings]
   end
@@ -105,13 +112,13 @@ class MealServingsTest < ActionDispatch::IntegrationTest
     assert_equal 1, toast.reload[:servings]
   end
 
-  test "editing a meal with no saved servings shows the slot default" do
-    add_meal("Breakfast", eaters: [ @bob ])
+  test "a meal with no saved servings counts as what the recipe makes" do
     pancakes = add_meal("Breakfast")
     pancakes.update_column(:servings, nil)
 
     get edit_meal_url(pancakes)
-    assert_select "input[name='meal[servings]'][value='2']"
+    assert_select "input[name='meal[servings]']:not([value])"
+    assert_equal recipes(:one).servings, pancakes.reload.servings
   end
 
   private
