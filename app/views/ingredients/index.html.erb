@@ -88,13 +88,19 @@
           </div>
 
           <%# Search %>
-          <%= form_with url: ingredients_path, method: :get, class: "flex gap-4" do |form| %>
+          <%# Searches as you type (search_controller.js), updating just the
+              results frame below so the box keeps focus. No URL change: this
+              page also loads inside the recipes page's Ingredients tab. %>
+          <%= form_with url: ingredients_path, method: :get, class: "flex gap-4",
+                        data: { controller: "search", turbo_frame: "ingredients-results" } do |form| %>
             <div class="flex-1">
               <label for="query" class="sr-only">Search</label>
               <div class="grid grid-cols-1">
                 <%= form.text_field :query,
                                     value: params[:query],
                                     placeholder: "Search ingredients...",
+                                    autocomplete: "off",
+                                    data: { action: "input->search#submit" },
                                     class: "col-start-1 row-start-1 block w-full rounded-md bg-white py-1.5 pr-3 pl-10 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] sm:pl-9 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-[#7a8f62]" %>
                 <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-gray-400 sm:size-4 dark:text-gray-500">
                   <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z" clip-rule="evenodd" />
@@ -108,6 +114,9 @@
           <% end %>
         </div>
 
+        <%# What the search box refreshes. Links inside still open in the
+            "ingredient" frame, as they did before this frame was added. %>
+        <%= turbo_frame_tag "ingredients-results", target: "ingredient" do %>
         <div class="mt-8">
 
           <%# ── MOBILE: card list ──────────────────────────────────────────────── %>
@@ -204,6 +213,7 @@
 
           <%= render "shared/pagination", pagy: @pagy, item_name: "ingredients" %>
         </div>
+        <% end %>
       <% end %>
     <% end %>
   </div>
