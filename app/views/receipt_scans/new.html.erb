@@ -1,0 +1,30 @@
+<% content_for :title, "Upload receipt" %>
+
+<div class="max-w-2xl mx-auto p-6">
+  <%= link_to "← Back to grocery list", grocery_lists_path(date: @date),
+              class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Upload Receipt</h1>
+  <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+    Snap a photo of your grocery receipt. We'll check off everything on it from that week's list,
+    and offer to update any prices that have changed.
+  </p>
+
+  <div class="mt-6">
+    <%= render "receipt_scans/week_nav", date: @date %>
+  </div>
+
+  <%= form_with url: receipt_scans_path, method: :post, multipart: true, data: { turbo: false },
+                class: "mt-6 rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10" do |f| %>
+    <%= f.hidden_field :week_of, value: @date %>
+    <div class="mb-4">
+      <%= f.label :file, "Receipt photo", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+      <%= f.file_field :file, accept: "image/*,.pdf", required: true,
+                       class: "block w-full text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[#5f734c] file:text-white hover:file:bg-[#4b5a3d] dark:file:bg-[#7a8f62]" %>
+    </div>
+    <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+      The receipt is read using AI. Supported formats: images and PDFs.
+    </p>
+    <%= f.submit "Read receipt",
+                 class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer" %>
+  <% end %>
+</div>

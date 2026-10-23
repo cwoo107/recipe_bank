@@ -1,0 +1,12 @@
+<% content_for :title, "Upload receipt" %>
+
+<%# Updates arrive over the scan's turbo stream as the worker reads it — no
+    page refresh, which would wipe the review's checkboxes. %>
+<div class="max-w-3xl mx-auto p-6">
+  <%= link_to "← Back to grocery list", grocery_lists_path(date: @receipt_scan.week_of),
+              class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3] mb-6">Upload Receipt</h1>
+
+  <%= turbo_stream_from "receipt_scan_#{@receipt_scan.id}" %>
+  <%= render @receipt_scan %>
+</div>

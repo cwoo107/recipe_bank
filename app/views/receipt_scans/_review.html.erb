@@ -1,0 +1,118 @@
+<%# Locals: receipt_scan (required) — waiting on the user. Ticked lines are
+    checked off the week's list; ticked prices replace the ingredient's.
+    Unmatched lines change nothing. %>
+<% items = receipt_scan.line_items %>
+<% on_list_count = items.count(&:on_list) %>
+<% money = ->(amount) { amount.nil? ? "—" : number_to_currency(amount) } %>
+
+<div class="mt-6 rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-white/10 dark:bg-white/5"
+     data-controller="match-confirmation">
+  <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+    <div>
+      <h3 class="text-base font-semibold text-gray-900 dark:text-white">
+        Review your receipt<%= " from #{receipt_scan.store_name}" if receipt_scan.store_name.present? %>
+      </h3>
+      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+        <%= on_list_count %> of <%= pluralize(items.size, "item") %> are on this week's list.
+        Untick any match that's wrong — we'll leave it alone.
+      </p>
+    </div>
+    <div class="flex shrink-0 gap-2 text-sm">
+      <button type="button" data-action="match-confirmation#checkAll"
+              class="rounded-md px-2.5 py-1.5 font-medium text-[#5f734c] hover:bg-gray-50 dark:text-[#7a8f62] dark:hover:bg-white/10">
+        Check all
+      </button>
+      <button type="button" data-action="match-confirmation#uncheckAll"
+              class="rounded-md px-2.5 py-1.5 font-medium text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-white/10">
+        Uncheck all
+      </button>
+    </div>
+  </div>
+
+  <%# Outside the form below — these are forms of their own. %>
+  <div class="mt-4">
+    <%= render "receipt_scans/week_nav", date: receipt_scan.week_of, scan: receipt_scan %>
+  </div>
+
+  <%= form_with url: apply_receipt_scan_path(receipt_scan), method: :post, class: "mt-4",
+                data: { turbo_frame: "_top" } do %>
+    <ul role="list" class="divide-y divide-gray-200 dark:divide-white/10">
+      <% items.each do |item| %>
+        <li class="py-3">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <%# What the receipt says %>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-gray-900 dark:text-white"><%= item.text %></p>
+              <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <%= item.name %>
+                <% if item.total_price %>
+                  ·
+                  <% if item.by_weight || item.quantity.to_f > 1 %>
+                    <%= number_with_precision(item.quantity, precision: 2, strip_insignificant_zeros: true) %> × <%= money.(item.unit_price) %> =
+                  <% end %>
+                  <%= money.(item.total_price) %>
+                <% end %>
+              </p>
+            </div>
+
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
+                 class="hidden size-4 shrink-0 text-gray-400 sm:block dark:text-gray-500">
+              <path fill-rule="evenodd" d="M2 10a.75.75 0 0 1 .75-.75h12.59l-2.1-2.1a.75.75 0 1 1 1.06-1.06l3.38 3.38a.75.75 0 0 1 0 1.06l-3.38 3.38a.75.75 0 1 1-1.06-1.06l2.1-2.1H2.75A.75.75 0 0 1 2 10Z" clip-rule="evenodd" />
+            </svg>
+
+            <%# What we matched it to %>
+            <div class="min-w-0 flex-1">
+              <% if item.matched? %>
+                <p class="truncate text-sm font-medium text-gray-900 dark:text-white"><%= item.ingredient.ingredient %></p>
+                <p class="mt-0.5 text-xs <%= item.on_list ? 'text-[#5f734c] dark:text-[#7a8f62] font-medium' : 'text-gray-500 dark:text-gray-400' %>">
+                  <%= item.on_list ? "On this week's list" : "Not on this week's list" %>
+                </p>
+              <% else %>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">No match found</p>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Not one of your ingredients</p>
+              <% end %>
+            </div>
+
+            <%# The confirmation itself %>
+            <div class="shrink-0 sm:w-28 sm:text-right">
+              <% if item.matched? %>
+                <label class="inline-flex cursor-pointer items-center gap-2">
+                  <%= check_box_tag "confirmed[]", item.index, true,
+                                    id: "confirmed_#{item.index}",
+                                    data: { match_confirmation_target: "checkbox" },
+                                    class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
+                  <span class="text-sm text-gray-700 dark:text-gray-300">Use this</span>
+                </label>
+              <% else %>
+                <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-white/10 dark:text-gray-300">
+                  Skipped
+                </span>
+              <% end %>
+            </div>
+          </div>
+
+          <%# The price check: offered when the receipt disagrees with what we have. %>
+          <% if item.price_differs? %>
+            <label class="mt-2 flex cursor-pointer items-center gap-2 rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-500/10 dark:text-amber-200">
+              <%= check_box_tag "price_updates[]", item.index, true,
+                                id: "price_update_#{item.index}",
+                                class: "rounded border-gray-300 dark:border-white/20 text-[#5f734c] focus:ring-[#5f734c]/40" %>
+              <span>
+                Update the price of <span class="font-medium"><%= item.ingredient.ingredient %></span>:
+                <%= item.ingredient.unit_price.nil? ? "no price yet" : money.(item.ingredient.unit_price) %>
+                → <span class="font-semibold"><%= money.(item.price_each) %></span> each
+              </span>
+            </label>
+          <% elsif item.matched? && item.by_weight %>
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Sold by weight, so its price isn't compared.</p>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+
+    <div class="mt-5 flex items-center gap-3 border-t border-gray-200 pt-4 dark:border-white/10">
+      <%= submit_tag "Check off for week of #{receipt_scan.week_of.strftime('%b %d')}",
+                     class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

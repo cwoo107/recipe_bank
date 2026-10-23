@@ -1,0 +1,45 @@
+<%# Its own turbo frame (dom_id), which the scan's broadcasts replace as the
+    worker reads the receipt (ReceiptScan). %>
+<%= turbo_frame_tag dom_id(receipt_scan) do %>
+  <% order = %i[pending reading_receipt matching_items awaiting_confirmation applied failed] %>
+
+  <% unless receipt_scan.failed? %>
+    <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+        <%= receipt_scan.awaiting_confirmation? ? "Your turn" : (receipt_scan.applied? ? "All done" : "Reading Receipt...") %>
+      </h2>
+      <div class="flow-root mt-2">
+        <ul role="list" class="-mb-8">
+          <%= render_import_step(receipt_scan, :reading_receipt, "Reading Receipt", "Read the receipt's items with AI", order: order) %>
+          <%= render_import_step(receipt_scan, :matching_items, "Matching Items",
+                                 "Matched #{receipt_scan.line_items.count(&:matched?)} of #{pluralize(Array(receipt_scan.items).size, 'item')} to your ingredients", order: order) %>
+          <%= render_import_step(receipt_scan, :awaiting_confirmation, "Review", "Reviewed by you", order: order, last: true) %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
+
+  <% if receipt_scan.awaiting_confirmation? %>
+    <%= render "receipt_scans/review", receipt_scan: receipt_scan %>
+  <% end %>
+
+  <% if receipt_scan.applied? %>
+    <div class="mt-6">
+      <%= link_to "View grocery list", grocery_lists_path(date: receipt_scan.week_of),
+                  data: { turbo_frame: "_top" },
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+    </div>
+  <% end %>
+
+  <% if receipt_scan.failed? %>
+    <div class="bg-red-50 border border-red-200 rounded p-4 dark:bg-red-900/20 dark:border-red-800">
+      <h3 class="text-sm font-medium text-red-800 dark:text-red-200">We couldn't read that receipt</h3>
+      <p class="mt-2 text-sm text-red-700 dark:text-red-300"><%= receipt_scan.error_message %></p>
+    </div>
+    <div class="mt-6">
+      <%= link_to "Try another photo", new_receipt_scan_path(date: receipt_scan.week_of),
+                  data: { turbo_frame: "_top" },
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+    </div>
+  <% end %>
+<% end %>

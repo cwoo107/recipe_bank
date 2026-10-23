@@ -1,0 +1,35 @@
+<%# Locals: date (the week shown), scan (optional). The grocery list's
+    Previous/Next Week buttons. Before upload they're links to the new page;
+    on a scan under review they change the scan's week (a PATCH). %>
+<% button_class = "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c] cursor-pointer" %>
+<% scan = local_assigns[:scan] %>
+<% week_button = ->(week, &content) do
+     if scan
+       button_to receipt_scan_path(scan), method: :patch, params: { receipt_scan: { week_of: week } },
+                 form: { data: { turbo_frame: "_top" } }, class: button_class, &content
+     else
+       link_to new_receipt_scan_path(date: week), class: button_class, &content
+     end
+   end %>
+
+<div class="flex items-center justify-between gap-2">
+  <%= week_button.(date - 1.week) do %>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+    </svg>
+    <span class="hidden sm:inline">Previous Week</span>
+    <span class="sm:hidden">Prev</span>
+  <% end %>
+
+  <span class="text-sm font-medium text-gray-700 dark:text-gray-300 text-center">
+    Week of <%= date.strftime("%b %d") %> – <%= (date + 6.days).strftime("%b %d") %>
+  </span>
+
+  <%= week_button.(date + 1.week) do %>
+    <span class="hidden sm:inline">Next Week</span>
+    <span class="sm:hidden">Next</span>
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+    </svg>
+  <% end %>
+</div>
