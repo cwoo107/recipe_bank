@@ -1,20 +1,25 @@
 # app/helpers/recipe_imports_helper.rb
 module RecipeImportsHelper
-  def render_import_step(job, step_status, title, description, last: false)
+  IMPORT_STATUS_ORDER = [:pending, :fetching_html, :parsing_recipe, :matching_ingredients,
+                         :awaiting_confirmation, :resolving_with_ai, :creating_recipe,
+                         :completed, :failed].freeze
+
+  # `order` is the job's statuses in sequence, ending in its done and failed
+  # ones — a recipe import's by default (receipt scans pass their own).
+  def render_import_step(job, step_status, title, description, last: false, order: IMPORT_STATUS_ORDER)
     current_status = job.status.to_sym
 
     # Get the order of statuses
-    status_order = [:pending, :fetching_html, :parsing_recipe, :matching_ingredients,
-                    :awaiting_confirmation, :resolving_with_ai, :creating_recipe,
-                    :completed, :failed]
+    status_order = order
 
     current_index = status_order.index(current_status) || 0
     step_index = status_order.index(step_status) || 0
 
     # Special handling: if job is completed, all steps are completed
-    is_completed = job.completed? || current_index > step_index
-    is_current = current_status == step_status && !job.completed? && !job.failed?
-    is_pending = current_index < step_index && !job.completed? && !job.failed?
+    done = status_order[-2]
+    is_completed = current_status == done || current_index > step_index
+    is_current = current_status == step_status && current_status != done && !job.failed?
+    is_pending = current_index < step_index && current_status != done && !job.failed?
     is_failed = job.failed? && current_status == step_status
 
     # Determine icon and color

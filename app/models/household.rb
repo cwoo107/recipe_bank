@@ -16,6 +16,7 @@ class Household < ApplicationRecord
   has_many :chores,           dependent: :destroy
   has_many :weekly_chores,    dependent: :destroy
   has_many :grocery_lists,    dependent: :destroy
+  has_many :receipt_scans,    dependent: :destroy
   has_many :calendar_sources, dependent: :destroy
   has_many :calendar_events,  dependent: :destroy
   has_many :weekly_plans,     dependent: :destroy

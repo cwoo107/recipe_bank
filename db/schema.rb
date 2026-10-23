@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_22_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -290,6 +290,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_190000) do
     t.float "total_fat"
     t.datetime "updated_at", null: false
     t.index ["ingredient_id"], name: "index_nutrition_facts_on_ingredient_id"
+  end
+
+  create_table "receipt_scans", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.integer "household_id", null: false
+    t.json "items"
+    t.string "source_content_type"
+    t.binary "source_file"
+    t.string "status", default: "pending", null: false
+    t.string "store_name"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.date "week_of", null: false
+    t.index ["household_id"], name: "index_receipt_scans_on_household_id"
+    t.index ["user_id"], name: "index_receipt_scans_on_user_id"
   end
 
   create_table "recipe_components", force: :cascade do |t|
@@ -590,6 +606,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_22_190000) do
   add_foreign_key "meals", "recurring_meals"
   add_foreign_key "meals", "users"
   add_foreign_key "nutrition_facts", "ingredients"
+  add_foreign_key "receipt_scans", "households"
+  add_foreign_key "receipt_scans", "users"
   add_foreign_key "recipe_components", "recipes", column: "component_recipe_id"
   add_foreign_key "recipe_components", "recipes", column: "parent_recipe_id"
   add_foreign_key "recipe_import_jobs", "users"

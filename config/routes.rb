@@ -31,6 +31,14 @@ Rails.application.routes.draw do
   end
   post 'grocery_lists', to: 'grocery_lists#create', as: :create_grocery_list
 
+  # "Upload Receipt" on the grocery list: read a receipt photo, review the
+  # matches (and which week), then check those items off.
+  resources :receipt_scans, only: %i[new create show update], path: "receipts" do
+    member do
+      post :apply
+    end
+  end
+
   resources :meals do
     collection do
       get :week_stats

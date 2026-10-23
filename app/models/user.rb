@@ -8,6 +8,7 @@ class User < ApplicationRecord
   # which stay with the household when the login goes.
   has_many :created_tags, class_name: "Tag", dependent: :nullify
   has_many :recipe_import_jobs, dependent: :destroy
+  has_many :receipt_scans,      dependent: :destroy
   has_many :collections,        dependent: :destroy
   has_many :created_ingredients, class_name: 'Ingredient',
                                   foreign_key: :created_by_id,

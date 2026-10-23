@@ -2,7 +2,6 @@
 #
 # Reads a recipe out of an uploaded photo or PDF with Claude Haiku (the
 # official SDK), getting back JSON in RECIPE_SCHEMA (structured outputs).
-require 'base64'
 
 class RecipeFileExtractor
   MODEL = 'claude-haiku-5-5'
@@ -20,13 +19,7 @@ class RecipeFileExtractor
     additionalProperties: false
   }.freeze
 
-  SUPPORTED_IMAGE_TYPES = %w[image/jpeg image/png image/gif image/webp].freeze
-  SUPPORTED_TYPES = (SUPPORTED_IMAGE_TYPES + ['application/pdf']).freeze
-
-  # Max dimension for images before sending to Claude — reduces payload dramatically
-  MAX_DIMENSION = 1568
-  # Target JPEG quality after resize
-  JPEG_QUALITY = 85
+  include ClaudeFileContent
 
   def initialize(file)
     @file = file
@@ -68,39 +61,6 @@ class RecipeFileExtractor
     response.content.find { |block| block.type == :text }&.text
   rescue Anthropic::Errors::APIStatusError => e
     raise "Claude API error: #{e.status} — #{e.message}"
-  end
-
-  def file_content_block
-    if @content_type == 'application/pdf'
-      data = Base64.strict_encode64(@file.read)
-      @file.rewind
-      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: data } }
-    else
-      data = Base64.strict_encode64(compressed_image_data)
-      { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: data } }
-    end
-  end
-
-  def compressed_image_data
-    require 'mini_magick'
-
-    image = MiniMagick::Image.read(@file.read)
-    @file.rewind
-
-    # Resize if either dimension exceeds MAX_DIMENSION, preserving aspect ratio
-    if image.width > MAX_DIMENSION || image.height > MAX_DIMENSION
-      image.resize "#{MAX_DIMENSION}x#{MAX_DIMENSION}>"
-    end
-
-    # Convert to JPEG and compress
-    image.format 'jpeg'
-    image.quality JPEG_QUALITY.to_s
-
-    image.to_blob
-  rescue => e
-    Rails.logger.warn "Image compression failed (#{e.message}), using original"
-    @file.rewind
-    @file.read
   end
 
   def extraction_prompt
