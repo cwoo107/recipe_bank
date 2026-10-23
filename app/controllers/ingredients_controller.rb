@@ -13,8 +13,12 @@ class IngredientsController < ApplicationController
     end
 
     if params[:query].present?
-      # LOWER on both sides: Postgres's LIKE (production) is case-sensitive.
-      @ingredients = @ingredients.where("LOWER(ingredients.ingredient) LIKE ?", "%#{Ingredient.sanitize_sql_like(params[:query].to_s.strip.downcase)}%")
+      # The name or any of its tags. LOWER on both sides: Postgres's LIKE
+      # (production) is case-sensitive. Tags go through a subquery rather
+      # than a join, so an ingredient with two matching tags isn't listed twice.
+      pattern = "%#{Ingredient.sanitize_sql_like(params[:query].to_s.strip.downcase)}%"
+      tagged  = IngredientTag.joins(:tag).where("LOWER(tags.tag) LIKE ?", pattern).select(:ingredient_id)
+      @ingredients = @ingredients.where("LOWER(ingredients.ingredient) LIKE ?", pattern).or(@ingredients.where(id: tagged))
     end
 
     @ingredients = apply_sort(@ingredients)

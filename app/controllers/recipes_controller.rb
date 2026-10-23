@@ -27,8 +27,12 @@ class RecipesController < ApplicationController
     end
 
     if params[:query].present?
-      # LOWER on both sides: Postgres's LIKE (production) is case-sensitive.
-      @recipes = @recipes.where("LOWER(recipes.title) LIKE ?", "%#{Recipe.sanitize_sql_like(params[:query].to_s.strip.downcase)}%")
+      # The title or any of its tags. LOWER on both sides: Postgres's LIKE
+      # (production) is case-sensitive. Tags go through a subquery rather
+      # than a join, so a recipe with two matching tags isn't listed twice.
+      pattern = "%#{Recipe.sanitize_sql_like(params[:query].to_s.strip.downcase)}%"
+      tagged  = RecipeTag.joins(:tag).where("LOWER(tags.tag) LIKE ?", pattern).select(:recipe_id)
+      @recipes = @recipes.where("LOWER(recipes.title) LIKE ?", pattern).or(@recipes.where(id: tagged))
     end
 
     @recipes = apply_sort(@recipes)
