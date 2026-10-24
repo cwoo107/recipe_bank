@@ -27,11 +27,6 @@ class ChoreCategoriesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
-  test "new households get the default categories" do
-    household = Household.create!(family_name: "New", owner: users(:two))
-    assert_equal ChoreCategory::DEFAULT_NAMES, household.chore_categories.ordered.pluck(:name)
-  end
-
   test "new and edit render the dialog forms" do
     get new_chore_category_url(return_to: "/weekly_chores", frame: "new_chore_category_ab12")
     assert_select "turbo-frame#new_chore_category_ab12 form"

@@ -22,6 +22,13 @@
       <%# The week's chart (in the print plan's default, landscape) — from
           either view. %>
       <%= render "shared/print_button", url: week_section_pdf_path("chores", @week_start), label: "Print chore chart" %>
+      <%= link_to chore_templates_path,
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:ring-white/10 dark:hover:bg-white/20" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6.429 9.75 2.25 12l4.179 2.25m0-4.5 5.571 3 5.571-3m-11.142 0L2.25 7.5 12 2.25l9.75 5.25-4.179 2.25m0 0L21.75 12l-4.179 2.25m0 0 4.179 2.25L12 21.75 2.25 16.5l4.179-2.25m11.142 0-5.571 3-5.571-3" />
+        </svg>
+        Templates
+      <% end %>
     <% if household_admin? %>
         <%= link_to new_chore_path(return_to: request.fullpath),
                     class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
@@ -43,6 +50,18 @@
             class: "#{view_tab} #{@view == view ? 'bg-white text-gray-900 shadow-xs dark:bg-white/15 dark:text-white' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'}" %>
     <% end %>
   </nav>
+
+  <%# A new household's chart starts empty — point it at the template library. %>
+  <% if household_admin? && current_household.chores.none? %>
+    <div id="chore_templates_prompt" class="mt-6 rounded-lg border-2 border-dashed border-gray-200 dark:border-white/10 p-6 text-center">
+      <h2 class="text-base font-semibold text-gray-900 dark:text-white">Get started with a template</h2>
+      <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+        Pick from ready-made categories like Standard Cleaning, Deep Cleaning and Admin, or add your own chores.
+      </p>
+      <%= link_to "Browse chore templates", chore_templates_path,
+                  class: "mt-4 inline-flex items-center rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+    </div>
+  <% end %>
 
   <% if @view == "table" %>
     <div class="mt-6">

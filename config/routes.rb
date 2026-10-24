@@ -149,6 +149,12 @@ Rails.application.routes.draw do
   resources :chores do
     resources :chore_tasks, only: [ :create, :update, :destroy ]
   end
+  # The template library: ready-made categories of chores to copy onto the chart.
+  resources :chore_templates, only: :index, path: "chore-templates" do
+    member do
+      post :add
+    end
+  end
   resources :weekly_chores, only: [ :index, :create, :update, :destroy ] do
     collection do
       post :reorder

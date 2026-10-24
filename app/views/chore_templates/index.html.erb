@@ -1,0 +1,85 @@
+<% content_for :title, "Chore Templates" %>
+
+<div class="w-full">
+  <div class="sm:flex sm:items-center sm:justify-between">
+    <div>
+      <h1 class="text-5xl tracking-tight text-olive-800 dark:text-[#e8ede3]">
+        <span class="text-[#5f734c]" style="font-family: 'Instrument Serif', serif;">Chore<span class="text-olive-800 dark:text-[#e8ede3]">Templates</span></span>
+      </h1>
+      <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
+        Ready-made collections of chores to help you get started.
+      </p>
+    </div>
+    <div class="mt-4 sm:ml-16 sm:mt-0">
+      <%= link_to weekly_chores_path,
+                  class: "inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:ring-white/10 dark:hover:bg-white/20" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+        </svg>
+        Back
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mt-8 mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <% @templates.each do |template| %>
+      <% missing = template.missing_chores_for(current_household) %>
+      <% added   = template.category_in(current_household).present? %>
+      <section id="chore_template_<%= template.key %>"
+               class="flex flex-col rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] p-5">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white"><%= template.name %></h2>
+            <% if template.description.present? %>
+              <p class="mt-1 text-sm text-gray-600 dark:text-gray-400"><%= template.description %></p>
+            <% end %>
+          </div>
+          <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400"><%= pluralize(template.chores.size, "chore") %></span>
+        </div>
+
+        <ul class="mt-4 flex-1 divide-y divide-gray-200 dark:divide-white/10">
+          <% template.chores.each do |chore| %>
+            <li class="py-2">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-sm text-gray-900 dark:text-gray-100"><%= chore.name %></span>
+                <span class="inline-flex shrink-0 items-center gap-1.5">
+                  <% if chore.day_name %>
+                    <span class="text-xs text-gray-500 dark:text-gray-400"><%= chore.day_name.pluralize %></span>
+                  <% end %>
+                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= chore.frequency_pill_classes %>">
+                    <%= chore.frequency_label %>
+                  </span>
+                </span>
+              </div>
+              <% if chore.tasks.any? %>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400"><%= chore.tasks.join(" · ") %></p>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+
+        <% if household_admin? %>
+          <div class="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
+            <% if missing.empty? %>
+              <span class="inline-flex items-center gap-x-1 text-sm font-medium text-gray-500 dark:text-gray-400">
+                <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clip-rule="evenodd" />
+                </svg>
+                On your chart
+              </span>
+            <% else %>
+              <%= button_to add_chore_template_path(template),
+                            method: :post,
+                            class: "inline-flex items-center gap-x-1 rounded-md bg-[#5f734c] px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" do %>
+                <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-4" aria-hidden="true">
+                  <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
+                </svg>
+                <%= added ? "Add #{pluralize(missing.size, "missing chore")}" : "Add to chore chart" %>
+              <% end %>
+            <% end %>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+</div>
