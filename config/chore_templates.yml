@@ -1,0 +1,128 @@
+# The Chore Chart's template library (see ChoreTemplate). Each template is a
+# chore category with a set of chores; adding one copies the category and its
+# chores — frequency, description and tasks — onto the household's chart.
+#
+# Keys are permanent (they're in the URL); names are what the category is
+# called once it's added. Frequencies must be one of Chore::FREQUENCIES.
+# Weekly and biweekly chores name the day they're done on, and go onto the
+# chart on that day from the week the template's added (see ChoreTemplate#add_to!).
+
+standard_cleaning:
+  name: "Standard Cleaning"
+  description: "The weekly reset that keeps the house in good shape."
+  chores:
+    - name: "Clean bathrooms"
+      day: saturday
+      frequency: weekly
+      tasks: [ "Scrub toilets", "Wipe sinks and counters", "Clean mirrors", "Clean shower and tub", "Mop floors" ]
+    - name: "Vacuum"
+      day: wednesday
+      frequency: weekly
+      tasks: [ "Living areas", "Bedrooms", "Stairs and hallways" ]
+    - name: "Mop hard floors"
+      day: thursday
+      frequency: weekly
+    - name: "Dust surfaces"
+      day: friday
+      frequency: weekly
+      tasks: [ "Shelves and tables", "TV and electronics", "Picture frames" ]
+    - name: "Change bed sheets"
+      day: sunday
+      frequency: weekly
+    - name: "Wipe down kitchen"
+      frequency: daily
+      tasks: [ "Counters", "Stovetop", "Sink" ]
+
+chores:
+  name: "Chores"
+  description: "Everyday jobs that keep the household running."
+  chores:
+    - name: "Take out trash and recycling"
+      day: tuesday
+      frequency: weekly
+    - name: "Run the dishwasher"
+      frequency: daily
+      tasks: [ "Load", "Run", "Unload" ]
+    - name: "Do laundry"
+      day: monday
+      frequency: weekly
+      tasks: [ "Wash", "Dry", "Fold", "Put away" ]
+    - name: "Water plants"
+      day: sunday
+      frequency: weekly
+    - name: "Tidy common areas"
+      frequency: daily
+
+deep_cleaning:
+  name: "Deep Cleaning"
+  description: "The jobs that don't need doing every week, but do need doing."
+  chores:
+    - name: "Clean out the fridge"
+      frequency: monthly
+      tasks: [ "Toss expired food", "Wipe shelves and drawers", "Clean door seals" ]
+    - name: "Clean the oven"
+      frequency: quarterly
+    - name: "Wash windows"
+      frequency: quarterly
+      tasks: [ "Inside glass", "Outside glass", "Sills and tracks" ]
+    - name: "Wash baseboards"
+      frequency: quarterly
+    - name: "Clean under furniture"
+      frequency: quarterly
+    - name: "Wash pillows and comforters"
+      frequency: semiannually
+    - name: "Deep clean carpets"
+      frequency: annually
+
+admin:
+  name: "Admin"
+  description: "Bills, paperwork and the household's behind-the-scenes work."
+  chores:
+    - name: "Pay bills"
+      frequency: monthly
+    - name: "Review the budget"
+      frequency: monthly
+      tasks: [ "Categorize spending", "Check against the plan", "Adjust next month" ]
+    - name: "Sort mail and paperwork"
+      day: friday
+      frequency: weekly
+    - name: "Check subscriptions"
+      frequency: quarterly
+    - name: "Back up photos and files"
+      frequency: quarterly
+    - name: "Review insurance policies"
+      frequency: annually
+
+home_maintenance:
+  name: "Home Maintenance"
+  description: "Keep things working and catch small problems early."
+  chores:
+    - name: "Replace HVAC filter"
+      frequency: quarterly
+    - name: "Test smoke detectors"
+      frequency: semiannually
+      tasks: [ "Test each alarm", "Replace batteries", "Check carbon monoxide detectors" ]
+    - name: "Clean dryer vent"
+      frequency: semiannually
+    - name: "Flush water heater"
+      frequency: annually
+    - name: "Clean gutters"
+      frequency: semiannually
+    - name: "Service the furnace and AC"
+      frequency: annually
+
+yard:
+  name: "Yard & Garden"
+  description: "Outdoor upkeep through the seasons."
+  chores:
+    - name: "Mow the lawn"
+      day: saturday
+      frequency: weekly
+      tasks: [ "Mow", "Edge", "Blow off walkways" ]
+    - name: "Weed garden beds"
+      day: sunday
+      frequency: biweekly
+    - name: "Trim hedges and shrubs"
+      frequency: quarterly
+    - name: "Clean patio furniture"
+      frequency: semiannually
