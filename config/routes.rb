@@ -27,6 +27,8 @@ Rails.application.routes.draw do
   resources :grocery_lists, except: [:index, :create] do
     collection do
       post :generate
+      patch :check_all
+      delete :destroy_checked
     end
   end
   post 'grocery_lists', to: 'grocery_lists#create', as: :create_grocery_list
@@ -152,6 +154,9 @@ Rails.application.routes.draw do
     end
   end
   resources :chores do
+    collection do
+      delete :destroy_selected
+    end
     resources :chore_tasks, only: [ :create, :update, :destroy ]
   end
   # The template library: ready-made categories of chores to copy onto the chart.

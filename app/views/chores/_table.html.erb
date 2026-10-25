@@ -55,31 +55,56 @@
     <p class="text-sm text-gray-500 dark:text-gray-400 italic">No chores yet. Add the recurring chores your household needs to keep up with.</p>
   </div>
 <% else %>
-  <%# ── DESKTOP: table — click a cell to edit it (chores/_table_row) ── %>
-  <div class="hidden md:block overflow-x-auto bg-white shadow-sm inset-ring inset-ring-gray-900/5 rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
-    <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
-      <% sorting = { sort:, direction:, filters: } %>
-      <thead class="bg-gray-50 dark:bg-white/5">
-        <tr>
-          <%= render "chores/sort_header", column: "name", label: "Chore", first: true, **sorting %>
-          <%= render "chores/sort_header", column: "tasks", label: "Tasks", **sorting %>
-          <%= render "chores/sort_header", column: "category", label: "Category", **sorting %>
-          <%= render "chores/sort_header", column: "frequency", label: "Frequency", **sorting %>
-          <%= render "chores/sort_header", column: "day", label: "Day", **sorting %>
-          <% if current_household.assignable? %>
-            <%= render "chores/sort_header", column: "assignee", label: "Assigned to", **sorting %>
-          <% end %>
-          <%= render "chores/sort_header", column: "last_done", label: "Last done", **sorting %>
-          <%= render "chores/sort_header", column: "next_due", label: "Next due", **sorting %>
-          <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
-        <% chores.each do |chore| %>
-          <%= render "chores/table_row", chore: chore %>
+  <%# ── DESKTOP: table — click a cell to edit it (chores/_table_row) ──
+      Admins get a checkbox on each row, a select-all box heading that
+      column, and a bar to delete whatever's ticked. The checkboxes join the
+      bar's form through their `form` attribute, as the rows' own fields do. %>
+  <% selectable = household_admin? %>
+  <div class="hidden md:block" <%= tag.attributes(data: selectable ? { controller: "bulk-select" } : {}) %>>
+    <% if selectable %>
+      <div data-bulk-select-target="bar" hidden
+           class="mb-3 flex items-center justify-between gap-3 rounded-lg border border-dusty-rose-200 bg-dusty-rose-50 px-4 py-2.5 dark:border-dusty-rose-800/60 dark:bg-dusty-rose-900/20">
+        <span class="text-sm font-medium text-dusty-rose-800 dark:text-dusty-rose-200" data-bulk-select-target="count" aria-live="polite"></span>
+        <%= form_with url: destroy_selected_chores_path, method: :delete, id: "selected_chores_form",
+              data: { turbo_confirm: "Delete the selected chores? This also removes them from any weekly lists." } do |f| %>
+          <%= f.submit "Delete selected",
+                class: "inline-flex items-center rounded-md bg-dusty-rose-600 px-3 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-dusty-rose-700 dark:bg-dusty-rose-500 dark:hover:bg-dusty-rose-600 cursor-pointer" %>
         <% end %>
-      </tbody>
-    </table>
+      </div>
+    <% end %>
+
+    <div class="overflow-x-auto bg-white shadow-sm inset-ring inset-ring-gray-900/5 rounded-lg dark:bg-white/5 dark:inset-ring-white/10">
+      <table class="min-w-full divide-y divide-gray-300 dark:divide-white/10">
+        <% sorting = { sort:, direction:, filters: } %>
+        <thead class="bg-gray-50 dark:bg-white/5">
+          <tr>
+            <% if selectable %>
+              <th scope="col" class="w-10 py-3.5 pl-4 pr-1 sm:pl-6 text-left">
+                <input type="checkbox" aria-label="Select all chores"
+                       class="size-4 rounded border-gray-300 text-[#5f734c] focus:ring-[#5f734c] dark:border-white/20 dark:bg-white/5 cursor-pointer"
+                       data-bulk-select-target="all" data-action="bulk-select#toggleAll">
+              </th>
+            <% end %>
+            <%= render "chores/sort_header", column: "name", label: "Chore", first: !selectable, **sorting %>
+            <%= render "chores/sort_header", column: "tasks", label: "Tasks", **sorting %>
+            <%= render "chores/sort_header", column: "category", label: "Category", **sorting %>
+            <%= render "chores/sort_header", column: "frequency", label: "Frequency", **sorting %>
+            <%= render "chores/sort_header", column: "day", label: "Day", **sorting %>
+            <% if current_household.assignable? %>
+              <%= render "chores/sort_header", column: "assignee", label: "Assigned to", **sorting %>
+            <% end %>
+            <%= render "chores/sort_header", column: "last_done", label: "Last done", **sorting %>
+            <%= render "chores/sort_header", column: "next_due", label: "Next due", **sorting %>
+            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-6"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white dark:divide-white/10 dark:bg-white/5">
+          <% chores.each do |chore| %>
+            <%= render "chores/table_row", chore: chore %>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <%# ── MOBILE: list, editing in a modal ── %>

@@ -2,21 +2,14 @@ class GroceryListsController < ApplicationController
   # Limited members can look but not change these (see ApplicationController).
   before_action :require_household_admin!, except: %i[index show]
   before_action :set_grocery_list, only: %i[show edit update destroy]
-  before_action :set_date, only: [:index, :generate]
+  before_action :set_date, only: [:index, :generate, :check_all, :destroy_checked]
 
   def index
-    @grocery_lists = current_household.grocery_lists
-                                 .where("week_of >= ?", @date)
-                                 .where("week_of < ?", @date + 7)
-                                 .includes(:ingredient)
-                                 .left_joins(:ingredient)
-                                 # Categories in the Ingredients page's order, then A–Z;
-                                 # notes (no ingredient) come last, oldest first.
-                                 .order(Ingredient.family_order_sql, "ingredients.ingredient ASC", :id)
-
-    if params[:filter].present?
-      @grocery_lists = @grocery_lists.where(ingredients: { family: params[:filter] })
-    end
+    @grocery_lists = shown_grocery_lists
+                       .includes(:ingredient)
+                       # Categories in the Ingredients page's order, then A–Z;
+                       # notes (no ingredient) come last, oldest first.
+                       .order(Ingredient.family_order_sql, "ingredients.ingredient ASC", :id)
 
     # What each line is for (the "used in N meals" hover), worked out once
     # for the whole list.
@@ -196,6 +189,25 @@ class GroceryListsController < ApplicationController
     end
   end
 
+  # PATCH /grocery_lists/check_all — "Select all": ticks off everything
+  # shown (this week, under the current filter); with checked=false, "Unselect
+  # all" unticks it. Back to the list, which refreshes in place.
+  def check_all
+    shown_grocery_lists.update_all(checked: params[:checked] != "false", updated_at: Time.current)
+    redirect_back_or_to grocery_lists_path(date: @date), status: :see_other
+  end
+
+  # DELETE /grocery_lists/destroy_checked — "Delete all checked items": takes
+  # what's ticked off (of what's shown) off the list.
+  def destroy_checked
+    checked = shown_grocery_lists.where(checked: true)
+    count = checked.size
+    checked.destroy_all
+
+    redirect_back_or_to grocery_lists_path(date: @date),
+                        notice: "#{count} checked #{'item'.pluralize(count)} removed from the list.", status: :see_other
+  end
+
   def destroy
     @ingredient_name = @grocery_list.title
     @grocery_list.destroy!
@@ -212,6 +224,13 @@ class GroceryListsController < ApplicationController
   def set_grocery_list
     @grocery_list = current_household.grocery_lists.find(params.expect(:id))
     @units = @grocery_list.units
+  end
+
+  # The list as the page shows it: the week, under the category filter if
+  # there is one.
+  def shown_grocery_lists
+    lists = current_household.grocery_lists.where(week_of: @date...(@date + 7)).left_joins(:ingredient)
+    params[:filter].present? ? lists.where(ingredients: { family: params[:filter] }) : lists
   end
 
   def set_date

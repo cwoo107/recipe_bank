@@ -205,4 +205,42 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "No chores match these filters."
     assert_select "a", text: "Clear filters"
   end
+
+  # ── Selecting rows in the Table View ──
+
+  test "the table view has a select-all box and a checkbox per chore for admins" do
+    get weekly_chores_url(view: "table")
+
+    assert_select "thead input[type=checkbox][data-bulk-select-target=all]"
+    assert_select "tr#chore_#{@chore.id} input[type=checkbox][name='chore_ids[]'][value='#{@chore.id}'][form=selected_chores_form]"
+    assert_select "form#selected_chores_form input[type=submit][value='Delete selected']"
+  end
+
+  test "limited members get no checkboxes" do
+    sign_in users(:two) # bob, a limited member of household :one
+    get weekly_chores_url(view: "table")
+
+    assert_select "input[name='chore_ids[]']", 0
+    assert_select "form#selected_chores_form", 0
+  end
+
+  test "destroy_selected deletes the ticked chores, and only this household's" do
+    other = @chore.household.chores.create!(name: "Mop", frequency: "weekly")
+    theirs = chores(:two) # household :two
+
+    assert_difference("Chore.count", -2) do
+      delete destroy_selected_chores_url, params: { chore_ids: [ @chore.id, other.id, theirs.id ] },
+                                          headers: { "HTTP_REFERER" => weekly_chores_url(view: "table", sort: "name") }
+    end
+    assert_redirected_to weekly_chores_url(view: "table", sort: "name")
+    assert Chore.exists?(theirs.id)
+    assert_equal "2 chores deleted.", flash[:notice]
+  end
+
+  test "limited members can't delete chores in bulk" do
+    sign_in users(:two)
+    assert_no_difference("Chore.count") do
+      delete destroy_selected_chores_url, params: { chore_ids: [ @chore.id ] }
+    end
+  end
 end

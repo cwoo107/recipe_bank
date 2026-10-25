@@ -36,7 +36,7 @@
     <div class="flex items-center admin-only col-start-1 row-start-1 row-span-2">
       <%= f.check_box :checked,
                       checked: grocery_list.checked == true,
-                      data: { action: "change->grocery-item#toggleCheck" },
+                      data: { action: "change->grocery-item#toggleCheck", grocery_checks_target: "box" },
                       style: "accent-color: #5f734c;",
                       class: "h-5 w-5 rounded border-gray-300 focus:ring-[#5f734c] dark:border-gray-600" %>
     </div>

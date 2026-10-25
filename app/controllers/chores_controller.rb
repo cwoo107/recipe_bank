@@ -54,6 +54,18 @@ class ChoresController < ApplicationController
     redirect_to weekly_chores_path(view: "table"), notice: "Chore was successfully deleted.", status: :see_other
   end
 
+  # DELETE /chores/destroy_selected — the Table View's checkboxes.
+  # Params: { chore_ids: ["1", "4"] }. Back to the table as it was (same
+  # sort and filters).
+  def destroy_selected
+    chores = current_household.chores.where(id: Array(params[:chore_ids]))
+    count  = chores.size
+    chores.destroy_all
+
+    redirect_back_or_to weekly_chores_path(view: "table"),
+                        notice: "#{count} #{'chore'.pluralize(count)} deleted.", status: :see_other
+  end
+
   private
 
   def set_chore

@@ -12,7 +12,16 @@
   cell       = "px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 align-top"
 %>
 <tr id="<%= dom_id(chore) %>" data-controller="chore-row">
-  <td class="py-2.5 pl-4 pr-3 sm:pl-6 text-sm font-medium text-gray-900 dark:text-white align-top max-w-56">
+  <% if editable %>
+    <%# Ticks it for the table's "Delete selected" (bulk_select_controller). %>
+    <td class="w-10 py-2.5 pl-4 pr-1 sm:pl-6 align-top">
+      <input type="checkbox" name="chore_ids[]" value="<%= chore.id %>" form="selected_chores_form"
+             aria-label="Select <%= chore.name %>"
+             class="mt-1.5 size-4 rounded border-gray-300 text-[#5f734c] focus:ring-[#5f734c] dark:border-white/20 dark:bg-white/5 cursor-pointer"
+             data-bulk-select-target="item" data-action="bulk-select#refresh">
+    </td>
+  <% end %>
+  <td class="py-2.5 <%= editable ? 'px-3' : 'pl-4 pr-3 sm:pl-6' %> text-sm font-medium text-gray-900 dark:text-white align-top max-w-56">
     <% if editable %>
       <%= form_with model: chore, id: form_id, class: "hidden" do %>
         <%= hidden_field_tag :inline, 1, id: nil %>
