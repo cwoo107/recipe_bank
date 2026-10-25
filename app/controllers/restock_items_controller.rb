@@ -111,6 +111,6 @@ class RestockItemsController < ApplicationController
   end
 
   def restock_item_params
-    params.require(:restock_item).permit(:name, :brand, :store, :restock_category_id, :last_restocked)
+    params.require(:restock_item).permit(:name, :brand, :store_names, :restock_category_id, :last_restocked)
   end
 end

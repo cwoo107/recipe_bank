@@ -125,6 +125,7 @@ Rails.application.routes.draw do
     end
   end
   resources :todo_tags, only: [ :index, :create, :update, :destroy ]
+  resources :stores,    only: [ :index, :create, :update, :destroy ]
   # The household's time for to-dos, changed from the board or "Plan your week".
   resource :todo_budget, only: :update
 

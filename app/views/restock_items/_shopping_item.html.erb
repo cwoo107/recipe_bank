@@ -4,6 +4,8 @@
     Ticking it dates its last_restocked; unticking right after puts back the
     date it replaced (previous_restocked, from RestockItemsController#mark_stocked).
     Limited members see the row but can't tick it.
+    The row is found by class (shopping_item.turbo_stream replaces every
+    match), so it'd still update if an item were ever listed twice.
     locals: (item:, previous_restocked: nil) %>
 <% bought = item.stocked? %>
 <% row = capture do %>
@@ -21,7 +23,7 @@
     <% end %>
   </span>
 <% end %>
-<li id="shopping_restock_item_<%= item.id %>">
+<li class="shopping_restock_item_<%= item.id %>">
   <% if household_admin? %>
     <%= button_to bought ? mark_restock_restock_item_path(item) : mark_stocked_restock_item_path(item),
           method: :patch, params: { context: "shopping", **(bought ? { previous_restocked: previous_restocked.to_s } : {}) },

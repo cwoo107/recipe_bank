@@ -12,6 +12,7 @@ class Household < ApplicationRecord
   has_many :todo_tags,        dependent: :destroy
   has_many :restock_items,    dependent: :destroy
   has_many :restock_categories, dependent: :destroy
+  has_many :stores,           dependent: :destroy
   has_many :chore_categories, dependent: :destroy
   has_many :tags,             dependent: :destroy
   has_many :chores,           dependent: :destroy

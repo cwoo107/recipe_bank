@@ -3,7 +3,6 @@
 one:
   name: "Toilet paper"
   brand: "Charmin"
-  store: "Costco"
   restock_category: bathrooms_one
   position: 1
   household: one

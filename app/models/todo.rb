@@ -30,7 +30,7 @@ class Todo < ApplicationRecord
   attribute :estimated_minutes, :integer
 
   after_initialize :set_default_priority, if: :new_record?
-  after_save :add_new_tags, if: -> { @new_tag_names.present? }
+  after_save :apply_tag_names, if: -> { @tag_names }
   before_validation :compose_estimated_time,
                     if: -> { estimated_hours.present? || estimated_minutes.present? }
 
@@ -180,12 +180,13 @@ class Todo < ApplicationRecord
     status == "done" ? DONE_CHART_COLOR : PRIORITY_CHART_COLORS.fetch(priority, "#95a97d")
   end
 
-  # Tags typed into the form that don't exist yet ("Yard, Paperwork") —
-  # created for the household and added alongside any that were ticked.
-  def new_tag_names = Array(@new_tag_names).join(", ")
+  # The form's tag picker sends the to-do's whole set of tags by name
+  # ("Yard, Paperwork"); names the household doesn't have yet become new tags.
+  def tag_name_list = @tag_names || tags.map(&:name)
+  def tag_names     = tag_name_list.join(", ")
 
-  def new_tag_names=(names)
-    @new_tag_names = names.to_s.split(",").map(&:strip).compact_blank.uniq(&:downcase)
+  def tag_names=(names)
+    @tag_names = names.to_s.split(",").map(&:strip).compact_blank.uniq(&:downcase)
   end
 
   # ── Live chart updates over Turbo Streams ─────────────────────────────
@@ -212,12 +213,11 @@ class Todo < ApplicationRecord
     self.estimated_time_to_complete = estimated_hours.to_i * 60 + estimated_minutes.to_i
   end
 
-  def add_new_tags
-    names = @new_tag_names
-    @new_tag_names = nil
-    names.each do |name|
-      tag = household.todo_tags.where("LOWER(name) = ?", name.downcase).first || household.todo_tags.create!(name: name)
-      tags << tag unless tags.include?(tag)
+  def apply_tag_names
+    names = @tag_names
+    @tag_names = nil
+    self.tags = names.map do |name|
+      household.todo_tags.where("LOWER(name) = ?", name.downcase).first || household.todo_tags.create!(name: name)
     end
   end
 end

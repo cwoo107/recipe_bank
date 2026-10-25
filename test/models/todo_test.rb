@@ -108,13 +108,13 @@ class TodoTest < ActiveSupport::TestCase
     assert_includes Todo.carried_over(household, this_week(household) + 7), old
   end
 
-  test "new tag names are created for the household and added to the to-do" do
+  test "tag names are created for the household as needed and set on the to-do" do
     household = households(:one)
     existing = household.todo_tags.create!(name: "Yard")
     todo = household.todos.create!(user: users(:one), title: "Mow", priority: :medium, status: "todo",
-                                   new_tag_names: "yard, Paperwork ,")
+                                   tag_names: "yard, Paperwork ,")
 
-    assert_equal [ "Paperwork", "Yard" ], todo.tags.map(&:name)
+    assert_equal [ "Paperwork", "Yard" ], todo.reload.tags.map(&:name)
     assert_includes todo.tags, existing
     assert_equal 2, household.todo_tags.count
   end

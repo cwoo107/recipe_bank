@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_140000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -427,6 +427,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
     t.index ["household_id", "position"], name: "index_restock_categories_on_household_id_and_position"
   end
 
+  create_table "restock_item_stores", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "restock_item_id", null: false
+    t.integer "store_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["restock_item_id", "store_id"], name: "index_restock_item_stores_on_restock_item_id_and_store_id", unique: true
+    t.index ["restock_item_id"], name: "index_restock_item_stores_on_restock_item_id"
+    t.index ["store_id"], name: "index_restock_item_stores_on_store_id"
+  end
+
   create_table "restock_items", force: :cascade do |t|
     t.string "brand"
     t.datetime "created_at", null: false
@@ -454,6 +464,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
     t.datetime "updated_at", null: false
     t.index ["recipe_id", "instruction_position"], name: "index_steps_on_recipe_id_and_instruction_position"
     t.index ["recipe_id"], name: "index_steps_on_recipe_id"
+  end
+
+  create_table "stores", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id", "name"], name: "index_stores_on_household_id_and_name", unique: true
+    t.index ["household_id"], name: "index_stores_on_household_id"
   end
 
   create_table "stripe_events", force: :cascade do |t|
@@ -649,10 +668,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
   add_foreign_key "recurring_meals", "recipes"
   add_foreign_key "recurring_meals", "users"
   add_foreign_key "restock_categories", "households"
+  add_foreign_key "restock_item_stores", "restock_items"
+  add_foreign_key "restock_item_stores", "stores"
   add_foreign_key "restock_items", "households"
   add_foreign_key "restock_items", "restock_categories"
   add_foreign_key "restock_items", "users"
   add_foreign_key "steps", "recipes"
+  add_foreign_key "stores", "households"
   add_foreign_key "tags", "households"
   add_foreign_key "tags", "users"
   add_foreign_key "todo_taggings", "todo_tags"

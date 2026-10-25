@@ -63,9 +63,10 @@
       <% end %>
     </div>
 
-    <% if item.brand.present? || item.store.present? %>
+    <% stores = item.stores.map(&:name).join(", ") %>
+    <% if item.brand.present? || stores.present? %>
       <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        <%= [ item.brand, item.store ].select(&:present?).join(" · ") %>
+        <%= [ item.brand, stores ].select(&:present?).join(" · ") %>
       </p>
     <% end %>
 

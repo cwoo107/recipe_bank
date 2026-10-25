@@ -3,26 +3,51 @@ class RestockItem < ApplicationRecord
   belongs_to :household
   belongs_to :restock_category
 
+  has_many :restock_item_stores, dependent: :destroy
+  has_many :stores, -> { ordered }, through: :restock_item_stores
+
   acts_as_list scope: :restock_category_id
+
+  after_save :apply_store_names, if: -> { @store_names }
 
   validates :name, presence: true
 
   scope :ordered, -> { order(:position) }
 
-  # The restock shopping list: everything marked Restock, grouped by the store
-  # it's bought at (blank store last, as "Any store"), then by restock
-  # category in checklist order. Returns [[store_name, [[category, items]]]].
+  # The restock shopping list: everything marked Restock, grouped by store —
+  # items at no store last, as "Any store" — then by restock category in
+  # checklist order. Returns [[store_name, [[category, items]]]].
+  #
+  # Each item is listed once. One bought at several stores goes under
+  # whichever of them has the most on the list (counting every item that can
+  # be bought there), so it joins the bigger trip: with 5 things from Amazon
+  # and 1 from Target, an item at both goes on the Amazon list. Ties go to
+  # the store that comes first alphabetically.
   def self.shopping_list(household)
-    items = household.restock_items.where(restock: true).includes(:restock_category).to_a
+    items = household.restock_items.where(restock: true).includes(:restock_category, :stores).to_a
 
-    by_store = items.group_by { |item| item.store.to_s.strip.downcase }
-    by_store.sort_by { |key, _| [ key.blank? ? 1 : 0, key ] }.map do |key, store_items|
-      name = key.blank? ? "Any store" : store_items.first.store.strip
+    counts = items.flat_map(&:stores).tally
+    by_store = Hash.new { |hash, key| hash[key] = [] }
+    items.each do |item|
+      store = item.stores.min_by { |s| [ -counts[s], s.name.downcase ] }
+      by_store[store&.name] << item
+    end
+
+    by_store.sort_by { |name, _| [ name.nil? ? 1 : 0, name.to_s.downcase ] }.map do |name, store_items|
       categories = store_items.group_by(&:restock_category)
                               .sort_by { |category, _| [ category.position, category.name ] }
                               .map { |category, category_items| [ category, category_items.sort_by(&:position) ] }
-      [ name, categories ]
+      [ name || "Any store", categories ]
     end
+  end
+
+  # The form's store picker sends the item's whole set of stores by name
+  # ("Costco, Target"); names the household doesn't have yet become new stores.
+  def store_name_list = @store_names || stores.map(&:name)
+  def store_names     = store_name_list.join(", ")
+
+  def store_names=(names)
+    @store_names = names.to_s.split(",").map(&:strip).compact_blank.uniq(&:downcase)
   end
 
   # Drag-and-drop move between lists. Mirrors Todo#move_to_column!.
@@ -75,6 +100,14 @@ class RestockItem < ApplicationRecord
   end
 
   private
+
+  def apply_store_names
+    names = @store_names
+    @store_names = nil
+    self.stores = names.map do |name|
+      household.stores.where("LOWER(name) = ?", name.downcase).first || household.stores.create!(name: name)
+    end
+  end
 
   def within_current_week?(timestamp)
     return false if timestamp.blank?

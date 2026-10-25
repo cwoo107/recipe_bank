@@ -162,15 +162,8 @@ class TodosController < ApplicationController
   end
 
   def todo_params
-    permitted = [ :title, :description, :priority, :status, :estimated_hours, :estimated_minutes, :new_tag_names, { tag_ids: [] } ]
+    permitted = [ :title, :description, :priority, :status, :estimated_hours, :estimated_minutes, :tag_names ]
     permitted << :assignee_id if household_admin? # limited members can't hand to-dos to others
-    scoped_tag_params(scoped_assignee_params(params.require(:todo).permit(*permitted)))
-  end
-
-  # Only this household's tags can be put on its to-dos.
-  def scoped_tag_params(permitted)
-    return permitted unless permitted.key?(:tag_ids)
-
-    permitted.merge(tag_ids: current_household.todo_tags.where(id: permitted[:tag_ids].compact_blank).pluck(:id))
+    scoped_assignee_params(params.require(:todo).permit(*permitted))
   end
 end

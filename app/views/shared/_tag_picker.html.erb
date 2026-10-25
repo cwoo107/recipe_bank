@@ -1,0 +1,23 @@
+<%# locals: (name:, options:, selected: [], placeholder: "Search tags…", creatable: true, label: "Tags") %>
+<%# A search-and-select bar for tags (tag_picker_controller.js): pick tags
+    from the list as you type and they collect in the bar, comma-separated.
+    Submits the names as one comma-separated field, `name`.
+    options: [{ name:, color: }] — color is any CSS color, for the dot. %>
+<% menu_id = "tag_picker_#{SecureRandom.hex(4)}" %>
+<div class="relative" data-controller="tag-picker"
+     data-tag-picker-options-value="<%= options.to_json %>"
+     data-tag-picker-creatable-value="<%= creatable %>">
+  <%= hidden_field_tag name, selected.join(", "), id: nil, data: { tag_picker_target: "field" } %>
+  <div class="flex min-h-10 cursor-text flex-wrap items-center gap-x-2 gap-y-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 focus-within:border-[#5f734c] focus-within:ring-2 focus-within:ring-[#5f734c]/20 dark:border-white/20 dark:bg-[#242b1e]"
+       data-action="click->tag-picker#focus">
+    <span class="contents" data-tag-picker-target="list"></span>
+    <input type="text" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"
+           aria-controls="<%= menu_id %>" aria-label="<%= label %>" placeholder="<%= placeholder %>"
+           class="min-w-28 flex-1 border-0 bg-transparent p-0.5 text-sm text-gray-900 placeholder-gray-400 focus:ring-0 focus:outline-none dark:text-white"
+           data-tag-picker-target="input"
+           data-action="input->tag-picker#search focus->tag-picker#search keydown->tag-picker#keydown blur->tag-picker#close">
+  </div>
+  <ul id="<%= menu_id %>" role="listbox" hidden
+      class="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-white/10 dark:bg-[#242b1e]"
+      data-tag-picker-target="menu"></ul>
+</div>

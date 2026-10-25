@@ -17,6 +17,8 @@ class TodoTag < ApplicationRecord
 
   def pill_classes = Palette.person_classes(color)[:pill]
   def dot_classes  = Palette.person_classes(color)[:dot]
+  # For the tag picker's dots, which are drawn in JavaScript.
+  def hex_color    = "##{Palette.print_colors(color)[:dot]}"
 
   private
 

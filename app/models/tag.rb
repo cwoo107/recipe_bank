@@ -32,6 +32,15 @@ class Tag < ApplicationRecord
 
   scope :ordered, -> { order(:tag) }
 
+  # The household's tag by this name (any capitalization), or a new one — in
+  # the next of the default colors — when it doesn't have one yet. For the
+  # recipe page's tag picker, where a new name can be typed straight in.
+  def self.find_or_create_for(household, name, user: nil)
+    household.tags.where("LOWER(tag) = ?", name.strip.downcase).first ||
+      household.tags.create!(tag: name, user: user,
+                             color: DEFAULTS.map(&:last).uniq[household.tags.count % DEFAULTS.map(&:last).uniq.size])
+  end
+
   # Copying a recipe into another household re-points its tags at that
   # household's tag of the same name, creating it if they don't have one.
   def mirror_for(other_household)

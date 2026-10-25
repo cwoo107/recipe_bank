@@ -64,7 +64,8 @@
 
   <%# Two lists: groceries from the meal plan, and restock items from the
       restock checklist. %>
-  <% restock_count = @restock_list.sum { |_, categories| categories.sum { |_, items| items.size } } %>
+  <%# Items at two stores are listed twice; count them once. %>
+  <% restock_count = @restock_list.flat_map { |_, categories| categories.flat_map(&:last) }.uniq.size %>
   <div class="mt-8 flex gap-6 border-b border-gray-200 dark:border-white/10" role="tablist">
     <% [ [ "groceries", "Groceries" ], [ "restock", "Restock (#{restock_count})" ] ].each do |key, label| %>
       <button type="button" role="tab" data-tabs-target="tab" data-tabs-panel="<%= key %>_panel" data-action="tabs#show"

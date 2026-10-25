@@ -96,12 +96,16 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ c, b, a ], household.todos.where(id: [ a, b, c ]).ordered.to_a
   end
 
-  test "tag_ids are limited to the household's own tags" do
+  test "tag names set the to-do's tags from the household's own" do
     mine   = households(:one).todo_tags.create!(name: "Yard")
     theirs = households(:two).todo_tags.create!(name: "Garage")
+    @todo.tags << mine
 
-    patch todo_url(@todo), params: { todo: { tag_ids: [ mine.id, theirs.id ] } }
-    assert_equal [ mine ], @todo.reload.tags.to_a
+    patch todo_url(@todo), params: { todo: { tag_names: "Garage" } }
+
+    assert_equal [ "Garage" ], @todo.reload.tags.map(&:name)
+    assert_not_includes @todo.tags, theirs # household :one got its own
+    assert_not_includes @todo.tags, mine   # taken off
   end
 
   test "the time for to-dos can be changed from the board" do

@@ -44,7 +44,7 @@ class GroceryListScrollTest < ApplicationSystemTestCase
     last = items.last
 
     visit grocery_lists_url(date: @week, list: "restock")
-    row = find("#shopping_restock_item_#{last.id}")
+    row = find(".shopping_restock_item_#{last.id}")
     page.execute_script("arguments[0].scrollIntoView()", row)
     before = scroll_y
     assert before.positive?

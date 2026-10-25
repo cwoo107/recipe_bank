@@ -67,7 +67,7 @@ class LimitedMemberPermissionsTest < ActionDispatch::IntegrationTest
     assert_select "#restock_item_#{toilet_paper.id} form", count: 0
 
     get grocery_lists_url(list: "restock")
-    assert_select "#shopping_restock_item_#{toilet_paper.id} form", count: 0
+    assert_select ".shopping_restock_item_#{toilet_paper.id} form", count: 0
 
     patch mark_stocked_restock_item_url(toilet_paper), params: { context: "shopping" }
     assert toilet_paper.reload.restock?
