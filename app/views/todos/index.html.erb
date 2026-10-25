@@ -2,9 +2,10 @@
 
 <%
   column_config = {
-    "todo"        => { label: "To Do",       color: "seafoam",    accent: "#5f734c" },
-    "in_progress" => { label: "In Progress", color: "honey",      accent: "#b88a00" },
-    "done"        => { label: "Done",        color: "mist",       accent: "#4a7a7a" }
+    "todo"        => { label: Todo::STATUS_LABELS["todo"],        color: "seafoam", accent: "#5f734c" },
+    "in_progress" => { label: Todo::STATUS_LABELS["in_progress"], color: "honey",   accent: "#b88a00",
+                       hint: "Drag to set the order — it's the order on the chart below." },
+    "done"        => { label: Todo::STATUS_LABELS["done"],        color: "mist",    accent: "#4a7a7a" }
   }
 
   priority_config = {
@@ -15,7 +16,7 @@
   }
 %>
 
-<%# Live updates for the Gantt chart (requires Action Cable / Turbo Streams) %>
+<%# Live updates for the time meter and Gantt chart (requires Action Cable / Turbo Streams) %>
 <%= turbo_stream_from current_household, "todos_gantt" %>
 
 <div class="w-full">
@@ -34,6 +35,27 @@
     <div class="mt-4 sm:ml-16 sm:mt-0 flex flex-wrap items-center gap-2">
       <%# What's in progress — the print plan's To-dos page. %>
       <%= render "shared/print_button", url: week_section_pdf_path("todos", Date.current), label: "Print to-dos" %>
+      <% if household_admin? %>
+        <%# The household's to-do tags — rename, recolor, delete. %>
+        <div data-controller="dialog" data-action="click->dialog#backdropClose">
+          <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+            <%= turbo_frame_tag "todo_tags", src: todo_tags_path, loading: :lazy do %><% end %>
+            <div class="mt-4">
+              <button type="button" data-action="dialog#close"
+                      class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+                Close
+              </button>
+            </div>
+          </dialog>
+          <button type="button" data-action="dialog#open"
+                  class="inline-flex items-center gap-x-2 rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">
+            <svg viewBox="0 0 20 20" fill="currentColor" class="-ml-0.5 size-5" aria-hidden="true">
+              <path fill-rule="evenodd" d="M4.5 2A2.5 2.5 0 0 0 2 4.5v3.879a2.5 2.5 0 0 0 .732 1.767l7.5 7.5a2.5 2.5 0 0 0 3.536 0l3.878-3.878a2.5 2.5 0 0 0 0-3.536l-7.5-7.5A2.5 2.5 0 0 0 8.38 2H4.5ZM5 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" />
+            </svg>
+            Tags
+          </button>
+        </div>
+      <% end %>
       <div data-controller="dialog" data-action="click->dialog#backdropClose">
         <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
           <%= turbo_frame_tag "new_todo", src: new_todo_path do %><% end %>
@@ -53,6 +75,16 @@
         </button>
       </div>
     </div>
+  </div>
+
+  <%# The week's time — always on show, so it's clear how full the week is. %>
+  <div class="mb-6 space-y-2">
+    <%= render "todos/budget", budget: @budget %>
+    <% if household_admin? %>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <%= render "todos/budget_form", household: current_household %>
+      </div>
+    <% end %>
   </div>
 
   <%# Kanban columns %>
@@ -94,6 +126,10 @@
           </div>
         </div>
 
+        <% if cfg[:hint] %>
+          <p class="px-4 pt-2 text-xs text-gray-500 dark:text-gray-400"><%= cfg[:hint] %></p>
+        <% end %>
+
         <%# Sortable card list %>
         <div id="todos_<%= status %>"
              class="flex flex-col gap-2 p-3 min-h-40 flex-1"
@@ -116,6 +152,8 @@
     <% end %>
   </div>
 
-  <%# Weekly schedule (Gantt) %>
-  <%= render "todos/gantt", household: current_household %>
+  <%# The week's to-dos along its hours (Gantt) %>
+  <div class="mt-8">
+    <%= render "todos/gantt", budget: @budget %>
+  </div>
 </div>

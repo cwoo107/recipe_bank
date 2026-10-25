@@ -124,7 +124,7 @@
         <% @todos_open.each do |todo| %>
           <li class="flex items-center justify-between gap-3 px-5 py-3 text-sm">
             <span class="text-sage-900 dark:text-white"><%= todo.title %></span>
-            <span class="shrink-0 text-xs text-olive-400 dark:text-gray-500"><%= todo.status == "in_progress" ? "In progress" : "To do" %></span>
+            <span class="shrink-0 text-xs text-olive-400 dark:text-gray-500"><%= todo.status_label %></span>
           </li>
         <% end %>
         <% if @todos_done.empty? && @todos_open.empty? %>

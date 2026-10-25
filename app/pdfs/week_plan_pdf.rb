@@ -14,7 +14,7 @@ class WeekPlanPdf
     "recipes"   => { label: "Recipes",            hint: "Ingredients and steps for every recipe on this week's meal plan" },
     "shopping"  => { label: "Shopping list",      hint: "The week's grocery list and restock items" },
     "chores"    => { label: "Chore chart",        hint: "Each day's chores and who's doing them" },
-    "todos"     => { label: "To-dos",             hint: "What's in progress" },
+    "todos"     => { label: "To-dos",             hint: "What's planned this week" },
     "calendar"  => { label: "Calendar",           hint: "All events coming up this week" }
   }.freeze
 
@@ -111,10 +111,10 @@ class WeekPlanPdf
     "week-plan-#{@week_start.iso8601}.pdf"
   end
 
-  # The to-dos page lists only what's in progress — not the backlog, and not
-  # what's already done.
+  # The to-dos page lists only what's planned for the week, in the order
+  # it'll be worked through — not the backlog, and not what's already done.
   def printed_todos
-    @household.todos.includes(:assignee).where(status: "in_progress").order(:start_date, :position)
+    Todo.open_for_week(@household, @week_start).includes(:assignee)
   end
 
   private
@@ -873,12 +873,12 @@ class WeekPlanPdf
     section_heading "To-dos"
 
     todos = printed_todos
-    return empty_note("Nothing in progress right now.") if todos.empty?
+    return empty_note("Nothing planned for this week.") if todos.empty?
 
     people_legend(todos.map(&:assignee))
     checkbox_columns(todos.map do |todo|
-      dates = todo.start_date && todo.end_date ? "#{todo.start_date.strftime('%b %-d')} – #{todo.end_date.strftime('%b %-d')}" : nil
-      [ todo.title, [ todo.assignee&.name, todo.priority_label, dates ].compact.join("  ·  "), false, todo.assignee ]
+      estimate = todo.estimated_time_to_complete.to_i.positive? ? todo.estimated_hm : nil
+      [ todo.title, [ todo.assignee&.name, todo.priority_label, estimate ].compact.join("  ·  "), false, todo.assignee ]
     end, columns:, padded: true)
   end
 

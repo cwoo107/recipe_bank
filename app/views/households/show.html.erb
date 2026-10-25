@@ -41,7 +41,7 @@
                [ "Household", [ [ "Family name", @household.family_name ], [ "Family size", @household.family_size ] ] ],
                [ "Schedule",  [ [ "Week starts on", @household.week_start_day_name ],
                                 [ "Time zone", @household.time_zone&.tr("_", " ") || "Not set" ],
-                                [ "Time for to-dos", "#{@household.minutes_per_day} min / day" ] ] ],
+                                [ "Time for to-dos", @household.todo_time_label ] ] ],
                [ "Weekly planner", [ [ "Steps", @household.planner_section_keys.map { |key| Dashboard.section_class(key)::LABEL }.to_sentence ] ] ]
              ].each do |heading, rows| %>
             <div class="border-b border-gray-900/10 pb-10 last:border-b-0 last:pb-0 dark:border-white/10">

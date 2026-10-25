@@ -46,4 +46,68 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     patch todo_url(@todo), params: { todo: { title: "Should not work" } }
     assert_response :not_found
   end
+
+  # ── Weekly planning ──
+
+  test "the board shows the week's time and the new columns" do
+    get todos_url
+    assert_select "#todo_budget"
+    assert_select "h2", text: "To-Do This Week"
+    assert_select "h2", text: "Completed"
+  end
+
+  test "plan adds a to-do to the week being planned" do
+    next_week = Date.current.beginning_of_week + 7
+    patch plan_todo_url(@todo), params: { plan: "add", week: next_week.iso8601 }
+
+    @todo.reload
+    assert_equal "in_progress", @todo.status
+    assert_equal next_week, @todo.planned_week
+  end
+
+  test "plan marks a carried-over to-do complete in the week it was planned for" do
+    last_week = Date.current.beginning_of_week - 7
+    @todo.update!(status: "in_progress", planned_week: last_week, estimated_time_to_complete: 30)
+
+    patch plan_todo_url(@todo), params: { plan: "complete", week: (last_week + 7).iso8601 }
+
+    @todo.reload
+    assert_equal "done", @todo.status
+    assert_equal last_week, @todo.planned_week
+    assert_equal 30, @todo.actual_time_to_complete
+  end
+
+  test "plan can put a to-do back in the To-Do column" do
+    @todo.update!(status: "in_progress", planned_week: Date.current.beginning_of_week)
+    patch plan_todo_url(@todo), params: { plan: "remove", week: Date.current.beginning_of_week.iso8601 }
+
+    assert_equal "todo", @todo.reload.status
+    assert_nil @todo.planned_week
+  end
+
+  test "reordering part of a column keeps the rest of it where it was" do
+    household = households(:one)
+    a, b, c = %w[A B C].map do |title|
+      household.todos.create!(user: users(:one), title:, priority: :medium, status: "in_progress")
+    end
+
+    post reorder_todos_url, params: { status: "in_progress", order: [ c.id, a.id ] }, as: :json
+
+    assert_equal [ c, b, a ], household.todos.where(id: [ a, b, c ]).ordered.to_a
+  end
+
+  test "tag_ids are limited to the household's own tags" do
+    mine   = households(:one).todo_tags.create!(name: "Yard")
+    theirs = households(:two).todo_tags.create!(name: "Garage")
+
+    patch todo_url(@todo), params: { todo: { tag_ids: [ mine.id, theirs.id ] } }
+    assert_equal [ mine ], @todo.reload.tags.to_a
+  end
+
+  test "the time for to-dos can be changed from the board" do
+    patch todo_budget_url, params: { household: { todo_hours_per_week: "7.5" } }, headers: { "HTTP_REFERER" => todos_url }
+
+    assert_redirected_to todos_url
+    assert_equal 450, households(:one).reload.todo_minutes_per_week
+  end
 end

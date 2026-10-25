@@ -1,0 +1,30 @@
+<%# locals: (household:) %>
+<%# Change the time set aside for to-dos, in whichever unit the household
+    budgets by (Settings switches between per week and per day) — a −/+
+    stepper like the recipe page's servings, which saves itself a moment
+    after the last click. The save redirects back here, and the page
+    refreshes in place (a morph), meter and chart included. Permanent, so
+    that refresh doesn't reset a count that's been clicked again since. %>
+<% per_day = household.todo_time_per_day? %>
+<% button_class = "flex size-6 items-center justify-center rounded-full inset-ring inset-ring-gray-300 dark:inset-ring-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-sm font-medium" %>
+<%= form_with model: household, url: todo_budget_path, method: :patch, id: "todo_budget_form",
+      class: "flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300",
+      data: { turbo_permanent: true, controller: "budget-stepper",
+              budget_stepper_step_value: per_day ? 5 : 0.5,
+              budget_stepper_min_value: per_day ? 5 : 0.5,
+              budget_stepper_unit_value: per_day ? "min / day" : "hour" } do |f| %>
+  <span class="font-medium">Time for to-dos</span>
+  <div class="flex items-center gap-2">
+    <% field = per_day ? :minutes_per_day : :todo_hours_per_week %>
+    <%= f.hidden_field field, data: { budget_stepper_target: "input" } %>
+    <button type="button" data-action="budget-stepper#decrement" class="<%= button_class %>" aria-label="Less time">−</button>
+    <span class="tabular-nums" data-budget-stepper-target="label" aria-live="polite">
+      <% if per_day %>
+        <%= household.minutes_per_day %> min / day
+      <% else %>
+        <%= household.todo_hours_per_week %> <%= "hour".pluralize(household.todo_hours_per_week) %> / week
+      <% end %>
+    </span>
+    <button type="button" data-action="budget-stepper#increment" class="<%= button_class %>" aria-label="More time">+</button>
+  </div>
+<% end %>

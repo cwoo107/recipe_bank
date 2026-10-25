@@ -9,6 +9,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
   test "shows an empty-state card for a household with nothing planned this week" do
     sign_in users(:three) # carol, household :two has no data for the current week
+    todos(:two).update!(status: "todo") # its fixture sits in "To-Do This Week"
 
     get dashboard_url
     assert_response :success

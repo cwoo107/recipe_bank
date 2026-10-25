@@ -7,13 +7,24 @@ if (!Chart.registry.controllers.get("bar")) {
     Chart.register(...registerables)
 }
 
-// Draws a dashed vertical "today" marker across the plot area.
-const todayLine = {
-    id: "todayLine",
-    afterDatasetsDraw(chart, _args, opts) {
-        if (opts.offset == null || opts.offset < 0 || opts.offset > 7) return
-        const x = chart.scales.x.getPixelForValue(opts.offset)
+// Marks the time set aside for the week: a dashed line at that many hours,
+// with anything past it shaded — so a plan that runs over shows how far.
+const budgetLine = {
+    id: "budgetLine",
+    beforeDatasetsDraw(chart, _args, opts) {
+        if (opts.hours == null) return
         const { ctx, chartArea } = chart
+        const x = chart.scales.x.getPixelForValue(opts.hours)
+        if (x >= chartArea.right) return
+        ctx.save()
+        ctx.fillStyle = opts.overflow
+        ctx.fillRect(x, chartArea.top, chartArea.right - x, chartArea.bottom - chartArea.top)
+        ctx.restore()
+    },
+    afterDatasetsDraw(chart, _args, opts) {
+        if (opts.hours == null) return
+        const { ctx, chartArea } = chart
+        const x = chart.scales.x.getPixelForValue(opts.hours)
         ctx.save()
         ctx.beginPath()
         ctx.setLineDash([4, 4])
@@ -24,6 +35,14 @@ const todayLine = {
         ctx.stroke()
         ctx.restore()
     }
+}
+
+// Whole hours across the top, spaced out so a big week doesn't crowd them.
+function hourStep(max) {
+    if (max <= 12) return 1
+    if (max <= 30) return 2
+    if (max <= 60) return 5
+    return 10
 }
 
 export default class extends Controller {
@@ -39,24 +58,34 @@ export default class extends Controller {
         this.chart = null
     }
 
+    // A morphing page refresh (e.g. after the time budget changes) swaps in
+    // new data without reconnecting — redraw for it.
+    dataValueChanged() {
+        if (this.chart) this.render()
+    }
+
     render() {
         const g = this.dataValue
         const dark = document.documentElement.classList.contains("dark")
 
         const grid = dark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)"
         const axis = dark ? "#9aa088" : "#5b6450"
-        const today = dark ? "#a3b58c" : "#5f734c"
+        const line = dark ? "#e0a493" : "#c0705a"
+        const overflow = dark ? "rgba(211,154,134,0.14)" : "rgba(211,154,134,0.16)"
 
         const rows = g.rows || []
+        const max = Math.max(Math.ceil(g.max_hours || 0), 1)
+        // A to-do with no estimate still gets a sliver, so it isn't missing.
+        const sliver = max / 100
 
         const data = {
             labels: rows.map((r) => r.title),
             datasets: [
                 {
-                    data: rows.map((r) => [r.start, r.end]),
+                    data: rows.map((r) => [r.start, Math.max(r.end, r.start + sliver)]),
                     backgroundColor: rows.map((r) => r.color),
-                    borderColor: rows.map((r) => r.color),
-                    borderWidth: 0,
+                    borderColor: rows.map((r) => (r.over ? line : r.color)),
+                    borderWidth: rows.map((r) => (r.over ? 1.5 : 0)),
                     borderRadius: 4,
                     borderSkipped: false,
                     barThickness: 18,
@@ -74,19 +103,16 @@ export default class extends Controller {
                 x: {
                     position: "top",
                     min: 0,
-                    max: 7,
+                    max: max,
                     offset: false,
                     grid: { color: grid, drawTicks: false },
                     border: { display: false },
                     ticks: {
-                        stepSize: 1,
+                        stepSize: hourStep(max),
                         color: axis,
                         font: { size: 11, weight: "600" },
                         padding: 6,
-                        callback: (value) => {
-                            const day = g.days?.[value]
-                            return day ? `${day.label} ${day.date}` : ""
-                        }
+                        callback: (value) => `${value}h`
                     }
                 },
                 y: {
@@ -106,14 +132,15 @@ export default class extends Controller {
             },
             plugins: {
                 legend: { display: false },
-                todayLine: { offset: g.today_offset, color: today },
+                budgetLine: { hours: g.budget_hours, color: line, overflow },
                 tooltip: {
                     displayColors: true,
                     callbacks: {
                         title: (items) => rows[items[0].dataIndex]?.title ?? "",
                         label: (item) => {
                             const r = rows[item.dataIndex]
-                            return r ? [r.range_label, r.meta] : ""
+                            if (!r) return ""
+                            return r.over ? [r.range_label, r.meta, "Past the time set aside"] : [r.range_label, r.meta]
                         }
                     }
                 }
@@ -125,7 +152,7 @@ export default class extends Controller {
             type: "bar",
             data,
             options,
-            plugins: [todayLine]
+            plugins: [budgetLine]
         })
     }
 }

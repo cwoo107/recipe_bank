@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_25_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -215,6 +215,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
     t.string "stripe_subscription_id"
     t.string "subscription_status", default: "trialing", null: false
     t.string "time_zone"
+    t.integer "todo_minutes_per_week", default: 420, null: false
+    t.string "todo_time_period", default: "week", null: false
     t.datetime "trial_ends_at"
     t.string "trial_reminder_sent"
     t.datetime "updated_at", null: false
@@ -474,6 +476,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
     t.index ["user_id"], name: "index_tags_on_user_id"
   end
 
+  create_table "todo_taggings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "todo_id", null: false
+    t.integer "todo_tag_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["todo_id", "todo_tag_id"], name: "index_todo_taggings_on_todo_id_and_todo_tag_id", unique: true
+    t.index ["todo_id"], name: "index_todo_taggings_on_todo_id"
+    t.index ["todo_tag_id"], name: "index_todo_taggings_on_todo_tag_id"
+  end
+
+  create_table "todo_tags", force: :cascade do |t|
+    t.string "color", null: false
+    t.datetime "created_at", null: false
+    t.integer "household_id", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["household_id", "name"], name: "index_todo_tags_on_household_id_and_name", unique: true
+    t.index ["household_id"], name: "index_todo_tags_on_household_id"
+  end
+
   create_table "todos", force: :cascade do |t|
     t.integer "actual_time_to_complete"
     t.integer "assignee_id"
@@ -483,6 +505,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
     t.datetime "end_date"
     t.integer "estimated_time_to_complete"
     t.integer "household_id", null: false
+    t.date "planned_week"
     t.integer "position", default: 0, null: false
     t.integer "priority", null: false
     t.datetime "start_date"
@@ -491,6 +514,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["assignee_id"], name: "index_todos_on_assignee_id"
+    t.index ["household_id", "status", "planned_week"], name: "index_todos_on_household_id_and_status_and_planned_week"
     t.index ["household_id", "status", "position"], name: "index_todos_on_household_id_and_status_and_position"
     t.index ["household_id", "status", "start_date"], name: "index_todos_on_household_id_and_status_and_start_date"
     t.index ["household_id", "status"], name: "index_todos_on_household_id_and_status"
@@ -631,6 +655,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_23_120000) do
   add_foreign_key "steps", "recipes"
   add_foreign_key "tags", "households"
   add_foreign_key "tags", "users"
+  add_foreign_key "todo_taggings", "todo_tags"
+  add_foreign_key "todo_taggings", "todos"
+  add_foreign_key "todo_tags", "households"
   add_foreign_key "todos", "household_members", column: "assignee_id"
   add_foreign_key "todos", "households"
   add_foreign_key "todos", "users"

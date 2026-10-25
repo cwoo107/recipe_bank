@@ -1,0 +1,44 @@
+<%# locals: (todo:, week_start:, actions:, sortable: false) %>
+<%# One to-do in "Plan your week", with buttons for what to do with it —
+    actions are TodosController#plan's: "complete", "add", "remove". %>
+<% labels  = { "complete" => "Mark complete", "remove" => "Back to To-Do",
+               "add" => todo.status == "in_progress" ? "Add to this week again" : "Add to this week" } %>
+<% primary = "inline-flex items-center rounded-md bg-[#5f734c] px-2.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+<% plain   = "inline-flex items-center rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+<li id="plan_todo_<%= todo.id %>" data-id="<%= todo.id %>" <%= tag.attributes(data: { sortable_target: ("item" if sortable) }) %>
+    class="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
+  <div class="flex min-w-0 items-start gap-2">
+    <% if sortable %>
+      <span class="sortable-handle mt-0.5 cursor-grab text-gray-400 active:cursor-grabbing" aria-label="Drag to reorder">
+        <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true">
+          <path d="M7 4a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm0 6a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm9-13a1 1 0 1 1-2 0 1 1 0 0 1 2 0Zm-1 7a1 1 0 1 0 0-2 1 1 0 0 0 0 2Zm1 5a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+        </svg>
+      </span>
+    <% end %>
+    <div class="min-w-0">
+      <p class="text-sm font-semibold text-gray-900 dark:text-white"><%= todo.title %></p>
+      <div class="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <span><%= todo.estimated_time_to_complete.to_i.positive? ? "Est. #{todo.estimated_hm}" : "No estimate" %></span>
+        <span aria-hidden="true">·</span>
+        <span><%= todo.priority_label %></span>
+        <%= person_pill(todo.assignee) %>
+        <% todo.tags.each do |tag| %>
+          <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-medium <%= tag.pill_classes %>">
+            <span class="size-1.5 rounded-full <%= tag.dot_classes %>" aria-hidden="true"></span>
+            <%= tag.name %>
+          </span>
+        <% end %>
+        <% if todo.status == "in_progress" && todo.planned_week && todo.planned_week < week_start %>
+          <span class="font-medium text-honey-700 dark:text-honey-300">Planned for <%= WeeklyPlan.week_label(todo.planned_week).downcase_first %></span>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <div class="flex shrink-0 flex-wrap gap-2 sm:justify-end">
+    <% actions.each_with_index do |action, index| %>
+      <%= button_to labels.fetch(action), plan_todo_path(todo), method: :patch,
+            params: { plan: action, week: week_start.iso8601 },
+            class: index.zero? ? primary : plain %>
+    <% end %>
+  </div>
+</li>

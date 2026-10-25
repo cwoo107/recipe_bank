@@ -90,8 +90,31 @@
       <span class="text-sm text-gray-500 dark:text-gray-400">Minutes</span>
     </div>
     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-      Each calendar day provides 30 minutes of work capacity.
+      Counts toward the week's time for to-dos once it's in “To-Do This Week”.
     </p>
+  </div>
+
+  <%# Tags — tick any of the household's, or type new ones %>
+  <% todo_tags = current_household.todo_tags.ordered %>
+  <div class="mt-4 mb-4">
+    <span class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</span>
+    <% if todo_tags.any? %>
+      <div class="mb-2 flex flex-wrap gap-1.5">
+        <%= f.collection_check_boxes :tag_ids, todo_tags, :id, :name do |b| %>
+          <label class="cursor-pointer">
+            <%= b.check_box class: "peer sr-only" %>
+            <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium opacity-50 transition peer-checked:opacity-100 peer-checked:ring-2 peer-checked:ring-[#5f734c] peer-focus-visible:outline-2 peer-focus-visible:outline-[#5f734c] dark:peer-checked:ring-[#7a8f62] <%= b.object.pill_classes %>">
+              <span class="size-1.5 rounded-full <%= b.object.dot_classes %>" aria-hidden="true"></span>
+              <%= b.text %>
+            </span>
+          </label>
+        <% end %>
+      </div>
+    <% end %>
+    <%= f.text_field :new_tag_names,
+          class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none",
+          placeholder: todo_tags.any? ? "Add new tags, separated by commas" : "e.g. Yard, Paperwork",
+          aria: { label: "New tags" } %>
   </div>
 
   <script>

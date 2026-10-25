@@ -30,7 +30,7 @@ class TodoQuickAddTest < ApplicationSystemTestCase
     login_as users(:one), scope: :user
     visit todos_url
 
-    find("button[aria-label='Add task to In Progress']").click
+    find("button[aria-label='Add task to To-Do This Week']").click
     assert_selector "dialog[open]"
 
     within "dialog[open]" do

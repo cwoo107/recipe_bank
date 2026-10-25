@@ -1,10 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
 import Sortable from "sortablejs"
+import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
   static targets = ["item"]
   static values = {
-    url: String
+    url: String,
+    // Reload the page (a morphing refresh) once the new order is saved, for
+    // pages that show something else that follows it — "Plan your week"'s
+    // to-do chart.
+    refresh: Boolean
   }
 
   connect() {
@@ -33,6 +38,8 @@ export default class extends Controller {
         ...(token ? { "X-CSRF-Token": token } : {})
       },
       body: JSON.stringify({ order: order })
+    }).then(response => {
+      if (this.refreshValue && response.ok) Turbo.visit(window.location.href, { action: "replace" })
     })
   }
 

@@ -133,6 +133,19 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
     assert_select "#due_chore_#{chores(:one).id} dialog form[action*=scheduled_date]", 7
   end
 
+  test "to-dos step asks about earlier weeks' to-dos and offers the To-Do column" do
+    household = households(:one)
+    left_over = household.todos.create!(user: users(:one), title: "Left over", priority: :medium,
+                                        status: "in_progress", planned_week: @this_week - 7)
+    get plan_week_step_url(section: "todos")
+
+    assert_response :success
+    assert_select "#todo_budget"
+    assert_select "#carried_over_todos #plan_todo_#{left_over.id} button", text: "Mark complete"
+    assert_select "#carried_over_todos #plan_todo_#{left_over.id} button", text: "Add to this week again"
+    assert_select "#backlog_todos #plan_todo_#{todos(:one).id} button", text: "Add to this week"
+  end
+
   test "visiting any step marks the plan as currently planning" do
     plan = WeeklyPlan.current_for(households(:one))
     refute plan.currently_planning?

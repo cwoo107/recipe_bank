@@ -4,8 +4,13 @@ class Todo < ApplicationRecord
   belongs_to :assignee, class_name: "HouseholdMember", optional: true
   belongs_to :household
 
+  has_many :todo_taggings, dependent: :destroy
+  has_many :tags, -> { order(:name) }, through: :todo_taggings, source: :todo_tag
+
   acts_as_list scope: [ :household_id, :status ]
 
+  # "in_progress" is the "To-Do This Week" column — the stored name predates
+  # the board's weekly columns.
   STATUSES   = %w[todo in_progress done].freeze
   PRIORITIES = { low: 1, medium: 2, high: 3, urgent: 4 }.freeze
 
@@ -25,6 +30,7 @@ class Todo < ApplicationRecord
   attribute :estimated_minutes, :integer
 
   after_initialize :set_default_priority, if: :new_record?
+  after_save :add_new_tags, if: -> { @new_tag_names.present? }
   before_validation :compose_estimated_time,
                     if: -> { estimated_hours.present? || estimated_minutes.present? }
 
@@ -35,9 +41,8 @@ class Todo < ApplicationRecord
   scope :ordered,   -> { order(:position) }
   scope :by_status, ->(s) { where(status: s).ordered }
 
-  # Todos whose end_date lands inside the given 7-day week. Used to keep
-  # the "done" column from accumulating stale, already-completed items — the
-  # week boundaries here match the Gantt's beginning_of_week anchor.
+  # Todos whose end_date (when they were completed) lands inside the given
+  # 7-day week. Keeps the "Completed" column from accumulating stale items.
   scope :ended_in_week, lambda { |week_start|
     where(end_date: week_start.beginning_of_day..(week_start + 6).end_of_day)
   }
@@ -50,7 +55,7 @@ class Todo < ApplicationRecord
   }.freeze
 
   STATUS_LABELS = {
-    "todo" => "To Do", "in_progress" => "In Progress", "done" => "Done"
+    "todo" => "To-Do", "in_progress" => "To-Do This Week", "done" => "Completed"
   }.freeze
 
   def priority_label = PRIORITY_LABELS[priority]
@@ -64,6 +69,16 @@ class Todo < ApplicationRecord
     parts << "#{hours}h" if hours.positive?
     parts << "#{mins}m"  if mins.positive? || parts.empty?
     parts.join(" ")
+  end
+
+  # For sentences: "6 hours", "1 hour", "45 minutes", "1h 30m".
+  def self.humanize_duration(minutes)
+    minutes = minutes.to_i
+    hours, mins = minutes.divmod(60)
+    if mins.zero? && hours.positive? then "#{hours} #{'hour'.pluralize(hours)}"
+    elsif hours.zero? then "#{mins} #{'minute'.pluralize(mins)}"
+    else humanize_minutes(minutes)
+    end
   end
 
   def estimated_hm = self.class.humanize_minutes(estimated_time_to_complete)
@@ -86,183 +101,104 @@ class Todo < ApplicationRecord
   end
 
   # Apply the field side-effects of a status change. Call AFTER the status
-  # itself has been set/saved. `previous_status` lets us tell
-  # "in_progress -> done" apart from "todo -> done".
-  #
-  # Returns the cursor date that `reschedule_in_progress!` should pack the
-  # rest of the household's queue from, or `false` if no one else's schedule
-  # needs to move at all. Callers should feed this straight into
-  # `reschedule_in_progress!(household, from: ...)` (skipping the call
-  # entirely when it's `false`).
-  def apply_status_side_effects!(previous_status)
-    reschedule_from = Date.current
-
+  # itself has been set. `previous_status` tells a fresh move into a column
+  # apart from a save that left it where it was; `week` is the week a move
+  # into "To-Do This Week" plans it for (the current one, unless "Plan your
+  # week" is planning a later week).
+  def apply_status_side_effects!(previous_status, week: Todo.current_week_start(household))
     case status
     when "done"
       self.completed = true
-
-      if previous_status == "in_progress" && start_date.present?
-        if start_date.to_date > Date.current
-          # Completed ahead of its scheduled slot — it jumped the queue, so
-          # it now occupies today instead of its original future start date,
-          # and whatever was queued behind it shifts up to fill in after it.
-          self.start_date = Date.current.beginning_of_day
-          self.end_date   = Date.current.end_of_day
-          reschedule_from = Date.current + 1
-        else
-          # Already at (or before) the front of the queue — completing it
-          # right on schedule doesn't free up or disturb anyone else's slot.
-          reschedule_from = false
-        end
-
-        # Worked across N calendar days -> N * household.minutes_per_day.
-        self.actual_time_to_complete = inclusive_minutes_between(start_date, end_date)
-      else
-        # Straight from "todo" (or no recorded start): trust the estimate and
-        # reverse-derive a start date from the completion timestamp — now, if
-        # it never had one (to-dos only get dates once in progress).
-        self.end_date              ||= Time.current
-        self.actual_time_to_complete = estimated_time_to_complete
-        self.start_date              = reverse_start_from(end_date, estimated_time_to_complete)
-      end
+      self.end_date  = Time.current if previous_status != "done" || end_date.nil?
+      self.actual_time_to_complete ||= estimated_time_to_complete
+      # Finished now, so it took up this week's time — unless it was planned
+      # for a week that hasn't started yet.
+      self.planned_week = week if planned_week.nil? || planned_week < week
 
     when "in_progress"
       self.completed               = false
       self.actual_time_to_complete = nil
-      # start_date / end_date are (re)assigned by reschedule_in_progress!
+      self.start_date              = nil
+      self.end_date                = nil
+      self.planned_week = week if previous_status != "in_progress" || planned_week.nil?
 
     when "todo"
       self.completed               = false
       self.actual_time_to_complete = nil
       self.start_date              = nil
       self.end_date                = nil
+      self.planned_week            = nil
     end
 
     save!
-    reschedule_from
   end
 
-  # ── The scheduler ─────────────────────────────────────────────────────
+  # ── The week's plan ───────────────────────────────────────────────────
   #
-  # Lays out every "in_progress" todo for a user along a timeline where each
-  # calendar day = household.minutes_per_day of capacity. Higher priority is
-  # scheduled first; ties fall back to the user's kanban order (position),
-  # then id.
-  #
-  # Todos that have already started in the past (start_date < today) are
-  # treated as "in flight" and keep their original start_date, so completing
-  # a long-running task still reports the right actual time. Everything else
-  # is (re)packed by priority starting from `from` (today by default) — which
-  # is what pushes a low-priority task later when an urgent one is dropped
-  # in, or later still when a same-day slot was already spent on a todo that
-  # jumped the queue (see `apply_status_side_effects!`).
-  def self.reschedule_in_progress!(household, from: Date.current)
-    today          = Date.current
-    minutes_per_day = household.minutes_per_day
+  # A household sets aside so much time a week for to-dos (see
+  # Household#todo_minutes_budget). Moving a to-do into "To-Do This Week"
+  # plans it for a week (planned_week); its estimate then counts against that
+  # week's time, as does the time anything completed that week took.
 
-    transaction do
-      todos = household.todos.where(status: "in_progress").to_a
-      in_flight, queued = todos.partition { |t| t.start_date.present? && t.start_date.to_date < today }
-
-      # In-flight: freeze the start, refresh the end from the estimate.
-      in_flight.each do |t|
-        days = days_for_minutes(t.estimated_time_to_complete, minutes_per_day)
-        end_day = t.start_date.to_date + (days - 1)
-        t.update_columns(end_date: end_day.end_of_day, completed: false, updated_at: Time.current)
-      end
-
-      # Queued: pack by priority starting from the given cursor.
-      ordered = queued.sort_by { |t| [ -priority_rank(t), t.position.to_i, t.id ] }
-      cursor  = from
-      ordered.each do |t|
-        days      = days_for_minutes(t.estimated_time_to_complete, minutes_per_day)
-        start_day = cursor
-        end_day   = cursor + (days - 1)
-        t.update_columns(
-          start_date: start_day.beginning_of_day,
-          end_date:   end_day.end_of_day,
-          completed:  false,
-          updated_at: Time.current
-        )
-        cursor = end_day + 1
-      end
-    end
+  def self.current_week_start(household)
+    Date.current.beginning_of_week(household.week_start_symbol)
   end
 
-  def self.priority_rank(todo)
-    PRIORITIES.fetch(todo.priority&.to_sym, 0)
+  # What's still to do in a week, in the This Week column's order (which is
+  # also the Gantt's). The current week also carries anything left in the
+  # column from earlier weeks — it's still there, waiting to be finished or
+  # carried over (see .carried_over) — and anything older that was moved in
+  # before weeks were tracked.
+  def self.open_for_week(household, week_start)
+    open = household.todos.where(status: "in_progress")
+    open = if week_start == current_week_start(household)
+             open.where(planned_week: ..week_start).or(open.where(planned_week: nil))
+           else
+             open.where(planned_week: week_start)
+           end
+    open.ordered
   end
 
-  def self.days_for_minutes(minutes, minutes_per_day)
-    [ (minutes.to_f / minutes_per_day).ceil, 1 ].max
+  def self.done_for_week(household, week_start)
+    household.todos.where(status: "done", planned_week: week_start).order(:end_date, :id)
   end
 
-  # ── Gantt data (consumed by gantt_controller.js) ──────────────────────
-  #
-  # Always spans the current week (starting on the household's week start day). Excludes "todo". Offsets are in
-  # day-units measured from the start of the week and clamped to [0, 7], so
-  # the controller never needs a date adapter.
-  def self.gantt_data(household)
-    week_start = Date.current.beginning_of_week(household.week_start_symbol)
-    days = (0..6).map do |i|
-      d = week_start + i
-      { label: d.strftime("%a"), date: d.strftime("%-d"), month: d.strftime("%b") }
-    end
-
-    today_offset = ((Time.current - week_start.to_time) / 1.day.to_i).round(3).clamp(0, 7)
-
-    rows = household.todos
-               .where(status: %w[in_progress done])
-               .where.not(start_date: nil).where.not(end_date: nil)
-               .order(:start_date, :end_date, :id)
-               .filter_map { |t| t.gantt_row(week_start) }
-
-    {
-      week_start:   week_start.iso8601,
-      week_label:   "#{week_start.strftime('%b %-d')} – #{(week_start + 6).strftime('%b %-d')}",
-      days:         days,
-      today_offset: today_offset,
-      rows:         rows
-    }
+  # Still in "To-Do This Week" from a week before this one — for "Plan your
+  # week" to finish off or carry over.
+  def self.carried_over(household, week_start)
+    open = household.todos.where(status: "in_progress")
+    open.where(planned_week: ...week_start).or(open.where(planned_week: nil)).ordered
   end
 
-  def gantt_row(week_start)
-    return nil if start_date.blank? || end_date.blank?
-
-    start_offset = (start_date.to_date - week_start).to_i
-    end_offset   = (end_date.to_date - week_start).to_i + 1 # +1 so a single day has width 1
-
-    s = start_offset.clamp(0, 7)
-    e = end_offset.clamp(0, 7)
-    return nil if e <= s # nothing visible inside this week
-
-    {
-      id:          id,
-      title:       title,
-      start:       s,
-      end:         e,
-      color:       gantt_color,
-      status:      status,
-      range_label: "#{start_date.strftime('%a %-d')} → #{end_date.strftime('%a %-d')}",
-      meta: if status == "done"
-              "Done · #{actual_hm}"
-            else
-              "#{priority_label} · #{estimated_hm}"
-            end
-    }
+  # What a to-do takes out of its week: the time it took once done, its
+  # estimate until then.
+  def minutes_for_week
+    (completed? ? actual_time_to_complete || estimated_time_to_complete : estimated_time_to_complete).to_i
   end
 
   def gantt_color
     status == "done" ? DONE_CHART_COLOR : PRIORITY_CHART_COLORS.fetch(priority, "#95a97d")
   end
 
+  # Tags typed into the form that don't exist yet ("Yard, Paperwork") —
+  # created for the household and added alongside any that were ticked.
+  def new_tag_names = Array(@new_tag_names).join(", ")
+
+  def new_tag_names=(names)
+    @new_tag_names = names.to_s.split(",").map(&:strip).compact_blank.uniq(&:downcase)
+  end
+
   # ── Live chart updates over Turbo Streams ─────────────────────────────
+  # The board's time meter and Gantt both follow the current week.
   def self.broadcast_gantt(household)
+    budget = TodoBudget.new(household)
     Turbo::StreamsChannel.broadcast_replace_to(
       household, "todos_gantt",
-      target:  "gantt_chart",
-      partial: "todos/gantt",
-      locals:  { household: household }
+      target: "todo_budget", partial: "todos/budget", locals: { budget: budget }
+    )
+    Turbo::StreamsChannel.broadcast_replace_to(
+      household, "todos_gantt",
+      target: "gantt_chart", partial: "todos/gantt", locals: { budget: budget }
     )
   end
 
@@ -276,15 +212,12 @@ class Todo < ApplicationRecord
     self.estimated_time_to_complete = estimated_hours.to_i * 60 + estimated_minutes.to_i
   end
 
-  def inclusive_minutes_between(start_at, end_at)
-    return 0 if start_at.blank? || end_at.blank?
-    days = (end_at.to_date - start_at.to_date).to_i + 1
-    days = 1 if days < 1
-    days * household.minutes_per_day
-  end
-
-  def reverse_start_from(end_at, minutes)
-    days = self.class.days_for_minutes(minutes, household.minutes_per_day)
-    (end_at.to_date - (days - 1)).beginning_of_day
+  def add_new_tags
+    names = @new_tag_names
+    @new_tag_names = nil
+    names.each do |name|
+      tag = household.todo_tags.where("LOWER(name) = ?", name.downcase).first || household.todo_tags.create!(name: name)
+      tags << tag unless tags.include?(tag)
+    end
   end
 end

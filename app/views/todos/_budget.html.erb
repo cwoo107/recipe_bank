@@ -1,0 +1,32 @@
+<%# locals: (budget:) %>
+<%#
+  The week's time for to-dos: what's set aside against what's planned —
+  green with time to spare, yellow once it's nearly full, red when it's over.
+  Always shown on the board and in "Plan your week". Also broadcast by
+  Todo.broadcast_gantt, so it can't lean on request helpers (current_user,
+  household_admin?); the form to change the time lives next to it instead.
+  The root id MUST stay "todo_budget" for the Turbo Stream replace.
+%>
+<%
+  styles = {
+    plenty: { box: "border-seafoam-300 bg-seafoam-50 dark:border-seafoam-700/60 dark:bg-seafoam-900/20",
+              text: "text-seafoam-800 dark:text-seafoam-200", bar: "bg-seafoam-500" },
+    close:  { box: "border-honey-300 bg-honey-50 dark:border-honey-700/60 dark:bg-honey-900/20",
+              text: "text-honey-800 dark:text-honey-200", bar: "bg-honey-500" },
+    over:   { box: "border-dusty-rose-300 bg-dusty-rose-50 dark:border-dusty-rose-700/60 dark:bg-dusty-rose-900/20",
+              text: "text-dusty-rose-800 dark:text-dusty-rose-200", bar: "bg-dusty-rose-500" }
+  }
+  style = styles.fetch(budget.state)
+%>
+<div id="todo_budget" role="status" data-state="<%= budget.state %>"
+     class="rounded-lg border px-4 py-3 <%= style[:box] %>">
+  <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+    <p class="text-sm font-medium <%= style[:text] %>"><%= budget.message %></p>
+    <span class="shrink-0 text-xs font-semibold tabular-nums <%= style[:text] %>">
+      <%= Todo.humanize_minutes(budget.planned_minutes).sub("—", "0m") %> / <%= Todo.humanize_minutes(budget.budget_minutes) %>
+    </span>
+  </div>
+  <div class="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/70 dark:bg-white/10">
+    <div class="h-2 rounded-full <%= style[:bar] %>" style="width: <%= budget.percent %>%;"></div>
+  </div>
+</div>

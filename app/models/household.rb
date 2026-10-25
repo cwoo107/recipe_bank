@@ -9,6 +9,7 @@ class Household < ApplicationRecord
   has_many :meals,            dependent: :destroy
   has_many :recurring_meals,  dependent: :destroy
   has_many :todos,            dependent: :destroy
+  has_many :todo_tags,        dependent: :destroy
   has_many :restock_items,    dependent: :destroy
   has_many :restock_categories, dependent: :destroy
   has_many :chore_categories, dependent: :destroy
@@ -26,6 +27,8 @@ class Household < ApplicationRecord
 
   validates :family_name, presence: true
   validates :minutes_per_day, presence: true, numericality: { only_integer: true, greater_than: 0 }
+  validates :todo_minutes_per_week, numericality: { only_integer: true, greater_than: 0 }
+  validates :todo_time_period, inclusion: { in: %w[week day] }
   validates :week_start_day, inclusion: { in: 0..6 }
   validates :family_size, numericality: { only_integer: true, greater_than: 0 }
   validate :time_zone_is_known
@@ -136,6 +139,32 @@ class Household < ApplicationRecord
   def grow_family_size_to_fit_members!
     listed = household_members.count
     update_column(:family_size, listed) if listed > family_size
+  end
+
+  # ── Time for to-dos ───────────────────────────────────────────────────
+  # Households say how much time they have for to-dos either per week (the
+  # default — "7 hours") or per day ("30 min", times seven). Either way the
+  # board and "Plan your week" budget a week at a time.
+
+  def todo_time_per_day? = todo_time_period == "day"
+
+  def todo_minutes_budget
+    todo_time_per_day? ? minutes_per_day * 7 : todo_minutes_per_week
+  end
+
+  # The weekly figure in hours for forms — 7, or 7.5 — rather than minutes.
+  def todo_hours_per_week
+    hours = todo_minutes_per_week.to_i / 60.0
+    hours == hours.floor ? hours.to_i : hours.round(2)
+  end
+
+  def todo_hours_per_week=(hours)
+    self.todo_minutes_per_week = (hours.to_f * 60).round if hours.present?
+  end
+
+  # "7h / week" or "30 min / day", as they set it.
+  def todo_time_label
+    todo_time_per_day? ? "#{minutes_per_day} min / day" : "#{Todo.humanize_minutes(todo_minutes_per_week)} / week"
   end
 
   # ── Weekly planner steps ──────────────────────────────────────────────

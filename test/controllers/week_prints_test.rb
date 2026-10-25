@@ -96,8 +96,8 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
 
   def page_count(pdf) = pdf.scan(%r{/Type /Page\b}).size
 
-  test "the to-dos page is only what's in progress" do
-    in_progress = @household.todos.create!(title: "Paint the shed", priority: :medium, status: "in_progress", user: users(:one))
+  test "the to-dos page is only what's planned for the week" do
+    in_progress = @household.todos.create!(title: "Paint the shed", priority: :medium, status: "in_progress", planned_week: MONDAY, user: users(:one))
     @household.todos.create!(title: "Finished", priority: :low, status: "done", user: users(:one))
 
     printed = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[todos]).printed_todos
@@ -145,7 +145,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
       chore = @household.chores.create!(name: "Chore number #{i} with a fairly long name", frequency: "monthly")
       3.times { |t| chore.chore_tasks.create!(name: "Task #{t} for chore #{i}") }
       @household.weekly_chores.create!(chore: chore, week_start: MONDAY, scheduled_date: MONDAY + (i % 7))
-      @household.todos.create!(title: "To-do number #{i}", priority: :medium, status: "in_progress", user: users(:one))
+      @household.todos.create!(title: "To-do number #{i}", priority: :medium, status: "in_progress", planned_week: MONDAY, user: users(:one))
     end
 
     %w[chores todos].each do |section|
@@ -167,7 +167,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     40.times do |i|
       chore = @household.chores.create!(name: "Chore number #{i}", frequency: "monthly")
       @household.weekly_chores.create!(chore: chore, week_start: MONDAY, scheduled_date: MONDAY + (i % 7))
-      @household.todos.create!(title: "To-do number #{i}", priority: :medium, status: "in_progress", user: users(:one))
+      @household.todos.create!(title: "To-do number #{i}", priority: :medium, status: "in_progress", planned_week: MONDAY, user: users(:one))
     end
 
     { "chores" => "Chore number", "todos" => "To-do number" }.each do |section, prefix|
@@ -193,8 +193,8 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     bob = household_members(:one)
     unassigned = @household.chores.create!(name: "Sweep porch", frequency: "monthly")
     @household.weekly_chores.create!(chore: unassigned, week_start: MONDAY, scheduled_date: MONDAY + 1, assignee: nil)
-    @household.todos.create!(title: "Assigned job", priority: :medium, status: "in_progress", user: users(:one), assignee: bob)
-    @household.todos.create!(title: "Unassigned job", priority: :medium, status: "in_progress", user: users(:one))
+    @household.todos.create!(title: "Assigned job", priority: :medium, status: "in_progress", planned_week: MONDAY, user: users(:one), assignee: bob)
+    @household.todos.create!(title: "Unassigned job", priority: :medium, status: "in_progress", planned_week: MONDAY, user: users(:one))
 
     { "chores" => [ "Take out trash - #{bob.name}", "Sweep porch" ],
       "todos"  => [ "Assigned job", "Unassigned job" ] }.each do |section, (assigned, unassigned_label)|
@@ -418,7 +418,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
   # ── Chore chart + to-dos on one page ──
 
   test "the chore chart and to-dos share a page when both are picked" do
-    @household.todos.create!(title: "Paint the shed", priority: :medium, status: "in_progress", user: users(:one))
+    @household.todos.create!(title: "Paint the shed", priority: :medium, status: "in_progress", planned_week: MONDAY, user: users(:one))
     pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[meals chores todos calendar]).render
 
     # Meals, then chores + to-dos on one landscape page, then the calendar.
@@ -443,7 +443,7 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
   end
 
   test "a long chore chart and to-do list still fit on their one page" do
-    20.times { |n| @household.todos.create!(title: "In-progress job #{n} with a longer title", priority: :medium, status: "in_progress", user: users(:one)) }
+    20.times { |n| @household.todos.create!(title: "In-progress job #{n} with a longer title", priority: :medium, status: "in_progress", planned_week: MONDAY, user: users(:one)) }
     category = @household.chore_categories.create!(name: "Kitchen")
     12.times do |n|
       chore = @household.chores.create!(name: "Chore #{n}", frequency: "monthly", chore_category: category)
