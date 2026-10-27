@@ -25,14 +25,7 @@ class Admin::HouseholdsController < Admin::BaseController
     @household = Household.includes(:owner).find(params[:id])
     @members   = @household.people
     @recipe_count = Recipe.for_household(@household).count
-    @usage = {
-      "Recipes"          => @recipe_count,
-      "Upcoming meals"   => @household.meals.where(date: Date.current..).count,
-      "To-dos"           => @household.todos.count,
-      "Chores"           => @household.chores.count,
-      "Restock items"    => @household.restock_items.count,
-      "Grocery lists"    => @household.grocery_lists.count
-    }
+    @usage = Household::Usage.new(@household).rows
     @calendar_sources = @household.calendar_sources.includes(:user).order(:position)
     @actions   = AdminAction.where(household: @household).includes(:admin, :user).order(created_at: :desc)
   end

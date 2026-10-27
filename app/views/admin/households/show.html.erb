@@ -126,20 +126,49 @@
   </div>
 
   <div id="admin_settings" class="<%= card %>">
-    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Settings and usage</h2></div>
-    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-sage-100 px-5 py-6 sm:grid-cols-3 lg:grid-cols-5 sm:px-8 dark:border-white/10">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Settings</h2></div>
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-sage-100 px-5 py-6 sm:grid-cols-4 sm:px-8 dark:border-white/10">
       <% {
            "Time zone"     => @household.time_zone.presence || "Not set",
            "Week starts"   => @household.week_start_day_name,
            "Family size"   => @household.family_size,
            "To-do time"    => @household.todo_time_per_day? ? "#{@household.minutes_per_day} min a day" : "#{@household.todo_hours_per_week} hours a week"
-         }.merge(@usage.transform_values { |count| number_with_delimiter(count) }).each do |label, shown| %>
+         }.each do |label, shown| %>
         <div>
           <dt class="<%= term %>"><%= label %></dt>
           <dd class="<%= value %>"><%= shown %></dd>
         </div>
       <% end %>
     </dl>
+  </div>
+
+  <%# Feature by feature — see Household::Usage for what each one counts %>
+  <div id="admin_usage" class="<%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Feature usage</h2></div>
+    <div class="overflow-x-auto border-t border-sage-100 dark:border-white/10">
+      <table class="min-w-full divide-y divide-sage-100 text-sm dark:divide-white/10">
+        <thead>
+          <tr class="text-left text-xs font-semibold uppercase tracking-wider text-sage-400 dark:text-gray-400">
+            <th class="px-5 py-3 sm:pl-8">Feature</th>
+            <th class="px-5 py-3 text-right">In all</th>
+            <th class="px-5 py-3 text-right">Last 30 days</th>
+            <th class="px-5 py-3 sm:pr-8">Last used</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-sage-100 dark:divide-white/10">
+          <% @usage.each do |row| %>
+            <tr class="<%= 'text-gray-400 dark:text-gray-500' if row.total.zero? %>">
+              <td class="px-5 py-2.5 font-medium sm:pl-8 <%= 'text-gray-900 dark:text-white' unless row.total.zero? %>"><%= row.feature %></td>
+              <td class="px-5 py-2.5 text-right tabular-nums"><%= number_with_delimiter row.total %></td>
+              <td class="px-5 py-2.5 text-right tabular-nums"><%= row.recent.zero? ? "—" : number_with_delimiter(row.recent) %></td>
+              <td class="px-5 py-2.5 sm:pr-8 <%= 'text-gray-600 dark:text-gray-300' unless row.total.zero? %>">
+                <%= row.last_at ? "#{time_ago_in_words(row.last_at)} ago" : "Never" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <% if @calendar_sources.any? %>

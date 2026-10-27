@@ -54,6 +54,8 @@ class AdminHouseholdsTest < ActionDispatch::IntegrationTest
     get admin_household_path(@household)
     assert_response :success
     assert_select "h1", text: "Doe Household"
+    assert_select "#admin_usage tbody tr", count: Household::Usage.new(@household).rows.size
+    assert_select "#admin_usage", text: /Receipt scans\s*0\s*—\s*Never/
     assert_select "#admin_history", text: /No admin changes yet/
   end
 
