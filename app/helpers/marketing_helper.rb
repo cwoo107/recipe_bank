@@ -22,4 +22,13 @@ module MarketingHelper
       link_to closed_label, root_path(anchor: "launch-list"), **options
     end
   end
+
+  # A screenshot of the app, swapped for its phone-sized version (when it
+  # has one — see marketing:screenshots) on screens narrower than sm.
+  def marketing_screenshot(image, alt:, mobile_image: nil)
+    img = image_tag(image, alt:, class: "w-full h-auto rounded-xl", loading: "lazy")
+    return img unless mobile_image
+
+    tag.picture { tag.source(media: "(max-width: 639px)", srcset: image_path(mobile_image)) + img }
+  end
 end

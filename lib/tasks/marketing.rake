@@ -70,6 +70,8 @@ module MarketingDemo
     [ 0, "Leo — soccer practice",     17, 90 ], [ 1, "Maya — piano lesson", 16, 45 ], [ 2, "Leo — soccer practice", 17, 90 ],
     [ 2, "Parent–teacher conference", 15, 30 ], [ 3, "Book club",            19, 120 ], [ 4, "Movie night", 19, 120 ],
     [ 5, "Leo's soccer game",          9, 90 ],  [ 5, "Farmers market",      11, 60 ], [ 6, "Dinner at Grandma's", 17, 150 ],
+    # A full Saturday, for the phone screenshot's day view.
+    [ 5, "Maya — birthday party",     13, 120 ], [ 5, "Grocery pickup",      16, 30 ], [ 5, "Date night",          19, 150 ],
     [ 4, "Teacher in-service — no school", nil, nil ]
   ].freeze
 
@@ -157,6 +159,10 @@ class MarketingScreenshots
   WIDTH  = 1300
   MAX_HEIGHT = 1700 # CSS pixels — a long page is cut off here
 
+  # Phone-sized versions ("<name>-mobile"), shown to visitors on phones.
+  MOBILE = { width: 390, max_height: 844, scale: 3 } # an iPhone's screen
+  MOBILE_PAGES = %w[meal-planning chores calendar plan-week].freeze
+
   # Image name → the page it's taken from.
   def pages(week)
     {
@@ -221,13 +227,44 @@ class MarketingScreenshots
 
       shoot(session, name, path)
     end
+
+    # Then on a phone: Chrome's mobile emulation, so the pages lay out (and
+    # their media queries match) as on one.
+    browser = session.driver.browser
+    browser.execute_cdp("Emulation.setDeviceMetricsOverride", width: MOBILE[:width], height: MOBILE[:max_height] + 200,
+                                                              deviceScaleFactor: MOBILE[:scale], mobile: true)
+    browser.execute_cdp("Emulation.setTouchEmulationEnabled", enabled: true)
+    pages(week).slice(*MOBILE_PAGES).each do |name, path|
+      next if only.any? && !only.include?("#{name}-mobile")
+
+      # A week of calendar is too cramped on a phone — show its busiest day,
+      # from an hour before its first event.
+      if name == "calendar"
+        day, first_hour = busiest_day(household, week)
+        path = "/calendar/day?date=#{day}"
+        @scroll_to_hour = [ first_hour - 1, 0 ].max
+      end
+      shoot(session, "#{name}-mobile", path, max_height: MOBILE[:max_height])
+    end
   ensure
     session&.driver&.quit
   end
 
   private
 
-  def shoot(session, name, path)
+  # The day (in the household's zone) with the most timed events, and the
+  # hour its first one starts.
+  def busiest_day(household, week)
+    Time.use_zone(household.time_zone.presence || Time.zone) do
+      day, events = household.calendar_events.where(all_day: false)
+                             .where(starts_at: week.in_time_zone...(week + 7).in_time_zone)
+                             .group_by { |event| event.starts_at.in_time_zone.to_date }
+                             .max_by { |_day, day_events| day_events.size }
+      day ? [ day, events.map { |event| event.starts_at.in_time_zone.hour }.min ] : [ week, 9 ]
+    end
+  end
+
+  def shoot(session, name, path, max_height: MAX_HEIGHT)
     session.visit path
     sleep 1 # Stimulus settles
 
@@ -238,23 +275,25 @@ class MarketingScreenshots
     JS
     sleep 2 # charts animate in
 
-    # The calendar opens on early morning; show the busy afternoon and evening.
-    session.execute_script(<<~JS) if name == "calendar"
+    # The calendar opens on early morning; show the busy afternoon and evening
+    # (or, for the day view, from the hour set for it).
+    fraction = name == "calendar-mobile" ? @scroll_to_hour / 24.0 : 0.4
+    session.execute_script(<<~JS) if name.start_with?("calendar")
       document.querySelectorAll("main *").forEach(el => {
-        if (el.scrollHeight > el.clientHeight + 50 && getComputedStyle(el).overflowY.match(/auto|scroll/)) el.scrollTop = el.scrollHeight * 0.4
+        if (el.scrollHeight > el.clientHeight + 50 && getComputedStyle(el).overflowY.match(/auto|scroll/)) el.scrollTop = el.scrollHeight * #{fraction}
       })
     JS
     sleep 0.5
 
     # Through Chrome's DevTools, clipped to the page's content (and no
-    # further down than MAX_HEIGHT, which the window is tall enough for).
+    # further down than max_height, which the window is tall enough for).
     rect = session.evaluate_script(<<~JS)
       (() => { const r = document.querySelector("main").getBoundingClientRect()
                return { x: r.left + window.scrollX, y: r.top + window.scrollY, width: r.width, height: r.height } })()
     JS
     shot = session.driver.browser.execute_cdp("Page.captureScreenshot", format: "png", captureBeyondViewport: false,
                                               clip: { x: rect["x"], y: rect["y"], width: rect["width"],
-                                                      height: [ rect["height"], MAX_HEIGHT ].min, scale: 1 })
+                                                      height: [ rect["height"], max_height ].min, scale: 1 })
     png = OUTPUT.join("#{name}.png")
     File.binwrite(png, Base64.decode64(shot["data"]))
     system("cwebp", "-quiet", "-q", "82", png.to_s, "-o", OUTPUT.join("#{name}.webp").to_s, exception: true)

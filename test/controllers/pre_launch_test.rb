@@ -145,6 +145,16 @@ class PreLaunchTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "phones get the phone-sized screenshots" do
+    { "/features/meal-planning" => "meal-planning", "/features/chores" => "chores",
+      "/features/calendar" => "calendar", "/features/plan-your-week" => "plan-week", "/" => "meal-planning" }.each do |path, image|
+      get path
+      assert_select "picture source[media='(max-width: 639px)'][srcset*=?]", "marketing/#{image}-mobile", { count: 1 }, path
+    end
+    get "/features/restock"
+    assert_select "picture", count: 0
+  end
+
   test "joining the launch list" do
     assert_difference "LaunchSubscriber.count" do
       post launch_subscribers_url, params: { launch_subscriber: { email: "  Fan@Example.com " } }

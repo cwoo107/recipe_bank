@@ -37,6 +37,12 @@
     overflow: hidden;
 }
 
+/* …and padding or a min-height on it would still show when closed. */
+.accordion-content:not(.accordion-open) > * {
+    padding-block: 0;
+    min-height: 0;
+}
+
 dialog {
     position: fixed;
     top: 50%;
