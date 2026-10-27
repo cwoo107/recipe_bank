@@ -350,8 +350,11 @@ class Household < ApplicationRecord
   end
 
   def seed_default_restock_categories
-    RestockCategory::DEFAULT_NAMES.each_with_index do |name, index|
-      restock_categories.create!(name: name, position: index + 1)
+    RestockCategory::DEFAULTS.each_with_index do |(name, item_names), index|
+      category = restock_categories.create!(name: name, position: index + 1)
+      item_names.each_with_index do |item_name, item_index|
+        category.restock_items.create!(household: self, user: owner, name: item_name, position: item_index + 1)
+      end
     end
   end
 end
