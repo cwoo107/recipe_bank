@@ -84,6 +84,19 @@
           </div>
         </div>
 
+        <fieldset class="mt-5">
+          <legend class="block text-sm font-medium text-gray-900 dark:text-white">Theme</legend>
+          <div class="mt-2 grid grid-cols-3 gap-2">
+            <% [ [ "light", "Light" ], [ "dark", "Dark" ], [ "system", "System default" ] ].each do |theme, label| %>
+              <label class="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 has-checked:border-[#5f734c] has-checked:bg-sage-50 dark:border-white/10 dark:text-white dark:has-checked:border-[#7a8f62] dark:has-checked:bg-white/5">
+                <%= f.radio_button :theme, theme, class: "size-4 accent-[#5f734c]" %>
+                <%= label %>
+              </label>
+            <% end %>
+          </div>
+          <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">System default follows your device's light or dark setting.</p>
+        </fieldset>
+
         <div class="mt-5">
           <%= f.submit "Save preferences",
                 class: "w-full rounded-lg px-4 py-2.5 bg-[#5f734c] hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] text-white font-semibold text-sm transition-colors cursor-pointer" %>

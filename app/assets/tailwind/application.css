@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* dark: follows the "dark" class on <html> — set from the user's light /
+   dark / system choice (layouts/_theme) — not the device setting directly. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-display: 'Instrument Serif', serif;
   --font-sans: 'Inter', system-ui, sans-serif;
@@ -179,11 +183,13 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     background-color: var(--color-olive-100);
+    color-scheme: light;
     scroll-padding-top: 0;
   }
 
   html.dark {
     background-color: var(--color-olive-950);
+    color-scheme: dark;
   }
 
   /* Native checkboxes, radios and the like in the app's olive rather than
@@ -316,45 +322,43 @@
 
 /* The Trix editor itself (step new/edit) in dark mode. actiontext.css is
    Trix's stock light-only stylesheet; these win over it by specificity
-   (the leading `html`) whatever order the two load in. */
-@variant dark {
-  html trix-editor {
-    border-color: rgb(255 255 255 / 0.15);
-  }
+   (the leading `html.dark`) whatever order the two load in. */
+html.dark trix-editor {
+  border-color: rgb(255 255 255 / 0.15);
+}
 
-  html trix-toolbar .trix-button-group,
-  html trix-toolbar .trix-button {
-    border-color: rgb(255 255 255 / 0.15);
-  }
+html.dark trix-toolbar .trix-button-group,
+html.dark trix-toolbar .trix-button {
+  border-color: rgb(255 255 255 / 0.15);
+}
 
-  html trix-toolbar .trix-button {
-    color: rgb(255 255 255 / 0.8);
-  }
+html.dark trix-toolbar .trix-button {
+  color: rgb(255 255 255 / 0.8);
+}
 
-  /* The toolbar icons are black SVG backgrounds — flip them to light. */
-  html trix-toolbar .trix-button--icon::before {
-    filter: invert(1);
-  }
+/* The toolbar icons are black SVG backgrounds — flip them to light. */
+html.dark trix-toolbar .trix-button--icon::before {
+  filter: invert(1);
+}
 
-  html trix-toolbar .trix-button.trix-active {
-    background: rgb(122 143 98 / 0.4);
-  }
+html.dark trix-toolbar .trix-button.trix-active {
+  background: rgb(122 143 98 / 0.4);
+}
 
-  html trix-toolbar .trix-button:disabled::before {
-    opacity: 0.25;
-  }
+html.dark trix-toolbar .trix-button:disabled::before {
+  opacity: 0.25;
+}
 
-  html trix-toolbar .trix-dialog {
-    background: #1a1f16;
-    border-top-color: #7a8f62;
-    color: #fff;
-  }
+html.dark trix-toolbar .trix-dialog {
+  background: #1a1f16;
+  border-top-color: #7a8f62;
+  color: #fff;
+}
 
-  html trix-toolbar .trix-input--dialog {
-    background: rgb(255 255 255 / 0.05);
-    border-color: rgb(255 255 255 / 0.2);
-    color: #fff;
-  }
+html.dark trix-toolbar .trix-input--dialog {
+  background: rgb(255 255 255 / 0.05);
+  border-color: rgb(255 255 255 / 0.2);
+  color: #fff;
 }
 
 .trix-content h1 {

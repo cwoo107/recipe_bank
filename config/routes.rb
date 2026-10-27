@@ -59,6 +59,7 @@ Rails.application.routes.draw do
     end
   end
   resource  :preferences, only: :update
+  resource  :theme, only: :update               # the light/dark/system switch — signed in or not
   resources :recurring_meals, only: [:index, :edit, :update, :destroy]
   resource  :household do                        # singular resource — index doesn't exist for these
     patch :adjust_servings

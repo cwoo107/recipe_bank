@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" <%= tag.attributes data: { theme: current_theme }, class: ("dark" if current_theme == "dark") %>>
 <head>
 <%
   page_title = content_for(:title) || "HomemakersHaven — Run your household from one place"
@@ -28,6 +28,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <%= render "layouts/theme" %>
   <%= stylesheet_link_tag :ruby_native %>
 
   <link rel="icon" href="/icon.png" type="image/png">
@@ -59,5 +60,10 @@
 </main>
 
 <%= render 'static_pages/footer' %>
+
+<%# Light / system / dark, floating in the bottom-right corner. %>
+<div class="fixed right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] z-40 rounded-full bg-white/90 shadow-lg ring-1 ring-black/5 backdrop-blur dark:bg-[#242b1e]/90 dark:ring-white/10">
+  <%= render "shared/theme_switch" %>
+</div>
 </body>
 </html>

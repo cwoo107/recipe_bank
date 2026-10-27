@@ -1,0 +1,17 @@
+<%# Puts the "dark" class on <html> for the dark theme, or for "system" when
+    the device is in dark mode (and keeps following the device after). Inline
+    in <head> so the page never flashes the wrong theme. The theme is written
+    into the script, so when Turbo navigates to a page with a different one
+    (e.g. signing in), the script is new to the page and runs again. %>
+<script>
+  document.documentElement.dataset.theme = "<%= j current_theme %>"
+  if (!window.applyTheme) {
+    const deviceDark = matchMedia("(prefers-color-scheme: dark)")
+    window.applyTheme = () => {
+      const theme = document.documentElement.dataset.theme
+      document.documentElement.classList.toggle("dark", theme === "dark" || (theme === "system" && deviceDark.matches))
+    }
+    deviceDark.addEventListener("change", window.applyTheme)
+  }
+  window.applyTheme()
+</script>

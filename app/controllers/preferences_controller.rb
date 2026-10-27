@@ -4,6 +4,7 @@
 class PreferencesController < ApplicationController
   def update
     if current_user.update(preference_params)
+      cookies.permanent[:theme] = current_user.theme
       redirect_back_or_to edit_user_registration_path, notice: "Preferences saved.", status: :see_other
     else
       redirect_back_or_to edit_user_registration_path, alert: "Couldn't save preferences.", status: :see_other
@@ -13,6 +14,6 @@ class PreferencesController < ApplicationController
   private
 
   def preference_params
-    params.expect(user: [:compact_meals_view])
+    params.expect(user: [ :compact_meals_view, :theme ])
   end
 end

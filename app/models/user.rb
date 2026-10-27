@@ -35,6 +35,11 @@ class User < ApplicationRecord
   # instead of getting the generic default. Not a column — never persisted.
   attribute :household_family_name, :string
 
+  # Light, dark, or "system" (follow the device's setting). Light is the
+  # default. See ApplicationController#current_theme.
+  THEMES = %w[light dark system].freeze
+  validates :theme, inclusion: { in: THEMES }
+
   after_create :provision_household, unless: :skip_household_provisioning
   before_update :mark_first_password_set, if: -> { awaiting_first_password? && will_save_change_to_encrypted_password? }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" <%= tag.attributes data: { theme: current_theme }, class: ("dark" if current_theme == "dark") %>>
 <head>
   <title><%= content_for(:title) || "RecipeBank" %></title>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
@@ -8,6 +8,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
+  <%= render "layouts/theme" %>
   <%= stylesheet_link_tag :ruby_native %>
 
   <%= yield :head %>

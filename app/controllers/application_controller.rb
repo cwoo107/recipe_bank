@@ -7,7 +7,7 @@ class ApplicationController < ActionController::Base
   around_action :use_time_zone
   around_action :use_household_week_start, if: :user_signed_in?
   before_action :require_active_subscription!, if: :user_signed_in?, unless: :devise_controller?
-  helper_method :current_household, :active_weekly_plan, :household_admin?, :current_member, :trial_banner?, :household_locked?
+  helper_method :current_theme, :current_household, :active_weekly_plan, :household_admin?, :current_member, :trial_banner?, :household_locked?
   layout :resolve_layout
 
   def require_ownership!(record, owner_method: :user)
@@ -42,6 +42,13 @@ class ApplicationController < ActionController::Base
 
     zone = (current_household&.time_zone.presence if user_signed_in?) || browser_time_zone
     Time.use_zone(ActiveSupport::TimeZone[zone.to_s] || Time.zone_default, &block)
+  end
+
+  # Light (the default), dark, or "system". A signed-in user's saved choice
+  # wins; visitors' choice from the marketing site's switch lives in a
+  # cookie. layouts/_theme turns it into the <html> "dark" class.
+  def current_theme
+    (current_user.theme if user_signed_in?) || cookies[:theme].presence_in(User::THEMES) || "light"
   end
 
   def browser_time_zone
