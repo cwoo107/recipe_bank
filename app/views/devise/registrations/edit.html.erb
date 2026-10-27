@@ -31,7 +31,9 @@
         </div>
 
         <div class="border-t border-gray-100 dark:border-white/10 pt-5">
-          <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">Leave blank to keep your current password</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
+            <%= resource.awaiting_first_password? ? "Set one to sign in with your email too" : "Leave blank to keep your current password" %>
+          </p>
 
           <div class="space-y-4">
             <div>
@@ -53,6 +55,9 @@
           </div>
         </div>
 
+        <%# Not asked of Google / Apple accounts until they've set a password
+            (Users::RegistrationsController#update_resource). %>
+        <% unless resource.awaiting_first_password? %>
         <div class="border-t border-gray-100 dark:border-white/10 pt-5">
           <%= f.label :current_password, class: "block text-sm font-medium text-gray-900 dark:text-white mb-1.5" %>
           <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">Required to confirm any changes</p>
@@ -60,6 +65,7 @@
                 autocomplete: "current-password",
                 class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition text-sm" %>
         </div>
+        <% end %>
 
         <div class="mt-4">
           <%= f.submit "Save changes",

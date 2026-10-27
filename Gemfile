@@ -60,6 +60,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Loads .env (git-ignored) into ENV locally; production uses Railway's variables
+  gem "dotenv-rails"
 end
 
 group :development do
@@ -100,3 +103,7 @@ gem "stripe", "~> 19.6"
 gem "anthropic", "~> 2.1"
 
 gem "pagy", "~> 43.8"
+
+gem "omniauth-google-oauth2", "~> 1.2"
+gem "omniauth-apple", "~> 1.4"
+gem "omniauth-rails_csrf_protection", "~> 2.0"

@@ -189,3 +189,7 @@ tabs:
 #   oauth_paths:
 #     - /auth/google
 #     - /auth/github
+auth:
+  oauth_paths:
+    - /users/auth/google_oauth2
+    - /users/auth/apple

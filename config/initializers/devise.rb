@@ -276,6 +276,18 @@ Devise.setup do |config|
   # Add a new OmniAuth provider. Check the wiki for more information on setting
   # up on your models and hooks.
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
+  #
+  # Sign in with Google / Apple (User::SocialSignIn). Each one's buttons only
+  # show once its keys are set — see SocialSignIn in initializers/omniauth.rb.
+  config.omniauth :google_oauth2, ENV["GOOGLE_CLIENT_ID"], ENV["GOOGLE_CLIENT_SECRET"],
+                  scope: "email,profile", prompt: "select_account"
+  # APPLE_CLIENT_ID is the Services ID; the client secret is a JWT signed
+  # with the .p8 key (APPLE_PRIVATE_KEY, newlines may be written as \n).
+  config.omniauth :apple, ENV["APPLE_CLIENT_ID"], "",
+                  scope: "email name",
+                  team_id: ENV["APPLE_TEAM_ID"],
+                  key_id: ENV["APPLE_KEY_ID"],
+                  pem: ENV["APPLE_PRIVATE_KEY"].to_s.gsub('\n', "\n")
 
   # ==> Warden configuration
   # If you want to use other strategies, that are not supported by Devise, or

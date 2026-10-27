@@ -5,7 +5,8 @@
 # copies and favorites of them — keep working.
 #
 # An owner takes their whole household with them, every member's shared data
-# included (the other members keep their logins and get a fresh household).
+# included (the other members keep their logins and name a new household
+# next time they sign in — ApplicationController#require_household_name!).
 # A member leaving a household that carries on is removed just as an admin
 # would remove them (Household#remove_member!): the recipes and lists they
 # added stay with the household.

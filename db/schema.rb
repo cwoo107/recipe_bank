@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_27_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_27_150000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -238,6 +238,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_140000) do
     t.index ["stripe_customer_id"], name: "index_households_on_stripe_customer_id", unique: true
     t.index ["stripe_subscription_id"], name: "index_households_on_stripe_subscription_id", unique: true
     t.index ["subscription_status", "trial_ends_at"], name: "index_households_on_subscription_status_and_trial_ends_at"
+  end
+
+  create_table "identities", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "provider", null: false
+    t.string "uid", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["provider", "uid"], name: "index_identities_on_provider_and_uid", unique: true
+    t.index ["user_id"], name: "index_identities_on_user_id"
   end
 
   create_table "ingredient_tags", force: :cascade do |t|
@@ -669,6 +679,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_140000) do
   add_foreign_key "household_members", "households"
   add_foreign_key "household_members", "users"
   add_foreign_key "households", "users", column: "owner_id"
+  add_foreign_key "identities", "users", on_delete: :cascade
   add_foreign_key "ingredient_tags", "ingredients"
   add_foreign_key "ingredient_tags", "tags"
   add_foreign_key "ingredients", "households"

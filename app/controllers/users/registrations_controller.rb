@@ -2,6 +2,9 @@
 # the form only opens from a beta invite link (BetaInvitesController puts its
 # token in the session), and the account it makes uses the invite up.
 #
+# Accounts made with Google / Apple skip the current password on account
+# changes until they've set one of their own (update_resource).
+#
 # Deleting an account needs "Delete Account" typed into its confirmation
 # box (devise/registrations/edit) — see User::AccountDeletion for what goes.
 class Users::RegistrationsController < Devise::RegistrationsController
@@ -30,6 +33,19 @@ class Users::RegistrationsController < Devise::RegistrationsController
     Rails.logger.error "Account deletion for user ##{resource.id} stopped: couldn't cancel the subscription (#{error.message})"
     redirect_to edit_user_registration_path, status: :see_other,
                 alert: "We couldn't cancel your subscription, so your account wasn't deleted. Please try again, or contact us."
+  end
+
+  protected
+
+  # Accounts made with Google / Apple have a random password they've never
+  # seen, so until they choose one (which clears awaiting_first_password)
+  # changes don't ask for the current one.
+  def update_resource(resource, params)
+    return super unless resource.awaiting_first_password?
+
+    params = params.except(:current_password)
+    params = params.except(:password, :password_confirmation) if params[:password].blank?
+    resource.update(params)
   end
 
   private

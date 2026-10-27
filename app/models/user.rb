@@ -1,8 +1,10 @@
 class User < ApplicationRecord
   include HouseholdAccountable
   devise :database_authenticatable, :registerable,
-         :recoverable, :rememberable, :validatable
+         :recoverable, :rememberable, :validatable,
+         :omniauthable, omniauth_providers: Identity::PROVIDERS.map(&:to_sym)
   include User::AccountDeletion # after devise, to override active_for_authentication?
+  include User::SocialSignIn
 
   has_many :recipes,            dependent: :destroy
   # Tags belong to the household (Tag) — this is just the ones they made,

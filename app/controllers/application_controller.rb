@@ -6,6 +6,7 @@ class ApplicationController < ActionController::Base
   before_action :configure_permitted_parameters, if: :devise_controller?
   around_action :use_time_zone
   around_action :use_household_week_start, if: :user_signed_in?
+  before_action :require_household_name!, if: :user_signed_in?, unless: :devise_controller?
   before_action :require_active_subscription!, if: :user_signed_in?, unless: :devise_controller?
   helper_method :current_theme, :current_household, :active_weekly_plan, :household_admin?, :current_member, :trial_banner?, :household_locked?
   layout :resolve_layout
@@ -75,11 +76,23 @@ class ApplicationController < ActionController::Base
     Date.beginning_of_week = previous
   end
 
-  # Every user is provisioned a household at signup (User#provision_household),
-  # so this should always resolve — the fallback here just guards edge cases
-  # (e.g. users created outside the normal signup path).
+  # Sign-up with a password provisions a household (User#provision_household);
+  # Google / Apple sign-ups, and members whose household was deleted, have
+  # none until they name one (require_household_name!).
   def current_household
-    @current_household ||= current_user&.household || provision_household_for(current_user)
+    @current_household ||= current_user&.household
+  end
+
+  # Anyone signed in without a named household names one before anything
+  # else (HouseholdSetupsController).
+  def require_household_name!
+    return if current_household&.family_name.present?
+
+    if request.format.html? || request.format.turbo_stream?
+      redirect_to household_setup_path, status: :see_other
+    else
+      head :forbidden
+    end
   end
 
   # The in-progress weekly plan, if any — drives the sticky "continue
@@ -104,12 +117,6 @@ class ApplicationController < ActionController::Base
     return permitted unless permitted.key?(:assignee_id)
 
     permitted.merge(assignee_id: current_household.household_members.where(id: permitted[:assignee_id].presence).pick(:id))
-  end
-
-  def provision_household_for(user)
-    return nil unless user
-
-    user.create_owned_household!(family_name: Household.default_family_name_for(user))
   end
 
   def require_household!

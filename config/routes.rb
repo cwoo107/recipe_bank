@@ -1,5 +1,10 @@
 Rails.application.routes.draw do
-  devise_for :users, controllers: { registrations: "users/registrations" }
+  devise_for :users, controllers: { registrations: "users/registrations", omniauth_callbacks: "users/omniauth_callbacks" }
+
+  # Accounts made with Google / Apple name their household here first (and
+  # anyone else left without one — see ApplicationController#require_household_name!).
+  get  "welcome", to: "household_setups#new",    as: :household_setup
+  post "welcome", to: "household_setups#create"
 
   # Before launch: beta invite links open sign-up; everyone else can join the
   # launch mailing list.
