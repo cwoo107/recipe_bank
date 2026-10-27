@@ -9,7 +9,7 @@ class EmailDesignTest < ActionMailer::TestCase
     email = HouseholdMailer.invitation(@bob, "tok123", household: households(:one))
 
     assert_equal [ @bob.email ], email.to
-    assert_equal "You're invited to join Doe Household on HomemakersHaven", email.subject
+    assert_equal "You're invited to join the Doe Household on HomemakersHaven", email.subject
     assert_match "HomemakersHaven <no-reply@example.com>", email[:from].to_s
 
     html = email.html_part.body.to_s
@@ -51,6 +51,13 @@ class EmailDesignTest < ActionMailer::TestCase
   test "a household name without 'household' in it reads naturally" do
     assert_equal "the Anderson household", Household.new(family_name: "Anderson").display_name
     assert_equal "Alice's Household", Household.new(family_name: "Alice's Household").display_name
+  end
+
+  test "a household name that already says 'The' or 'household' doesn't get them twice" do
+    assert_equal "The Woods household", Household.new(family_name: "The Woods household").display_name
+    assert_equal "The Woods household", Household.new(family_name: "The Woods").display_name
+    assert_equal "the Woods Household", Household.new(family_name: "Woods Household").display_name
+    assert_equal "the Theodores household", Household.new(family_name: "Theodores").display_name
   end
 
   test "changing a password sends the password-changed alert" do

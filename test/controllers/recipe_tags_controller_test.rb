@@ -58,10 +58,10 @@ class RecipeTagsControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes offered, "Holiday"   # household :two's
   end
 
-  test "the recipes page filters by the household's tags only" do
+  test "the recipes page offers the household's tags only, searching by label" do
     get recipes_url
 
-    assert_select "a[href*='filter=#{tags(:one).id}']"
-    assert_select "a[href*='filter=#{tags(:two).id}']", 0
+    assert_select "a[href*='query=Weeknight']"
+    assert_select "a[href*='query=Holiday']", 0
   end
 end

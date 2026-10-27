@@ -30,7 +30,7 @@
           <div class="mt-2">
             <%= f.text_field :family_name, class: settings_input_classes, placeholder: "e.g. Anderson" %>
           </div>
-          <p class="<%= hint_class %>">Shown as "The <%= household.family_name.presence || "Anderson" %> household".</p>
+          <p class="<%= hint_class %>">Shown as "<%= Household.new(family_name: household.family_name.presence || "Anderson").display_name.upcase_first %>".</p>
         </div>
 
         <div class="sm:col-span-2">

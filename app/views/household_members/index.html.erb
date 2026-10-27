@@ -4,7 +4,7 @@
     <div>
       <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Household</p>
       <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">
-        The <%= current_household.family_name %> household
+        <%= current_household.display_name.upcase_first %>
       </h1>
     </div>
     <%= link_to "Add member", new_household_member_path, class: "btn-primary" %>

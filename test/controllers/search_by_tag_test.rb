@@ -36,10 +36,17 @@ class SearchByTagTest < ActionDispatch::IntegrationTest
     assert_equal by_title, links_to(@pasta)
   end
 
-  test "names still match, alongside the tag filter" do
-    get recipes_url(query: "lemon", filter: @weeknight.id)
+  test "a tag chip searches by its label, so it finds public recipes tagged by other households" do
+    get recipes_url(scope: "public")
+    assert_select "a[href=?]", recipes_path(scope: "public", query: "Weeknight")
 
-    assert_select "a[href=?]", recipe_path(@pasta)
+    # Household :two's own "Weeknight" tag — a different id from ours.
+    theirs = households(:two).tags.create!(tag: "Weeknight", color: "#7a8f62", user: users(:three))
+    tacos  = users(:three).recipes.create!(title: "Fish Tacos", servings: 4, visibility: "public")
+    tacos.tags << theirs
+
+    get recipes_url(scope: "public", query: "Weeknight")
+    assert_select "a[href=?]", recipe_path(tacos)
   end
 
   test "an ingredient is found by one of its tags, and listed once" do

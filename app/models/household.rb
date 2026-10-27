@@ -86,10 +86,15 @@ class Household < ApplicationRecord
     (0..6).map { |i| (week_start_day + i) % 7 }
   end
 
-  # "The Anderson household" — or the name as-is when it already says
-  # household (the signup default is "Alice's Household").
+  # "the Anderson household", adding only what the name doesn't already say:
+  # "The Andersons" gets just " household", "Anderson Household" just "the ".
+  # A possessive name gets no "the" (the signup default is "Alice's Household").
+  # Lowercase "the" for mid-sentence; upcase_first it to lead a line.
   def display_name
-    family_name.to_s.match?(/household\z/i) ? family_name : "the #{family_name} household"
+    name = family_name.to_s.strip
+    name = "#{name} household" unless name.match?(/\bhousehold\z/i)
+    name = "the #{name}" unless name.match?(/\Athe\s/i) || name.match?(/['’]s?\s/)
+    name
   end
 
   # The owner's own member row — every household has one (created alongside

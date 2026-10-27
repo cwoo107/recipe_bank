@@ -88,15 +88,15 @@
       <%# Tag filters %>
       <div class="my-2 flex flex-wrap gap-2">
         <% current_household.tags.ordered.each do |tag| %>
-          <%= link_to recipes_list_path(filter: tag.id) do %>
+          <%= link_to recipes_list_path(query: tag.tag) do %>
         <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10"
               style="background-color: <%= tag.color %>20; color: <%= tag.color %>;">
           <%= tag.tag %>
         </span>
           <% end %>
         <% end %>
-        <% if params[:filter].present? %>
-          <%= link_to recipes_list_path(filter: nil) do %>
+        <% if params[:query].present? %>
+          <%= link_to recipes_list_path(query: nil) do %>
         <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10">
           clear filter
         </span>
@@ -110,7 +110,6 @@
       <%= form_with url: recipes_path, method: :get, class: "flex gap-4",
                     data: { controller: "search", turbo_frame: "recipes-results", turbo_action: "replace" } do |form| %>
         <%= hidden_field_tag :scope, @scope %>
-        <%= hidden_field_tag :filter, params[:filter] if params[:filter].present? %>
         <div class="flex-1">
           <label for="query" class="sr-only">Search</label>
           <div class="grid grid-cols-1">

@@ -21,13 +21,10 @@ class RecipesController < ApplicationController
     # Featured recipes lead the public list whatever sort is picked below.
     @recipes = @recipes.order(featured: :desc) if @scope == "public"
 
-    if params[:filter].present?
-      tag = current_household.tags.find_by(id: params[:filter])
-      @recipes = @recipes.joins(:recipe_tags).where(recipe_tags: { tag_id: tag&.id })
-    end
-
     if params[:query].present?
-      # The title or any of its tags. LOWER on both sides: Postgres's LIKE
+      # The title or any of its tags. The tag chips above the box search
+      # this way too (by label), so they also match public recipes, whose
+      # tags belong to other households. LOWER on both sides: Postgres's LIKE
       # (production) is case-sensitive. Tags go through a subquery rather
       # than a join, so a recipe with two matching tags isn't listed twice.
       pattern = "%#{Recipe.sanitize_sql_like(params[:query].to_s.strip.downcase)}%"
