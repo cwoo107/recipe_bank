@@ -1,19 +1,19 @@
 <% content_for :title, "To-Do Lists — HomemakersHaven" %>
-<% content_for :description, "A shared to-do board for the household, with priorities, tags and a weekly plan that fits the time you have." %>
+<% content_for :description, "A shared to-do list for the household, where you pick what to focus on each week and see whether it fits the time you have." %>
 
 <%= render "static_pages/feature_hero",
     eyebrow: "To-do lists",
     headline: "One list for everything the household needs to get done",
-    subheadline: "Track chores, errands, and appointments on a shared board with priorities — and see them laid out on a timeline so you know what's coming up this week.",
+    subheadline: "No more forgetting to call and set up that appointment. See everything you need to do all laid out so you know what's coming up this week.",
     image: "marketing/todo-list.webp",
-    image_alt: "A to-do board with To Do, In Progress, and Done columns and a weekly timeline in HomemakersHaven" %>
+    image_alt: "This week's to-dos alongside the household's to-do list and a weekly timeline in HomemakersHaven" %>
 
 <%= render "static_pages/detail_grid", items: [
-  { title: "Organize by status", desc: "Move tasks from To-Do into To-Do This Week, then Completed, as the household works through them." },
+  { title: "Pick this week's to-dos", desc: "Focus on the most important things first. Pick and choose the key things you want to accomplish this week and stop the to-do overwhelm." },
   { title: "Set a priority", desc: "Mark tasks Low, Medium, High, or Urgent so it's obvious what needs attention first." },
-  { title: "See the week at a glance", desc: "Set aside time for to-dos each week, and a chart lays out what's planned against it — so you can tell when you've taken on too much." },
+  { title: "See the week at a glance", desc: "Set aside a certain amount of time for to-dos each week, and a chart lays out everything you've planned against it so you can tell when you've taken on more than you have time for." },
 ] %>
 
 <%= render "static_pages/cta_band",
     headline: "Get the whole household on the same to-do list",
-    subheadline: "Chores, errands, and appointments — all in one shared board." %>
+    subheadline: "Errands, appointments, and household projects on one shared weekly list." %>

@@ -12,8 +12,8 @@
         Run your household from one place
       </h1>
       <p class="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-300">
-        Plan meals and your week, generate the grocery list automatically, keep every recipe you love in one bank,
-        share out the chores and to-dos, and see the whole family's calendar in one view — no more sticky notes on the fridge.
+        Most households are run from sticky notes on the fridge, a few group texts, and whatever someone happens to remember.
+        HomemakersHaven brings it all together so you can spend less time playing catch up and more time together.
       </p>
       <% if launched %>
         <div class="mt-10 flex items-center justify-center gap-4">
@@ -32,8 +32,10 @@
     </div>
 
     <div class="mx-auto mt-16 max-w-5xl">
-      <div class="rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
-        <%= marketing_screenshot "marketing/meal-planning.webp", alt: "HomemakersHaven meal planning calendar", mobile_image: "marketing/meal-planning-mobile.webp" %>
+      <div class="screenshot-teaser">
+        <div class="rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
+          <%= marketing_screenshot "marketing/meal-planning.webp", alt: "HomemakersHaven meal planning calendar", mobile_image: "marketing/meal-planning-mobile.webp" %>
+        </div>
       </div>
     </div>
   </div>
@@ -45,21 +47,20 @@
       Everything you need, nothing you don't
     </h2>
     <p class="mt-4 text-base text-gray-600 dark:text-gray-300">
-      Tools that work together, so planning dinner, shopping for it, and getting the dishes done
-      doesn't take five different apps.
+      Your saved recipes can be added straight to the meal plan, and the meal plan builds your grocery list for you.
     </p>
   </div>
 
   <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
     <% [
-      { path: feature_meal_planning_path, title: "Meal planning", desc: "Plan breakfast, lunch, and dinner for the week and see the nutrition and cost per serving as you go." },
-      { path: feature_grocery_lists_path, title: "Grocery lists", desc: "Your shopping list builds itself from whatever's on the meal plan — no more forgotten ingredients." },
-      { path: feature_recipes_path, title: "Recipe bank", desc: "Write a recipe from scratch, import it from a URL, upload a document, or snap a photo of a cookbook page." },
-      { path: feature_plan_week_path, title: "Plan your week", desc: "A guided walk through the week ahead — meals, to-dos, chores and the grocery list — in one sitting." },
-      { path: feature_todos_path, title: "To-do lists", desc: "A shared board for household tasks, with a weekly time budget so you don't take on too much." },
-      { path: feature_chores_path, title: "Chore chart", desc: "Hand out chores to everyone in the house, set how often they repeat, and tick them off the week." },
-      { path: feature_restock_path, title: "Restock list", desc: "Keep track of the household staples, mark what's running low, and shop it store by store." },
-      { path: feature_calendar_path, title: "Shared calendar", desc: "Sync every family calendar into one view so nobody double-books the minivan." },
+      { path: feature_plan_week_path, title: "Plan your week", desc: "Plan your whole week in minutes with our guided tool." },
+      { path: feature_calendar_path, title: "Shared calendar", desc: "Sync each family member's calendar together so nothing gets missed." },
+      { path: feature_meal_planning_path, title: "Meal planning", desc: "Plan breakfast, lunch, and dinner for the week, with nutrition and cost per serving updating as you go." },
+      { path: feature_recipes_path, title: "Recipe bank", desc: "Write a recipe from scratch, import it from a website, upload a document, or take a photo of a cookbook page." },
+      { path: feature_restock_path, title: "Restock list", desc: "Keep track of the household staples, mark what's running low, and shop for them store by store." },
+      { path: feature_grocery_lists_path, title: "Grocery lists", desc: "Your grocery list is generated directly from the meal plan, so you're not realizing halfway through making dinner that you forgot an ingredient." },
+      { path: feature_chores_path, title: "Chore chart", desc: "Categorize and assign chores to everyone in the house, set how often each one repeats, and check them off as the week goes on." },
+      { path: feature_todos_path, title: "To-do lists", desc: "A shared board for household tasks, with a weekly time budget that keeps you from taking on more than you can handle." },
     ].each do |f| %>
       <%= link_to f[:path], class: "group block rounded-2xl border border-black/5 bg-white p-6 hover:shadow-lg transition-shadow dark:bg-white/5 dark:border-white/10" do %>
         <h3 class="text-lg font-semibold text-olive-900 dark:text-white"><%= f[:title] %></h3>
@@ -83,8 +84,8 @@
         One plan. Every feature. No per-person fees.
       </h2>
       <p class="mt-4 text-base text-gray-600 dark:text-gray-300">
-        Every household plan includes every feature — meal planner, grocery lists, recipe bank, to-dos, chores,
-        restock list, and shared calendar — for everyone you invite.
+        Every household plan includes the meal planner, grocery lists, recipe bank, to-dos, chores, restock list,
+        and shared calendar for everyone you invite, so the price stays the same whether there are two of you or eight.
         <%= launched ? "Try it free for your first month." : "Join the launch list and your first three months are free." %>
       </p>
       <%= link_to "View pricing", pricing_path, class: "mt-6 inline-flex items-center rounded-md bg-[#5f734c] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#4b5a3d]" %>

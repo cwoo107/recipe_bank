@@ -3,10 +3,8 @@
 
 <%= render "static_pages/feature_hero",
     eyebrow: "Recipe bank",
-    headline: "Every recipe you love, in one bank",
-    subheadline: "Keep all of your family’s favorite recipes in one place, organized into collections however you like. With nutrition facts and estimated costs built into every recipe, you can stay on track with your nutrition and budget goals—without the mental overwhelm.
-
-  Stop reinventing the wheel every week or endlessly digging through Pinterest trying to find that recipe you saved months ago.",
+    headline: "Stop digging for the recipe you saved months ago",
+    subheadline: "Keep all of your family’s favorite recipes in one place, organized into collections however you like. No more reinventing the wheel every week or scrolling back through Pinterest trying to find it again.",
     image: "marketing/recipe-detail.webp",
     image_alt: "A recipe page in HomemakersHaven showing ingredients, instructions, and nutrition" %>
 
@@ -16,7 +14,7 @@
       Four ways to add a recipe
     </h2>
     <p class="mt-4 text-base text-gray-600 dark:text-gray-300">
-      Whichever way a recipe reaches you, it ends up in the same organized bank.
+      Quickly save any recipe, whichever way it reaches you.
     </p>
   </div>
 
@@ -40,8 +38,10 @@
       </div>
     </div>
     <div>
-      <div class="rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
-        <%= image_tag "marketing/recipe-import.webp", alt: "Adding a recipe to HomemakersHaven", class: "w-full h-auto rounded-xl", loading: "lazy" %>
+      <div class="screenshot-teaser">
+        <div class="rounded-2xl bg-white p-2 shadow-2xl ring-1 ring-black/5 dark:bg-white/5 dark:ring-white/10">
+          <%= image_tag "marketing/recipe-import.webp", alt: "Adding a recipe to HomemakersHaven", class: "w-full h-auto rounded-xl", loading: "lazy" %>
+        </div>
       </div>
     </div>
   </div>

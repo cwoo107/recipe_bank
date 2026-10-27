@@ -65,14 +65,24 @@ module MarketingDemo
     "Refrigerator/Freezer" => [ [ "Milk", "Horizon Organic", nil, true ], [ "Butter", "Kerrygold", "Costco", false ], [ "Frozen berries", "Kirkland", "Costco", false ] ]
   }.freeze
 
+  # Three synced calendars, so the shots show how they come together.
+  CALENDARS = {
+    family: { name: "Parker Family", provider: "google",  color: "seafoam" },
+    work:   { name: "Sam — Work",    provider: "outlook", color: "honey" },
+    sports: { name: "Kids' Sports",  provider: "ical",    color: "dusty-rose" }
+  }.freeze
+
   EVENTS = [
-    # day offset from week start, title, hour, minutes long, all day
-    [ 0, "Leo — soccer practice",     17, 90 ], [ 1, "Maya — piano lesson", 16, 45 ], [ 2, "Leo — soccer practice", 17, 90 ],
-    [ 2, "Parent–teacher conference", 15, 30 ], [ 3, "Book club",            19, 120 ], [ 4, "Movie night", 19, 120 ],
-    [ 5, "Leo's soccer game",          9, 90 ],  [ 5, "Farmers market",      11, 60 ], [ 6, "Dinner at Grandma's", 17, 150 ],
+    # calendar, day offset from week start, title, hour, minutes long (no hour: all day)
+    [ :sports, 0, "Leo — soccer practice",     17, 90 ], [ :family, 1, "Maya — piano lesson", 16, 45 ], [ :sports, 2, "Leo — soccer practice", 17, 90 ],
+    [ :family, 2, "Parent–teacher conference", 15, 30 ], [ :family, 3, "Book club",            19, 120 ], [ :family, 4, "Movie night", 19, 120 ],
+    [ :sports, 5, "Leo's soccer game",         14, 90 ], [ :family, 5, "Farmers market",       9, 60 ], [ :family, 6, "Dinner at Grandma's", 17, 150 ],
+    [ :sports, 1, "Maya — swim practice",      17, 60 ], [ :sports, 3, "Maya — swim practice", 17, 60 ],
+    [ :work,   0, "Quarterly planning",        13, 90 ], [ :work,   1, "Client call",         13, 60 ], [ :work,   2, "1:1 with Dana",       12, 30 ],
+    [ :work,   3, "Design review",             14, 60 ], [ :work,   4, "Team lunch",          12, 60 ],
     # A full Saturday, for the phone screenshot's day view.
-    [ 5, "Maya — birthday party",     13, 120 ], [ 5, "Grocery pickup",      16, 30 ], [ 5, "Date night",          19, 150 ],
-    [ 4, "Teacher in-service — no school", nil, nil ]
+    [ :family, 5, "Maya — birthday party",     11, 120 ], [ :family, 5, "Grocery pickup",      16, 30 ], [ :family, 5, "Date night",          19, 150 ],
+    [ :family, 4, "Teacher in-service — no school", nil, nil ]
   ].freeze
 
   def self.build!
@@ -133,20 +143,24 @@ module MarketingDemo
         end
       end
 
-      # A family calendar for the week. No iCal link, so nothing tries to
-      # sync it (the link is otherwise required).
-      source = household.calendar_sources.new(user:, name: "Parker Family", provider: "google", color: "seafoam")
-      source.last_synced_at = Time.current
-      source.save!(validate: false)
+      # The family, work and kids' sports calendars for the week. No iCal
+      # links, so nothing tries to sync them (the link is otherwise required).
+      sources = CALENDARS.transform_values do |attributes|
+        household.calendar_sources.new(user:, **attributes).tap do |source|
+          source.last_synced_at = Time.current
+          source.save!(validate: false)
+        end
+      end
       Time.use_zone(household.zone) do
-        EVENTS.each do |offset, title, hour, minutes|
+        EVENTS.each do |calendar, offset, title, hour, minutes|
+          events = sources.fetch(calendar).calendar_events
           day = week + offset
           if hour
             starts = Time.zone.local(day.year, day.month, day.day, hour)
-            source.calendar_events.create!(household:, user:, title:, starts_at: starts, ends_at: starts + minutes.minutes)
+            events.create!(household:, user:, title:, starts_at: starts, ends_at: starts + minutes.minutes)
           else
-            source.calendar_events.create!(household:, user:, title:, all_day: true,
-                                           starts_at: day.beginning_of_day, ends_at: day.end_of_day)
+            events.create!(household:, user:, title:, all_day: true,
+                           starts_at: day.beginning_of_day, ends_at: day.end_of_day)
           end
         end
       end

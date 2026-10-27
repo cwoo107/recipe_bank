@@ -434,3 +434,21 @@ html.dark trix-toolbar .trix-input--dialog {
     @apply min-w-6 bg-transparent px-0 text-gray-400 shadow-none inset-ring-0 dark:bg-transparent dark:text-gray-500;
   }
 }
+
+/* Marketing screenshots: just a taste of the feature. The framed screenshot
+   inside is cut to about a screen tall (less the sticky nav), so its bottom
+   reaches the bottom of the screen around when the hero's headline scrolls
+   away, and fades out over the last stretch. The wrapper reaches past the
+   frame (pulled back with negative margins) so the mask doesn't clip the
+   frame's shadow — only at sm and up, so phones don't scroll sideways. */
+@layer components {
+  .screenshot-teaser {
+    @apply -mt-12 pt-12 sm:-mx-12 sm:px-12;
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 12rem), transparent);
+  }
+
+  .screenshot-teaser > * {
+    max-height: calc(100svh - 4rem);
+    overflow: hidden;
+  }
+}
