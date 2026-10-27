@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_27_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_27_140000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -255,6 +255,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_130000) do
     t.integer "created_by_id"
     t.string "family"
     t.boolean "favorite"
+    t.string "former_user_email"
+    t.integer "former_user_id"
     t.integer "household_id"
     t.string "ingredient"
     t.boolean "organic"
@@ -263,6 +265,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_130000) do
     t.integer "unit_servings"
     t.datetime "updated_at", null: false
     t.index ["created_by_id"], name: "index_ingredients_on_created_by_id"
+    t.index ["former_user_id"], name: "index_ingredients_on_former_user_id"
     t.index ["household_id"], name: "index_ingredients_on_household_id"
     t.index ["source_ingredient_id"], name: "index_ingredients_on_source_ingredient_id"
   end
@@ -390,12 +393,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_130000) do
     t.datetime "created_at", null: false
     t.text "description"
     t.boolean "featured", default: false, null: false
+    t.string "former_user_email"
+    t.integer "former_user_id"
     t.integer "servings"
     t.integer "source_recipe_id"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.string "visibility", default: "private", null: false
+    t.index ["former_user_id"], name: "index_recipes_on_former_user_id"
     t.index ["source_recipe_id"], name: "index_recipes_on_source_recipe_id"
     t.index ["user_id", "visibility"], name: "index_recipes_on_user_id_and_visibility"
     t.index ["user_id"], name: "index_recipes_on_user_id"

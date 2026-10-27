@@ -2,6 +2,7 @@ class User < ApplicationRecord
   include HouseholdAccountable
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :validatable
+  include User::AccountDeletion # after devise, to override active_for_authentication?
 
   has_many :recipes,            dependent: :destroy
   # Tags belong to the household (Tag) — this is just the ones they made,

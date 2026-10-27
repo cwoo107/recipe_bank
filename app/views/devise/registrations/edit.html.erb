@@ -108,12 +108,45 @@
     <div class="mt-6 bg-white dark:bg-[#242b1e] rounded-2xl shadow-sm inset-ring inset-ring-dusty-rose-200 dark:inset-ring-dusty-rose-900/50 px-8 py-6">
       <h2 class="text-sm font-semibold text-dusty-rose-700 dark:text-dusty-rose-400 mb-1">Danger zone</h2>
       <p class="text-xs text-gray-500 dark:text-gray-400 mb-4">
-        Permanently delete your account and all associated data. This cannot be undone.
+        Permanently delete your account and its data.
       </p>
-      <%= button_to "Delete my account", registration_path(resource_name),
-            method: :delete,
-            data: { turbo_confirm: "Are you sure? This will permanently delete your account and all your data." },
-            class: "w-full rounded-lg px-4 py-2.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 dark:bg-dusty-rose-700 dark:hover:bg-dusty-rose-600 text-white font-semibold text-sm transition-colors cursor-pointer" %>
+      <div data-controller="delete-account" data-delete-account-phrase-value="<%= User::CONFIRMATION %>">
+        <button type="button" data-action="delete-account#open"
+                class="w-full rounded-lg px-4 py-2.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 dark:bg-dusty-rose-700 dark:hover:bg-dusty-rose-600 text-white font-semibold text-sm transition-colors cursor-pointer">
+          Delete my account
+        </button>
+
+        <dialog data-delete-account-target="dialog" data-action="click->delete-account#backdropClick"
+                class="m-auto w-11/12 sm:w-md rounded-2xl bg-white dark:bg-[#1a1f16] p-6 shadow-xl backdrop:bg-black/50">
+          <h3 class="text-base font-semibold text-gray-900 dark:text-white">Delete your account?</h3>
+          <div class="mt-2 space-y-2 text-sm text-gray-600 dark:text-gray-300">
+            <% if resource.household_owner? %>
+              <p>This deletes your account and your whole household — its meals, lists, chores, to-dos and calendar — for everyone in it.</p>
+            <% else %>
+              <p>This deletes your account. What you've added to <%= resource.household&.family_name || "your household" %> stays with it.</p>
+            <% end %>
+            <p><%= " Your subscription is cancelled." if resource.owned_household&.paid? %></p>
+          </div>
+
+          <%= form_with url: registration_path(resource_name), method: :delete, class: "mt-5" do |f| %>
+            <%= f.label :confirmation, class: "block text-sm text-gray-700 dark:text-gray-200" do %>
+              Type <strong class="font-semibold text-gray-900 dark:text-white"><%= User::CONFIRMATION %></strong> to confirm:
+            <% end %>
+            <%= f.text_field :confirmation, autocomplete: "off", autocapitalize: "off", spellcheck: false,
+                  data: { delete_account_target: "input", action: "input->delete-account#check" },
+                  class: "mt-2 block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-dusty-rose-600 focus:ring-2 focus:ring-dusty-rose-600/20 outline-none transition text-sm" %>
+
+            <div class="mt-5 flex flex-col gap-2">
+              <%= f.button "Delete my account", type: "submit", disabled: true, data: { delete_account_target: "submit" },
+                    class: "w-full rounded-lg px-4 py-2.5 bg-dusty-rose-600 hover:bg-dusty-rose-700 text-white text-sm font-semibold transition cursor-pointer disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-dusty-rose-600" %>
+              <button type="button" data-action="delete-account#close"
+                      class="w-full rounded-lg px-4 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white text-sm font-medium transition cursor-pointer">
+                Cancel
+              </button>
+            </div>
+          <% end %>
+        </dialog>
+      </div>
     </div>
 
     <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">

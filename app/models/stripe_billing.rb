@@ -143,6 +143,15 @@ module StripeBilling
     sync(household, household.stripe_subscription_id)
   end
 
+  # Ends the household's subscription straight away — its owner is deleting
+  # their account (User::AccountDeletion).
+  def cancel_subscription(household)
+    return if household.stripe_subscription_id.blank? || ENDED_STATUSES.include?(household.subscription_status)
+
+    ensure_configured!
+    Stripe::Subscription.cancel(household.stripe_subscription_id)
+  end
+
   def ensure_configured!
     raise NotConfigured, "Stripe isn't configured" unless configured?
   end
