@@ -149,10 +149,17 @@ class PreLaunchTest < ActionDispatch::IntegrationTest
     { "/features/meal-planning" => "meal-planning", "/features/chores" => "chores",
       "/features/calendar" => "calendar", "/features/plan-your-week" => "plan-week", "/" => "meal-planning" }.each do |path, image|
       get path
-      assert_select "picture source[media='(max-width: 639px)'][srcset*=?]", "marketing/#{image}-mobile", { count: 1 }, path
+      assert_select "picture source[media='(max-width: 639px)'][srcset*=?]:not([srcset*='-dark'])", "marketing/#{image}-mobile", { count: 1 }, path
+      assert_select "picture source[media='(max-width: 639px)'][srcset*=?]", "marketing/#{image}-mobile-dark", { count: 1 }, path
     end
     get "/features/restock"
     assert_select "picture", count: 0
+  end
+
+  test "dark mode gets the dark screenshots" do
+    get "/features/restock"
+    assert_select "img.dark\\:hidden[src*=?]:not([src*='-dark'])", "marketing/restock", count: 1
+    assert_select "img.hidden.dark\\:block[src*=?]", "marketing/restock-dark", count: 1
   end
 
   test "joining the launch list" do

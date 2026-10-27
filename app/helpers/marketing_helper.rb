@@ -24,11 +24,24 @@ module MarketingHelper
   end
 
   # A screenshot of the app, swapped for its phone-sized version (when it
-  # has one — see marketing:screenshots) on screens narrower than sm.
+  # has one — see marketing:screenshots) on screens narrower than sm, and
+  # for its "-dark" version when the page is in dark mode. The theme is the
+  # "dark" class on <html> (layouts/_theme), not the device setting, so both
+  # are in the page and CSS shows one; the hidden one is lazy, so it never loads.
   def marketing_screenshot(image, alt:, mobile_image: nil)
-    img = image_tag(image, alt:, class: "w-full h-auto rounded-xl", loading: "lazy")
+    screenshot_picture(image, mobile_image, alt:, theme_class: "dark:hidden") +
+      screenshot_picture(dark_screenshot(image), mobile_image && dark_screenshot(mobile_image), alt:, theme_class: "hidden dark:block")
+  end
+
+  private
+
+  def screenshot_picture(image, mobile_image, alt:, theme_class:)
+    img = image_tag(image, alt:, class: "w-full h-auto rounded-xl #{theme_class}", loading: "lazy")
     return img unless mobile_image
 
     tag.picture { tag.source(media: "(max-width: 639px)", srcset: image_path(mobile_image)) + img }
   end
+
+  # "marketing/chores.webp" → "marketing/chores-dark.webp"
+  def dark_screenshot(image) = image.sub(/(\.\w+)\z/, '-dark\1')
 end

@@ -2,7 +2,9 @@
 # from a made-up household so no real family's data ends up on the site.
 #
 #   bin/rails marketing:demo_household   # once — builds "The Parkers" in the dev database
-#   bin/rails marketing:screenshots      # headless Chrome → PNG + WebP
+#   bin/rails marketing:screenshots      # headless Chrome → PNG + WebP, light and dark
+#
+# ONLY=chores,chores-mobile reshoots just those; THEME=dark just one theme.
 #
 # Development only. The demo household is left in place; RESET=1 on
 # demo_household deletes it (and only it) and builds it fresh.
@@ -177,6 +179,9 @@ class MarketingScreenshots
   MOBILE = { width: 390, max_height: 844, scale: 3 } # an iPhone's screen
   MOBILE_PAGES = %w[meal-planning chores calendar plan-week].freeze
 
+  # Theme → file name suffix ("<name>-dark"). THEME=dark shoots just one.
+  THEMES = { "light" => "", "dark" => "-dark" }.freeze
+
   # Image name → the page it's taken from.
   def pages(week)
     {
@@ -236,31 +241,44 @@ class MarketingScreenshots
     end
 
     only = ENV["ONLY"].to_s.split(",")
-    pages(week).each do |name, path|
-      next if only.any? && !only.include?(name)
-
-      shoot(session, name, path)
-    end
-
-    # Then on a phone: Chrome's mobile emulation, so the pages lay out (and
-    # their media queries match) as on one.
+    themes = ENV["THEME"].present? ? THEMES.slice(*ENV["THEME"].split(",")) : THEMES
+    original_theme = @user.theme
     browser = session.driver.browser
-    browser.execute_cdp("Emulation.setDeviceMetricsOverride", width: MOBILE[:width], height: MOBILE[:max_height] + 200,
-                                                              deviceScaleFactor: MOBILE[:scale], mobile: true)
-    browser.execute_cdp("Emulation.setTouchEmulationEnabled", enabled: true)
-    pages(week).slice(*MOBILE_PAGES).each do |name, path|
-      next if only.any? && !only.include?("#{name}-mobile")
 
-      # A week of calendar is too cramped on a phone — show its busiest day,
-      # from an hour before its first event.
-      if name == "calendar"
-        day, first_hour = busiest_day(household, week)
-        path = "/calendar/day?date=#{day}"
-        @scroll_to_hour = [ first_hour - 1, 0 ].max
+    # Each theme in turn — the marketing pages show the dark set to visitors
+    # viewing them in dark mode (MarketingHelper#marketing_screenshot).
+    themes.each do |theme, suffix|
+      @theme = theme
+      @user.update_column(:theme, theme)
+
+      browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
+      browser.execute_cdp("Emulation.setTouchEmulationEnabled", enabled: false)
+      pages(week).each do |name, path|
+        next if only.any? && !only.include?(name)
+
+        shoot(session, "#{name}#{suffix}", path)
       end
-      shoot(session, "#{name}-mobile", path, max_height: MOBILE[:max_height])
+
+      # Then on a phone: Chrome's mobile emulation, so the pages lay out (and
+      # their media queries match) as on one.
+      browser.execute_cdp("Emulation.setDeviceMetricsOverride", width: MOBILE[:width], height: MOBILE[:max_height] + 200,
+                                                                deviceScaleFactor: MOBILE[:scale], mobile: true)
+      browser.execute_cdp("Emulation.setTouchEmulationEnabled", enabled: true)
+      pages(week).slice(*MOBILE_PAGES).each do |name, path|
+        next if only.any? && !only.include?("#{name}-mobile")
+
+        # A week of calendar is too cramped on a phone — show its busiest day,
+        # from an hour before its first event.
+        if name == "calendar"
+          day, first_hour = busiest_day(household, week)
+          path = "/calendar/day?date=#{day}"
+          @scroll_to_hour = [ first_hour - 1, 0 ].max
+        end
+        shoot(session, "#{name}-mobile#{suffix}", path, max_height: MOBILE[:max_height])
+      end
     end
   ensure
+    @user.update_column(:theme, original_theme) if original_theme
     session&.driver&.quit
   end
 
@@ -285,13 +303,13 @@ class MarketingScreenshots
     # Just the page itself: no navbar, banners or planning bar.
     session.execute_script(<<~JS)
       document.querySelectorAll("body > nav, body > header, #trial_banner, [id^=plan_week_bar], #flash, .fixed").forEach(el => el.style.display = "none")
-      document.documentElement.style.colorScheme = "light"
+      document.documentElement.style.colorScheme = "#{@theme}"
     JS
     sleep 2 # charts animate in
 
     # The calendar opens on early morning; show the busy afternoon and evening
     # (or, for the day view, from the hour set for it).
-    fraction = name == "calendar-mobile" ? @scroll_to_hour / 24.0 : 0.4
+    fraction = name.start_with?("calendar-mobile") ? @scroll_to_hour / 24.0 : 0.4
     session.execute_script(<<~JS) if name.start_with?("calendar")
       document.querySelectorAll("main *").forEach(el => {
         if (el.scrollHeight > el.clientHeight + 50 && getComputedStyle(el).overflowY.match(/auto|scroll/)) el.scrollTop = el.scrollHeight * #{fraction}
