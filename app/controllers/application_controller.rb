@@ -1,6 +1,8 @@
 class ApplicationController < ActionController::Base
   # pagy(:offset, scope, limit:) — paginated lists (see shared/_pagination).
   include Pagy::Method
+  # "View as" for app admins — overrides current_user (see Impersonation).
+  include Impersonation
 
   before_action :authenticate_user!
   before_action :configure_permitted_parameters, if: :devise_controller?

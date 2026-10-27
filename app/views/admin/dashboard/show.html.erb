@@ -1,0 +1,88 @@
+<% content_for :title, "Admin · Overview" %>
+<% term = "text-sm/6 text-gray-600 dark:text-gray-400" %>
+<% card = "overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]" %>
+<% card_heading = "text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400" %>
+<% link_class = "text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+<% empty = "border-t border-sage-100 px-5 py-4 text-sm italic text-gray-400 sm:px-8 dark:border-white/10 dark:text-gray-500" %>
+
+<div class="mx-auto max-w-6xl">
+  <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
+  <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Overview</h1>
+
+  <%# Households by billing state — each links to the filtered list %>
+  <div id="admin_billing_counts" class="mt-8 <%= card %>">
+    <div class="flex items-baseline justify-between px-5 py-4">
+      <h2 class="<%= card_heading %>">Households</h2>
+      <%= link_to "#{number_with_delimiter @household_count} in all", admin_households_path, class: "text-sm #{link_class}" %>
+    </div>
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-sage-100 px-5 py-6 sm:grid-cols-5 sm:px-8 dark:border-white/10">
+      <% @billing_counts.each do |state, count| %>
+        <div>
+          <dt class="<%= term %>"><%= billing_state_label(state) %></dt>
+          <dd class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white">
+            <%= link_to number_with_delimiter(count), admin_households_path(state:), class: "hover:underline" %>
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+
+  <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <%# Sign-ups %>
+    <div id="admin_recent_users" class="<%= card %>">
+      <div class="flex items-baseline justify-between px-5 py-4">
+        <h2 class="<%= card_heading %>">New users</h2>
+        <%= link_to "#{number_with_delimiter @user_count} in all", admin_users_path, class: "text-sm #{link_class}" %>
+      </div>
+      <dl class="grid grid-cols-2 gap-x-6 border-t border-sage-100 px-5 py-4 sm:px-8 dark:border-white/10">
+        <% @signups.each do |label, count| %>
+          <div>
+            <dt class="<%= term %>"><%= label %></dt>
+            <dd class="mt-1 text-2xl font-semibold text-gray-900 dark:text-white"><%= number_with_delimiter count %></dd>
+          </div>
+        <% end %>
+      </dl>
+      <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+        <% @recent_users.each do |user| %>
+          <% household = user.owned_household || user.household_membership&.household # (preloaded) %>
+          <li class="flex items-center justify-between gap-4 px-5 py-3 text-sm sm:px-8">
+            <span class="min-w-0 truncate">
+              <%= link_to user.email, admin_user_path(user), class: "font-medium text-gray-900 hover:underline dark:text-white" %>
+              <% if household %><span class="text-gray-500 dark:text-gray-400"> · <%= household.family_name %></span><% end %>
+            </span>
+            <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400"><%= time_ago_in_words(user.created_at) %> ago</span>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <%# What's gone wrong lately, for whoever it happened to %>
+    <div id="admin_failures" class="<%= card %>">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Needs attention</h2></div>
+      <% if @problems.any? %>
+        <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+          <% @problems.each do |problem| %>
+            <li class="px-5 py-3 text-sm sm:px-8">
+              <p class="text-gray-900 dark:text-white">
+                <%= problem.label %> ·
+                <%# Older recipe imports have no user (recipe_import_jobs.user_id is nullable). %>
+                <%= problem.user ? link_to(problem.user.email, admin_user_path(problem.user), class: link_class) : "no user" %>
+              </p>
+              <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <%= time_ago_in_words(problem.at) %> ago
+                <% if problem.error.present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300"><%= problem.error.truncate(160) %></span><% end %>
+              </p>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="<%= empty %>">Nothing's failed lately.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div id="admin_history" class="mt-8 <%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Recent admin activity</h2></div>
+    <%= render "admin/history", actions: @actions, show_household: true %>
+  </div>
+</div>

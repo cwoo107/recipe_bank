@@ -27,7 +27,38 @@ module AdminHelper
     case action.action
     when "extend_trial" then "Extended the trial from #{from} to #{to}"
     when "comp"         then to ? "Gave free access until #{to}" : "Ended free access"
+    when "impersonation_started" then "Viewed the app as #{action.user&.email || 'a deleted user'}"
+    when "impersonation_ended"
+      ended = { "timed_out" => " (timed out)", "signed_out" => " (signed out)" }[action.details["reason"]]
+      "Stopped viewing as #{action.user&.email || 'a deleted user'}#{ended}"
     else action.action.humanize
     end
+  end
+
+  # "Owner", "Admin", "Limited", or "No household".
+  def admin_user_role(user)
+    if user.owned_household then "Owner"
+    elsif user.household_membership then user.household_membership.role.humanize
+    else "No household"
+    end
+  end
+
+  # How they sign in: "Password", "Google", "Apple" — Google / Apple
+  # sign-ups have no password of their own until they set one.
+  def admin_sign_in_methods(user)
+    methods = user.identities.map { |identity| Admin::UsersController::SIGN_IN_FILTERS[identity.provider] }
+    methods.unshift("Password") unless user.awaiting_first_password?
+    methods.compact
+  end
+
+  # A job's status, colored by whether it went wrong.
+  def admin_status_badge(status)
+    classes =
+      case status
+      when "failed" then "bg-dusty-rose-100 text-dusty-rose-800 dark:bg-dusty-rose-900/30 dark:text-dusty-rose-300"
+      when "completed", "applied" then "bg-sage-100 text-sage-800 dark:bg-white/10 dark:text-sage-100"
+      else "bg-gray-100 text-gray-700 dark:bg-white/10 dark:text-gray-300"
+      end
+    tag.span(status.to_s.humanize, class: "inline-flex rounded-full px-2 py-0.5 text-xs font-medium #{classes}")
   end
 end

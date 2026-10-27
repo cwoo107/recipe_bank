@@ -212,11 +212,17 @@ Rails.application.routes.draw do
 
   # Staff only (users.app_admin) — see Admin::BaseController.
   namespace :admin do
-    root to: "households#index"
+    root to: "dashboard#show"
     resources :households, only: %i[index show] do
       resource :trial_extension, only: :create
       resource :comp, only: %i[create destroy]
     end
+    # "View as" (read-only) — started from a user's page, stopped from the
+    # banner shown on every page meanwhile. See Impersonation.
+    resources :users, only: %i[index show] do
+      resource :impersonation, only: :create
+    end
+    resource :impersonation, only: :destroy
     # :id is the recipe's — featuring is just a flag on it.
     resources :featured_recipes, only: %i[index create destroy]
     resources :beta_invites,     only: %i[index create destroy]

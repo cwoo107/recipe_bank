@@ -1,0 +1,65 @@
+<% content_for :title, "Admin · Users" %>
+<% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+
+<div class="mx-auto max-w-6xl">
+  <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
+  <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Users</h1>
+
+  <%= form_with url: admin_users_path, method: :get, class: "mt-8 flex flex-col gap-4 sm:flex-row sm:items-end" do %>
+    <div class="flex-1">
+      <%= label_tag :q, "Search", class: label_class %>
+      <div class="mt-2">
+        <%= search_field_tag :q, @query, placeholder: "Email, name, or household", class: settings_input_classes %>
+      </div>
+    </div>
+    <div class="sm:w-48">
+      <%= label_tag :sign_in, "Signs in with", class: label_class %>
+      <div class="mt-2">
+        <%= select_tag :sign_in,
+              options_for_select(Admin::UsersController::SIGN_IN_FILTERS.invert, @sign_in),
+              include_blank: "Anything", class: settings_select_classes %>
+      </div>
+    </div>
+    <%= submit_tag "Search", name: nil,
+          class: "rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] cursor-pointer dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+  <% end %>
+
+  <% if @users.any? %>
+    <div class="mt-6 overflow-x-auto rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <table id="admin_users" class="min-w-full divide-y divide-sage-100 text-sm dark:divide-white/10">
+        <thead>
+          <tr class="text-left text-xs font-semibold uppercase tracking-wider text-sage-400 dark:text-gray-400">
+            <th class="px-5 py-3">Email</th>
+            <th class="px-5 py-3">Household</th>
+            <th class="px-5 py-3">Role</th>
+            <th class="px-5 py-3">Signs in with</th>
+            <th class="px-5 py-3">Signed up</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-sage-100 dark:divide-white/10">
+          <% @users.each do |user| %>
+            <% household = user.owned_household || user.household_membership&.household # (preloaded) %>
+            <tr class="hover:bg-sage-50/50 dark:hover:bg-white/5">
+              <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                <%= link_to user.email, admin_user_path(user), class: "hover:underline" %>
+                <% if user.app_admin? %>
+                  <span class="ml-1 inline-flex rounded-full bg-sage-100 px-2 py-0.5 text-xs font-medium text-sage-800 dark:bg-white/10 dark:text-sage-100">App admin</span>
+                <% end %>
+              </td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300">
+                <%= household ? link_to(household.family_name, admin_household_path(household), class: "hover:underline") : "—" %>
+              </td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= admin_user_role(user) %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= admin_sign_in_methods(user).to_sentence.presence || "—" %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= l user.created_at.to_date, format: :long %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <%= render "shared/pagination", pagy: @pagy, item_name: "users" %>
+  <% else %>
+    <p class="mt-8 text-sm italic text-gray-400 dark:text-gray-500">No users match.</p>
+  <% end %>
+</div>

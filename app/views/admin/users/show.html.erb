@@ -1,0 +1,149 @@
+<% content_for :title, "Admin · #{@user.email}" %>
+<% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+<% term = "text-sm/6 text-gray-600 dark:text-gray-400" %>
+<% value = "mt-1 text-sm/6 font-medium text-gray-900 dark:text-white" %>
+<% card = "mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]" %>
+<% card_heading = "text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400" %>
+<% primary = "rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] cursor-pointer dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+<% link_class = "text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+<% date_format = ->(time) { time ? l(time.to_date, format: :long) : "—" } %>
+
+<div class="mx-auto max-w-6xl">
+  <%= link_to "← All users", admin_users_path, class: "text-sm #{link_class}" %>
+  <div class="mt-3 flex flex-wrap items-center gap-3">
+    <h1 class="font-serif text-4xl text-sage-900 break-all dark:text-[#e8ede3]"><%= @user.email %></h1>
+    <% if @user.app_admin? %>
+      <span class="inline-flex rounded-full bg-sage-100 px-2 py-0.5 text-xs font-medium text-sage-800 dark:bg-white/10 dark:text-sage-100">App admin</span>
+    <% end %>
+  </div>
+  <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
+    Signed up <%= date_format.(@user.created_at) %> ·
+    signs in with <%= admin_sign_in_methods(@user).to_sentence.presence || "nothing yet" %>
+  </p>
+
+  <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div id="admin_account" class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Account</h2></div>
+      <dl class="grid grid-cols-1 gap-x-6 gap-y-4 border-t border-sage-100 px-5 py-6 sm:grid-cols-2 sm:px-8 dark:border-white/10">
+        <div>
+          <dt class="<%= term %>">Household</dt>
+          <dd class="<%= value %>">
+            <%= @household ? link_to(@household.family_name, admin_household_path(@household), class: link_class) : "None yet" %>
+          </dd>
+        </div>
+        <div>
+          <dt class="<%= term %>">Role</dt>
+          <dd class="<%= value %>"><%= admin_user_role(@user) %></dd>
+        </div>
+        <div>
+          <dt class="<%= term %>">Name in the household</dt>
+          <dd class="<%= value %>"><%= @membership&.name || "—" %></dd>
+        </div>
+        <div>
+          <dt class="<%= term %>">Theme</dt>
+          <dd class="<%= value %>"><%= @user.theme.humanize %></dd>
+        </div>
+        <div>
+          <dt class="<%= term %>">Last password reset email</dt>
+          <dd class="<%= value %>"><%= date_format.(@user.reset_password_sent_at) %></dd>
+        </div>
+        <div>
+          <dt class="<%= term %>">Household billing</dt>
+          <dd class="<%= value %>"><%= @household ? billing_state_badge(@household) : "—" %></dd>
+        </div>
+      </dl>
+    </div>
+
+    <%# View the app as them %>
+    <div id="admin_impersonate" class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">View as this user</h2></div>
+      <div class="border-t border-sage-100 px-5 py-6 sm:px-8 dark:border-white/10">
+        <% if @user.app_admin? %>
+          <p class="text-sm text-olive-500 dark:text-gray-400">You can't view the app as another admin.</p>
+        <% else %>
+          <p class="mb-4 text-sm text-olive-500 dark:text-gray-400">
+            See the app exactly as they do — their household, their permissions. It's read-only: nothing you click
+            changes anything, and it ends on its own after <%= distance_of_time_in_words(Impersonation::TIMEOUT) %>.
+          </p>
+          <%= form_with url: admin_user_impersonation_path(@user), class: "space-y-4" do %>
+            <div>
+              <%= label_tag :impersonation_note, "Note", class: label_class %>
+              <div class="mt-2"><%= text_field_tag :note, nil, id: "impersonation_note", placeholder: "Why? (shows in the history)", class: settings_input_classes %></div>
+            </div>
+            <%= submit_tag "View as #{@user.email}", name: nil, class: primary %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div id="admin_usage" class="<%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Their things</h2></div>
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-sage-100 px-5 py-6 sm:grid-cols-5 sm:px-8 dark:border-white/10">
+      <% @counts.each do |label, count| %>
+        <div>
+          <dt class="<%= term %>"><%= label %></dt>
+          <dd class="<%= value %>"><%= number_with_delimiter count %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+
+  <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div id="admin_recipe_imports" class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Recent recipe imports</h2></div>
+      <% if @recipe_imports.any? %>
+        <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+          <% @recipe_imports.each do |import| %>
+            <li class="px-5 py-3 text-sm sm:px-8">
+              <div class="flex items-center justify-between gap-3">
+                <span class="truncate text-gray-900 dark:text-white"><%= import.url.presence || "From a file" %></span>
+                <%= admin_status_badge(import.status) %>
+              </div>
+              <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <%= l import.created_at, format: :long %>
+                <% if import.error_message.present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300"><%= import.error_message.truncate(160) %></span><% end %>
+              </p>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="border-t border-sage-100 px-5 py-4 text-sm italic text-gray-400 sm:px-8 dark:border-white/10 dark:text-gray-500">None yet.</p>
+      <% end %>
+    </div>
+
+    <div id="admin_receipt_scans" class="overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Recent receipt scans</h2></div>
+      <% if @receipt_scans.any? %>
+        <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+          <% @receipt_scans.each do |scan| %>
+            <li class="px-5 py-3 text-sm sm:px-8">
+              <div class="flex items-center justify-between gap-3">
+                <span class="truncate text-gray-900 dark:text-white"><%= scan.store_name.presence || "Receipt" %> · week of <%= l scan.week_of, format: :long %></span>
+                <%= admin_status_badge(scan.status) %>
+              </div>
+              <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                <%= l scan.created_at, format: :long %>
+                <% if scan.error_message.present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300"><%= scan.error_message.truncate(160) %></span><% end %>
+              </p>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="border-t border-sage-100 px-5 py-4 text-sm italic text-gray-400 sm:px-8 dark:border-white/10 dark:text-gray-500">None yet.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @calendar_sources.any? %>
+    <div id="admin_calendars" class="<%= card %>">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Calendars they connected</h2></div>
+      <%= render "admin/calendar_sources", sources: @calendar_sources %>
+    </div>
+  <% end %>
+
+  <div id="admin_history" class="<%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">History</h2></div>
+    <%= render "admin/history", actions: @actions %>
+  </div>
+</div>

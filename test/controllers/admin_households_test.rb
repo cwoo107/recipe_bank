@@ -113,7 +113,7 @@ class AdminHouseholdsTest < ActionDispatch::IntegrationTest
 
   test "the account menu links admins to the admin pages" do
     sign_in @admin
-    get admin_root_path
+    get dashboard_path
     assert_select "a[href='#{admin_root_path}']", text: "Admin"
 
     sign_in users(:one)

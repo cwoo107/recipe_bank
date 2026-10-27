@@ -1,0 +1,22 @@
+<%# locals: (actions:, show_household: false) %>
+<%# The admin audit trail (AdminAction) as a card's list. %>
+<% if actions.any? %>
+  <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+    <% actions.each do |action| %>
+      <li class="px-5 py-3 text-sm sm:px-8">
+        <p class="text-gray-900 dark:text-white">
+          <%= admin_action_summary(action) %>
+          <% if show_household && action.household %>
+            · <%= link_to action.household.family_name, admin_household_path(action.household), class: "text-[#5f734c] hover:underline dark:text-[#7a8f62]" %>
+          <% end %>
+        </p>
+        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          <%= action.admin.email %> · <%= l action.created_at, format: :long %>
+          <% if action.note.present? %> · “<%= action.note %>”<% end %>
+        </p>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p class="border-t border-sage-100 px-5 py-4 text-sm italic text-gray-400 sm:px-8 dark:border-white/10 dark:text-gray-500">No admin changes yet.</p>
+<% end %>

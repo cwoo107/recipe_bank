@@ -1,0 +1,20 @@
+<%# While an app admin views the app as someone (Impersonation): who, that
+    it's read-only, when it ends, and the way out — on every page, admin
+    ones included, so it's never forgotten. %>
+<% if impersonating? %>
+  <% household = impersonated_user.household %>
+  <div id="impersonation_banner" class="sticky top-0 z-50 bg-honey-300 text-honey-950 shadow-sm dark:bg-honey-800 dark:text-honey-50">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-2 text-sm sm:px-6 lg:px-8">
+      <p>
+        Viewing as <span class="font-semibold"><%= impersonated_user.email %></span>
+        <% if household %>· <%= household.family_name %><% end %>
+        · read-only until <%= l impersonation_ends_at, format: "%-l:%M %p" %>
+      </p>
+      <div class="flex items-center gap-3">
+        <%= link_to "Admin", admin_user_path(impersonated_user), class: "font-medium underline-offset-2 hover:underline" %>
+        <%= button_to "Stop viewing", admin_impersonation_path, method: :delete,
+              class: "rounded-md bg-honey-950 px-3 py-1 text-xs font-semibold text-white hover:bg-honey-900 cursor-pointer dark:bg-honey-50 dark:text-honey-950 dark:hover:bg-white" %>
+      </div>
+    </div>
+  </div>
+<% end %>

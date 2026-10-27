@@ -108,32 +108,49 @@
     <div class="px-5 py-4"><h2 class="<%= card_heading %>">Members</h2></div>
     <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
       <% @members.each do |member| %>
-        <li class="flex items-center justify-between gap-4 px-5 py-3 text-sm sm:px-8">
+        <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-3 text-sm sm:px-8">
           <span class="font-medium text-gray-900 dark:text-white"><%= member.name %></span>
-          <span class="text-gray-500 dark:text-gray-400">
-            <%= member.user&.email || "No login" %> · <%= member.owner? ? "Owner" : member.role.humanize %>
+          <span class="flex items-center gap-3 text-gray-500 dark:text-gray-400">
+            <span>
+              <%= member.user ? link_to(member.user.email, admin_user_path(member.user), class: "text-[#5f734c] hover:underline dark:text-[#7a8f62]") : "No login" %>
+              · <%= member.owner? ? "Owner" : member.role.humanize %>
+            </span>
+            <% if member.user && !member.user.app_admin? %>
+              <%= button_to "View as", admin_user_impersonation_path(member.user),
+                    class: "rounded-md border border-sage-200 px-2.5 py-1 text-xs font-medium text-sage-800 hover:bg-sage-50 cursor-pointer dark:border-white/15 dark:text-sage-100 dark:hover:bg-white/5" %>
+            <% end %>
           </span>
         </li>
       <% end %>
     </ul>
   </div>
 
+  <div id="admin_settings" class="<%= card %>">
+    <div class="px-5 py-4"><h2 class="<%= card_heading %>">Settings and usage</h2></div>
+    <dl class="grid grid-cols-2 gap-x-6 gap-y-4 border-t border-sage-100 px-5 py-6 sm:grid-cols-3 lg:grid-cols-5 sm:px-8 dark:border-white/10">
+      <% {
+           "Time zone"     => @household.time_zone.presence || "Not set",
+           "Week starts"   => @household.week_start_day_name,
+           "Family size"   => @household.family_size,
+           "To-do time"    => @household.todo_time_per_day? ? "#{@household.minutes_per_day} min a day" : "#{@household.todo_hours_per_week} hours a week"
+         }.merge(@usage.transform_values { |count| number_with_delimiter(count) }).each do |label, shown| %>
+        <div>
+          <dt class="<%= term %>"><%= label %></dt>
+          <dd class="<%= value %>"><%= shown %></dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+
+  <% if @calendar_sources.any? %>
+    <div id="admin_calendars" class="<%= card %>">
+      <div class="px-5 py-4"><h2 class="<%= card_heading %>">Calendars</h2></div>
+      <%= render "admin/calendar_sources", sources: @calendar_sources %>
+    </div>
+  <% end %>
+
   <div id="admin_history" class="<%= card %>">
     <div class="px-5 py-4"><h2 class="<%= card_heading %>">History</h2></div>
-    <% if @actions.any? %>
-      <ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
-        <% @actions.each do |action| %>
-          <li class="px-5 py-3 text-sm sm:px-8">
-            <p class="text-gray-900 dark:text-white"><%= admin_action_summary(action) %></p>
-            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-              <%= action.admin.email %> · <%= l action.created_at, format: :long %>
-              <% if action.note.present? %> · “<%= action.note %>”<% end %>
-            </p>
-          </li>
-        <% end %>
-      </ul>
-    <% else %>
-      <p class="border-t border-sage-100 px-5 py-4 text-sm italic text-gray-400 sm:px-8 dark:border-white/10 dark:text-gray-500">No admin changes yet.</p>
-    <% end %>
+    <%= render "admin/history", actions: @actions %>
   </div>
 </div>

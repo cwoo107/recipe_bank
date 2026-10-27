@@ -33,17 +33,22 @@
     that's broadcast to everyone at once (e.g. grocery list rows), where the
     server can't tailor it per viewer. The server still enforces permissions. %>
 <body class="min-h-screen bg-[#faf9f7] dark:bg-[#1a1f16] antialiased" data-controller="timezone" <%= "data-limited" if user_signed_in? && !household_admin? %>>
+<%= render 'shared/impersonation_banner' %>
 <%= native_tabs_tag if user_signed_in? %>
 <%= render 'shared/native_navbar' if user_signed_in? %>
-<%= render 'shared/navbar' unless native_app? %>
-<%= render 'shared/trial_banner' %>
+<% if content_for?(:navbar) %>
+  <%= yield :navbar %>
+<% else %>
+  <%= render 'shared/navbar' unless native_app? %>
+  <%= render 'shared/trial_banner' %>
+<% end %>
 
 <div id="flash"></div>
 <%= render 'shared/flash' if notice.present? || alert.present? %>
 <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 native-inset">
   <%= yield %>
 </main>
-<%= render 'shared/plan_week_bar' %>
+<%= render 'shared/plan_week_bar' unless content_for?(:navbar) %>
 <%= render 'shared/turbo_confirm_dialog' %>
 </body>
 </html>

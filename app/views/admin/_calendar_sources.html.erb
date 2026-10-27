@@ -1,0 +1,18 @@
+<%# locals: (sources:) %>
+<%# Connected calendars and how their syncing is going, as a card's list. %>
+<ul class="divide-y divide-sage-100 border-t border-sage-100 dark:divide-white/10 dark:border-white/10">
+  <% sources.each do |source| %>
+    <li class="px-5 py-3 text-sm sm:px-8">
+      <div class="flex items-center justify-between gap-3">
+        <span class="text-gray-900 dark:text-white"><%= source.name %> · <%= source.provider_label %></span>
+        <% if source.last_sync_error.present? %>
+          <%= admin_status_badge("failed") %>
+        <% end %>
+      </div>
+      <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+        Last synced <%= source.last_synced_at ? l(source.last_synced_at, format: :long) : "never" %>
+        <% if source.last_sync_error.present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300"><%= source.last_sync_error.truncate(200) %></span><% end %>
+      </p>
+    </li>
+  <% end %>
+</ul>
