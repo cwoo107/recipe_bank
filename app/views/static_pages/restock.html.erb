@@ -1,0 +1,19 @@
+<% content_for :title, "Restock List — HomemakersHaven" %>
+<% content_for :description, "Keep track of the household staples — mark what's running low and shop it store by store." %>
+
+<%= render "static_pages/feature_hero",
+    eyebrow: "Restock list",
+    headline: "Never run out of toilet paper again",
+    subheadline: "Keep a checklist of everything the house runs on — paper towels, dish soap, coffee, dog food — and mark what's running low. It becomes a shopping list, sorted by the store you buy it from.",
+    image: "marketing/restock.webp",
+    image_alt: "A restock checklist in HomemakersHaven with household staples grouped by category" %>
+
+<%= render "static_pages/detail_grid", items: [
+  { title: "Your staples, in one place", desc: "List the things you always keep on hand, with the brand you like, grouped your way — pantry, cleaning, bathroom, pets." },
+  { title: "One tap when it's low", desc: "Spot something running low? Mark it to restock. Mark it stocked again once it's home." },
+  { title: "Shop it store by store", desc: "Say where you buy each thing — Costco, Target, Amazon — and the restock list sorts itself into one list per store, right alongside your groceries." },
+] %>
+
+<%= render "static_pages/cta_band",
+    headline: "Know what you're out of before you're out of it",
+    subheadline: "Keep the whole household's staples stocked." %>

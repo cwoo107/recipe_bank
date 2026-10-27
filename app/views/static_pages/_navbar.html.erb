@@ -8,11 +8,20 @@
       <% end %>
 
       <div class="hidden lg:flex lg:items-center lg:gap-x-7">
-        <%= link_to "Meal Planning", feature_meal_planning_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
-        <%= link_to "Grocery Lists", feature_grocery_lists_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
-        <%= link_to "Recipe Bank", feature_recipes_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
-        <%= link_to "To-do Lists", feature_todos_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
-        <%= link_to "Shared Calendar", feature_calendar_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
+        <%# Every feature page, under one menu — too many to sit in the bar. %>
+        <div class="relative" data-controller="dropdown" data-action="click@window->dropdown#closeOnOutsideClick">
+          <button type="button" data-action="dropdown#toggle"
+                  class="inline-flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-[#5f734c] cursor-pointer dark:text-gray-300 dark:hover:text-[#7a8f62]">
+            Features
+            <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" /></svg>
+          </button>
+          <div data-dropdown-target="menu"
+               class="hidden absolute left-1/2 z-50 mt-3 w-64 -translate-x-1/2 rounded-xl bg-white p-2 shadow-lg ring-1 ring-black/5 dark:bg-[#242b1e] dark:ring-white/10">
+            <% marketing_feature_links.each do |label, path| %>
+              <%= link_to label, path, class: "block rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-sage-50 hover:text-[#5f734c] dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-[#95a97d]" %>
+            <% end %>
+          </div>
+        </div>
         <%= link_to "Pricing", pricing_path, class: "text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
       </div>
 
@@ -21,7 +30,7 @@
           <%= link_to "Go to dashboard", meals_path, class: "hidden sm:inline-flex items-center rounded-md bg-[#5f734c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
         <% else %>
           <%= link_to "Sign in", new_user_session_path, class: "hidden sm:inline-flex text-sm font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62]" %>
-          <%= link_to "Get started", new_user_registration_path, class: "hidden sm:inline-flex items-center rounded-md bg-[#5f734c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+          <%= signup_cta "Get started", closed_label: "Join the list", class: "hidden sm:inline-flex items-center rounded-md bg-[#5f734c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
         <% end %>
 
         <button type="button" data-action="click->mobile-menu#toggle"
@@ -37,18 +46,16 @@
 
   <div class="hidden lg:hidden border-t border-black/5 dark:border-white/10" data-mobile-menu-target="menu">
     <div class="space-y-1 px-4 py-4">
-      <%= link_to "Meal planning", feature_meal_planning_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
-      <%= link_to "Grocery lists", feature_grocery_lists_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
-      <%= link_to "Recipes", feature_recipes_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
-      <%= link_to "To-do lists", feature_todos_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
-      <%= link_to "Shared calendar", feature_calendar_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <% marketing_feature_links.each do |label, path| %>
+        <%= link_to label, path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
+      <% end %>
       <%= link_to "Pricing", pricing_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
       <div class="mt-4 border-t border-black/5 dark:border-white/10 pt-4 space-y-2">
         <% if user_signed_in? %>
           <%= link_to "Go to dashboard", meals_path, class: "block rounded-lg bg-[#5f734c] px-3 py-2 text-center text-base font-semibold text-white" %>
         <% else %>
           <%= link_to "Sign in", new_user_session_path, class: "block rounded-lg px-3 py-2 text-base font-medium text-gray-700 hover:bg-sage-50 dark:text-gray-300" %>
-          <%= link_to "Get started", new_user_registration_path, class: "block rounded-lg bg-[#5f734c] px-3 py-2 text-center text-base font-semibold text-white" %>
+          <%= signup_cta "Get started", class: "block rounded-lg bg-[#5f734c] px-3 py-2 text-center text-base font-semibold text-white" %>
         <% end %>
       </div>
     </div>

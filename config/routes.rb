@@ -1,5 +1,11 @@
 Rails.application.routes.draw do
-  devise_for :users
+  devise_for :users, controllers: { registrations: "users/registrations" }
+
+  # Before launch: beta invite links open sign-up; everyone else can join the
+  # launch mailing list.
+  get  "beta/:token", to: "beta_invites#show", as: :beta_invite
+  resources :launch_subscribers, only: :create, path: "launch-list"
+  get  "launch-list/unsubscribe/:token", to: "launch_subscribers#unsubscribe", as: :unsubscribe_launch_list
 
   root 'static_pages#home'
 
@@ -19,6 +25,9 @@ Rails.application.routes.draw do
   get 'features/recipes',       to: 'static_pages#recipes',       as: :feature_recipes
   get 'features/todos',         to: 'static_pages#todos',         as: :feature_todos
   get 'features/calendar',      to: 'static_pages#calendar',      as: :feature_calendar
+  get 'features/restock',       to: 'static_pages#restock',       as: :feature_restock
+  get 'features/chores',        to: 'static_pages#chores',        as: :feature_chores
+  get 'features/plan-your-week', to: 'static_pages#plan_week',    as: :feature_plan_week
 
   get 'grocery_list', to: 'grocery_lists#index', as: 'grocery_lists'
   # `create`'s default path helper (grocery_lists_path) would collide with the
@@ -204,6 +213,8 @@ Rails.application.routes.draw do
     end
     # :id is the recipe's — featuring is just a flag on it.
     resources :featured_recipes, only: %i[index create destroy]
+    resources :beta_invites,     only: %i[index create destroy]
+    resources :launch_subscribers, only: :index
   end
 
   get "up" => "rails/health#show", as: :rails_health_check

@@ -1,0 +1,87 @@
+<% content_for :title, "Admin · Beta invites" %>
+<% label_class = "block text-sm/6 font-medium text-gray-900 dark:text-white" %>
+
+<div class="mx-auto max-w-6xl">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Beta invites</h1>
+    </div>
+    <%= render "admin/nav" %>
+  </div>
+  <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+    <% if Launch.registrations_open? %>
+      Sign-ups are open to everyone, so these links aren't needed right now — they still work.
+    <% else %>
+      Sign-ups are closed until launch. Each link lets one person make their own account; copy it and send it to them.
+    <% end %>
+  </p>
+
+  <%= form_with url: admin_beta_invites_path, class: "mt-6 flex flex-col gap-4 sm:flex-row sm:items-end" do %>
+    <div class="flex-1">
+      <%= label_tag :name, "Who's it for? (optional)", class: label_class %>
+      <div class="mt-2">
+        <%= text_field_tag :name, nil, placeholder: "e.g. Aunt Jo", class: settings_input_classes %>
+      </div>
+    </div>
+    <%= submit_tag "Create invite link", name: nil,
+          class: "rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] cursor-pointer dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>
+  <% end %>
+
+  <% if @invites.any? %>
+    <div class="mt-6 overflow-x-auto rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <table id="admin_beta_invites" class="min-w-full divide-y divide-sage-100 text-sm dark:divide-white/10">
+        <thead>
+          <tr class="text-left text-xs font-semibold uppercase tracking-wider text-sage-400 dark:text-gray-400">
+            <th class="px-5 py-3">For</th>
+            <th class="px-5 py-3">Link</th>
+            <th class="px-5 py-3">Status</th>
+            <th class="px-5 py-3"><span class="sr-only">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-sage-100 dark:divide-white/10">
+          <% @invites.each do |invite| %>
+            <tr id="<%= dom_id(invite) %>" class="<%= 'bg-sage-50 dark:bg-white/5' if params[:highlight].to_i == invite.id %>">
+              <td class="px-5 py-3 font-medium text-gray-900 dark:text-white">
+                <%= invite.name.presence || "—" %>
+                <p class="text-xs font-normal text-gray-500 dark:text-gray-400">
+                  <%= l(invite.created_at.to_date, format: :long) %><%= " by #{invite.created_by.email}" if invite.created_by %>
+                </p>
+              </td>
+              <td class="px-5 py-3">
+                <% if invite.redeemed? %>
+                  <span class="text-gray-400 dark:text-gray-500">Used</span>
+                <% else %>
+                  <div class="flex items-center gap-2" data-controller="clipboard">
+                    <input type="text" readonly value="<%= beta_invite_url(invite.token) %>"
+                           data-clipboard-target="source" data-action="focus->clipboard#select"
+                           aria-label="Invite link<%= " for #{invite.name}" if invite.name %>"
+                           class="w-72 rounded-md bg-white px-2 py-1 font-mono text-xs text-gray-700 outline-1 -outline-offset-1 outline-gray-300 dark:bg-white/5 dark:text-gray-200 dark:outline-white/10">
+                    <button type="button" data-clipboard-target="button" data-action="clipboard#copy"
+                            class="rounded-md bg-white px-2.5 py-1 text-xs font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 cursor-pointer dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20">Copy link</button>
+                  </div>
+                <% end %>
+              </td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300">
+                <% if invite.redeemed? %>
+                  Joined <%= l(invite.redeemed_at.to_date, format: :long) %><%= " as #{invite.redeemed_by.email}" if invite.redeemed_by %>
+                <% else %>
+                  Not used yet
+                <% end %>
+              </td>
+              <td class="px-5 py-3 text-right">
+                <% unless invite.redeemed? %>
+                  <%= button_to "Revoke", admin_beta_invite_path(invite), method: :delete,
+                        data: { turbo_confirm: "Revoke this invite link? It will stop working." },
+                        class: "text-dusty-rose-600 hover:text-dusty-rose-900 cursor-pointer dark:text-dusty-rose-400" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="mt-6 text-sm italic text-gray-400 dark:text-gray-500">No invite links yet.</p>
+  <% end %>
+</div>

@@ -129,7 +129,7 @@ class ApplicationController < ActionController::Base
   end
 
   # ── Billing ────────────────────────────────────────────────────────────
-  # Once a household's free month runs out without a plan, everything but
+  # Once a household's free trial runs out without a plan, everything but
   # the household page's billing section (and the owner's recipe export) is
   # locked until someone subscribes. Nothing is deleted. See Household::Billing.
 

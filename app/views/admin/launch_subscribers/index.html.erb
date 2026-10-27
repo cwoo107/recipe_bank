@@ -1,0 +1,47 @@
+<% content_for :title, "Admin · Launch list" %>
+
+<div class="mx-auto max-w-6xl">
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
+      <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Launch list</h1>
+    </div>
+    <%= render "admin/nav" %>
+  </div>
+
+  <div class="mt-2 flex flex-wrap items-center justify-between gap-4">
+    <p class="text-sm text-gray-600 dark:text-gray-400">
+      <%= pluralize(@subscribers.subscribed.count, "person") %> waiting to hear about launch.
+      Anyone here who signs up with the same email gets three months free.
+    </p>
+    <%= link_to "Download CSV", admin_launch_subscribers_path(format: :csv),
+          class: "rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+  </div>
+
+  <% if @subscribers.any? %>
+    <div class="mt-6 overflow-x-auto rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+      <table id="admin_launch_subscribers" class="min-w-full divide-y divide-sage-100 text-sm dark:divide-white/10">
+        <thead>
+          <tr class="text-left text-xs font-semibold uppercase tracking-wider text-sage-400 dark:text-gray-400">
+            <th class="px-5 py-3">Email</th>
+            <th class="px-5 py-3">Joined</th>
+            <th class="px-5 py-3">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-sage-100 dark:divide-white/10">
+          <% @subscribers.each do |subscriber| %>
+            <tr>
+              <td class="px-5 py-3 font-medium text-gray-900 dark:text-white"><%= subscriber.email %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300"><%= l(subscriber.created_at.to_date, format: :long) %></td>
+              <td class="px-5 py-3 text-gray-600 dark:text-gray-300">
+                <%= subscriber.unsubscribed? ? "Unsubscribed #{l(subscriber.unsubscribed_at.to_date, format: :long)}" : "Subscribed" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="mt-6 text-sm italic text-gray-400 dark:text-gray-500">No one has joined yet.</p>
+  <% end %>
+</div>

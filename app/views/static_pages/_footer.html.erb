@@ -11,11 +11,9 @@
       <div>
         <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Features</h3>
         <ul class="mt-4 space-y-3 text-sm">
-          <li><%= link_to "Meal planning", feature_meal_planning_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
-          <li><%= link_to "Grocery lists", feature_grocery_lists_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
-          <li><%= link_to "Recipes", feature_recipes_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
-          <li><%= link_to "To-do lists", feature_todos_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
-          <li><%= link_to "Shared calendar", feature_calendar_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
+          <% marketing_feature_links.each do |label, path| %>
+            <li><%= link_to label, path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
+          <% end %>
         </ul>
       </div>
 
@@ -24,7 +22,7 @@
         <ul class="mt-4 space-y-3 text-sm">
           <li><%= link_to "Pricing", pricing_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
           <li><%= link_to "Sign in", new_user_session_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
-          <li><%= link_to "Create an account", new_user_registration_path, class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
+          <li><%= signup_cta "Create an account", class: "text-gray-500 hover:text-[#5f734c] dark:text-gray-400" %></li>
         </ul>
       </div>
     </div>

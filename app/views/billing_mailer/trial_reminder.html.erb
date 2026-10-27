@@ -4,15 +4,15 @@
   <%= email_heading "Your free trial has ended" %>
 
   <%= email_paragraph do %>
-    Hi <%= email_name_for(@owner) %>, the free month for <strong><%= @household.display_name %></strong> ended on <%= ends_on %>.
+    Hi <%= email_name_for(@owner) %>, the free trial for <strong><%= @household.display_name %></strong> ended on <%= ends_on %>.
     Your recipes, meal plans and lists are all still there — pick a plan to pick up where you left off.
   <% end %>
 <% else %>
-  <% content_for :preheader, "Your free month ends on #{ends_on}." %>
+  <% content_for :preheader, "Your free trial ends on #{ends_on}." %>
   <%= email_heading(@stage == "day" ? "Your trial ends tomorrow" : "One week left in your trial") %>
 
   <%= email_paragraph do %>
-    Hi <%= email_name_for(@owner) %>, the free month for <strong><%= @household.display_name %></strong> ends on <%= ends_on %>.
+    Hi <%= email_name_for(@owner) %>, the free trial for <strong><%= @household.display_name %></strong> ends on <%= ends_on %>.
     To keep planning without a break, choose a plan: $5 a month, or $52 a year ($4.33 a month).
   <% end %>
 <% end %>

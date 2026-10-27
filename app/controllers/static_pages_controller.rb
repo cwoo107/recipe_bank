@@ -13,4 +13,7 @@ class StaticPagesController < ApplicationController
   def recipes; end
   def todos; end
   def calendar; end
+  def restock; end
+  def chores; end
+  def plan_week; end
 end

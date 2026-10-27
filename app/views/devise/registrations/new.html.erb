@@ -14,6 +14,12 @@
       <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">Create your account</p>
     </div>
 
+    <% if @beta_invite %>
+      <p class="mb-6 rounded-lg bg-sage-50 px-4 py-3 text-center text-sm text-sage-800 inset-ring inset-ring-sage-200 dark:bg-white/5 dark:text-sage-100 dark:inset-ring-white/10">
+        Welcome to the beta<%= ", #{@beta_invite.name}" if @beta_invite.name.present? %>! Thanks for helping us test HomemakersHaven.
+      </p>
+    <% end %>
+
     <div class="bg-white dark:bg-[#242b1e] rounded-2xl shadow-sm inset-ring inset-ring-gray-900/5 dark:inset-ring-white/10 px-8 py-10">
 
       <% if resource.errors.any? %>

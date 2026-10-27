@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_25_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_27_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -59,6 +59,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_140000) do
     t.datetime "updated_at", null: false
     t.index ["admin_id"], name: "index_admin_actions_on_admin_id"
     t.index ["household_id"], name: "index_admin_actions_on_household_id"
+  end
+
+  create_table "beta_invites", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "created_by_id"
+    t.string "name"
+    t.datetime "redeemed_at"
+    t.integer "redeemed_by_id"
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_by_id"], name: "index_beta_invites_on_created_by_id"
+    t.index ["redeemed_by_id"], name: "index_beta_invites_on_redeemed_by_id"
+    t.index ["token"], name: "index_beta_invites_on_token", unique: true
   end
 
   create_table "calendar_events", force: :cascade do |t|
@@ -252,6 +265,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_140000) do
     t.index ["created_by_id"], name: "index_ingredients_on_created_by_id"
     t.index ["household_id"], name: "index_ingredients_on_household_id"
     t.index ["source_ingredient_id"], name: "index_ingredients_on_source_ingredient_id"
+  end
+
+  create_table "launch_subscribers", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "unsubscribe_token", null: false
+    t.datetime "unsubscribed_at"
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_launch_subscribers_on_email", unique: true
+    t.index ["unsubscribe_token"], name: "index_launch_subscribers_on_unsubscribe_token", unique: true
   end
 
   create_table "meal_assignments", force: :cascade do |t|
@@ -618,6 +641,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_25_140000) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "admin_actions", "households", on_delete: :nullify
   add_foreign_key "admin_actions", "users", column: "admin_id"
+  add_foreign_key "beta_invites", "users", column: "created_by_id", on_delete: :nullify
+  add_foreign_key "beta_invites", "users", column: "redeemed_by_id", on_delete: :nullify
   add_foreign_key "calendar_events", "calendar_sources"
   add_foreign_key "calendar_events", "households"
   add_foreign_key "calendar_events", "users"

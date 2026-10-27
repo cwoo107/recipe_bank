@@ -4,9 +4,16 @@
     <% if defined?(subheadline) && subheadline.present? %>
       <p class="mx-auto mt-4 max-w-xl text-base text-sage-100"><%= subheadline %></p>
     <% end %>
-    <div class="mt-8 flex items-center justify-center gap-4">
-      <%= link_to "Get started", new_user_registration_path, class: "inline-flex items-center rounded-md bg-white px-5 py-3 text-sm font-semibold text-[#3e4a33] hover:bg-sage-50" %>
-      <%= link_to "See pricing", pricing_path, class: "inline-flex items-center rounded-md px-5 py-3 text-sm font-semibold text-white ring-1 ring-inset ring-white/30 hover:bg-white/10" %>
-    </div>
+    <% if Launch.registrations_open? %>
+      <div class="mt-8 flex items-center justify-center gap-4">
+        <%= link_to "Get started", new_user_registration_path, class: "inline-flex items-center rounded-md bg-white px-5 py-3 text-sm font-semibold text-[#3e4a33] hover:bg-sage-50" %>
+        <%= link_to "See pricing", pricing_path, class: "inline-flex items-center rounded-md px-5 py-3 text-sm font-semibold text-white ring-1 ring-inset ring-white/30 hover:bg-white/10" %>
+      </div>
+    <% else %>
+      <%# Coming soon — sign up for the launch list right here. %>
+      <div class="mt-8">
+        <%= render "static_pages/launch_list_form", tone: :dark %>
+      </div>
+    <% end %>
   </div>
 </section>

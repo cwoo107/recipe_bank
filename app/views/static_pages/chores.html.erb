@@ -1,0 +1,22 @@
+<% content_for :title, "Chore Chart — HomemakersHaven" %>
+<% content_for :description, "A shared chore chart for the household: hand out chores, set how often they repeat, and tick them off through the week." %>
+
+<%= render "static_pages/feature_hero",
+    eyebrow: "Chore chart",
+    headline: "Everyone knows whose turn it is",
+    subheadline: "Put every household chore on one chart, give each one to someone, and set how often it comes around. Weekly chores land on their day by themselves, and the less frequent ones show up when they're due.",
+    image: "marketing/chores.webp",
+    image_alt: "A weekly chore chart in HomemakersHaven with chores assigned to family members on each day" %>
+
+<%= render "static_pages/detail_grid", items: [
+  { title: "Start from a template", desc: "Pick from ready-made lists of chores for the kitchen, bathrooms, laundry, yard and more, then make them your own." },
+  { title: "Daily to once a year", desc: "Set how often each chore repeats. Weekly ones land on the same day every week; monthly and yearly ones show up under Due soon when it's time." },
+  { title: "Hand them out", desc: "Give each chore to someone in the household — color-coded, so everyone can spot their own at a glance." },
+  { title: "Break it into steps", desc: "Add a checklist to a bigger chore, so \"clean the bathroom\" means the same thing to everyone." },
+  { title: "Drag to reschedule", desc: "Busy Tuesday? Drag a chore to another day — just this week, or from now on." },
+  { title: "Kids can join in", desc: "Give kids their own login to see and tick off their chores, without being able to change the rest of the household's plans." },
+] %>
+
+<%= render "static_pages/cta_band",
+    headline: "Stop being the one who remembers every chore",
+    subheadline: "Share the load — and the chart — with the whole household." %>
