@@ -13,8 +13,13 @@ class RecipeImportsController < ApplicationController
   end
 
   def create
+    if params[:url].blank?
+      redirect_to new_recipe_import_path, alert: "Please enter a recipe URL."
+      return
+    end
+
     @import_job = current_user.recipe_import_jobs.create!(
-      url: params[:url],
+      url: params[:url].strip,
       status: :pending,
       progress: 0,
       total_steps: 5

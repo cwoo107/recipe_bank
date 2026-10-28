@@ -1,6 +1,5 @@
 # lib/recipe_scraper.rb
 require 'nokogiri'
-require 'open-uri'
 require 'json'
 
 class RecipeScraper
@@ -12,7 +11,11 @@ class RecipeScraper
 
   def scrape
     @doc = fetch_html
+    scrape_document
+  end
 
+  # Split from #scrape so tests can hand it a page without fetching one.
+  def scrape_document
     # Try schema.org first (most reliable)
     schema_data = extract_schema_recipe
     return schema_data if schema_data
@@ -23,11 +26,11 @@ class RecipeScraper
 
   private
 
+  # The URL is whatever the user typed, so it goes through SafeUrlFetcher —
+  # its errors are already worded for the user.
   def fetch_html
-    html = URI.open(url, 'User-Agent' => 'Mozilla/5.0').read
-    Nokogiri::HTML(html)
-  rescue => e
-    raise "Failed to fetch URL: #{e.message}"
+    html, charset = SafeUrlFetcher.new(url).fetch
+    Nokogiri::HTML(html, nil, charset)
   end
 
   def extract_schema_recipe
@@ -37,21 +40,11 @@ class RecipeScraper
       begin
         data = JSON.parse(script.content)
 
-        # Skip if data is not a hash or array
-        next unless data.is_a?(Hash) || data.is_a?(Array)
-
-        recipes = data.is_a?(Array) ? data : [data]
-
-        # Handle nested @graph structures
-        if data.is_a?(Hash) && data['@graph']
-          recipes = data['@graph']
-        end
-
-        recipe = recipes.find { |r| r.is_a?(Hash) && r['@type'] == 'Recipe' }
+        recipe = find_schema_recipe(data)
 
         if recipe
           return {
-            title: recipe['name'],
+            title: clean_text(recipe['name']).presence,
             description: clean_text(recipe['description']),
             servings: extract_servings(recipe['recipeYield']),
             ingredients: extract_schema_ingredients(recipe['recipeIngredient'] || []),
@@ -69,6 +62,25 @@ class RecipeScraper
     end
 
     nil
+  end
+
+  # The Recipe node can be the top-level object, one of an array of them, or
+  # inside an @graph — at any of those levels — and its @type can be a list
+  # ("Recipe" alongside "NewsArticle", say).
+  def find_schema_recipe(node, depth = 0)
+    return nil if depth > 5
+
+    case node
+    when Array
+      node.each do |item|
+        found = find_schema_recipe(item, depth + 1)
+        return found if found
+      end
+      nil
+    when Hash
+      return node if Array(node['@type']).include?('Recipe')
+      find_schema_recipe(node['@graph'], depth + 1) if node['@graph']
+    end
   end
 
   def extract_schema_ingredients(ingredients)
@@ -153,17 +165,19 @@ class RecipeScraper
       doc.at_css('h1')
     ]
 
-    candidates.compact.first&.text&.strip || 'Untitled Recipe'
+    # nil rather than a placeholder, so the importer's "No title found" check
+    # can catch a page we couldn't read.
+    candidates.compact.first&.text&.strip.presence
   end
 
   def extract_description
     candidates = [
-      doc.at_css('[itemprop="description"]'),
-      doc.at_css('.recipe-description'),
+      doc.at_css('[itemprop="description"]')&.text,
+      doc.at_css('.recipe-description')&.text,
       doc.at_css('meta[name="description"]')&.[]('content')
     ]
 
-    clean_text(candidates.compact.first&.text)
+    clean_text(candidates.compact.first)
   end
 
   def extract_servings_from_html
@@ -252,8 +266,14 @@ class RecipeScraper
     match ? match[1].to_i : nil
   end
 
+  # JSON-LD text often arrives HTML-encoded ("Mom&#8217;s Pie") and sometimes
+  # with tags in it; parsing it as a fragment decodes the one and drops the
+  # other. Text read out of the page's HTML is already decoded and passes
+  # through unchanged.
   def clean_text(text)
     return '' unless text
-    text.to_s.gsub(/\s+/, ' ').strip
+    text = text.to_s
+    text = Nokogiri::HTML.fragment(text).text if text.match?(/[&<]/)
+    text.gsub(/\s+/, ' ').strip
   end
 end

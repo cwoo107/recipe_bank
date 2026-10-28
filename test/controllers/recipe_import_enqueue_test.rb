@@ -19,6 +19,15 @@ class RecipeImportEnqueueTest < ActionDispatch::IntegrationTest
     assert job.pending?
   end
 
+  test "a blank URL is turned away before anything is stored" do
+    assert_no_difference("RecipeImportJob.count") do
+      post recipe_imports_url, params: { url: "   " }
+    end
+
+    assert_redirected_to new_recipe_import_path
+    assert_no_enqueued_jobs only: ProcessRecipeImportJob
+  end
+
   test "importing from a file keeps the upload on the import for the worker, and enqueues it" do
     upload = Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4 fake"), "application/pdf", original_filename: "soup.pdf")
 

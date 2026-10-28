@@ -1,7 +1,9 @@
 require "test_helper"
 require "minitest/mock"
+require_relative "../support/fake_network"
 
 class CalendarSyncJobTest < ActiveJob::TestCase
+  include FakeNetwork
   DENVER = ActiveSupport::TimeZone["America/Denver"]
 
   setup do
@@ -112,13 +114,8 @@ class CalendarSyncJobTest < ActiveJob::TestCase
   # Runs the real fetch, with the network answering with `response` (or
   # raising it).
   def sync_with_network(response)
-    start = response.is_a?(Exception) ? ->(*) { raise response } : ->(*) { response }
-    Net::HTTP.stub(:start, start) { CalendarSyncJob.perform_now(@source.id) }
+    with_fake_network(response) { CalendarSyncJob.perform_now(@source.id) }
     @source.reload
-  end
-
-  def http_response(code)
-    Net::HTTPResponse::CODE_TO_OBJ.fetch(code.to_s).new("1.1", code.to_s, "")
   end
 
   test "failed fetches are explained in plain words, with what to do next" do
@@ -133,6 +130,27 @@ class CalendarSyncJobTest < ActiveJob::TestCase
       assert_match message, @source.last_sync_error
       assert_no_match(/OpenTimeout|SocketError|getaddrinfo/, @source.last_sync_error)
     end
+  end
+
+  test "a webcal link is fetched over https, following redirects" do
+    feed = file_fixture("recurring.ics").read
+    @source.update_columns(ical_url: "webcal://calendar.example.com/family.ics")
+
+    with_fake_network(http_response(301, location: "https://cdn.example.com/family.ics"),
+                      http_response(200, body: feed)) do |http|
+      CalendarSyncJob.perform_now(@source.id)
+      assert_equal [ "/family.ics", "/family.ics" ], http.requests.map(&:path)
+      assert http.use_ssl
+    end
+
+    assert_nil @source.reload.last_sync_error
+    assert_operator events("Standup").count, :>, 40
+  end
+
+  test "a feed link pointing at an internal address is refused before connecting" do
+    @source.update_columns(ical_url: "http://169.254.169.254/latest/meta-data")
+    CalendarSyncJob.perform_now(@source.id)
+    assert_match(/can't be synced from/, @source.reload.last_sync_error)
   end
 
   test "a feed link that isn't a web address says so" do

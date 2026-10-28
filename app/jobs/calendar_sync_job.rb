@@ -160,30 +160,47 @@ class CalendarSyncJob < ApplicationJob
                  .destroy_all
   end
 
+  # The feed link is whatever the user pasted, so it goes through
+  # SafeUrlFetcher, which refuses internal addresses; its errors are
+  # reworded here for a calendar.
   def fetch(url)
-    uri = URI.parse(url.to_s.strip.sub(/\Awebcal:\/\//i, "https://"))
-    raise FeedError, NOT_A_LINK unless uri.is_a?(URI::HTTP) && uri.host.present?
-
-    response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 20) do |http|
-      http.get(uri.request_uri, "User-Agent" => "HomemakersHaven-CalendarSync/1.0")
-    end
-    return response.body if response.is_a?(Net::HTTPSuccess)
-
-    raise FeedError, http_error_message(response)
-  rescue URI::InvalidURIError
-    raise FeedError, NOT_A_LINK
-  rescue SocketError
-    raise FeedError, "The website in the calendar link couldn't be found. Check the link for typos, or #{FRESH_LINK.downcase_first}"
-  rescue Timeout::Error, Net::OpenTimeout, Net::ReadTimeout
-    raise FeedError, "The calendar took too long to respond. #{RETRYING}"
-  rescue Errno::ECONNREFUSED
-    raise FeedError, "The calendar's website turned the connection away. #{RETRYING}"
-  rescue OpenSSL::SSL::SSLError
-    raise FeedError, "A secure connection to the calendar's website couldn't be made. If this keeps happening, #{FRESH_LINK.downcase_first}"
+    body, _charset = SafeUrlFetcher.new(url.to_s.strip.sub(/\Awebcal:\/\//i, "https://"),
+                                        user_agent: "HomemakersHaven-CalendarSync/1.0",
+                                        accept: "text/calendar, */*",
+                                        max_bytes: 20.megabytes,
+                                        open_timeout: 10, read_timeout: 20).fetch
+    body
+  rescue SafeUrlFetcher::Error => e
+    raise FeedError, fetch_error_message(e)
   end
 
-  def http_error_message(response)
-    case response.code.to_i
+  def fetch_error_message(error)
+    case error.reason
+    when :not_a_link
+      NOT_A_LINK
+    when :not_allowed
+      "The calendar link points to an address that can't be synced from. Paste a link to a public calendar. #{FRESH_LINK}"
+    when :not_found
+      "The website in the calendar link couldn't be found. Check the link for typos, or #{FRESH_LINK.downcase_first}"
+    when :timeout
+      "The calendar took too long to respond. #{RETRYING}"
+    when :refused
+      "The calendar's website turned the connection away. #{RETRYING}"
+    when :unreachable
+      "The calendar's website couldn't be reached. #{RETRYING}"
+    when :ssl
+      "A secure connection to the calendar's website couldn't be made. If this keeps happening, #{FRESH_LINK.downcase_first}"
+    when :too_large
+      "The calendar file is too large to sync. If this keeps happening, #{FRESH_LINK.downcase_first}"
+    when :http_status
+      http_error_message(error.status)
+    else # a redirect that went nowhere, or round in circles
+      "The calendar link kept redirecting without reaching a calendar. #{FRESH_LINK}"
+    end
+  end
+
+  def http_error_message(status)
+    case status
     when 401, 403
       "The calendar wouldn't let us in. It may be private, or its sharing link was turned off or reset. #{FRESH_LINK}"
     when 404, 410
@@ -193,7 +210,7 @@ class CalendarSyncJob < ApplicationJob
     when 500..599
       "The calendar's provider is having trouble right now. #{RETRYING}"
     else
-      "The calendar's provider sent back something other than the calendar (error #{response.code}). Try Sync now; if it keeps happening, #{FRESH_LINK.downcase_first}"
+      "The calendar's provider sent back something other than the calendar (error #{status}). Try Sync now; if it keeps happening, #{FRESH_LINK.downcase_first}"
     end
   end
 

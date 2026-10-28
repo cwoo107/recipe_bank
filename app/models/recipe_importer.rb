@@ -7,7 +7,6 @@ class RecipeImporter
     begin
       # Step 1: Fetch HTML
       @job.update_progress(:fetching_html)
-      sleep 0.5
       scraped_data = RecipeScraper.new(@job.url).scrape
 
       # Log what we scraped for debugging
@@ -22,7 +21,6 @@ class RecipeImporter
 
       # Step 2: Parse recipe structure
       @job.update_progress(:parsing_recipe)
-      sleep 0.5
       validate_scraped_data(scraped_data)
 
       # Step 3: Match ingredients, then hand over to the user. The rest of
@@ -49,7 +47,6 @@ class RecipeImporter
     begin
       # Step 1: Extract recipe from file via Claude
       @job.update_progress(:fetching_html) # reuse status — "Fetching file"
-      sleep 0.3
 
       file_data, content_type = @job.source_file, @job.source_content_type
       raise "The uploaded file is no longer available — please upload it again." if file_data.blank?
@@ -72,7 +69,6 @@ class RecipeImporter
 
       # Steps 2–5 are identical to the URL import flow
       @job.update_progress(:parsing_recipe)
-      sleep 0.3
       validate_scraped_data(scraped_data)
 
       match_ingredients_and_pause(scraped_data)
@@ -109,7 +105,6 @@ class RecipeImporter
 
     # Step 5: Create recipe in database
     @job.update_progress(:creating_recipe)
-    sleep 0.3
     recipe = create_recipe(scraped_data, matched_results)
 
     @job.update!(
