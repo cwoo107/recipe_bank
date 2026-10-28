@@ -1,0 +1,32 @@
+<%# locals: (sources:, link_to_edit: true) %>
+<%# An alert for each calendar whose last sync failed, saying why in plain
+    words (CalendarSyncJob writes them). Above the grid rather than in the
+    sidebar so it shows at every screen size. The page refreshes when a sync
+    finishes, so it clears itself once the calendar syncs again. %>
+<% failed = sources.select { |source| source.last_sync_error.present? } %>
+<% if failed.any? %>
+  <div id="calendar_sync_errors" class="mb-6 space-y-3">
+    <% failed.each do |source| %>
+      <div role="alert"
+           class="flex gap-3 rounded-lg border border-dusty-rose-200 bg-dusty-rose-50 p-4
+                  dark:border-dusty-rose-400/20 dark:bg-dusty-rose-400/10">
+        <svg class="size-5 shrink-0 text-dusty-rose-500 dark:text-dusty-rose-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clip-rule="evenodd" /></svg>
+        <div class="min-w-0 text-sm">
+          <p class="font-semibold text-dusty-rose-800 dark:text-dusty-rose-200">
+            <%= source.name %> couldn't sync<%= " #{time_ago_in_words(source.last_sync_attempted_at)} ago" if source.last_sync_attempted_at %>
+          </p>
+          <p class="mt-1 text-dusty-rose-700 dark:text-dusty-rose-300"><%= source.last_sync_error %></p>
+          <% if source.last_synced_at %>
+            <p class="mt-1 text-xs text-dusty-rose-600 dark:text-dusty-rose-400">
+              Its events are from the last good sync, <%= time_ago_in_words(source.last_synced_at) %> ago.
+            </p>
+          <% end %>
+          <% if link_to_edit && household_admin? %>
+            <%= link_to "Update calendar link", edit_calendar_source_path(source),
+                  class: "mt-2 inline-block text-sm font-semibold text-dusty-rose-800 hover:underline dark:text-dusty-rose-200" %>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>

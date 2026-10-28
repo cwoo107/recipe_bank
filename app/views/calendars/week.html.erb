@@ -41,6 +41,8 @@
     </div>
   </div>
 
+  <%= render "calendars/sync_errors", sources: @sources %>
+
   <div class="flex gap-6">
     <div class="flex-1 min-w-0">
       <%= render "calendars/week_grid", date: @date, range_end: @range_end,

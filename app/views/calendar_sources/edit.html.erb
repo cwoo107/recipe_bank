@@ -8,6 +8,8 @@
     <p class="mt-2 text-sm text-gray-500 dark:text-gray-400"><%= @source.provider_label %></p>
   </div>
 
+  <%= render "calendars/sync_errors", sources: [ @source ], link_to_edit: false %>
+
   <%= render "form", source: @source %>
 
   <div class="mt-8 pt-6 border-t border-gray-200 dark:border-white/10">

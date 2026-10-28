@@ -27,6 +27,40 @@ class CalendarSyncUiTest < ActionDispatch::IntegrationTest
     assert_select "#source_#{@source.id}_status span[title='The calendar link returned an error (404).']", text: /Couldn't sync/
   end
 
+  test "a failed sync shows an alert explaining why, at every screen size, with a way to fix it" do
+    @source.update_columns(last_sync_error: "There's no calendar at that link anymore.", last_sync_attempted_at: 5.minutes.ago,
+                           last_synced_at: 2.days.ago)
+    [ month_calendars_url(year: 2026, month: 10), week_calendars_url, day_calendars_url ].each do |url|
+      get url
+      assert_select "#calendar_sync_errors [role=alert]", count: 1 do
+        assert_select "p", text: /Family couldn't sync 5 minutes ago/
+        assert_select "p", text: "There's no calendar at that link anymore."
+        assert_select "p", text: /last good sync, 2 days ago/
+        assert_select "a[href='#{edit_calendar_source_path(@source)}']", text: "Update calendar link"
+      end
+      assert_select "aside #calendar_sync_errors", count: 0, message: "not tucked in the wide-screen-only sidebar"
+    end
+
+    get edit_calendar_source_url(@source)
+    assert_select "#calendar_sync_errors p", text: "There's no calendar at that link anymore."
+  end
+
+  test "no alert when every calendar synced; limited members see the reason but no edit link" do
+    get month_calendars_url(year: 2026, month: 10)
+    assert_select "#calendar_sync_errors", count: 0
+
+    @source.update_columns(last_sync_error: "The calendar took too long to respond.")
+    sign_in users(:two)
+    get month_calendars_url(year: 2026, month: 10)
+    assert_select "#calendar_sync_errors p", text: "The calendar took too long to respond."
+    assert_select "a[href='#{edit_calendar_source_path(@source)}']", count: 0
+  end
+
+  test "a calendar's name in the sidebar links to its edit page" do
+    get month_calendars_url(year: 2026, month: 10)
+    assert_select "#calendar_source_#{@source.id} a[href='#{edit_calendar_source_path(@source)}']", text: "Family"
+  end
+
   test "Sync now queues a sync and shows it's syncing" do
     assert_enqueued_with(job: CalendarSyncJob, args: [ @source.id ]) do
       post sync_calendar_source_url(@source), as: :turbo_stream

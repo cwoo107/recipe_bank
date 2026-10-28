@@ -71,13 +71,19 @@
             <% end %>
 
             <div class="flex-1 min-w-0">
+              <% if household_admin? %>
+              <%= link_to source.name, edit_calendar_source_path(source),
+                    title: "Edit #{source.name}",
+                    class: "block text-xs font-medium text-gray-700 hover:text-[#5f734c] dark:text-gray-300 dark:hover:text-[#7a8f62] truncate transition" %>
+              <% else %>
               <div class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
                 <%= source.name %>
               </div>
+              <% end %>
               <%= render "calendar_sources/sync_status", source: source %>
             </div>
 
-            <%# Sync now (always visible) + edit (on hover) %>
+            <%# Sync now (the name links to edit) %>
             <% if household_admin? %>
                 <%= button_to sync_calendar_source_path(source), method: :post,
                       form: { "data-turbo-stream": "true" },
@@ -86,14 +92,6 @@
                   <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z" clip-rule="evenodd" /></svg>
                 <% end %>
             <% end %>
-            <div class="opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition flex items-center gap-1">
-              <% if household_admin? %>
-              <%= link_to edit_calendar_source_path(source),
-                    class: "text-gray-300 hover:text-gray-600 dark:text-gray-600 dark:hover:text-gray-300 transition" do %>
-                <svg class="size-3.5" viewBox="0 0 20 20" fill="currentColor"><path d="m5.433 13.917 1.144-3.201a.75.75 0 0 1 .162-.261l8.36-8.36c.72-.72 1.888-.72 2.609 0l.638.638c.72.72.72 1.888 0 2.609l-8.36 8.36a.75.75 0 0 1-.261.162l-3.201 1.144a.5.5 0 0 1-.632-.632Z" /><path d="m11 3.188.96 1.15-6.75 6.75L4.062 9.94Z" /></svg>
-              <% end %>
-              <% end %>
-            </div>
           </li>
         <% end %>
       </ul>

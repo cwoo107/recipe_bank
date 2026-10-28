@@ -23,8 +23,13 @@ class CalendarSyncJob < ApplicationJob
   SYNC_WINDOW_FUTURE = 12.months
 
   # A feed that couldn't be fetched or read — recorded on the source and
-  # shown in the calendar sidebar rather than retried as a crash.
+  # shown on the calendar pages rather than retried as a crash. Messages are
+  # read by the household, so they say what happened and what to do about it.
   class FeedError < StandardError; end
+
+  FRESH_LINK = "Copy a fresh link from the calendar's sharing settings and paste it into this calendar's settings.".freeze
+  NOT_A_LINK = "The calendar link isn't a web address. Paste the full link, starting with https:// or webcal://.".freeze
+  RETRYING   = "This is usually temporary — it'll try again on the next automatic sync, every few hours.".freeze
 
   def perform(source_id)
     source = CalendarSource.find_by(id: source_id)
@@ -40,7 +45,7 @@ class CalendarSyncJob < ApplicationJob
       Turbo::StreamsChannel.broadcast_refresh_to(source.household, "calendar_sources")
     end
   rescue => e
-    source&.update_columns(last_sync_attempted_at: Time.current, last_sync_error: "Something went wrong reading this calendar.")
+    source&.update_columns(last_sync_attempted_at: Time.current, last_sync_error: "The calendar file came back in a form that couldn't be read. Try Sync now; if it keeps happening, #{FRESH_LINK.downcase_first}")
     Rails.logger.error "[CalendarSyncJob] source=#{source_id} #{e.class}: #{e.message}"
     raise
   end
@@ -49,7 +54,7 @@ class CalendarSyncJob < ApplicationJob
 
   def sync(source)
     calendars = Icalendar::Calendar.parse(fetch(source.ical_url))
-    raise FeedError, "That link didn't return a calendar." if calendars.empty?
+    raise FeedError, "That link opened a web page, not a calendar. Make sure you copied the calendar's iCal (.ics) address, not the address of the page you view it on." if calendars.empty?
 
     @window_start = SYNC_WINDOW_PAST.ago
     @window_end   = SYNC_WINDOW_FUTURE.from_now
@@ -157,18 +162,39 @@ class CalendarSyncJob < ApplicationJob
 
   def fetch(url)
     uri = URI.parse(url.to_s.strip.sub(/\Awebcal:\/\//i, "https://"))
-    raise FeedError, "That isn't a web link." unless uri.is_a?(URI::HTTP) && uri.host.present?
+    raise FeedError, NOT_A_LINK unless uri.is_a?(URI::HTTP) && uri.host.present?
 
     response = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 10, read_timeout: 20) do |http|
       http.get(uri.request_uri, "User-Agent" => "HomemakersHaven-CalendarSync/1.0")
     end
     return response.body if response.is_a?(Net::HTTPSuccess)
 
-    raise FeedError, "The calendar link returned an error (#{response.code}). It may have been reset — paste a fresh link."
+    raise FeedError, http_error_message(response)
   rescue URI::InvalidURIError
-    raise FeedError, "That isn't a web link."
-  rescue SocketError, Timeout::Error, Errno::ECONNREFUSED, OpenSSL::SSL::SSLError, Net::OpenTimeout, Net::ReadTimeout => e
-    raise FeedError, "Couldn't reach the calendar (#{e.class.name.demodulize})."
+    raise FeedError, NOT_A_LINK
+  rescue SocketError
+    raise FeedError, "The website in the calendar link couldn't be found. Check the link for typos, or #{FRESH_LINK.downcase_first}"
+  rescue Timeout::Error, Net::OpenTimeout, Net::ReadTimeout
+    raise FeedError, "The calendar took too long to respond. #{RETRYING}"
+  rescue Errno::ECONNREFUSED
+    raise FeedError, "The calendar's website turned the connection away. #{RETRYING}"
+  rescue OpenSSL::SSL::SSLError
+    raise FeedError, "A secure connection to the calendar's website couldn't be made. If this keeps happening, #{FRESH_LINK.downcase_first}"
+  end
+
+  def http_error_message(response)
+    case response.code.to_i
+    when 401, 403
+      "The calendar wouldn't let us in. It may be private, or its sharing link was turned off or reset. #{FRESH_LINK}"
+    when 404, 410
+      "There's no calendar at that link anymore. The calendar may have been deleted, or its link was reset. #{FRESH_LINK}"
+    when 429
+      "The calendar's provider asked us to slow down. #{RETRYING}"
+    when 500..599
+      "The calendar's provider is having trouble right now. #{RETRYING}"
+    else
+      "The calendar's provider sent back something other than the calendar (error #{response.code}). Try Sync now; if it keeps happening, #{FRESH_LINK.downcase_first}"
+    end
   end
 
   # [time, all_day?] — all-day dates become midnight in the household's zone;

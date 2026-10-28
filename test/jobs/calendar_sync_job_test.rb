@@ -1,4 +1,5 @@
 require "test_helper"
+require "minitest/mock"
 
 class CalendarSyncJobTest < ActiveJob::TestCase
   DENVER = ActiveSupport::TimeZone["America/Denver"]
@@ -105,7 +106,39 @@ class CalendarSyncJobTest < ActiveJob::TestCase
 
   test "a link that isn't a calendar is reported too" do
     sync_with "<html>not a calendar</html>"
-    assert_equal "That link didn't return a calendar.", @source.last_sync_error
+    assert_match(/opened a web page, not a calendar/, @source.last_sync_error)
+  end
+
+  # Runs the real fetch, with the network answering with `response` (or
+  # raising it).
+  def sync_with_network(response)
+    start = response.is_a?(Exception) ? ->(*) { raise response } : ->(*) { response }
+    Net::HTTP.stub(:start, start) { CalendarSyncJob.perform_now(@source.id) }
+    @source.reload
+  end
+
+  def http_response(code)
+    Net::HTTPResponse::CODE_TO_OBJ.fetch(code.to_s).new("1.1", code.to_s, "")
+  end
+
+  test "failed fetches are explained in plain words, with what to do next" do
+    {
+      http_response(404)              => /no calendar at that link anymore.*Copy a fresh link/,
+      http_response(403)              => /wouldn't let us in.*Copy a fresh link/,
+      http_response(503)              => /having trouble right now.*try again on the next automatic sync/,
+      SocketError.new("getaddrinfo")  => /website in the calendar link couldn't be found/,
+      Net::OpenTimeout.new            => /took too long to respond/
+    }.each do |response, message|
+      sync_with_network(response)
+      assert_match message, @source.last_sync_error
+      assert_no_match(/OpenTimeout|SocketError|getaddrinfo/, @source.last_sync_error)
+    end
+  end
+
+  test "a feed link that isn't a web address says so" do
+    @source.update!(ical_url: "not a link")
+    CalendarSyncJob.perform_now(@source.id)
+    assert_match(/isn't a web address/, @source.reload.last_sync_error)
   end
 
   test "the scheduled sync runs every few hours and queues every linked calendar" do
