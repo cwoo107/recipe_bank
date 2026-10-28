@@ -10,6 +10,7 @@ class ApplicationController < ActionController::Base
   around_action :use_household_week_start, if: :user_signed_in?
   before_action :require_household_name!, if: :user_signed_in?, unless: :devise_controller?
   before_action :require_active_subscription!, if: :user_signed_in?, unless: :devise_controller?
+  before_action :track_planning_time, if: :user_signed_in?, unless: :devise_controller?
   helper_method :current_theme, :current_household, :active_weekly_plan, :household_admin?, :current_member, :trial_banner?, :household_locked?
   layout :resolve_layout
 
@@ -105,6 +106,16 @@ class ApplicationController < ActionController::Base
     return nil if controller_name.in?(%w[plan_week dashboard])
 
     WeeklyPlan.in_progress_for(current_household)
+  end
+
+  # Any request while a plan is in progress counts toward its time, not just
+  # the wizard's — the meals step, for one, is mostly requests to meals.
+  # Runs before the dashboard or the planner can end the session, so the
+  # last stretch is banked first.
+  def track_planning_time
+    return unless household_admin? # planning is admin-only
+
+    WeeklyPlan.in_progress_for(current_household)&.track_planning_time!
   end
 
   # Queues the household page's "adjust upcoming meals?" notice, if there are

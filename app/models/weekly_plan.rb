@@ -8,6 +8,10 @@ class WeeklyPlan < ApplicationRecord
   # little beyond, without piling up rows for weeks nobody will reach.
   WEEKS_AHEAD = 4
 
+  # A gap between requests longer than this is time spent away, not
+  # planning, and isn't counted (see #track_planning_time!).
+  IDLE_GAP = 15.minutes
+
   def self.current_for(household, week_start: Date.current.beginning_of_week)
     find_or_create_by!(household: household, week_start: week_start)
   end
@@ -107,7 +111,30 @@ class WeeklyPlan < ApplicationRecord
   # The step "in progress" right now — where the wizard resumes, and what
   # the sticky planning bar acts on from anywhere else in the app.
   def active_key
-    planner_keys.find { |k| incomplete?(k) } || planner_keys.first
+    first_incomplete_key || planner_keys.first
+  end
+
+  def first_incomplete_key
+    planner_keys.find { |k| incomplete?(k) }
+  end
+
+  # Opens a planning session. Time from here on counts toward
+  # planning_seconds; the time since the last session doesn't.
+  def start_planning_session!(now = Time.current)
+    update!(currently_planning: true, planning_started_at: now, planning_last_active_at: now)
+  end
+
+  # Called on each request during a session: banks the time since the last
+  # one, unless the gap was long enough to count as walking away. Stops
+  # counting once the week is first finished, so planning_seconds is how
+  # long the plan took — later tweaks from "Reopen the plan" don't add to it.
+  def track_planning_time!(now = Time.current)
+    return if planning_completed_at.present?
+
+    gap = planning_last_active_at && now - planning_last_active_at
+    self.planning_seconds += gap.round if gap && gap <= IDLE_GAP
+    self.planning_last_active_at = now
+    save!
   end
 
   # The next unfinished planner step after `key`. Placed by the full

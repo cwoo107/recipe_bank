@@ -11,6 +11,10 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
     Dashboard.section_keys.each { |k| plan.section(k).mark!("done", by: users(:one)) }
   end
 
+  def complete_all_but(plan, key)
+    (plan.planner_keys - [ key ]).each { |k| plan.section(k).mark!("done", by: users(:one)) }
+  end
+
   test "start resumes at the first incomplete section" do
     get plan_week_url
     assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
@@ -107,10 +111,19 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
 
   test "update on the last section redirects to the dashboard" do
     plan = WeeklyPlan.current_for(households(:one))
-    %w[calendar meals groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    complete_all_but(plan, "todos")
 
     patch plan_week_step_url(section: "todos"), params: { status: "done" }
     assert_redirected_to dashboard_url
+  end
+
+  test "finishing the last step with earlier ones still open goes back to them instead of finishing" do
+    plan = WeeklyPlan.current_for(households(:one))
+
+    patch plan_week_step_url(section: "todos"), params: { status: "done" }
+
+    assert_redirected_to plan_week_step_url(section: "calendar", week: @this_week)
+    assert_nil plan.reload.planning_completed_at
   end
 
   test "skip marks the section skipped" do
@@ -156,7 +169,7 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
 
   test "finishing the wizard turns currently_planning back off" do
     plan = WeeklyPlan.current_for(households(:one))
-    %w[calendar meals groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    complete_all_but(plan, "todos")
     plan.update!(currently_planning: true)
 
     patch plan_week_step_url(section: "todos"), params: { status: "done" }
@@ -171,15 +184,61 @@ class PlanWeekControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil plan.reload.planning_started_at
   end
 
-  test "finishing the wizard stamps planning_completed_at and flashes elapsed time" do
+  test "finishing the wizard stamps planning_completed_at and flashes the week's planning time" do
     plan = WeeklyPlan.current_for(households(:one))
-    plan.update!(currently_planning: true, planning_started_at: 3.minutes.ago)
-    %w[calendar meals groceries].each { |k| plan.section(k).mark!("done", by: users(:one)) }
+    plan.update!(currently_planning: true, planning_started_at: 1.minute.ago,
+                 planning_seconds: 8.minutes, planning_last_active_at: 1.minute.ago)
+    complete_all_but(plan, "todos")
 
     patch plan_week_step_url(section: "todos"), params: { status: "done" }
 
     assert_not_nil plan.reload.planning_completed_at
-    assert_match(/Congrats! It just took you 3 minutes to plan this week\./, flash[:notice])
+    assert_match(/Congrats! It just took you 9 minutes to plan this week\./, flash[:notice])
+  end
+
+  test "time from an earlier session carries over when planning is resumed" do
+    plan = WeeklyPlan.current_for(households(:one))
+    complete_all_but(plan, "todos")
+
+    travel_to(Time.current.change(usec: 0)) do
+      get plan_week_step_url(section: "meals")
+      travel 4.minutes
+      get dashboard_url # ends the session, banking the 4 minutes
+      travel 2.hours    # away — not counted
+      get plan_week_step_url(section: "todos")
+      travel 3.minutes
+      patch plan_week_step_url(section: "todos"), params: { status: "done" }
+    end
+
+    assert_equal 7.minutes.to_i, plan.reload.planning_seconds
+    assert_match(/took you 7 minutes/, flash[:notice])
+  end
+
+  test "time spent elsewhere in the app during a session counts" do
+    plan = WeeklyPlan.current_for(households(:one))
+
+    travel_to(Time.current.change(usec: 0)) do
+      get plan_week_step_url(section: "meals")
+      travel 5.minutes
+      get todos_url
+    end
+
+    assert_equal 5.minutes.to_i, plan.reload.planning_seconds
+  end
+
+  test "finishing a reopened plan says it was updated and doesn't add time" do
+    plan = WeeklyPlan.current_for(households(:one))
+    complete_all(plan)
+    plan.update!(planning_completed_at: 1.day.ago, planning_seconds: 12.minutes)
+
+    travel_to(Time.current.change(usec: 0)) do
+      get plan_week_url(week: @this_week)
+      travel 2.minutes
+      patch plan_week_step_url(section: "calendar", week: @this_week), params: { status: "done" }
+    end
+
+    assert_equal "Plan for this week updated.", flash[:notice]
+    assert_equal 12.minutes.to_i, plan.reload.planning_seconds
   end
 
   # ── Mobile layout ──

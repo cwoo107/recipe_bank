@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_27_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_28_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -649,6 +649,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_27_160000) do
     t.boolean "currently_planning", default: false, null: false
     t.integer "household_id", null: false
     t.datetime "planning_completed_at"
+    t.datetime "planning_last_active_at"
+    t.integer "planning_seconds", default: 0, null: false
     t.datetime "planning_started_at"
     t.datetime "updated_at", null: false
     t.date "week_start", null: false

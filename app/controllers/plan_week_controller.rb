@@ -25,13 +25,17 @@ class PlanWeekController < ApplicationController
     return head :bad_request unless WeeklyPlanSection::STATUSES.include?(status)
 
     @dashboard_section.weekly_plan_section.mark!(status, by: current_user)
+    @weekly_plan.reload # drops the cached statuses
 
-    next_key = @weekly_plan.next_key_after(params[:section])
+    # Onward first, then back round to any earlier step still open — a step
+    # opened straight from a dashboard card shouldn't finish the week.
+    next_key = @weekly_plan.next_key_after(params[:section]) || @weekly_plan.first_incomplete_key
     if next_key
       redirect_to plan_week_step_path(section: next_key, week: @week_start)
     else
+      notice = completion_notice # before the stamp — it asks whether this is a first finish
       @weekly_plan.update!(currently_planning: false, planning_completed_at: Time.current)
-      redirect_to dashboard_path, notice: completion_notice
+      redirect_to dashboard_path, notice: notice
     end
   end
 
@@ -55,9 +59,7 @@ class PlanWeekController < ApplicationController
 
     current_household.weekly_plans.where(currently_planning: true)
                      .where.not(id: @weekly_plan.id).update_all(currently_planning: false)
-    unless @weekly_plan.currently_planning?
-      @weekly_plan.update!(currently_planning: true, planning_started_at: Time.current)
-    end
+    @weekly_plan.start_planning_session! unless @weekly_plan.currently_planning?
   end
 
   def requested_week
@@ -67,13 +69,16 @@ class PlanWeekController < ApplicationController
     nil
   end
 
+  # The time is the week's total across every session (see
+  # WeeklyPlan#track_planning_time!). Finishing a reopened plan again isn't
+  # a new plan, so it gets no time.
   def completion_notice
     week = @weekly_plan.week_label.downcase
-    return "Plan for #{week} updated." unless @weekly_plan.planning_started_at
+    return "Plan for #{week} updated." if @weekly_plan.planning_completed_at
 
-    minutes = ((Time.current - @weekly_plan.planning_started_at) / 60.0).round
-    unit = minutes == 1 ? "minute" : "minutes"
-    "Congrats! It just took you #{minutes} #{unit} to plan #{week}."
+    minutes = (@weekly_plan.planning_seconds / 60.0).round
+    took = minutes.zero? ? "less than a minute" : "#{minutes} #{minutes == 1 ? 'minute' : 'minutes'}"
+    "Congrats! It just took you #{took} to plan #{week}."
   end
 
   # The planner's steps — only the ones this household plans (see

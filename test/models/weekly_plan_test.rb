@@ -73,4 +73,31 @@ class WeeklyPlanTest < ActiveSupport::TestCase
     plan = WeeklyPlan.current_for(households(:one))
     assert_equal "not_started", plan.section_status("meals")
   end
+
+  test "track_planning_time! banks the gap since the last request" do
+    plan = WeeklyPlan.current_for(households(:one))
+    plan.start_planning_session!(1.hour.ago)
+
+    plan.track_planning_time!(1.hour.ago + 90.seconds)
+    assert_equal 90, plan.planning_seconds
+  end
+
+  test "track_planning_time! leaves out gaps longer than IDLE_GAP" do
+    plan = WeeklyPlan.current_for(households(:one))
+    start = 1.hour.ago
+    plan.start_planning_session!(start)
+
+    plan.track_planning_time!(start + WeeklyPlan::IDLE_GAP + 1.second)
+    plan.track_planning_time!(start + WeeklyPlan::IDLE_GAP + 61.seconds)
+    assert_equal 60, plan.planning_seconds
+  end
+
+  test "track_planning_time! stops counting once the week has been finished" do
+    plan = WeeklyPlan.current_for(households(:one))
+    plan.start_planning_session!(1.minute.ago)
+    plan.update!(planning_completed_at: Time.current)
+
+    plan.track_planning_time!
+    assert_equal 0, plan.planning_seconds
+  end
 end
