@@ -11,6 +11,39 @@ class GroceryListsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "only offers category filters for categories on this week's list" do
+    week = Date.current.beginning_of_week
+    kale = households(:one).ingredients.create!(ingredient: "Filter kale", family: "produce")
+    households(:one).ingredients.create!(ingredient: "Filter milk", family: "dairy") # not on the list
+    households(:one).grocery_lists.create!(ingredient: kale, week_of: week, user: users(:one))
+
+    # Still offered while another category is the filter.
+    get grocery_lists_url(date: week, filter: "dairy")
+
+    assert_select "a[href*='filter=produce']", 1
+    assert_select "a[href*='filter=dairy']", 0
+  end
+
+  test "adding and removing lines updates that week's category filters live" do
+    week = Date.current.beginning_of_week
+    kale = households(:one).ingredients.create!(ingredient: "Live kale", family: "produce")
+    stream = [ households(:one), "grocery_family_filters", week ]
+
+    broadcasts = capture_turbo_stream_broadcasts(stream) do
+      post create_grocery_list_url(format: :turbo_stream), params: { grocery_list: { ingredient_id: kale.id, week_of: week, units: 1 } }
+    end
+    assert_equal [ "replace" ], broadcasts.map { |b| b["action"] }
+    assert_includes broadcasts.first.to_html, "filter=produce"
+
+    line = GroceryList.find_by!(ingredient: kale, week_of: week)
+    broadcasts = capture_turbo_stream_broadcasts(stream) do
+      delete grocery_list_url(line, format: :turbo_stream)
+    end
+    # (The helper returns everything sent on the stream so far.)
+    assert_equal [ "replace", "replace" ], broadcasts.map { |b| b["action"] }
+    assert_not_includes broadcasts.last.to_html, "filter=produce"
+  end
+
   test "should get new" do
     get new_grocery_list_url
     assert_response :success

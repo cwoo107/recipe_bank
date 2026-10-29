@@ -102,13 +102,12 @@
       <% end %>
     </div>
 
-    <%# Family filters %>
+    <%# Family filters — only categories with something on this week's list,
+        kept up to date as lines are added and removed (its own stream per
+        week, so someone looking at another week isn't sent these). %>
+    <%= turbo_stream_from current_household, "grocery_family_filters", @date %>
     <div class="my-2 flex flex-wrap gap-2">
-      <% Ingredient::FAMILIES.each_key do |family| %>
-        <%= link_to grocery_lists_path(filter: family, date: params[:date]) do %>
-          <%= ingredient_family_tag(family) %>
-        <% end %>
-      <% end %>
+      <%= render "grocery_lists/family_filters", families: @list_families, date: @date %>
       <% if params[:filter].present? %>
         <%= link_to grocery_lists_path(date: params[:date]) do %>
           <span class="inline-flex items-center rounded-full px-2 py-1 text-xs font-medium inset-ring inset-ring-gray-900/10 dark:inset-ring-white/10">

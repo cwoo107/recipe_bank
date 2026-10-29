@@ -1,0 +1,13 @@
+<%# locals: (families:, date:) %>
+<%# The shopping list's category filter tags — only categories with something
+    on the week's list (GroceryList.families_for_week), in the usual order.
+    `contents` so the tags sit in the parent's row with "clear filter".
+    Replaced live when a line is added or removed
+    (GroceryList.broadcast_family_filters). %>
+<div id="grocery_family_filters" class="contents">
+  <% Ingredient::FAMILIES.each_key.select { |family| families.include?(family) }.each do |family| %>
+    <%= link_to grocery_lists_path(filter: family, date: date) do %>
+      <%= ingredient_family_tag(family) %>
+    <% end %>
+  <% end %>
+</div>

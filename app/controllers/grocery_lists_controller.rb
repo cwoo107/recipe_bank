@@ -11,6 +11,11 @@ class GroceryListsController < ApplicationController
                        # notes (no ingredient) come last, oldest first.
                        .order(Ingredient.family_order_sql, "ingredients.ingredient ASC", :id)
 
+    # The categories with something on this week's list — the only filters
+    # worth offering. Not narrowed by the current filter, so the others stay
+    # there to switch to.
+    @list_families = GroceryList.families_for_week(current_household, @date)
+
     # What each line is for (the "used in N meals" hover), worked out once
     # for the whole list.
     @grocery_uses = GroceryList::Breakdown.uses_by_ingredient(
@@ -143,6 +148,7 @@ class GroceryListsController < ApplicationController
           partial: "grocery_lists/grocery_list",
           locals: { grocery_list: @grocery_list }
         )
+        GroceryList.broadcast_family_filters(current_household, @grocery_list.week_of)
         format.html { redirect_to @grocery_list, notice: "Grocery list was successfully created." }
         format.json { render :show, status: :created, location: @grocery_list }
         format.turbo_stream do
@@ -211,6 +217,7 @@ class GroceryListsController < ApplicationController
   def destroy
     @ingredient_name = @grocery_list.title
     @grocery_list.destroy!
+    GroceryList.broadcast_family_filters(current_household, @grocery_list.week_of)
 
     respond_to do |format|
       format.turbo_stream
