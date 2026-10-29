@@ -5,6 +5,15 @@ class IngredientMatcherTest < ActiveSupport::TestCase
     IngredientParser.new.parse(str)
   end
 
+  test "a line with no ingredient name matches nothing" do
+    Ingredient.create!(ingredient: "Chicken breast")
+
+    result = IngredientMatcher.new.find_or_suggest(parsed("2 cups"))
+
+    assert_nil result[:match]
+    assert_equal "none", result[:method]
+  end
+
   test "exact match ignores case and punctuation" do
     Ingredient.create!(ingredient: "Salt")
 

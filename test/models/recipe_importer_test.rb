@@ -118,6 +118,28 @@ class RecipeImporterTest < ActiveSupport::TestCase
     assert used.all? { |i| i.created_by == @user }
   end
 
+  test "lines with no ingredient in them are skipped, not matched to something" do
+    scraped = SCRAPED.merge(ingredients: [ "2 cups", "", "2 tbsp. fresh chopped", "2 tablespoons olive oil" ])
+    IngredientAssistant.stub(:new, FakeIngredientAssistant.new) do
+      RecipeScraper.stub(:new, FakeScraper.new(scraped)) { RecipeImporter.new(@job).perform }
+    end
+
+    assert_equal [ "2 tablespoons olive oil" ], @job.reload.ingredient_matches.map(&:original)
+  end
+
+  test "unticking everything doesn't fail on a nameless line from before they were skipped" do
+    run_match_phase
+    rows = @job.matched_ingredients + [ { "parsed" => { "original" => "2 cups", "name" => "", "search_name" => "" },
+                                          "match_id" => @olive_oil.id, "confidence" => 0.95, "method" => "partial" } ]
+    @job.update!(matched_ingredients: rows)
+    @job.apply_ingredient_confirmations!([])
+
+    assert_difference("Ingredient.count", 2) { run_resume }
+
+    assert @job.completed?
+    assert_equal [ "Olive oil", "Zzqqx flour" ], @job.recipe.ingredients.map(&:ingredient).sort
+  end
+
   test "unticking clears the stored match so the UI stops showing it" do
     run_match_phase
     @job.apply_ingredient_confirmations!([])

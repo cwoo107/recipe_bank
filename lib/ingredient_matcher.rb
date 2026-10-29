@@ -10,6 +10,12 @@ class IngredientMatcher
     search_name = parsed_ingredient[:search_name]
     original_name = parsed_ingredient[:name]
 
+    # Nothing to compare: a blank name is "inside" every ingredient name, so
+    # partial matching would hand back whichever ingredient came first.
+    if search_name.blank?
+      return { match: nil, confidence: 0.0, method: 'none', suggested_name: original_name }
+    end
+
     # Try exact match first (case insensitive)
     exact = exact_match(search_name)
     return { match: exact, confidence: 1.0, method: 'exact' } if exact

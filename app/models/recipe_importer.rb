@@ -145,6 +145,15 @@ class RecipeImporter
   # The match rows are persisted across the confirmation pause, so they have
   # to survive a JSON round trip. Ingredients are stored by id and re-looked
   # up rather than serialized whole.
+  # Whether a parsed line has an ingredient in it. One that's only an amount
+  # ("2 cups", "1 (15 oz) can" — a page that puts the ingredient on the next
+  # line) parses to a blank name, and one that's only punctuation and
+  # descriptors ("2 tbsp. fresh chopped") to a name like "."; neither is an
+  # ingredient. Any letter counts, not just a–z, so "味噌" is kept.
+  def self.names_an_ingredient?(parsed)
+    parsed[:name].to_s.match?(/[[:alpha:]]/)
+  end
+
   def self.deserialize_results(raw)
     rows = Array(raw).select { |row| row.is_a?(Hash) }
     by_id = Ingredient.where(id: rows.filter_map { |row| row['match_id'] }).index_by(&:id)
@@ -213,14 +222,17 @@ class RecipeImporter
     own_matcher   = IngredientMatcher.new(household_ingredients)
     other_matcher = IngredientMatcher.new(other_ingredients)
 
-    ingredient_strings.map.with_index do |ing_str, index|
+    ingredient_strings.each_with_index.filter_map do |ing_str, index|
       parsed = parser.parse(ing_str)
+      @job.update!(progress: index + 1)
+      # Nothing to match or create — skipped, rather than shown on the
+      # confirmation screen (see .names_an_ingredient?).
+      next unless self.class.names_an_ingredient?(parsed)
+
       # The household's own library first; failing that, anyone's — which
       # create_recipe copies into the household rather than linking to.
       match_result = own_matcher.find_or_suggest(parsed)
       match_result = other_matcher.find_or_suggest(parsed) unless match_result[:match]
-
-      @job.update!(progress: index + 1)
 
       {
         parsed: parsed,
@@ -370,6 +382,11 @@ class RecipeImporter
 
       # Create recipe ingredients
       matched_results.each do |result|
+        # Imports paused before match_ingredients skipped these can still
+        # carry one; an unticked match would otherwise create a nameless
+        # ingredient.
+        next unless self.class.names_an_ingredient?(result[:parsed])
+
         # Use the matched ingredient (copied into the household if it's
         # someone else's) OR create a new one with nutrition
         ingredient = result[:match]&.copy_for(household, user: @job.user) || create_ingredient_with_nutrition(
