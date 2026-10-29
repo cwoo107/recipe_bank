@@ -104,6 +104,7 @@ class WeekPlanPdf
     end
 
     page_furniture
+    turn_landscape_pages
     document.render
   end
 
@@ -139,6 +140,19 @@ class WeekPlanPdf
     return :portrait if @page_size.is_a?(Array)
 
     landscape?(key == "chores_and_todos" ? "chores" : key) ? :landscape : :portrait
+  end
+
+  # A print dialog sets one orientation for the whole job, so in a PDF that
+  # mixes the two, the landscape pages were shrunk onto portrait paper. A
+  # page /Rotate turns them a quarter turn: they're drawn just the same, but
+  # viewers and printers take them as portrait sheets and print them full
+  # size (they read sideways on screen). A PDF that's all landscape stays
+  # as it is, and prints landscape.
+  def turn_landscape_pages
+    pages = document.state.pages
+    return unless pages.map(&:layout).uniq.size > 1
+
+    pages.each { |page| page.dictionary.data[:Rotate] = 90 if page.layout == :landscape }
   end
 
   def week_title

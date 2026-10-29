@@ -251,6 +251,14 @@ class WeekPrintsTest < ActionDispatch::IntegrationTest
     assert_equal [ LETTER_PORTRAIT, LETTER_LANDSCAPE, LETTER_PORTRAIT ], page_sizes(pdf)
   end
 
+  test "landscape pages among portrait ones are turned to print on portrait paper" do
+    mixed = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[meals chores calendar]).render
+    assert_equal [ 90 ], mixed.scan(%r{/Rotate (\d+)}).flatten.map(&:to_i)
+
+    landscape_only = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores]).render
+    assert_no_match %r{/Rotate}, landscape_only
+  end
+
   test "a landscape chore chart can be the first page" do
     pdf = WeekPlanPdf.new(household: @household, week_start: MONDAY, sections: %w[chores calendar]).render
 
