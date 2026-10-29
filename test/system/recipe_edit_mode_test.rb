@@ -32,6 +32,26 @@ class RecipeEditModeTest < ApplicationSystemTestCase
     assert_field "recipe[title]", with: "Roast Chicken"
   end
 
+  test "edit mode swaps the servings scaler for the recipe's servings field" do
+    login_as @user, scope: :user
+    visit recipe_url(@recipe)
+
+    # Scale while reading — that's not an edit.
+    find("button[aria-label='More servings']").click
+    assert_selector "[data-serving-scaler-target='count']", text: "5"
+
+    click_button "Edit"
+    assert_no_selector "button[aria-label='More servings']"
+    assert_field "recipe[servings]", with: "4"
+
+    fill_in "recipe[servings]", with: "6"
+    find("#recipe_servings_field").send_keys(:tab) # change → saves
+
+    edit_toggle.click
+    assert_selector "[data-serving-scaler-target='count']", text: "6"
+    assert_equal 6, @recipe.reload.servings
+  end
+
   test "leaving edit mode puts the header back" do
     login_as @user, scope: :user
     visit recipe_url(@recipe)

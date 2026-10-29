@@ -15,6 +15,9 @@ export default class extends Controller {
         this.viewOnlyItemsTargets.forEach(el => {
             el.classList.toggle("hidden", this.editingValue)
         })
+        // "edit-mode:change" — e.g. the serving scaler puts quantities back to
+        // the recipe's own amounts while editing.
+        this.dispatch("change", { detail: { editing: this.editingValue } })
     }
 
     // Fires whenever a new editOnlyItems target is inserted into the DOM,

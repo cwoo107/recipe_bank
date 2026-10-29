@@ -1,0 +1,24 @@
+<%# Locals: recipe (required). The Ingredients header's servings: the scaler
+    while reading, and in edit mode the recipe's own servings field, which
+    saves on change like the title (recipes/_heading). Saving replaces only
+    the scaler and the nutrition chart, not the field being typed in. %>
+<div class="flex items-center">
+  <%= render "recipes/servings_scaler", recipe: recipe %>
+
+  <% if recipe.owned_by?(current_user) %>
+    <div class="hidden" data-edit-mode-target="editOnlyItems">
+      <%= form_with model: recipe,
+                    url: recipe_path(recipe, format: :turbo_stream),
+                    class: "flex items-center gap-2",
+                    data: { controller: "auto-submit" } do |form| %>
+        <%= form.number_field :servings,
+                              id: "recipe_servings_field",
+                              min: 1, step: 1,
+                              placeholder: "—",
+                              class: "block w-16 rounded-md bg-white px-2 py-1 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-[#5f734c] dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-[#7a8f62]",
+                              data: { action: "change->auto-submit#submit" } %>
+        <%= form.label :servings, "servings", for: "recipe_servings_field", class: "text-sm text-gray-700 dark:text-gray-300" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

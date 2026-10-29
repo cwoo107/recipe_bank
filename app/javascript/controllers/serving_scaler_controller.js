@@ -4,12 +4,23 @@ export default class extends Controller {
     static targets = ["count", "quantity"]
     static values  = { base: Number }
 
-    // Opens at what the recipe makes; the +/- buttons scale from there.
-    connect() {
-        if (!this.hasCountTarget) return
-
-        this.baseValue = parseInt(this.countTarget.textContent, 10)
+    // Opens at what the recipe makes; the +/- buttons scale from there. Also
+    // runs when the count is re-rendered after the recipe's servings are
+    // edited (recipes/_servings_scaler), which makes that the new base.
+    countTargetConnected(element) {
+        const wasScaled = this.current && this.current !== this.baseValue
+        this.baseValue = parseInt(element.textContent, 10)
         this.current   = this.baseValue
+        if (wasScaled) this.update()
+    }
+
+    // Back to the recipe's own amounts — on entering edit mode, where the
+    // quantities being edited are the recipe's, not a scaled copy.
+    reset() {
+        if (!this.hasCountTarget || this.current === this.baseValue) return
+
+        this.current = this.baseValue
+        this.update()
     }
 
     // A row re-rendered mid-scale (e.g. after an inline quantity edit) comes

@@ -135,26 +135,11 @@
     <%# Ingredients %>
     <div class="lg:col-span-1">
       <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10"
-           data-controller="serving-scaler">
+           data-controller="serving-scaler"
+           data-action="edit-mode:change@window->serving-scaler#reset">
         <div class="flex items-center justify-between mb-2">
           <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Ingredients</h2>
-          <% if @recipe.servings.present? %>
-            <div class="flex items-center gap-2">
-              <button type="button"
-                      data-action="click->serving-scaler#decrement"
-                      class="flex size-6 items-center justify-center rounded-full inset-ring inset-ring-gray-300 dark:inset-ring-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-sm font-medium">
-                −
-              </button>
-              <span class="text-sm text-gray-700 dark:text-gray-300">
-          <span data-serving-scaler-target="count"><%= @recipe.servings %></span> servings
-        </span>
-              <button type="button"
-                      data-action="click->serving-scaler#increment"
-                      class="flex size-6 items-center justify-center rounded-full inset-ring inset-ring-gray-300 dark:inset-ring-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-sm font-medium">
-                +
-              </button>
-            </div>
-          <% end %>
+          <%= render "recipes/servings", recipe: @recipe %>
         </div>
 
         <%= render "recipes/recipe_ingredients", recipe: @recipe %>

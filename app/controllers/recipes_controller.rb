@@ -69,15 +69,22 @@ class RecipesController < ApplicationController
     saved = @recipe.update(recipe_params)
 
     respond_to do |format|
-      # The show page's inline title/description fields post to .turbo_stream
-      # and get just the read-only halves back, so the form they're still
-      # typing in isn't yanked out from under them.
+      # The show page's inline title/description/servings fields post to
+      # .turbo_stream and get just the read-only halves back, so the form
+      # they're still typing in isn't yanked out from under them. Servings
+      # also changes the scaler's starting point and the per-serving
+      # nutrition.
       format.turbo_stream do
         if saved
-          render turbo_stream: [
+          streams = [
             turbo_stream.replace("recipe_title", partial: "recipes/title", locals: { recipe: @recipe }),
             turbo_stream.replace("recipe_description", partial: "recipes/description", locals: { recipe: @recipe })
           ]
+          if @recipe.saved_change_to_servings?
+            streams << turbo_stream.replace("recipe_servings_scaler", partial: "recipes/servings_scaler", locals: { recipe: @recipe })
+            streams << turbo_stream.replace("macros_chart", partial: "recipes/macros_chart", locals: { recipe: @recipe })
+          end
+          render turbo_stream: streams
         else
           render turbo_stream: turbo_stream.replace("recipe_heading", partial: "recipes/heading", locals: { recipe: @recipe }),
                  status: :unprocessable_entity
