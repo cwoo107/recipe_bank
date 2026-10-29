@@ -26,7 +26,7 @@
   segment_bar_class = "isolate flex w-full -space-x-px rounded-md shadow-xs dark:shadow-none"
 %>
 
-<div data-controller="recurrence-pattern" class="space-y-4">
+<div data-controller="recurrence-pattern" data-action="change->recurrence-pattern#syncPreview" class="space-y-4">
   <%# Repeat pattern %>
   <div>
     <span class="block text-sm font-medium text-gray-900 dark:text-white mb-2">Repeat</span>
@@ -76,13 +76,20 @@
     </div>
   </div>
 
-  <%# Start date %>
-  <div>
-    <%= label_tag "#{prefix}[start_date]", "Starts", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
-    <%= date_field_tag "#{prefix}[start_date]", recurring_meal.start_date || Date.today,
+  <%# Start date — the meal form's week picker, which also lights up every
+      later date the rule lands on (recurrence-pattern#syncPreview). %>
+  <% start_date = recurring_meal.start_date || Date.current %>
+  <div data-recurrence-pattern-target="startPicker"
+       data-controller="week-date-picker"
+       data-week-date-picker-selected-value="<%= start_date.iso8601 %>"
+       data-week-date-picker-week-start-value="<%= start_date.beginning_of_week.iso8601 %>"
+       data-week-date-picker-first-day-value="<%= current_household.week_start_day %>">
+    <%= label_tag "#{prefix}[start_date]", "Select a starting date", class: "block text-sm font-medium text-gray-900 dark:text-white mb-2" %>
+    <%= date_field_tag "#{prefix}[start_date]", start_date,
                         required: true,
-                        data: { controller: "date-field", date_field_first_day_value: current_household.week_start_day },
-                        class: "block w-full rounded-lg bg-white dark:bg-white/5 px-3 py-2.5 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
+                        class: "sr-only",
+                        data: { week_date_picker_target: "input" } %>
+    <div data-week-date-picker-target="nav"></div>
   </div>
 
   <%# End condition %>
