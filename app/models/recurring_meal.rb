@@ -163,6 +163,24 @@ class RecurringMeal < ApplicationRecord
     end
   end
 
+  # Ended — its end date is before today in its household's time zone, so
+  # it has nothing left to schedule. Ongoing rules (no end date) never lapse.
+  def lapsed?
+    end_date.present? && end_date < household.zone.today
+  end
+
+  # Removes lapsed rules (DeleteLapsedRecurringMealsJob, daily) so Manage
+  # recurring meals only lists ones still going. The meals they put on the
+  # calendar stay, just no longer tied to a rule (meals: dependent: :nullify).
+  # The query takes anything ended by today in UTC — "today" somewhere ahead
+  # of UTC is at most a day later — and lapsed? decides for each household.
+  # Returns how many were removed.
+  def self.delete_lapsed!
+    where(end_date: ..Time.now.utc.to_date).includes(:household).find_each.count do |rule|
+      rule.lapsed? && rule.destroy
+    end
+  end
+
   # Meals this rule generated that are still attached (not individually
   # detached) and dated today or later — what "remove upcoming meals too"
   # on delete would actually clear.
