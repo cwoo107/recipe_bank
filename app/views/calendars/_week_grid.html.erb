@@ -35,7 +35,7 @@
         <% d = date + i.days %>
         <div class="min-h-8 p-1 border-l border-gray-100 dark:border-white/5 flex flex-col gap-0.5">
           <% all_day_events.select { |e| e.starts_at.to_date <= d && e.ends_at.to_date >= d }.each do |event| %>
-            <%= render "calendars/event_chip_week", event: event %>
+            <%= render "calendars/event_chip_week", event: event, day: d %>
           <% end %>
         </div>
       <% end %>
@@ -72,8 +72,9 @@
           <% (events_by_day[d] || []).reject(&:all_day?).each do |event| %>
             <% style = event_position_style(event, hour_height_rem: hour_h, start_hour: day_start, end_hour: day_end + 1) %>
             <% next if style.nil? %>
-            <div data-controller="dialog event-stack"
-                 data-action="click->dialog#backdropClose mouseenter->event-stack#lift mouseleave->event-stack#drop"
+            <div data-controller="dialog event-stack event-tooltip"
+                 data-action="click->dialog#backdropClose click->event-tooltip#hide mouseenter->event-stack#lift mouseleave->event-stack#drop
+                              mouseenter->event-tooltip#show mouseleave->event-tooltip#hide focusin->event-tooltip#show focusout->event-tooltip#hide"
                  class="absolute left-0.5 right-0.5"
                  style="<%= style %>">
               <dialog data-dialog-target="dialog"
@@ -86,12 +87,13 @@
                 </div>
               </dialog>
               <button type="button"
-                      data-action="dialog#open"
+                      data-action="dialog#open" aria-describedby="event_tooltip_<%= event.id %>"
                       class="absolute inset-0 w-full text-left rounded overflow-hidden text-xs px-1.5 py-1
                        ring-1 ring-inset leading-snug hover:ring-2 transition z-10 <%= event_chip_classes(event) %>">
                 <div class="font-semibold truncate"><%= event.title %></div>
                 <div class="opacity-75 truncate"><%= event.short_time %></div>
               </button>
+              <%= render "calendars/event_tooltip", event: event, id: "event_tooltip_#{event.id}" %>
             </div>
           <% end %>
         </div>

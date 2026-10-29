@@ -5,6 +5,25 @@ module CalendarsHelper
     "#{colors[:bg]} #{colors[:ring]} #{colors[:text]}"
   end
 
+  # The "when" line on an event's hover tooltip (calendars/_event_tooltip):
+  # "Tue, Nov 3 · 9:15–10:00 am", "Tue, Nov 3 · All day", or a range for
+  # events over several days. All-day events from feeds end at midnight the
+  # next day, so that end counts as the day before.
+  def event_tooltip_when(event)
+    starts = event.starts_at.in_time_zone
+    ends   = event.ends_at.in_time_zone
+    last_day = event.all_day? && ends == ends.beginning_of_day && ends > starts ? ends.to_date - 1 : ends.to_date
+
+    if last_day <= starts.to_date
+      "#{starts.strftime('%a, %b %-d')} · #{event.time_range}"
+    elsif event.all_day?
+      "#{starts.strftime('%a, %b %-d')} – #{last_day.strftime('%a, %b %-d')}"
+    else
+      day_and_time = ->(time) { "#{time.strftime('%a, %b %-d, %-I:%M')} #{time.strftime('%p').downcase}" }
+      "#{day_and_time.(starts)} – #{day_and_time.(ends)}"
+    end
+  end
+
   # Navigation helpers
   def prev_month_path(date)
     d = date - 1.month

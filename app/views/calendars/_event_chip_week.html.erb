@@ -1,5 +1,8 @@
 <%# _event_chip_week.html.erb — for all-day strips %>
-<div data-controller="dialog" data-action="click->dialog#backdropClose">
+<%# locals: (event:, day:) %>
+<% tooltip_id = "event_tooltip_#{event.id}_#{day.iso8601}" %>
+<div data-controller="dialog event-tooltip"
+     data-action="click->dialog#backdropClose click->event-tooltip#hide mouseenter->event-tooltip#show mouseleave->event-tooltip#hide focusin->event-tooltip#show focusout->event-tooltip#hide">
   <dialog data-dialog-target="dialog"
           class="dark:bg-[#1a1f16] w-11/12 sm:w-[480px] rounded-xl p-0 shadow-2xl backdrop:bg-black/50 overflow-hidden">
     <%= turbo_frame_tag "calendar_event_#{event.id}", src: calendar_event_path(event), loading: "lazy" %>
@@ -12,9 +15,10 @@
     </div>
   </dialog>
 
-  <button type="button" data-action="dialog#open"
+  <button type="button" data-action="dialog#open" aria-describedby="<%= tooltip_id %>"
           class="w-full text-left block truncate rounded px-2 py-0.5 text-xs font-medium ring-1 ring-inset
                  hover:ring-2 transition <%= event_chip_classes(event) %>">
     <%= event.title %>
   </button>
+  <%= render "calendars/event_tooltip", event: event, id: tooltip_id %>
 </div>

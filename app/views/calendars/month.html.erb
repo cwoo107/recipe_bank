@@ -95,7 +95,7 @@
                 <% hidden  = day_events.size - visible.size %>
 
                 <% visible.each do |event| %>
-                  <%= render "calendars/event_chip_month", event: event %>
+                  <%= render "calendars/event_chip_month", event: event, day: date %>
                 <% end %>
 
                 <% if hidden > 0 %>
