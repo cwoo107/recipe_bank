@@ -22,6 +22,8 @@
     hover:text-[#5f734c] dark:hover:text-[#7a8f62]
     peer-checked:hover:text-white
   CLASSES
+  # The joined bars of choices below (shared/_segment_option).
+  segment_bar_class = "isolate flex w-full -space-x-px rounded-md shadow-xs dark:shadow-none"
 %>
 
 <div data-controller="recurrence-pattern" class="space-y-4">
@@ -45,24 +47,32 @@
       </label>
     </div>
 
-    <div data-recurrence-pattern-target="intervalFields" class="flex items-center gap-2 <%= 'hidden' if is_weekday_pattern %>">
-      <span class="text-sm text-gray-700 dark:text-gray-300">Every</span>
-      <%= number_field_tag "#{prefix}[interval_days]", recurring_meal.interval_days || 1,
-                            min: 1,
-                            class: "w-20 rounded-lg bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white border border-gray-300 dark:border-white/10 focus:border-[#5f734c] dark:focus:border-[#7a8f62] focus:ring-2 focus:ring-[#5f734c]/20 dark:focus:ring-[#7a8f62]/20 outline-none transition" %>
-      <span class="text-sm text-gray-700 dark:text-gray-300">day(s)</span>
+    <%# How often — every day up to every week (RecurringMeal::INTERVAL_LABELS).
+        Radios underneath, so arrow keys move between them. A rule from before
+        the limit keeps its own interval as an extra choice until it's changed. %>
+    <% interval = recurring_meal.interval_days || 1 %>
+    <% interval_choices = RecurringMeal::INTERVAL_LABELS.dup %>
+    <% interval_choices[interval] ||= "Every #{interval} Days" %>
+    <div data-recurrence-pattern-target="intervalFields" class="<%= 'hidden' if is_weekday_pattern %>">
+      <div role="radiogroup" aria-label="How often" class="<%= segment_bar_class %>">
+        <% interval_choices.each_with_index do |(days, label), index| %>
+          <%= render "shared/segment_option", label: label, index: index, count: interval_choices.size,
+                     input: radio_button_tag("#{prefix}[interval_days]", days, days == interval, class: "peer sr-only") %>
+        <% end %>
+      </div>
     </div>
 
-    <div data-recurrence-pattern-target="weekdayFields" class="flex flex-wrap gap-2 <%= 'hidden' unless is_weekday_pattern %>">
-      <% current_household.ordered_wdays.each do |wday| %>
-        <% label = Date::ABBR_DAYNAMES[wday] %>
-        <label class="meal-type-pill">
-          <%= check_box_tag "#{prefix}[days_of_week][]", wday,
-                             recurring_meal.days_of_week&.include?(wday),
-                             class: "sr-only peer" %>
-          <span class="<%= pill_span_class %>"><%= label %></span>
-        </label>
-      <% end %>
+    <%# Which weekdays — the same bar, but checkboxes, since a meal can fall
+        on several days. In the household's week order. %>
+    <div data-recurrence-pattern-target="weekdayFields" class="<%= 'hidden' unless is_weekday_pattern %>">
+      <div role="group" aria-label="Which days" class="<%= segment_bar_class %>">
+        <% wdays = current_household.ordered_wdays %>
+        <% wdays.each_with_index do |wday, index| %>
+          <%= render "shared/segment_option", label: Date::ABBR_DAYNAMES[wday], index: index, count: wdays.size,
+                     input: check_box_tag("#{prefix}[days_of_week][]", wday, recurring_meal.days_of_week&.include?(wday),
+                                          id: "#{prefix.parameterize(separator: '_')}_days_of_week_#{wday}", class: "peer sr-only") %>
+        <% end %>
+      </div>
     </div>
   </div>
 

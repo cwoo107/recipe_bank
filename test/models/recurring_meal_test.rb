@@ -48,6 +48,32 @@ class RecurringMealTest < ActiveSupport::TestCase
     assert_includes rule.errors[:interval_days], "must be greater than 0"
   end
 
+  test "an interval can't be longer than a week" do
+    rule = RecurringMeal.new(household: households(:one), user: users(:one), recipe: recipes(:one),
+                              meal_name: "Dinner", pattern_type: "interval", interval_days: 8, start_date: Date.today)
+    assert_not rule.valid?
+    assert_includes rule.errors[:interval_days], "can't be more than 7 days"
+
+    rule.interval_days = 7
+    assert rule.valid?
+  end
+
+  test "a longer interval saved before the limit can still be edited otherwise" do
+    rule = RecurringMeal.create!(household: households(:one), user: users(:one), recipe: recipes(:one),
+                                 meal_name: "Dinner", pattern_type: "interval", interval_days: 1, start_date: Date.today)
+    rule.update_column(:interval_days, 14)
+
+    assert rule.reload.update(servings: 3)
+    assert_equal "Every 14 days", rule.description
+  end
+
+  test "an interval reads as words" do
+    rule = RecurringMeal.new(pattern_type: "interval")
+
+    assert_equal [ "Every day", "Every other day", "Every three days", "Every week" ],
+                 [ 1, 2, 3, 7 ].map { |days| rule.interval_days = days; rule.description }
+  end
+
   test "materialize_week! is idempotent and only creates meals for matching dates" do
     rule = recurring_meals(:one) # Sundays only, household :one
     week_start = Date.new(2026, 1, 4) # a Sunday

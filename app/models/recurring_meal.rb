@@ -11,6 +11,13 @@ class RecurringMeal < ApplicationRecord
   serialize :days_of_week, type: Array, coder: JSON
 
   PATTERN_TYPES = %w[interval days_of_week].freeze
+  # The "Every few days" choices on the form (shared/_recurrence_fields), in
+  # words. Nothing rarer than weekly — a meal that comes round monthly isn't
+  # something to plan as a rule.
+  INTERVAL_LABELS = {
+    1 => "Every Day", 2 => "Every Other Day", 3 => "Every Three Days", 4 => "Every Four Days",
+    5 => "Every Five Days", 6 => "Every Six Days", 7 => "Every Week"
+  }.freeze
   # Recurring only makes sense for date-scheduled meals, not the week-level
   # snack/dessert entries.
   MEAL_NAMES = Meal::CALENDAR_TYPES.freeze
@@ -28,6 +35,10 @@ class RecurringMeal < ApplicationRecord
   validates :pattern_type, inclusion: { in: PATTERN_TYPES }
   validates :start_date, presence: true
   validates :interval_days, numericality: { only_integer: true, greater_than: 0 }, if: -> { pattern_type == "interval" }
+  # Only when it's set or changed, so a longer rule from before the limit can
+  # still be edited otherwise (the form keeps offering its current interval).
+  validates :interval_days, inclusion: { in: INTERVAL_LABELS.keys, message: "can't be more than 7 days" },
+                            if: -> { pattern_type == "interval" && will_save_change_to_interval_days? }
   validate :days_of_week_present, if: -> { pattern_type == "days_of_week" }
   validate :end_date_not_before_start_date
 
@@ -146,7 +157,7 @@ class RecurringMeal < ApplicationRecord
   def description
     case pattern_type
     when "interval"
-      interval_days == 1 ? "Every day" : "Every #{interval_days} days"
+      INTERVAL_LABELS[interval_days]&.capitalize || "Every #{interval_days} days"
     when "days_of_week"
       "Weekly on " + days_of_week.sort.map { |wday| Date::ABBR_DAYNAMES[wday] }.join(", ")
     end

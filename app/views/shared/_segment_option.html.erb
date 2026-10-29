@@ -1,0 +1,20 @@
+<%# locals: (input:, label:, index:, count:) %>
+<%# One choice in a joined bar of choices (shared/_recurrence_fields), styled
+    like the meal form's date picker (week_date_picker_controller). `input` is
+    the radio or checkbox, which the label wraps. Checked choices keep a faint
+    divider so neighbouring checked weekdays don't run together.
+
+    The classes are written out here, in the markup, rather than built in Ruby:
+    Tailwind's scanner reads a `#` in Ruby code (as in bg-[#5f734c]) as the start
+    of a comment and skips the rest of that line. %>
+<label class="relative flex min-w-0 flex-1">
+  <%= input %>
+  <span class="<%= 'rounded-l-md' if index.zero? %> <%= 'rounded-r-md' if index == count - 1 %>
+               flex w-full cursor-pointer items-center justify-center px-1 py-2 text-center text-xs leading-tight sm:text-sm transition-colors
+               text-gray-900 inset-ring inset-ring-gray-300 hover:bg-gray-50
+               dark:text-gray-200 dark:inset-ring-white/10 dark:hover:bg-white/5
+               peer-checked:z-10 peer-checked:bg-[#5f734c] peer-checked:font-semibold peer-checked:text-white
+               peer-checked:inset-ring-white/25 peer-checked:hover:bg-[#5f734c]
+               dark:peer-checked:bg-[#7a8f62] dark:peer-checked:inset-ring-white/25 dark:peer-checked:hover:bg-[#7a8f62]
+               peer-focus-visible:z-20 peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[#5f734c]"><%= label %></span>
+</label>
