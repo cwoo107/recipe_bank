@@ -3,6 +3,11 @@ require 'nokogiri'
 require 'json'
 
 class RecipeScraper
+  BLOCKED_STATUSES = [ 401, 403 ].freeze
+  BLOCKED_MESSAGE = "This site doesn't let apps like ours read its pages, so the recipe can't be imported " \
+                    "from the link. You can still bring it in from a file: save the page as a PDF (in most " \
+                    "browsers, Print → Save as PDF) or take a screenshot, then upload it on the From File tab.".freeze
+
   attr_reader :url, :doc
 
   def initialize(url)
@@ -27,10 +32,16 @@ class RecipeScraper
   private
 
   # The URL is whatever the user typed, so it goes through SafeUrlFetcher —
-  # its errors are already worded for the user.
+  # its errors are already worded for the user. A 401/403 is usually a site
+  # turning away apps (bot protection) rather than a bad link, so that one
+  # points to the import page's From File tab instead.
   def fetch_html
     html, charset = SafeUrlFetcher.new(url).fetch
     Nokogiri::HTML(html, nil, charset)
+  rescue SafeUrlFetcher::Error => e
+    raise unless e.reason == :http_status && BLOCKED_STATUSES.include?(e.status)
+
+    raise SafeUrlFetcher::Error.new(BLOCKED_MESSAGE, reason: e.reason, status: e.status)
   end
 
   def extract_schema_recipe

@@ -33,6 +33,7 @@ class RecipeImporter
       Rails.logger.error e.backtrace.join("\n")
 
       @job.update!(
+        failed_step: @job.status, # the step it was on, for the progress list
         status: :failed,
         error_message: e.message,
         current_step: "Error: #{e.message}"
@@ -78,6 +79,7 @@ class RecipeImporter
       Rails.logger.error e.backtrace.join("\n")
 
       @job.update!(
+        failed_step: @job.status, # the step it was on, for the progress list
         status: :failed,
         error_message: e.message,
         current_step: "Error: #{e.message}"
@@ -132,6 +134,7 @@ class RecipeImporter
     end
 
     @job.update!(
+      failed_step: @job.status, # the step it was on, for the progress list
       status: :failed,
       error_message: e.message,
       current_step: "Error: #{e.message}"

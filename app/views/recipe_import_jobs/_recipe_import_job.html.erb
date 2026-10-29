@@ -1,6 +1,17 @@
 <!-- app/views/recipe_import_jobs/_recipe_import_job.html.erb -->
 <%= turbo_frame_tag dom_id(recipe_import_job) do %>
   <% from_file = recipe_import_job.url.nil? %>
+  <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+    <% if recipe_import_job.failed? %>
+      Couldn't import this recipe
+    <% elsif recipe_import_job.completed? %>
+      Recipe imported
+    <% elsif recipe_import_job.awaiting_confirmation? %>
+      Your turn
+    <% else %>
+      Importing Recipe...
+    <% end %>
+  </h2>
   <div class="flow-root mt-2">
     <ul role="list" class="-mb-8">
       <% if from_file %>
@@ -22,18 +33,19 @@
     <%= render "recipe_imports/ingredient_confirmation", import_job: recipe_import_job %>
   <% end %>
 
-  <!-- Error message -->
-  <% if recipe_import_job.failed? %>
-    <div class="bg-red-50 border border-red-200 rounded p-4 mt-6 dark:bg-red-900/20 dark:border-red-800">
+  <%# Error message — normally under the step it failed on (render_import_step);
+      here only for an import with no recorded step (from before failed_step). %>
+  <% if recipe_import_job.failed? && recipe_import_job.failed_step.blank? %>
+    <div class="rounded-lg border border-dusty-rose-200 bg-dusty-rose-50 p-4 mt-6 dark:border-dusty-rose-800/40 dark:bg-dusty-rose-900/20">
       <div class="flex">
         <div class="flex-shrink-0">
-          <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+          <svg class="h-5 w-5 text-dusty-rose-500 dark:text-dusty-rose-400" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
           </svg>
         </div>
         <div class="ml-3">
-          <h3 class="text-sm font-medium text-red-800 dark:text-red-200">Import failed</h3>
-          <p class="mt-2 text-sm text-red-700 dark:text-red-300"><%= recipe_import_job.error_message %></p>
+          <h3 class="text-sm font-medium text-dusty-rose-800 dark:text-dusty-rose-200">Import failed</h3>
+          <p class="mt-2 text-sm text-dusty-rose-700 dark:text-dusty-rose-300"><%= recipe_import_job.error_message %></p>
         </div>
       </div>
     </div>

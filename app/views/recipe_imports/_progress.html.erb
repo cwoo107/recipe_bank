@@ -2,11 +2,8 @@
 <%= turbo_stream_from "recipe_import_#{import_job.id}" %>
 
 <div class="rounded-lg bg-white p-6 shadow-sm inset-ring inset-ring-gray-900/5 dark:bg-white/5 dark:inset-ring-white/10">
-  <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-    <%= import_job.awaiting_confirmation? ? "Your turn" : "Importing Recipe..." %>
-  </h2>
-
   <%# The partial opens its own turbo frame (dom_id), which is what the job's
-      broadcasts replace as the import moves through its steps. %>
+      broadcasts replace as the import moves through its steps — heading
+      included, so it changes when the import finishes or fails. %>
   <%= render import_job %>
 </div>

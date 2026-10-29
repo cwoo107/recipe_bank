@@ -32,6 +32,28 @@ class RecipeScraperTest < ActiveSupport::TestCase
     assert_equal ["Simmer the tomatoes.", "Season."], data[:steps]
   end
 
+  def scrape_with_fetch_error(error)
+    fetcher = Object.new
+    fetcher.define_singleton_method(:fetch) { raise error }
+    SafeUrlFetcher.stub(:new, fetcher) do
+      assert_raises(SafeUrlFetcher::Error) { RecipeScraper.new("https://example.com/r").scrape }
+    end
+  end
+
+  test "a site that blocks the fetch points to importing from a file" do
+    blocked = SafeUrlFetcher::Error.new("The site responded with an error (403).", reason: :http_status, status: 403)
+    error = scrape_with_fetch_error(blocked)
+
+    assert_equal RecipeScraper::BLOCKED_MESSAGE, error.message
+    assert_equal 403, error.status
+  end
+
+  test "other fetch errors keep their own message" do
+    missing = SafeUrlFetcher::Error.new("The site responded with an error (404).", reason: :http_status, status: 404)
+
+    assert_equal missing.message, scrape_with_fetch_error(missing).message
+  end
+
   test "a page with no recipe comes back empty rather than with a placeholder title" do
     data = scrape_fixture("not_a_recipe.html")
 

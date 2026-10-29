@@ -41,6 +41,7 @@ class ProcessRecipeImportJobTest < ActiveJob::TestCase
     end
 
     assert job.reload.failed?
+    assert_equal "fetching_html", job.failed_step
     assert_match(/403/, job.error_message)
     assert_no_enqueued_jobs only: ProcessRecipeImportJob
   end
