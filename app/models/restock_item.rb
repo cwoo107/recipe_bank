@@ -5,6 +5,8 @@ class RestockItem < ApplicationRecord
 
   has_many :restock_item_stores, dependent: :destroy
   has_many :stores, -> { ordered }, through: :restock_item_stores
+  # Grocery ingredients that are the same thing (RestockItemIngredient).
+  has_many :restock_item_ingredients, dependent: :destroy
 
   acts_as_list scope: :restock_category_id
 
@@ -80,6 +82,25 @@ class RestockItem < ApplicationRecord
   # undoing (see RestockItemsController#mark_restock).
   def mark_restock!(**last_restocked)
     update!(restock: true, stocked: false, last_date_checked_restocked: Time.current, **last_restocked.slice(:last_restocked))
+  end
+
+  # Ticked off the restock shopping list today — what unticking its grocery
+  # line can put back (RestockItemIngredient.sync_from_groceries).
+  def bought_today?
+    stocked? && last_restocked == Date.current
+  end
+
+  # Still on the restock shopping list, or ticked off it this week — when a
+  # linked grocery line says "also on restock list".
+  def on_shopping_list?
+    restock? || (stocked? && last_restocked.present? && last_restocked >= Date.current.beginning_of_week)
+  end
+
+  # The grocery lines for the week starting `week_start` that are this item
+  # under another name (a linked ingredient) — its "also on grocery list".
+  def grocery_lines(week_start)
+    household.grocery_lists.where(week_of: week_start...(week_start + 7))
+             .where(ingredient_id: restock_item_ingredients.linked.select(:ingredient_id))
   end
 
   # A badge only shows while the check that produced it is still fresh (this

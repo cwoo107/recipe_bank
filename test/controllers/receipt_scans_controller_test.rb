@@ -44,14 +44,17 @@ class ReceiptScansControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", new_receipt_scan_path(date: @week + 7)
   end
 
+  JPEG_BYTES = "\xFF\xD8\xFF\xE0 fake jpeg".b.freeze
+
   test "uploading keeps the photo on the scan for the worker, and enqueues it" do
-    upload = Rack::Test::UploadedFile.new(StringIO.new("fake jpeg"), "image/jpeg", original_filename: "receipt.jpg")
+    upload = Rack::Test::UploadedFile.new(StringIO.new(JPEG_BYTES), "image/jpeg", original_filename: "receipt.jpg")
 
     post receipt_scans_url, params: { file: upload, week_of: @week.to_s }
 
     scan = ReceiptScan.last
     assert_redirected_to receipt_scan_path(scan)
-    assert_equal "fake jpeg", scan.source_file
+    assert_equal JPEG_BYTES, scan.source_file
+    assert_equal "image/jpeg", scan.source_content_type
     assert_equal @week, scan.week_of
     assert scan.pending?
     assert_enqueued_with(job: ProcessReceiptScanJob, args: [ scan.id ])
@@ -64,6 +67,41 @@ class ReceiptScansControllerTest < ActionDispatch::IntegrationTest
       post receipt_scans_url, params: { file: upload, week_of: @week.to_s }
     end
     assert_redirected_to new_receipt_scan_path(date: @week)
+  end
+
+  test "a file is judged by its contents, not the type the browser claims" do
+    upload = Rack::Test::UploadedFile.new(StringIO.new("<svg xmlns='http://www.w3.org/2000/svg'/>"), "image/jpeg",
+                                          original_filename: "receipt.jpg")
+
+    assert_no_difference("ReceiptScan.count") do
+      post receipt_scans_url, params: { file: upload, week_of: @week.to_s }
+    end
+    assert_redirected_to new_receipt_scan_path(date: @week)
+    assert_no_enqueued_jobs only: ProcessReceiptScanJob
+  end
+
+  test "a file field sent as plain text is turned away rather than erroring" do
+    assert_no_difference("ReceiptScan.count") do
+      post receipt_scans_url, params: { file: "not a file", week_of: @week.to_s }
+    end
+    assert_redirected_to new_receipt_scan_path(date: @week)
+  end
+
+  test "the worker drops amounts that aren't sensible" do
+    upload_scan = @household.receipt_scans.create!(user: @user, week_of: @week, source_file: "jpeg", source_content_type: "image/jpeg")
+    extracted = { store_name: nil,
+                  items: [ line("GV WHL MLK", @milk, 3.49).merge("unit_price" => -5, "total_price" => 1e9, "quantity" => "2") ] }
+
+    fake = Minitest::Mock.new
+    fake.expect(:extract, extracted)
+    ReceiptExtractor.stub(:new, ->(*, **) { fake }) do
+      ProcessReceiptScanJob.perform_now(upload_scan.id)
+    end
+
+    item = upload_scan.reload.items.first
+    assert_nil item["unit_price"]
+    assert_nil item["total_price"]
+    assert_nil item["quantity"]
   end
 
   test "the review shows each line beside its match, and offers changed prices" do

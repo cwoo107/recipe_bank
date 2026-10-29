@@ -9,3 +9,6 @@ trial_reminders:
 delete_lapsed_recurring_meals:
   cron: "15 10 * * *" # daily, 10:15 UTC (overnight in the US)
   class: "DeleteLapsedRecurringMealsJob"
+purge_stale_uploads:
+  cron: "20 * * * *" # hourly
+  class: "PurgeStaleUploadsJob"

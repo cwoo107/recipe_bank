@@ -3,11 +3,18 @@ class ReceiptScansController < ApplicationController
   before_action :require_household_admin!
   before_action :set_receipt_scan, only: %i[show update apply]
 
+  # Every scan runs on Claude, so a household can only start so many an
+  # hour. Counted per process (the cache store is in memory).
+  rate_limit to: 20, within: 1.hour, only: :create,
+             by: -> { current_household.id },
+             with: -> { redirect_to new_receipt_scan_path, alert: "That's a lot of receipts at once — please try again in a little while." }
+
   # Receipts are read on Sidekiq (ProcessReceiptScanJob), and the scan page
   # streams its progress as Turbo broadcasts over Redis.
 
-  # Uploads wait in the database until the worker reads them.
-  MAX_UPLOAD_SIZE = 25.megabytes
+  # Uploads wait in the database until the worker reads them. Base64 for
+  # Claude grows a file by a third, and its requests top out at 32 MB.
+  MAX_UPLOAD_SIZE = 20.megabytes
 
   # Starts on the week the grocery list was showing (?date=).
   def new
@@ -18,16 +25,18 @@ class ReceiptScansController < ApplicationController
     @date = week_from(params[:week_of])
     file  = params[:file]
 
-    unless file.present?
+    unless file.is_a?(ActionDispatch::Http::UploadedFile)
       return redirect_to new_receipt_scan_path(date: @date), alert: "Please choose a photo of your receipt."
-    end
-
-    unless ReceiptExtractor::SUPPORTED_TYPES.include?(file.content_type)
-      return redirect_to new_receipt_scan_path(date: @date), alert: "Unsupported file type. Please upload a photo (JPEG, PNG, WebP) or a PDF."
     end
 
     if file.size > MAX_UPLOAD_SIZE
       return redirect_to new_receipt_scan_path(date: @date), alert: "That file is too large — please upload one under #{MAX_UPLOAD_SIZE / 1.megabyte} MB."
+    end
+
+    # Judged by the file's contents, not the type the browser claims for it.
+    content_type = ClaudeFileContent.content_type_of(file)
+    unless content_type
+      return redirect_to new_receipt_scan_path(date: @date), alert: "Unsupported file type. Please upload a photo (JPEG, PNG, WebP) or a PDF."
     end
 
     # The worker may be in another container, so the upload travels with the
@@ -36,7 +45,7 @@ class ReceiptScansController < ApplicationController
       user: current_user,
       week_of: @date,
       source_file: file.read,
-      source_content_type: file.content_type
+      source_content_type: content_type
     )
 
     ProcessReceiptScanJob.perform_later(scan.id)

@@ -93,6 +93,14 @@
             <% end %>
           </span>
         </div>
+        <%# The same thing is waiting on the restock list (RestockItemIngredient)
+            — ticking this line off ticks that off too. `restock_links` comes
+            from the list page; a re-rendered row looks it up. %>
+        <% if grocery_list.restock_items(local_assigns[:restock_links]).any? %>
+          <p class="text-[11px]/4 sm:text-xs/5 font-medium text-[#5f734c] dark:text-[#7a8f62] transition-all duration-200 <%= 'line-through opacity-50' if grocery_list.checked == true %>">
+            also on restock list
+          </p>
+        <% end %>
       </div>
     </div>
 

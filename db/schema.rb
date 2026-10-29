@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -469,6 +469,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_120000) do
     t.index ["household_id", "position"], name: "index_restock_categories_on_household_id_and_position"
   end
 
+  create_table "restock_item_ingredients", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "ingredient_id", null: false
+    t.boolean "linked", default: true, null: false
+    t.integer "restock_item_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["ingredient_id"], name: "index_restock_item_ingredients_on_ingredient_id"
+    t.index ["restock_item_id", "ingredient_id"], name: "idx_on_restock_item_id_ingredient_id_6ea993f60f", unique: true
+    t.index ["restock_item_id"], name: "index_restock_item_ingredients_on_restock_item_id"
+  end
+
   create_table "restock_item_stores", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "restock_item_id", null: false
@@ -716,6 +727,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_120000) do
   add_foreign_key "recurring_meals", "recipes"
   add_foreign_key "recurring_meals", "users"
   add_foreign_key "restock_categories", "households"
+  add_foreign_key "restock_item_ingredients", "ingredients"
+  add_foreign_key "restock_item_ingredients", "restock_items"
   add_foreign_key "restock_item_stores", "restock_items"
   add_foreign_key "restock_item_stores", "stores"
   add_foreign_key "restock_items", "households"

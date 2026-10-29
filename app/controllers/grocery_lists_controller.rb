@@ -24,6 +24,13 @@ class GroceryListsController < ApplicationController
 
     # Second tab: what's marked Restock on the restock checklist, by store.
     @restock_list = RestockItem.shopping_list(current_household)
+
+    # Lines that are the same thing on both lists ("also on restock list" /
+    # "also on grocery list"), worked out once for the page.
+    @restock_links = RestockItemIngredient.restock_items_by_ingredient(current_household, @grocery_lists.filter_map(&:ingredient_id))
+    @restock_grocery_lines = RestockItemIngredient.grocery_lines_by_restock_item(
+      current_household, @restock_list.flat_map { |_, categories| categories.flat_map(&:last) }, @date
+    )
     @active_list  = params[:list] == "restock" ? "restock" : "groceries"
   end
 
@@ -42,6 +49,9 @@ class GroceryListsController < ApplicationController
                 .destroy_all
 
     ingredient_data = {}
+    # Linked to a restock item that's marked Stocked: already in the house.
+    stocked_ids = RestockItemIngredient.stocked_ingredient_ids(current_household)
+    left_off = Set.new
 
     meals.each do |meal|
       multiplier = meal.servings_multiplier
@@ -53,6 +63,10 @@ class GroceryListsController < ApplicationController
         ingredient       = line.ingredient
         next unless ingredient
         next if ingredient.not_shopped? # tap water, not something to buy
+        if stocked_ids.include?(ingredient_id)
+          left_off << ingredient.ingredient
+          next
+        end
 
         scaled_quantity  = line.quantity * multiplier
 
@@ -89,8 +103,15 @@ class GroceryListsController < ApplicationController
       )
     end
 
-    redirect_to grocery_lists_path(date: @date),
-                notice: "Grocery list generated for week of #{@date.strftime('%B %d, %Y')}"
+    notice = "Grocery list generated for week of #{@date.strftime('%B %d, %Y')}"
+    notice += ". Left off #{left_off.sort.to_sentence} — already stocked on your restock list." if left_off.any?
+    # Anything that looks like it's also on the restock list gets confirmed
+    # first (RestockMatchesController), then it's on to the list.
+    if RestockMatch.suggestions(current_household, @date).any?
+      redirect_to new_restock_match_path(date: @date), notice:
+    else
+      redirect_to grocery_lists_path(date: @date), notice:
+    end
   end
 
   def show; end
@@ -179,12 +200,28 @@ class GroceryListsController < ApplicationController
 
     respond_to do |format|
       if @grocery_list.update(grocery_list_params)
+        # Ticking a line ticks off the restock items linked to it (and
+        # unticking puts them back); their rows on the Restock tab follow.
+        week = @grocery_list.week_of&.beginning_of_week
+        restock_items = if week && @grocery_list.saved_change_to_checked? && !@grocery_list.note_only?
+                          RestockItemIngredient.sync_from_groceries(current_household, [ @grocery_list.ingredient_id ],
+                                                                    checked: @grocery_list.checked?)
+                        else
+                          []
+                        end
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
-            "grocery_list_#{@grocery_list.id}",
-            partial: "grocery_lists/grocery_list",
-            locals: { grocery_list: @grocery_list }
-          )
+          render turbo_stream: [
+            turbo_stream.replace(
+              "grocery_list_#{@grocery_list.id}",
+              partial: "grocery_lists/grocery_list",
+              locals: { grocery_list: @grocery_list }
+            ),
+            *restock_items.map do |item|
+              turbo_stream.replace_all(".shopping_restock_item_#{item.id}",
+                                       partial: "restock_items/shopping_item",
+                                       locals: { item:, grocery_lines: item.grocery_lines(week), date: week })
+            end
+          ]
         end
         format.html { redirect_to @grocery_list, notice: "Grocery list was successfully updated.", status: :see_other }
         format.json { render :show, status: :ok, location: @grocery_list }
@@ -199,7 +236,11 @@ class GroceryListsController < ApplicationController
   # shown (this week, under the current filter); with checked=false, "Unselect
   # all" unticks it. Back to the list, which refreshes in place.
   def check_all
-    shown_grocery_lists.update_all(checked: params[:checked] != "false", updated_at: Time.current)
+    checked = params[:checked] != "false"
+    lines = shown_grocery_lists.where.not(ingredient_id: nil)
+    changed_ids = (checked ? lines.where(checked: [ false, nil ]) : lines.where(checked: true)).pluck(:ingredient_id)
+    shown_grocery_lists.update_all(checked:, updated_at: Time.current)
+    RestockItemIngredient.sync_from_groceries(current_household, changed_ids, checked:)
     redirect_back_or_to grocery_lists_path(date: @date), status: :see_other
   end
 

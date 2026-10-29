@@ -80,6 +80,7 @@ class RestockItemsController < ApplicationController
   def mark_stocked
     @previous_restocked = @restock_item.last_restocked
     @restock_item.mark_stocked!(restocked: shopping_list_context?)
+    sync_grocery_lines(checked: true) if shopping_list_context?
     respond_to do |format|
       format.turbo_stream { render shopping_list_context? ? :shopping_item : :update }
       format.html { redirect_to restock_items_path }
@@ -92,6 +93,7 @@ class RestockItemsController < ApplicationController
     else
       @restock_item.mark_restock!
     end
+    sync_grocery_lines(checked: false) if shopping_list_context?
     respond_to do |format|
       format.turbo_stream { render shopping_list_context? ? :shopping_item : :update }
       format.html { redirect_to restock_items_path }
@@ -104,6 +106,20 @@ class RestockItemsController < ApplicationController
   # these actions but re-renders the shopping row instead of the checklist card.
   def shopping_list_context?
     params[:context] == "shopping"
+  end
+
+  # Ticking (or unticking) an item on the shopping list does the same to the
+  # week's grocery lines linked to it (RestockItemIngredient). @grocery_lines
+  # are all of them, for the row's "also on grocery list"; @synced_grocery_lines
+  # the ones that changed, re-rendered on the Groceries tab.
+  def sync_grocery_lines(checked:)
+    @week = (Date.iso8601(params[:date].to_s) rescue Time.zone.today).beginning_of_week
+    lines = @restock_item.grocery_lines(@week)
+    changed = lines.where(checked: checked ? [ false, nil ] : true)
+    @synced_grocery_lines = changed.to_a
+    changed.update_all(checked:, updated_at: Time.current)
+    @synced_grocery_lines.each(&:reload)
+    @grocery_lines = lines.to_a
   end
 
   def set_restock_item

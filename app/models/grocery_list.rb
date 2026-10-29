@@ -52,6 +52,17 @@ class GroceryList < ApplicationRecord
     Breakdown.new(uses_by_ingredient.fetch(ingredient_id, []).select { |use| meal_ids.include?(use.meal_id) })
   end
 
+  # Restock items on the restock shopping list that are this line under
+  # another name (RestockItemIngredient) — its "also on restock list". Pass
+  # RestockItemIngredient.restock_items_by_ingredient for the whole list to
+  # save looking them up row by row.
+  def restock_items(restock_links = nil)
+    return [] if note_only?
+
+    restock_links ||= RestockItemIngredient.restock_items_by_ingredient(household, [ ingredient_id ])
+    restock_links.fetch(ingredient_id, []).select(&:on_shopping_list?)
+  end
+
   private
 
   def ingredient_or_note

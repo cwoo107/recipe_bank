@@ -2,11 +2,18 @@ class RecipeImportsController < ApplicationController
   # Limited members can look but not change these (see ApplicationController).
   before_action :require_household_admin!
 
+  # Every import (URL or file) runs on Claude, so a household can only start
+  # so many an hour. Counted per process (the cache store is in memory).
+  rate_limit to: 20, within: 1.hour, only: %i[create create_from_file],
+             by: -> { current_household.id },
+             with: -> { redirect_to new_recipe_import_path, alert: "That's a lot of imports at once — please try again in a little while." }
+
   # Imports run on Sidekiq (ProcessRecipeImportJob), and the progress page
   # streams their updates as Turbo broadcasts over Redis.
 
-  # Uploads wait in the database until the worker reads them.
-  MAX_UPLOAD_SIZE = 25.megabytes
+  # Uploads wait in the database until the worker reads them. Base64 for
+  # Claude grows a file by a third, and its requests top out at 32 MB.
+  MAX_UPLOAD_SIZE = 20.megabytes
 
   def new
     @import_job = RecipeImportJob.new
@@ -40,20 +47,21 @@ class RecipeImportsController < ApplicationController
   end
 
   def create_from_file
-    unless params[:file].present?
-      redirect_to new_recipe_import_path, alert: "Please select a file."
-      return
-    end
-
     file = params[:file]
-    allowed_types = RecipeFileExtractor::SUPPORTED_TYPES
-    unless allowed_types.include?(file.content_type)
-      redirect_to new_recipe_import_path, alert: "Unsupported file type. Please upload an image or PDF."
+    unless file.is_a?(ActionDispatch::Http::UploadedFile)
+      redirect_to new_recipe_import_path, alert: "Please select a file."
       return
     end
 
     if file.size > MAX_UPLOAD_SIZE
       redirect_to new_recipe_import_path, alert: "That file is too large — please upload one under #{MAX_UPLOAD_SIZE / 1.megabyte} MB."
+      return
+    end
+
+    # Judged by the file's contents, not the type the browser claims for it.
+    content_type = ClaudeFileContent.content_type_of(file)
+    unless content_type
+      redirect_to new_recipe_import_path, alert: "Unsupported file type. Please upload an image or PDF."
       return
     end
 
@@ -65,7 +73,7 @@ class RecipeImportsController < ApplicationController
       progress: 0,
       total_steps: 5,
       source_file: file.read,
-      source_content_type: file.content_type
+      source_content_type: content_type
     )
 
     ProcessRecipeImportJob.perform_later(@import_job.id, "file")

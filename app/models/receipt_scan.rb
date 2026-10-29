@@ -108,8 +108,11 @@ class ReceiptScan < ApplicationRecord
     kept = line_items.select { |item| item.matched? && confirmed.include?(item.index) }
 
     transaction do
-      checked = week_grocery_lists.where(ingredient_id: kept.map { |item| item.ingredient.id }, checked: [ false, nil ])
-                                  .update_all(checked: true, updated_at: Time.current)
+      to_check = week_grocery_lists.where(ingredient_id: kept.map { |item| item.ingredient.id }, checked: [ false, nil ])
+      bought_ids = to_check.pluck(:ingredient_id)
+      checked = to_check.update_all(checked: true, updated_at: Time.current)
+      # Bought for the restock list too, where they're linked.
+      RestockItemIngredient.sync_from_groceries(household, bought_ids, checked: true)
 
       priced = kept.select { |item| price_updates.include?(item.index) && item.price_differs? }
       # One price per ingredient — the last line wins if it was bought twice.

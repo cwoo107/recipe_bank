@@ -91,6 +91,19 @@ class RecipeImporterTest < ActiveSupport::TestCase
     assert_equal ["Zzqqx flour"], (used - [@olive_oil]).map(&:ingredient)
   end
 
+  test "markup in an imported step is kept as text, not rendered" do
+    scraped = SCRAPED.merge(steps: [ %(Mix it. <a href="https://evil.example">Watch</a> <img src="https://evil.example/p.gif">) ])
+    IngredientAssistant.stub(:new, FakeIngredientAssistant.new) do
+      RecipeScraper.stub(:new, FakeScraper.new(scraped)) { RecipeImporter.new(@job).perform }
+    end
+    @job.reload.apply_ingredient_confirmations!([])
+    run_resume
+
+    html = @job.recipe.steps.first.content.body.to_html
+    assert_no_match(/<a|<img/, html)
+    assert_includes @job.recipe.steps.first.content.to_plain_text, '<a href="https://evil.example">Watch</a>'
+  end
+
   test "an unticked match is discarded and a new ingredient is created in its place" do
     run_match_phase
     @job.apply_ingredient_confirmations!([]) # user ticked nothing
@@ -235,6 +248,27 @@ class RecipeImporterTest < ActiveSupport::TestCase
     assert_equal "g", flour.nutrition_fact.serving_unit
     assert_equal 4.25, flour.unit_price
     assert_equal 20, flour.unit_servings
+  end
+
+  class SkewedIngredientAssistant < FakeIngredientAssistant
+    def estimate_nutrition_facts(ingredients)
+      ingredients.map do |i|
+        { "name" => i[:name], "calories" => -50, "protein" => "lots", "total_fat" => 1e12,
+          "total_carb" => 76.0, "serving_size" => 100, "serving_unit" => "g", "unit_price" => -4, "unit_servings" => 20 }
+      end
+    end
+  end
+
+  test "an estimate that isn't a sensible number is left blank" do
+    run_match_phase
+    IngredientAssistant.stub(:new, SkewedIngredientAssistant.new) { RecipeImporter.new(@job).resume_after_confirmation }
+
+    flour = @job.reload.recipe.ingredients.find_by(ingredient: "Zzqqx flour")
+    assert_nil flour.nutrition_fact.calories
+    assert_nil flour.nutrition_fact.protein
+    assert_nil flour.nutrition_fact.total_fat
+    assert_equal 76.0, flour.nutrition_fact.total_carb
+    assert_nil flour.unit_price
   end
 
   test "the offline fallback estimate (symbol keys) is still saved" do

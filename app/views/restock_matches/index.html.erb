@@ -1,0 +1,34 @@
+<% content_for :title, "Linked ingredients" %>
+
+<%# Every grocery ingredient ↔ restock item answer the household has given
+    (RestockMatchesController#index): unlink one that's wrong, or link one
+    that was marked "not the same". %>
+<div class="max-w-3xl mx-auto p-6">
+  <%= link_to "← Back to restock checklist", restock_items_path,
+              class: "text-sm font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+  <h1 class="mt-2 text-3xl font-bold tracking-tight text-olive-800 dark:text-[#e8ede3]">Linked ingredients</h1>
+  <p class="mt-2 mb-6 text-sm text-gray-500 dark:text-gray-400">
+    A linked ingredient is the same thing as the restock item: it shows on both lists, checking one off checks off the other,
+    and it's left off the generated grocery list while the restock item is marked Stocked.
+  </p>
+
+  <section class="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-white/10 dark:bg-white/5">
+    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Linked</h2>
+    <% if @linked.any? %>
+      <%= render "restock_matches/pair_list", pairs: @linked, linked: true %>
+    <% else %>
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+        Nothing linked yet. When you generate a grocery list, we'll ask about anything that looks like it's on your restock list.
+      </p>
+    <% end %>
+  </section>
+
+  <section class="mt-6 rounded-lg border border-gray-200 bg-white p-4 sm:p-6 dark:border-white/10 dark:bg-white/5">
+    <h2 class="text-base font-semibold text-gray-900 dark:text-white">Marked as not the same</h2>
+    <% if @unlinked.any? %>
+      <%= render "restock_matches/pair_list", pairs: @unlinked, linked: false %>
+    <% else %>
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">Nothing here — matches you untick show up here so you can link them later.</p>
+    <% end %>
+  </section>
+</div>

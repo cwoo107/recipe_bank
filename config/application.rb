@@ -15,6 +15,12 @@ module RecipeBank
     # Initialize configuration defaults for originally generated Rails version.
     config.load_defaults 8.1
 
+    # Nothing uploads to Active Storage (step attachments are off, and
+    # recipe/receipt uploads go straight to the worker), so its direct-upload
+    # and file-serving endpoints — open to anyone, signed in or not — aren't
+    # mounted at all.
+    config.active_storage.draw_routes = false
+
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.

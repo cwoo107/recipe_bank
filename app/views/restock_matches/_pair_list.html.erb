@@ -1,0 +1,33 @@
+<%# One section of the linked-ingredients page. Locals: pairs, linked (which section). %>
+<ul role="list" class="divide-y divide-gray-200 dark:divide-white/10">
+  <% pairs.each do |pair| %>
+    <li id="<%= dom_id(pair) %>" class="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:gap-4">
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-medium text-gray-900 dark:text-white"><%= pair.ingredient.ingredient %></p>
+        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">Grocery ingredient</p>
+      </div>
+
+      <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
+           class="hidden size-4 shrink-0 text-gray-400 sm:block dark:text-gray-500">
+        <path fill-rule="evenodd" d="M2 10a.75.75 0 0 1 .75-.75h12.59l-2.1-2.1a.75.75 0 1 1 1.06-1.06l3.38 3.38a.75.75 0 0 1 0 1.06l-3.38 3.38a.75.75 0 1 1-1.06-1.06l2.1-2.1H2.75A.75.75 0 0 1 2 10Z" clip-rule="evenodd" />
+      </svg>
+
+      <div class="min-w-0 flex-1">
+        <p class="truncate text-sm font-medium text-gray-900 dark:text-white"><%= pair.restock_item.name %></p>
+        <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+          Restock item<%= " · #{pair.restock_item.brand}" if pair.restock_item.brand.present? %>
+        </p>
+      </div>
+
+      <div class="shrink-0 sm:w-28 sm:text-right">
+        <% if linked %>
+          <%= button_to "Unlink", restock_match_path(pair), method: :patch, params: { linked: false },
+                class: "rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-dusty-rose-600 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-dusty-rose-400 dark:inset-ring-white/5 dark:hover:bg-white/20 cursor-pointer" %>
+        <% else %>
+          <%= button_to "Link", restock_match_path(pair), method: :patch, params: { linked: true },
+                class: "rounded-md bg-[#5f734c] px-2.5 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c] cursor-pointer" %>
+        <% end %>
+      </div>
+    </li>
+  <% end %>
+</ul>

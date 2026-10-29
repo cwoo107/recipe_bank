@@ -20,6 +20,10 @@ ENV RAILS_ENV="production" \
     BUNDLE_WITHOUT="development" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
+# Thruster turns away request bodies past this (bytes) before Rails reads
+# them; uploads are capped at 20 MB, so 25 MB leaves room for the form.
+ENV MAX_REQUEST_BODY="26214400"
+
 # Build stage
 FROM base AS build
 

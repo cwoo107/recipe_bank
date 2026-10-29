@@ -386,11 +386,13 @@ class RecipeImporter
         )
       end
 
-      # Create steps
+      # Create steps. Rich text takes HTML, and this text came from a web page
+      # or an uploaded file (by way of Claude), so it's escaped: anything in
+      # it that looks like markup — a link someone planted — stays plain text.
       scraped_data[:steps].each_with_index do |step_text, index|
         recipe.steps.create!(
           position: index + 1,
-          content: step_text
+          content: ERB::Util.html_escape(step_text.to_s)
         )
       end
 
@@ -419,23 +421,33 @@ class RecipeImporter
     ingredient = Ingredient.create!(
       ingredient: parsed[:name],
       family: family || 'grocery',
-      unit_price: nutrition&.dig(:unit_price),
-      unit_servings: nutrition&.dig(:unit_servings),
+      unit_price: estimate(nutrition&.dig(:unit_price)),
+      unit_servings: estimate(nutrition&.dig(:unit_servings)),
       created_by: @job.user,
       household: household
     )
 
     if nutrition
       ingredient.create_nutrition_fact!(
-        serving_size: nutrition[:serving_size],
+        serving_size: estimate(nutrition[:serving_size]),
         serving_unit: nutrition[:serving_unit],
-        calories: nutrition[:calories],
-        protein: nutrition[:protein],
-        total_fat: nutrition[:total_fat],
-        total_carb: nutrition[:total_carb]
+        calories: estimate(nutrition[:calories]),
+        protein: estimate(nutrition[:protein]),
+        total_fat: estimate(nutrition[:total_fat]),
+        total_carb: estimate(nutrition[:total_carb])
       )
     end
 
     ingredient
+  end
+
+  # An AI estimate as a number, or nil when it isn't a sensible one — the
+  # estimates follow a recipe that came from someone else's page or file,
+  # which could try to steer them.
+  MAX_ESTIMATE = 100_000
+
+  def estimate(value)
+    number = Float(value, exception: false)
+    number if number&.finite? && number >= 0 && number <= MAX_ESTIMATE
   end
 end

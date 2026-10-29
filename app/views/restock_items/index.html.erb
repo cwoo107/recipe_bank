@@ -11,6 +11,11 @@
       </h1>
       <p class="mt-2 text-sm text-gray-700 dark:text-gray-400">
         <%= current_household.restock_items.count %> item<%= current_household.restock_items.count == 1 ? "" : "s" %> to keep stocked
+        <% if household_admin? %>
+          <span aria-hidden="true">·</span>
+          <%= link_to "Manage linked ingredients", restock_matches_path,
+                      class: "font-medium text-[#5f734c] hover:text-[#4b5a3d] dark:text-[#7a8f62]" %>
+        <% end %>
       </p>
     </div>
     <% if household_admin? %>

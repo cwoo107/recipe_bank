@@ -47,6 +47,11 @@ Rails.application.routes.draw do
   end
   post 'grocery_lists', to: 'grocery_lists#create', as: :create_grocery_list
 
+  # After "Auto generate list": confirm which groceries are also on the
+  # restock list (RestockMatchesController); index lists every answer so a
+  # link can be undone or a "not the same" turned into one.
+  resources :restock_matches, only: %i[index new create update]
+
   # "Upload Receipt" on the grocery list: read a receipt photo, review the
   # matches (and which week), then check those items off.
   resources :receipt_scans, only: %i[new create show update], path: "receipts" do

@@ -39,6 +39,26 @@ class RecipeImportEnqueueTest < ActionDispatch::IntegrationTest
     assert_enqueued_with(job: ProcessRecipeImportJob, args: [ job.id, "file" ])
   end
 
+  test "an upload's type comes from its contents, not the type the browser claims" do
+    upload = Rack::Test::UploadedFile.new(StringIO.new("%PDF-1.4 fake"), "image/png", original_filename: "soup.png")
+
+    post create_from_file_recipe_imports_url, params: { file: upload }
+
+    assert_equal "application/pdf", RecipeImportJob.last.source_content_type
+  end
+
+  test "a file that isn't really an image or PDF is turned away" do
+    upload = Rack::Test::UploadedFile.new(StringIO.new("<html><script>1</script></html>"), "application/pdf",
+                                          original_filename: "soup.pdf")
+
+    assert_no_difference("RecipeImportJob.count") do
+      post create_from_file_recipe_imports_url, params: { file: upload }
+    end
+
+    assert_redirected_to new_recipe_import_path
+    assert_no_enqueued_jobs only: ProcessRecipeImportJob
+  end
+
   test "an oversized upload is turned away before anything is stored" do
     with_max_upload_size(10) do
       upload = Rack::Test::UploadedFile.new(StringIO.new("x" * 11), "application/pdf", original_filename: "huge.pdf")

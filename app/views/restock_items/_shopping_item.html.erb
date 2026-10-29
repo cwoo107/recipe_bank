@@ -6,8 +6,14 @@
     Limited members see the row but can't tick it.
     The row is found by class (shopping_item.turbo_stream replaces every
     match), so it'd still update if an item were ever listed twice.
-    locals: (item:, previous_restocked: nil) %>
+    grocery_lines: the week's grocery lines that are this item under another
+    name (RestockItemIngredient) — "also on grocery list", and ticked along
+    with it. date: that week, posted back so the right week's lines are ticked.
+    locals: (item:, previous_restocked: nil, grocery_lines: [], date: nil) %>
 <% bought = item.stocked? %>
+<% previous_restocked = local_assigns[:previous_restocked] %>
+<% grocery_lines = local_assigns.fetch(:grocery_lines, nil) || [] %>
+<% date = local_assigns[:date] %>
 <% row = capture do %>
   <span class="flex size-5 shrink-0 items-center justify-center rounded border <%= bought ? 'border-[#5f734c] bg-[#5f734c] text-white' : 'border-gray-300 dark:border-gray-600' %>">
     <% if bought %>
@@ -21,12 +27,15 @@
     <% if item.brand.present? %>
       <span class="block text-xs text-gray-500 dark:text-gray-400"><%= item.brand %></span>
     <% end %>
+    <% if grocery_lines.any? %>
+      <span class="block text-xs font-medium text-[#5f734c] dark:text-[#7a8f62]">also on grocery list</span>
+    <% end %>
   </span>
 <% end %>
 <li class="shopping_restock_item_<%= item.id %>">
   <% if household_admin? %>
     <%= button_to bought ? mark_restock_restock_item_path(item) : mark_stocked_restock_item_path(item),
-          method: :patch, params: { context: "shopping", **(bought ? { previous_restocked: previous_restocked.to_s } : {}) },
+          method: :patch, params: { context: "shopping", date: date&.to_s, **(bought ? { previous_restocked: previous_restocked.to_s } : {}) },
           form_class: "w-full",
           class: "flex w-full items-center gap-3 rounded px-2 py-2.5 text-left hover:bg-[#faf9f7] dark:hover:bg-[#1a1f16] cursor-pointer",
           aria: { pressed: bought, label: bought ? "Untick #{item.name}" : "Tick off #{item.name}" } do %>

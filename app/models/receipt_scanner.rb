@@ -65,12 +65,21 @@ class ReceiptScanner
     {
       'text'          => item['text'].to_s,
       'name'          => item['name'].to_s,
-      'quantity'      => item['quantity'],
-      'unit_price'    => item['unit_price'],
-      'total_price'   => item['total_price'],
+      'quantity'      => amount(item['quantity']),
+      'unit_price'    => amount(item['unit_price']),
+      'total_price'   => amount(item['total_price']),
       'by_weight'     => item['by_weight'] == true,
       'ingredient_id' => ingredient_id
     }
+  end
+
+  # A receipt amount, or nil when it isn't a sensible one (negative, or
+  # past anything a grocery line costs) — the receipt is the uploader's, and
+  # what's printed on it could try to steer the model.
+  MAX_AMOUNT = 10_000
+
+  def amount(value)
+    value if value.is_a?(Numeric) && value.finite? && value >= 0 && value <= MAX_AMOUNT
   end
 
   def candidate_ids

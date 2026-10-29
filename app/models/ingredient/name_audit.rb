@@ -178,6 +178,8 @@ class Ingredient::NameAudit
     merge_grocery_rows(duplicate, keeper)
 
     duplicate.ingredient_tags.where.not(tag_id: keeper.ingredient_tags.select(:tag_id)).update_all(ingredient_id: keeper.id)
+    duplicate.restock_item_ingredients.where.not(restock_item_id: keeper.restock_item_ingredients.select(:restock_item_id))
+             .update_all(ingredient_id: keeper.id)
 
     if keeper.nutrition_fact.nil? && duplicate.nutrition_fact
       duplicate.nutrition_fact.update_columns(ingredient_id: keeper.id)

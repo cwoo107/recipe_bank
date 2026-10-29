@@ -17,6 +17,7 @@ class Ingredient < ApplicationRecord
   has_many :ingredient_tags, dependent: :destroy
   has_many :tags, through: :ingredient_tags
   has_many :grocery_lists, dependent: :destroy
+  has_many :restock_item_ingredients, dependent: :destroy
 
   # Ingredient families (the "family" column) — the one list everything else
   # reads from: the family select, filter chips and tags (IngredientsHelper,

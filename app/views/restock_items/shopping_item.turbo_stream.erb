@@ -1,3 +1,8 @@
 <%= turbo_stream.replace_all ".shopping_restock_item_#{@restock_item.id}" do %>
-  <%= render "restock_items/shopping_item", item: @restock_item, previous_restocked: @previous_restocked %>
+  <%= render "restock_items/shopping_item", item: @restock_item, previous_restocked: @previous_restocked,
+             grocery_lines: @grocery_lines, date: @week %>
+<% end %>
+<%# Its linked grocery lines, ticked along with it (RestockItemsController#sync_grocery_lines). %>
+<% Array(@synced_grocery_lines).each do |grocery_list| %>
+  <%= turbo_stream.replace "grocery_list_#{grocery_list.id}", partial: "grocery_lists/grocery_list", locals: { grocery_list: } %>
 <% end %>

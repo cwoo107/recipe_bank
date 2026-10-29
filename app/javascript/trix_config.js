@@ -1,8 +1,10 @@
 // Trims the Trix editor (recipe step instructions) down to what's useful
-// here: bold, italic, strikethrough, links, headings and attachments. Lists,
-// quotes, code blocks and indenting are removed — both their toolbar buttons
-// and the formats themselves, so pasted lists/quotes/code come in as plain
-// paragraphs rather than formatting nobody can edit anymore.
+// here: bold, italic, strikethrough, links and headings. Lists, quotes, code
+// blocks and indenting are removed — both their toolbar buttons and the
+// formats themselves, so pasted lists/quotes/code come in as plain
+// paragraphs rather than formatting nobody can edit anymore. Attachments
+// are removed too: steps are text only, and nothing uploads files (Step
+// also strips any that get through).
 //
 // Runs as soon as it's imported, right after "trix": Trix registers its
 // <trix-toolbar>/<trix-editor> elements on a setTimeout, so this is always
@@ -18,7 +20,8 @@ const REMOVED_BUTTONS = [
   '[data-trix-attribute="bullet"]',
   '[data-trix-attribute="number"]',
   '[data-trix-action="decreaseNestingLevel"]',
-  '[data-trix-action="increaseNestingLevel"]'
+  '[data-trix-action="increaseNestingLevel"]',
+  '[data-trix-button-group="file-tools"]'
 ].join(", ")
 
 REMOVED_BLOCK_FORMATS.forEach((name) => { delete Trix.config.blockAttributes[name] })
@@ -45,6 +48,7 @@ function flattenRemovedFormats(html) {
     element.replaceWith(div)
   })
   root.querySelectorAll("ul, ol").forEach((list) => list.replaceWith(...list.childNodes))
+  root.querySelectorAll("img, figure, action-text-attachment").forEach((element) => element.remove())
 
   return template.innerHTML
 }
@@ -58,6 +62,11 @@ document.addEventListener("trix-before-paste", (event) => {
   const paste = event.paste
   if (paste?.html) paste.html = flattenRemovedFormats(paste.html)
 })
+
+// Dropped or pasted files are turned away, and any attachment that still
+// gets in (a pasted image URL, say) is taken straight back out.
+document.addEventListener("trix-file-accept", (event) => event.preventDefault())
+document.addEventListener("trix-attachment-add", (event) => event.attachment.remove())
 
 // Start from Trix's own toolbar markup (keeping its labels and translations)
 // and just take the unwanted buttons out.

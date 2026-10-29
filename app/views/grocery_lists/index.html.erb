@@ -143,7 +143,7 @@
         <%= turbo_stream_from current_household, 'grocery_lists' %>
         <%# Items added to the list are broadcast in here (GroceryListsController#create). %>
         <div id="grocery_lists" class="divide-y divide-gray-100 dark:divide-white/5">
-          <%= render @grocery_lists, uses: @grocery_uses %>
+          <%= render @grocery_lists, uses: @grocery_uses, restock_links: @restock_links %>
         </div>
 
         <div class="flex justify-between gap-x-6 p-4 bg-[#faf9f7] dark:bg-[#1a1f16]">
@@ -180,7 +180,7 @@
                 <h3 class="mt-3 px-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500"><%= category.name %></h3>
                 <ul class="divide-y divide-gray-100 dark:divide-white/5">
                   <% items.each do |item| %>
-                    <%= render "restock_items/shopping_item", item: item %>
+                    <%= render "restock_items/shopping_item", item: item, grocery_lines: @restock_grocery_lines.fetch(item.id, []), date: @date %>
                   <% end %>
                 </ul>
               <% end %>
