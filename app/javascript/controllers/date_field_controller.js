@@ -1,5 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 import AirDatepicker from "air-datepicker"
+import { autoUpdate, computePosition, flip, offset, shift } from "@floating-ui/dom"
 import localeEn from "air-datepicker/locale/en"
 
 // Put on an <input type="date">. On desktop it swaps the browser's own
@@ -28,6 +29,11 @@ export default class extends Controller {
         input.after(this.hidden)
 
         const selected = this.#parse(input.value)
+        const minDate = this.#parse(input.min)
+        const maxDate = this.#parse(input.max)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
+        const todayAllowed = (!minDate || today >= minDate) && (!maxDate || today <= maxDate)
         input.removeAttribute("name")
         input.type = "text"
         input.readOnly = true
@@ -41,16 +47,19 @@ export default class extends Controller {
             altField: this.hidden,
             altFieldDateFormat: "yyyy-MM-dd",
             selectedDates: selected ? [selected] : [],
-            minDate: this.#parse(input.min) || "",
-            maxDate: this.#parse(input.max) || "",
+            // Open on the selected date's month, not this month.
+            startDate: selected || today,
+            minDate: minDate || "",
+            maxDate: maxDate || "",
             // Not autoClose: that hides (and blurs the input) as soon as a day is
             // clicked, before the new value is written and `change` fires, so a
             // blur-to-save field would save the old date. onSelect runs after
             // `change`, so closing there is safe.
             onSelect: ({ datepicker }) => datepicker.hide(),
             container: input.closest("dialog") || "",
+            position: this.#position,
             buttons: [
-                { content: "Today", onClick: (dp) => dp.selectDate(new Date()) },
+                ...(todayAllowed ? [{ content: "Today", onClick: (dp) => dp.selectDate(new Date()) }] : []),
                 ...(input.required ? [] : ["clear"]),
             ],
         })
@@ -92,6 +101,7 @@ export default class extends Controller {
 
         const input = this.element
         input.removeEventListener("keydown", this.onKeydown, { capture: true })
+        this.stopPositioning?.()
         this.picker.destroy()
         this.picker = null
 
@@ -100,6 +110,29 @@ export default class extends Controller {
         input.name = this.hidden.name
         input.value = this.hidden.value
         this.hidden.remove()
+    }
+
+    // Floating UI instead of Air Datepicker's own positioning: `fixed`, so a
+    // dialog's overflow doesn't clip the calendar, and it flips above the field
+    // when there's no room below. Air Datepicker calls this on show (and again
+    // on month changes, which autoUpdate already covers) and calls what it
+    // returns on hide, which must call done() to remove the calendar.
+    #position = ({ $datepicker, $target, isViewChange, done }) => {
+        if (!isViewChange) {
+            $datepicker.style.position = "fixed"
+            this.stopPositioning = autoUpdate($target, $datepicker, () => {
+                computePosition($target, $datepicker, {
+                    strategy: "fixed",
+                    placement: "bottom-start",
+                    middleware: [offset(6), flip(), shift({ padding: 8 })],
+                }).then(({ x, y }) => Object.assign($datepicker.style, { left: `${x}px`, top: `${y}px` }))
+            })
+        }
+        return () => {
+            this.stopPositioning?.()
+            this.stopPositioning = null
+            done()
+        }
     }
 
     // "YYYY-MM-DD" -> local midnight (not UTC, which shows as the day before

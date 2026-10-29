@@ -21,6 +21,35 @@ class CalendarEventsControllerTest < ActionDispatch::IntegrationTest
     assert_equal households(:one), CalendarEvent.last.household
   end
 
+  test "the form's separate date and time fields are combined" do
+    post calendar_events_url, params: {
+      calendar_event: {
+        title: "Dentist",
+        calendar_source_id: calendar_sources(:one).id,
+        starts_on: "2026-11-03", starts_time: "09:15",
+        ends_on: "2026-11-03", ends_time: "10:00"
+      }
+    }
+
+    event = CalendarEvent.last
+    assert_equal Time.zone.local(2026, 11, 3, 9, 15), event.starts_at
+    assert_equal Time.zone.local(2026, 11, 3, 10, 0), event.ends_at
+  end
+
+  test "a missing start date is reported, not saved as today" do
+    assert_no_difference("CalendarEvent.count") do
+      post calendar_events_url, params: {
+        calendar_event: {
+          title: "Dentist",
+          calendar_source_id: calendar_sources(:one).id,
+          starts_on: "", starts_time: "09:15",
+          ends_on: "2026-11-03", ends_time: "10:00"
+        }
+      }
+    end
+    assert_response :unprocessable_entity
+  end
+
   test "another member of the same household can see the event" do
     sign_in users(:two) # bob, also in household :one
 

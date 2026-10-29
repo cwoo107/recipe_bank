@@ -84,13 +84,31 @@ class CalendarEventsController < ApplicationController
                 alert: "“#{@event.title}” comes from #{@event.source_name} — change it there.", status: :see_other
   end
 
+  # The form sends each time as a date and a time of day (starts_on +
+  # starts_time); they're put back together as starts_at / ends_at in the
+  # household's zone. starts_at / ends_at sent whole still work.
   def event_params
     params.require(:calendar_event).permit(
       :title, :description, :location, :starts_at, :ends_at,
+      :starts_on, :starts_time, :ends_on, :ends_time,
       :all_day, :calendar_source_id, :url, :status
     ).tap do |p|
+      %w[starts ends].each do |key|
+        date, time = p.delete("#{key}_on"), p.delete("#{key}_time")
+        p["#{key}_at"] = combine_date_and_time(date, time) unless date.nil?
+      end
       p[:user_id] = current_user.id
     end
+  end
+
+  # A blank or unreadable date gives nil, so the model's presence check
+  # reports it.
+  def combine_date_and_time(date, time)
+    day = Date.iso8601(date.to_s)
+    hour, minute = time.to_s.split(":").map(&:to_i)
+    Time.zone.local(day.year, day.month, day.day, hour || 0, minute || 0)
+  rescue ArgumentError, Date::Error
+    nil
   end
 
   def parse_datetime(val)

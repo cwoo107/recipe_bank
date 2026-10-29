@@ -68,12 +68,12 @@ class PaginationTest < ActionDispatch::IntegrationTest
     end
 
     get ingredient_url(rice)
-    assert_select "ul li", IngredientsController::RECIPES_PER_PAGE
-    assert_select "ul li:first-child", text: /Rice dish 00/
+    assert_select "main ul li", IngredientsController::RECIPES_PER_PAGE
+    assert_select "main ul li:first-child", text: /Rice dish 00/
     assert_select ".pagy.info", text: "Showing 1–10 of 15 recipes"
 
     get ingredient_url(rice, page: 2)
-    assert_select "ul li", 5
-    assert_select "ul li:first-child", text: /Rice dish 10/
+    assert_select "main ul li", 5
+    assert_select "main ul li:first-child", text: /Rice dish 10/
   end
 end

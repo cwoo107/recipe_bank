@@ -84,7 +84,8 @@
         <%= form_with url: admin_household_comp_path(@household), class: "space-y-4" do %>
           <div>
             <%= label_tag :until, "Free until", class: label_class %>
-            <div class="mt-2"><%= date_field_tag :until, (@household.comped_until || 1.year.from_now).to_date, min: Date.tomorrow, class: settings_input_classes %></div>
+            <div class="mt-2"><%= date_field_tag :until, (@household.comped_until || 1.year.from_now).to_date, min: Date.tomorrow, required: true, class: settings_input_classes,
+                  data: { controller: "date-field", date_field_first_day_value: @household.week_start_day } %></div>
             <p class="mt-1 text-xs text-olive-400 dark:text-gray-500">Full access, no plan needed, through the end of this day.</p>
           </div>
           <div>

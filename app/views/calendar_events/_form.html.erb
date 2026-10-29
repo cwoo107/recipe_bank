@@ -41,24 +41,25 @@
     <span class="text-sm text-gray-700 dark:text-gray-300">All day</span>
   </label>
 
-  <%# Date/time %>
-  <div class="grid grid-cols-2 gap-3" id="datetime_fields">
-    <div>
-      <%= f.label :starts_at, "Starts", class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
-      <%= f.datetime_local_field :starts_at,
-            value: event.starts_at&.strftime("%Y-%m-%dT%H:%M"),
-            class: "w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5
+  <%# Date/time — each is a date (date_field_controller) and a time select;
+      CalendarEventsController#event_params puts them back together. %>
+  <% field_class = "rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5
                     px-3 py-2 text-sm text-gray-900 dark:text-white
                     focus:outline-none focus:ring-2 focus:ring-[#5f734c] dark:focus:ring-[#7a8f62]" %>
-    </div>
-    <div>
-      <%= f.label :ends_at, "Ends", class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
-      <%= f.datetime_local_field :ends_at,
-            value: event.ends_at&.strftime("%Y-%m-%dT%H:%M"),
-            class: "w-full rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5
-                    px-3 py-2 text-sm text-gray-900 dark:text-white
-                    focus:outline-none focus:ring-2 focus:ring-[#5f734c] dark:focus:ring-[#7a8f62]" %>
-    </div>
+  <div class="space-y-3" id="datetime_fields">
+    <% [ [ :starts, "Starts", event.starts_at ], [ :ends, "Ends", event.ends_at ] ].each do |key, label, time| %>
+      <div>
+        <%= label_tag "calendar_event_#{key}_on", label, class: "block text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-1.5" %>
+        <div class="flex gap-2">
+          <%= date_field_tag "calendar_event[#{key}_on]", time&.to_date, id: "calendar_event_#{key}_on", required: true,
+                class: "min-w-0 flex-1 #{field_class}",
+                data: { controller: "date-field", date_field_first_day_value: current_household.week_start_day } %>
+          <%= select_tag "calendar_event[#{key}_time]", event_time_options(time&.strftime("%H:%M")),
+                id: "calendar_event_#{key}_time", "aria-label": "#{label} time",
+                class: "w-32 shrink-0 dark:*:bg-gray-800 #{field_class}" %>
+        </div>
+      </div>
+    <% end %>
   </div>
 
   <%# Location %>
