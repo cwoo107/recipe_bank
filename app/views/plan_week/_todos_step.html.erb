@@ -3,6 +3,8 @@
 <% intro   = "mt-1 text-sm text-gray-600 dark:text-gray-400" %>
 <% list    = "mt-2 divide-y divide-gray-200 rounded-lg border border-gray-200 bg-white px-4 dark:divide-white/10 dark:border-white/10 dark:bg-[#242b1e]" %>
 
+<%# Root id MUST stay "plan_week_todos": TodosController#plan redraws it in place. %>
+<div id="plan_week_todos">
 <p class="text-sm text-gray-600 dark:text-gray-400">
   Settle what's left from earlier weeks, then pick what to take on <%= section.week_phrase %> — keeping it within the time you've set aside.
 </p>
@@ -10,7 +12,7 @@
 <%# The week's time, and how much is set aside %>
 <div class="mt-4 space-y-2">
   <%= render "todos/budget", budget: section.budget %>
-  <%= render "todos/budget_form", household: section.household %>
+  <%= render "todos/budget_form", household: section.household, week_start: section.week_start %>
 </div>
 
 <%# 1. Left over from earlier weeks %>
@@ -28,25 +30,7 @@
   </section>
 <% end %>
 
-<%# 2. What's planned so far, in order %>
-<section id="planned_todos" class="mt-8">
-  <h2 class="<%= heading %>" style="font-family: 'Instrument Serif', serif;">Planned for <%= section.week_phrase %></h2>
-  <% if section.planned.any? %>
-    <p class="<%= intro %>">Drag to set the order you'll work through them — it's the order on the chart below.</p>
-    <ul class="<%= list %>"
-        data-controller="sortable"
-        data-sortable-url-value="<%= reorder_todos_path(status: "in_progress") %>"
-        data-sortable-refresh-value="true">
-      <% section.planned.each do |todo| %>
-        <%= render "plan_week/todo_row", todo:, week_start: section.week_start, actions: %w[remove], sortable: true %>
-      <% end %>
-    </ul>
-  <% else %>
-    <p class="<%= intro %>">Nothing yet — add to-dos from the list below.</p>
-  <% end %>
-</section>
-
-<%# 3. Pick from the To-Do column %>
+<%# 2. Pick from the To-Do column %>
 <section id="backlog_todos" class="mt-8">
   <h2 class="<%= heading %>" style="font-family: 'Instrument Serif', serif;">Which to-dos would you like to add to <%= section.week_phrase %>?</h2>
   <% if section.backlog.any? %>
@@ -60,6 +44,24 @@
   <% end %>
 </section>
 
+<%# 3. What's planned so far, in order — just above the chart that follows it %>
+<section id="planned_todos" class="mt-8">
+  <h2 class="<%= heading %>" style="font-family: 'Instrument Serif', serif;">Planned for <%= section.week_phrase %></h2>
+  <% if section.planned.any? %>
+    <p class="<%= intro %>">Drag to set the order you'll work through them — it's the order on the chart below.</p>
+    <ul class="<%= list %>"
+        data-controller="sortable"
+        data-sortable-url-value="<%= reorder_todos_path(status: "in_progress", week: section.week_start.iso8601) %>"
+        data-sortable-refresh-value="true">
+      <% section.planned.each do |todo| %>
+        <%= render "plan_week/todo_row", todo:, week_start: section.week_start, actions: %w[remove], sortable: true %>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="<%= intro %>">Nothing yet — add to-dos from the list above.</p>
+  <% end %>
+</section>
+
 <div class="mt-8">
   <%= render "todos/gantt", budget: section.budget %>
 </div>
@@ -69,4 +71,5 @@
               class: "inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2.5 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
   <%= button_to "Looks good", plan_week_step_path(section: section.key, week: section.week_start), method: :patch, params: { status: "done" },
                 class: "inline-flex items-center rounded-md bg-white px-3.5 py-2.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
+</div>
 </div>

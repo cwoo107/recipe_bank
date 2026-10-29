@@ -1,10 +1,10 @@
-<%# locals: (household:) %>
+<%# locals: (household:, week_start: Todo.current_week_start(household)) %>
 <%# Change the time set aside for to-dos, in whichever unit the household
     budgets by (Settings switches between per week and per day) — a −/+
     stepper like the recipe page's servings, which saves itself a moment
-    after the last click. The save redirects back here, and the page
-    refreshes in place (a morph), meter and chart included. Permanent, so
-    that refresh doesn't reset a count that's been clicked again since. %>
+    after the last click. The save answers with a Turbo Stream that swaps
+    the meter and chart for week_start's, so the page keeps its scroll.
+    Permanent, so nothing resets a count that's been clicked again since. %>
 <% per_day = household.todo_time_per_day? %>
 <% button_class = "flex size-6 items-center justify-center rounded-full inset-ring inset-ring-gray-300 dark:inset-ring-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-sm font-medium" %>
 <%= form_with model: household, url: todo_budget_path, method: :patch, id: "todo_budget_form",
@@ -13,6 +13,7 @@
               budget_stepper_step_value: per_day ? 5 : 0.5,
               budget_stepper_min_value: per_day ? 5 : 0.5,
               budget_stepper_unit_value: per_day ? "min / day" : "hour" } do |f| %>
+  <%= hidden_field_tag :week, week_start.iso8601, id: nil %>
   <span class="font-medium">Time for to-dos</span>
   <div class="flex items-center gap-2">
     <% field = per_day ? :minutes_per_day : :todo_hours_per_week %>

@@ -114,4 +114,28 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to todos_url
     assert_equal 450, households(:one).reload.todo_minutes_per_week
   end
+
+  test "planning a to-do redraws the plan-week step in place" do
+    patch plan_todo_url(@todo), params: { plan: "add", week: Date.current.beginning_of_week.iso8601 }, as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[action=replace][target=plan_week_todos][method=morph]"
+    assert_select "#planned_todos #plan_todo_#{@todo.id}"
+  end
+
+  test "reordering from plan-week sends back the meter and chart" do
+    post reorder_todos_url(status: "in_progress", week: Date.current.beginning_of_week.iso8601),
+         params: { order: [ @todo.id ] }, as: :json, headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_select "turbo-stream[action=replace][target=gantt_chart]"
+  end
+
+  test "changing the time for to-dos swaps the meter and chart in place" do
+    patch todo_budget_url, params: { household: { todo_hours_per_week: "7.5" } }, as: :turbo_stream
+
+    assert_response :success
+    assert_select "turbo-stream[action=replace][target=todo_budget]"
+    assert_select "turbo-stream[action=replace][target=gantt_chart]"
+  end
 end

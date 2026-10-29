@@ -95,7 +95,13 @@ class TodosController < ApplicationController
     # The This Week column's order is the Gantt's order.
     Todo.broadcast_gantt(current_household) if status == "in_progress"
 
-    head :ok
+    # "Plan your week" asks for its week's meter and chart back; the board's
+    # come by broadcast.
+    if request.format.turbo_stream?
+      @budget = TodoBudget.new(current_household, reorder_week)
+    else
+      head :ok
+    end
   end
 
   # PATCH /todos/:id/plan
@@ -126,7 +132,14 @@ class TodosController < ApplicationController
     end
 
     Todo.broadcast_gantt(current_household)
-    redirect_back_or_to plan_week_step_path(section: "todos", week: week), status: :see_other
+    respond_to do |format|
+      # Redraw the step in place, so the page keeps its scroll.
+      format.turbo_stream do
+        @section = Dashboard::TodosSection.new(household: current_household, week_start: week,
+                                               weekly_plan: current_household.weekly_plans.find_or_initialize_by(week_start: week))
+      end
+      format.html { redirect_back_or_to plan_week_step_path(section: "todos", week: week), status: :see_other }
+    end
   rescue Date::Error
     head :bad_request
   end
@@ -155,6 +168,12 @@ class TodosController < ApplicationController
 
   def set_todo
     @todo = current_household.todos.find(params[:id])
+  end
+
+  def reorder_week
+    Date.iso8601(params[:week].to_s).beginning_of_week(current_household.week_start_symbol)
+  rescue Date::Error
+    Todo.current_week_start(current_household)
   end
 
   def require_todo_editable!

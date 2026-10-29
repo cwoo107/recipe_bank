@@ -1,0 +1,2 @@
+<%= turbo_stream.replace "todo_budget", partial: "todos/budget", locals: { budget: @budget } %>
+<%= turbo_stream.replace "gantt_chart", partial: "todos/gantt", locals: { budget: @budget } %>

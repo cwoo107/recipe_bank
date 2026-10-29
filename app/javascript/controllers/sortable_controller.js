@@ -6,9 +6,9 @@ export default class extends Controller {
   static targets = ["item"]
   static values = {
     url: String,
-    // Reload the page (a morphing refresh) once the new order is saved, for
-    // pages that show something else that follows it — "Plan your week"'s
-    // to-do chart.
+    // Ask for a Turbo Stream back once the new order is saved, for pages
+    // that show something else that follows it — "Plan your week"'s to-do
+    // chart — so it updates in place and the page keeps its scroll.
     refresh: Boolean
   }
 
@@ -35,11 +35,12 @@ export default class extends Controller {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(this.refreshValue ? { "Accept": "text/vnd.turbo-stream.html" } : {}),
         ...(token ? { "X-CSRF-Token": token } : {})
       },
       body: JSON.stringify({ order: order })
-    }).then(response => {
-      if (this.refreshValue && response.ok) Turbo.visit(window.location.href, { action: "replace" })
+    }).then(async response => {
+      if (this.refreshValue && response.ok) Turbo.renderStreamMessage(await response.text())
     })
   }
 
