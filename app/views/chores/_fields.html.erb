@@ -35,7 +35,8 @@
 
 <div>
   <%= f.label :last_completed_at, "Last done", class: label_class %>
-  <%= f.date_field :last_completed_at, value: chore.last_completed_at&.to_date, max: Date.current, class: input_class %>
+  <%= f.date_field :last_completed_at, value: chore.last_completed_at&.to_date, max: Date.current, class: input_class,
+        data: { controller: "date-field", date_field_first_day_value: current_household.week_start_day } %>
 </div>
 
 <% if current_household.assignable? %>

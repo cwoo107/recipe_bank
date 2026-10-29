@@ -33,10 +33,10 @@ class SafeUrlFetcher
   OPEN_TIMEOUT  = 5
   READ_TIMEOUT  = 15
 
-  # A current desktop browser; sites behind bot protection turn away a bare
-  # "Mozilla/5.0".
-  USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' \
-               '(KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36'
+  # What URI.open sent before this class existed. A full Chrome user agent
+  # got 403s from sites that had always imported fine — bot protection turns
+  # away a request that claims to be a browser but doesn't act like one.
+  USER_AGENT = 'Mozilla/5.0'
 
   BLOCKED_RANGES = %w[
     0.0.0.0/8 10.0.0.0/8 100.64.0.0/10 127.0.0.0/8 169.254.0.0/16 172.16.0.0/12
@@ -56,7 +56,7 @@ class SafeUrlFetcher
     true
   end
 
-  def initialize(url, user_agent: USER_AGENT, accept: 'text/html,application/xhtml+xml',
+  def initialize(url, user_agent: USER_AGENT, accept: '*/*',
                  max_bytes: MAX_BYTES, open_timeout: OPEN_TIMEOUT, read_timeout: READ_TIMEOUT)
     @url          = url.to_s.strip
     @user_agent   = user_agent

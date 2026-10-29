@@ -8,6 +8,7 @@
     <%= date_field_tag "chore[last_completed_at]", chore.last_completed_at&.to_date,
           id: "chore_#{chore.id}_inline_last_completed_at", form: "chore_inline_form_#{chore.id}", max: Date.current,
           class: "block w-full rounded-md border border-gray-300 dark:border-white/20 bg-white dark:bg-[#242b1e] -mx-2 px-2 py-1 text-sm text-gray-900 dark:text-white focus:border-[#5f734c] focus:ring-2 focus:ring-[#5f734c]/20 focus:outline-none",
-          data: { inline_cell_target: "field", action: "change->inline-cell#commit blur->inline-cell#commit keydown.enter->inline-cell#commitOnEnter keydown.esc->inline-cell#cancel" } %>
+          data: { controller: "date-field", date_field_first_day_value: current_household.week_start_day,
+                  inline_cell_target: "field", action: "change->inline-cell#commit blur->inline-cell#commit keydown.enter->inline-cell#commitOnEnter keydown.esc->inline-cell#cancel" } %>
   <% end %>
 </div>

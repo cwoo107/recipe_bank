@@ -32,7 +32,7 @@
 <%# data-limited hides .admin-only controls for limited members — for markup
     that's broadcast to everyone at once (e.g. grocery list rows), where the
     server can't tailor it per viewer. The server still enforces permissions. %>
-<body class="min-h-screen bg-[#faf9f7] dark:bg-[#1a1f16] antialiased" data-controller="timezone" <%= "data-limited" if user_signed_in? && !household_admin? %>>
+<body class="min-h-screen flex flex-col bg-[#faf9f7] dark:bg-[#1a1f16] antialiased" data-controller="timezone" <%= "data-limited" if user_signed_in? && !household_admin? %>>
 <%= render 'shared/impersonation_banner' %>
 <%= native_tabs_tag if user_signed_in? %>
 <%= render 'shared/native_navbar' if user_signed_in? %>
@@ -45,9 +45,10 @@
 
 <div id="flash"></div>
 <%= render 'shared/flash' if notice.present? || alert.present? %>
-<main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 native-inset">
+<main class="w-full flex-1 mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 native-inset">
   <%= yield %>
 </main>
+<%= render 'shared/app_footer' if user_signed_in? && !native_app? && !content_for?(:navbar) %>
 <%= render 'shared/plan_week_bar' unless content_for?(:navbar) %>
 <%= render 'shared/turbo_confirm_dialog' %>
 </body>

@@ -1,0 +1,49 @@
+<%# The signed-in app's footer — the marketing footer's look (static_pages/_footer)
+    with links into the app. Mostly it's breathing room, so tables and lists
+    don't run into the bottom of the window. Not shown in the native app (it
+    has its own tab bar) or on full-screen flows that swap out the navbar. %>
+<% link_class = "text-gray-500 hover:text-[#5f734c] dark:text-gray-400 dark:hover:text-[#7a8f62]" %>
+<footer class="mt-16 border-t border-black/5 dark:border-white/10">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 gap-8 sm:grid-cols-4">
+      <div class="col-span-2 sm:col-span-1">
+        <%= link_to dashboard_path, class: "text-xl", style: "font-family: 'Instrument Serif', serif;" do %>
+          <span class="text-[#5f734c] font-bold">Homemakers<span class="text-olive-800 dark:text-[#e8ede3]">Haven</span></span>
+        <% end %>
+        <p class="mt-3 text-sm text-gray-500 dark:text-gray-400">Meal planning, groceries, chores, and the family calendar for your whole household.</p>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Food</h3>
+        <ul class="mt-4 space-y-3 text-sm">
+          <li><%= link_to "Meal Planning", meals_path, class: link_class %></li>
+          <li><%= link_to "Recipe Bank", recipes_path, class: link_class %></li>
+          <li><%= link_to "Shopping List", grocery_lists_path, class: link_class %></li>
+          <li><%= link_to "Restock Checklist", restock_items_path, class: link_class %></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Home</h3>
+        <ul class="mt-4 space-y-3 text-sm">
+          <li><%= link_to "Dashboard", dashboard_path, class: link_class %></li>
+          <li><%= link_to "Chore Chart", weekly_chores_path, class: link_class %></li>
+          <li><%= link_to "ToDo List", todos_path, class: link_class %></li>
+          <li><%= link_to "Calendar", calendars_path, class: link_class %></li>
+        </ul>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Account</h3>
+        <ul class="mt-4 space-y-3 text-sm">
+          <li><%= link_to "Manage Household", household_path, class: link_class %></li>
+          <li><%= link_to "Account settings", edit_user_registration_path, class: link_class %></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-12 border-t border-black/5 pt-8 dark:border-white/10">
+      <p class="text-sm text-gray-500 dark:text-gray-400">&copy; <%= Date.current.year %> HomemakersHaven. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
