@@ -9,13 +9,34 @@
      <%# A daily chore has a card on every day — the board won't drop one onto
          a day that already has another (see chore_board_controller.js). %>
      <%= tag.attributes(data: { daily_chore_id: (chore.id if chore.daily?) }) %>
-     data-controller="chore-item"
+     data-controller="chore-item tap-edit"
+     data-action="click->tap-edit#open"
      title="<%= chore_card_assignee_label(weekly_chore.assignee) %>"
      class="chore-card weekly-chore-<%= weekly_chore.id %> group relative rounded-md border <%= chore_card_color_classes(weekly_chore.assignee) %> p-2 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
 
   <%# Drag handle (invisible but full-width, class used by chore_board_controller.js).
       Dragging the card back up into "Coming up" takes it off this week. %>
   <div class="sortable-handle absolute inset-0 rounded-md cursor-grab active:cursor-grabbing" aria-hidden="true"></div>
+
+  <%# Edit the chore — admins, on a phone, by tapping the card
+      (tap_edit_controller.js clicks the hidden button). The form loads only
+      once the dialog opens, and saving lands back on this week. %>
+  <% if household_admin? %>
+    <div data-controller="dialog" data-action="click->dialog#backdropClose">
+      <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+        <%= turbo_frame_tag "edit_chore_#{chore.id}",
+              src: edit_chore_path(chore, return_to: weekly_chores_path(date: weekly_chore.week_start.iso8601)),
+              loading: :lazy do %><% end %>
+        <div class="mt-4">
+          <button type="button" data-action="dialog#close"
+                  class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+            Close
+          </button>
+        </div>
+      </dialog>
+      <button type="button" class="hidden" data-action="dialog#open" data-tap-edit-target="edit" aria-label="Edit <%= chore.name %>"></button>
+    </div>
+  <% end %>
 
   <%# Only the checkbox opts back into pointer events — the
       rest of the card (including the name/assignee text) stays part of the

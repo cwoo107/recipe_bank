@@ -15,6 +15,9 @@ export default class extends Controller {
   connect() {
     this.sortable = Sortable.create(this.element, {
       handle: ".sortable-handle",
+      // On touch screens a quick swipe still scrolls the page.
+      delay: 200,
+      delayOnTouchOnly: true,
       animation: 150,
       onEnd: this.end.bind(this)
     })

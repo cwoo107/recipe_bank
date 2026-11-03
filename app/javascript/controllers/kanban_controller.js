@@ -26,6 +26,9 @@ export default class extends Controller {
         this.sortable = Sortable.create(this.element, {
             group:     "kanban",          // shared group enables cross-column drag
             handle:    ".sortable-handle",
+            // On touch screens a quick swipe still scrolls the page.
+            delay:            200,
+            delayOnTouchOnly: true,
             animation: 150,
             onEnd:     this.end.bind(this)
         })

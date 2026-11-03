@@ -34,6 +34,14 @@ import Sortable from "sortablejs"
 // the actual cards (not above/below them).
 const DRAGGABLE_SELECTOR = ".chore-card"
 
+// On touch screens a quick swipe still scrolls the page.
+const TOUCH_DELAY = { delay: 200, delayOnTouchOnly: true }
+
+// The board's day cells only show from Tailwind's sm breakpoint up, so below
+// it the "Coming up" strip has nowhere to drop onto — drag is switched off
+// there (phones use each card's "Add to this week" button instead).
+const BOARD_VISIBLE = window.matchMedia("(min-width: 640px)")
+
 export default class extends Controller {
     static targets = [
         "dueList", "column", "rows",
@@ -57,7 +65,9 @@ export default class extends Controller {
             // a cell clones it in place (the recommendation stays put until
             // the create request removes it) rather than reordering it. A
             // board card dropped back in here comes off this week.
-            this.sortables.push(Sortable.create(this.dueListTarget, {
+            this.dueSortable = Sortable.create(this.dueListTarget, {
+                ...TOUCH_DELAY,
+                disabled: !BOARD_VISIBLE.matches,
                 group: {
                     name: "chore-board",
                     pull: "clone",
@@ -68,11 +78,16 @@ export default class extends Controller {
                 sort: false,
                 animation: 150,
                 onAdd: this.unschedule.bind(this)
-            }))
+            })
+            this.sortables.push(this.dueSortable)
+
+            this.boardVisibilityChanged = (event) => this.dueSortable.option("disabled", !event.matches)
+            BOARD_VISIBLE.addEventListener("change", this.boardVisibilityChanged)
         }
 
         this.columnTargets.forEach((column) => {
             this.sortables.push(Sortable.create(column, {
+                ...TOUCH_DELAY,
                 group: "chore-board",
                 handle: ".sortable-handle",
                 draggable: DRAGGABLE_SELECTOR,
@@ -84,6 +99,7 @@ export default class extends Controller {
 
         if (this.hasRowsTarget && this.categoryReorderUrlValue) {
             this.sortables.push(Sortable.create(this.rowsTarget, {
+                ...TOUCH_DELAY,
                 group: "category-rows",
                 handle: ".category-row-handle",
                 draggable: "[data-category-row-id]",
@@ -95,6 +111,7 @@ export default class extends Controller {
 
     disconnect() {
         this.#settle(null)
+        if (this.boardVisibilityChanged) BOARD_VISIBLE.removeEventListener("change", this.boardVisibilityChanged)
         this.sortables.forEach((sortable) => sortable.destroy())
     }
 

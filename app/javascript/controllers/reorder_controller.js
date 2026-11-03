@@ -20,6 +20,9 @@ export default class extends Controller {
             group: "reorder-blocks",
             handle: ".reorder-handle",
             draggable: "[data-reorder-id]",
+            // On touch screens a quick swipe still scrolls the page.
+            delay: 200,
+            delayOnTouchOnly: true,
             animation: 150,
             onEnd: this.end.bind(this)
         })

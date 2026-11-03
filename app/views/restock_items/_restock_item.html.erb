@@ -3,6 +3,8 @@
 <div id="restock_item_<%= item.id %>"
      data-id="<%= item.id %>"
      data-sortable-target="item"
+     data-controller="tap-edit"
+     data-action="click->tap-edit#open"
      class="group relative rounded-lg bg-white dark:bg-[#242b1e] border border-gray-200 dark:border-white/10 p-3 shadow-sm hover:shadow-md transition-shadow cursor-grab active:cursor-grabbing">
 
   <%# Drag handle (invisible but full-width) %>
@@ -25,7 +27,8 @@
             </button>
           </div>
         </dialog>
-        <button type="button" data-action="dialog#open"
+        <%# Also opened by tapping the card on a phone (tap_edit_controller.js). %>
+        <button type="button" data-action="dialog#open" data-tap-edit-target="edit"
                 class="rounded p-1 text-gray-400 hover:text-[#5f734c] dark:hover:text-[#7a8f62] transition-colors"
                 aria-label="Edit item">
           <svg viewBox="0 0 16 16" fill="currentColor" class="size-5">
