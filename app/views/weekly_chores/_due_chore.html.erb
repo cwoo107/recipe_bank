@@ -2,17 +2,24 @@
 <%# A card in the board's "Coming up" strip.
     Draggable onto a day on desktop (see chore_board_controller.js) — into
     another category's row re-files it, after a confirmation. Phones can't
-    drag, so they get an "Add to this week" button that asks which day. %>
+    drag, so they get an "Add to this week" button that asks which day.
+    Clicking or tapping the card opens the chore's edit dialog. %>
 <% due_on = chore.next_due_on %>
 <div id="due_chore_<%= chore.id %>"
      data-chore-id="<%= chore.id %>"
      data-category-key="<%= chore_board_category_key(chore) %>"
      data-chore-name="<%= chore.name %>"
+     data-controller="tap-edit"
+     data-action="click->tap-edit#open"
      title="<%= chore_card_assignee_label(chore.assignee) %>"
-     class="chore-card group relative flex items-center justify-between gap-3 rounded-md border <%= chore_card_color_classes(chore.assignee) %> px-3 py-2 shadow-sm sm:w-64 <%= 'cursor-grab active:cursor-grabbing' if household_admin? %>">
+     class="chore-card group relative flex items-center justify-between gap-3 rounded-md border <%= chore_card_color_classes(chore.assignee) %> px-3 py-2 shadow-sm sm:w-64 <%= 'cursor-grab active:cursor-grabbing' if household_admin? %> has-[[data-tap-edit-target]:focus-visible]:ring-2 has-[[data-tap-edit-target]:focus-visible]:ring-[#5f734c]">
 
   <%# Drag handle (invisible but full-width, class used by chore_board_controller.js) %>
   <div class="sortable-handle absolute inset-0 rounded-md" aria-hidden="true"></div>
+
+  <% if household_admin? %>
+    <%= render "chores/edit_dialog", chore: chore, return_to: (request.get? ? request.fullpath : weekly_chores_path(date: week_start.iso8601)) %>
+  <% end %>
 
   <div class="relative z-10 pointer-events-none min-w-0">
     <p class="text-sm font-medium text-gray-900 dark:text-white leading-snug">

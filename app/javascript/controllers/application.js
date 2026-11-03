@@ -1,10 +1,10 @@
 import { Application } from "@hotwired/stimulus"
 import Chartjs from "stimulus-chartjs"
-import Dialog from "@stimulus-components/dialog"
 
 const application = Application.start()
 application.register("chartjs", Chartjs)
-application.register('dialog', Dialog)
+// "dialog" is controllers/dialog_controller.js, which builds on
+// @stimulus-components/dialog.
 
 // Configure Stimulus development experience
 application.debug = false

@@ -51,7 +51,8 @@ class ChoresController < ApplicationController
 
   def destroy
     @chore.destroy!
-    redirect_to weekly_chores_path(view: "table"), notice: "Chore was successfully deleted.", status: :see_other
+    # Deleted from a Week View card's dialog: back to that week.
+    redirect_to safe_return_to || weekly_chores_path(view: "table"), notice: "Chore was successfully deleted.", status: :see_other
   end
 
   # DELETE /chores/destroy_selected — the Table View's checkboxes.

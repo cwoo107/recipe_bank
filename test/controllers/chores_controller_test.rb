@@ -41,6 +41,16 @@ class ChoresControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "deleting from a Week View card goes back to that week" do
+    delete chore_url(@chore), params: { return_to: "/weekly_chores?date=2026-11-02" }
+    assert_redirected_to "/weekly_chores?date=2026-11-02"
+  end
+
+  test "deleting ignores a return_to that points off-site" do
+    delete chore_url(@chore), params: { return_to: "https://example.com/" }
+    assert_redirected_to weekly_chores_url(view: "table")
+  end
+
   test "a user in a different household cannot edit the chore" do
     sign_in users(:three) # carol, household :two
 

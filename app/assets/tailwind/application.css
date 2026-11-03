@@ -127,6 +127,12 @@
 }
 
 @layer base {
+  /* On touch screens an opened dialog takes focus itself rather than its
+     first text field (controllers/dialog_controller.js) — no ring for that. */
+  dialog:focus {
+    outline: none;
+  }
+
   body {
     @apply bg-[var(--ivory)] text-gray-900 antialiased;
     font-family: 'Inter var', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

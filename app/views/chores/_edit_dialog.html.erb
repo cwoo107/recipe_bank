@@ -1,0 +1,26 @@
+<%# locals: (chore:, return_to:) %>
+<%# Edit a chore from a Week View card — a scheduled one or a "Coming up"
+    one — opened by clicking or tapping the card (tap_edit_controller.js
+    clicks the screen-reader-only button). The form loads only once the
+    dialog opens; saving or deleting lands back on return_to (the page it
+    was opened from).
+    display: contents keeps it out of the card's layout. Admins only. %>
+<div class="contents" data-controller="dialog" data-action="click->dialog#backdropClose">
+  <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+    <%= render "shared/dialog_close_x" %>
+    <%= turbo_frame_tag "edit_chore_#{chore.id}",
+          src: edit_chore_path(chore, return_to: return_to),
+          loading: :lazy do %><% end %>
+    <div class="mt-4 flex items-center justify-between gap-3">
+      <%= button_to "Delete", chore_path(chore), method: :delete,
+            params: { return_to: return_to },
+            class: "rounded-lg px-4 py-2.5 text-sm font-semibold text-dusty-rose-700 hover:bg-dusty-rose-50 dark:text-dusty-rose-300 dark:hover:bg-dusty-rose-900/20 cursor-pointer transition",
+            data: { turbo_confirm: "Delete \"#{chore.name}\"? This also removes it from any weekly lists." } %>
+      <button type="button" data-action="dialog#close"
+              class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+        Close
+      </button>
+    </div>
+  </dialog>
+  <button type="button" class="sr-only" data-action="dialog#open" data-tap-edit-target="edit">Edit <%= chore.name %></button>
+</div>
