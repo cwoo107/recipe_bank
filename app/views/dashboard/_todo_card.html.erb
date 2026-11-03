@@ -1,0 +1,57 @@
+<%# locals: (todo:, fade_in: false) %>
+<%# A to-do in the dashboard's Up next, as a card like the chore chart's
+    (weekly_chores/_weekly_chore): the assignee's color, and a checkbox that
+    fades the card out and marks it done (up_next_todo_controller.js) —
+    TodosController#move then brings in the next one, faded in (fade_in).
+    Clicking the card opens its edit dialog (tap_edit_controller.js). %>
+<% movable  = todo_movable?(todo) %>
+<% editable = todo_editable?(todo) %>
+<div id="dashboard_todo_<%= todo.id %>"
+     data-controller="tap-edit up-next-todo"
+     data-action="click->tap-edit#open"
+     title="<%= chore_card_assignee_label(todo.assignee) %>"
+     class="group relative rounded-md border <%= chore_card_color_classes(todo.assignee) %> p-2 shadow-sm hover:shadow-md transition-[opacity,box-shadow] duration-300 <%= 'starting:opacity-0' if fade_in %> <%= 'cursor-pointer' if editable %> has-[[data-tap-edit-target]:focus-visible]:ring-2 has-[[data-tap-edit-target]:focus-visible]:ring-[#5f734c]">
+
+  <% if editable %>
+    <div class="contents" data-controller="dialog" data-action="click->dialog#backdropClose">
+      <dialog data-dialog-target="dialog" class="dark:bg-[#1a1f16] w-11/12 sm:w-1/2 rounded-lg p-6 shadow-xl backdrop:bg-black/50">
+        <%= render "shared/dialog_close_x" %>
+        <%= turbo_frame_tag "edit_todo_#{todo.id}", src: edit_todo_path(todo), loading: :lazy do %><% end %>
+        <div class="mt-4 flex items-center justify-between gap-3">
+          <%= button_to "Delete", todo_path(todo, from: "dashboard"), method: :delete,
+                class: "rounded-lg px-4 py-2.5 text-sm font-semibold text-dusty-rose-700 hover:bg-dusty-rose-50 dark:text-dusty-rose-300 dark:hover:bg-dusty-rose-900/20 cursor-pointer transition",
+                data: { turbo_confirm: "Delete \"#{todo.title}\"?" } %>
+          <button type="button" data-action="dialog#close"
+                  class="rounded-lg px-6 py-2.5 bg-gray-200 hover:bg-gray-300 dark:bg-white/10 dark:hover:bg-white/20 text-gray-900 dark:text-white font-medium transition">
+            Close
+          </button>
+        </div>
+      </dialog>
+      <button type="button" class="sr-only" data-action="dialog#open" data-tap-edit-target="edit">Edit task</button>
+    </div>
+  <% end %>
+
+  <div class="flex items-start gap-2 min-w-0">
+    <% if movable %>
+      <%= form_with url: move_todo_path(todo, from: "dashboard"), method: :post, class: "mt-0.5 shrink-0",
+            data: { up_next_todo_target: "form", action: "turbo:submit-end->up-next-todo#restore" } do %>
+        <%= hidden_field_tag :status, "done", id: nil %>
+        <input type="checkbox" aria-label="Mark <%= todo.title %> done"
+               data-up-next-todo-target="checkbox" data-action="change->up-next-todo#complete"
+               style="accent-color: #5f734c;" class="size-4 rounded border-gray-300 focus:ring-[#5f734c] dark:border-gray-600">
+      <% end %>
+    <% else %>
+      <input type="checkbox" disabled aria-label="Not done" style="accent-color: #5f734c;"
+             class="mt-0.5 size-4 shrink-0 rounded border-gray-300 opacity-60 dark:border-gray-600">
+    <% end %>
+    <div class="min-w-0 flex-1">
+      <p class="text-sm font-medium text-gray-900 dark:text-white leading-snug">
+        <%= todo.title %>
+        <span class="sr-only">· <%= chore_card_assignee_label(todo.assignee) %></span>
+      </p>
+      <% if todo.estimated_time_to_complete.to_i.positive? %>
+        <p class="mt-0.5 text-xs text-gray-600 dark:text-gray-300">Est. <%= todo.estimated_hm %></p>
+      <% end %>
+    </div>
+  </div>
+</div>

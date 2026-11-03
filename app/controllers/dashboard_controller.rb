@@ -35,9 +35,27 @@ class DashboardController < ApplicationController
     @nothing_planned = planned_sections.all?(&:empty?)
     @everything_done = planned_sections.none?(&:empty?)
     @planned_steps   = planned_sections.map { |section| PLANNING_PHRASES.fetch(section.key, section.label.downcase) }
+
+    # Once this week has been planned, desktop gets a bento grid of what's on
+    # now (dashboard/_bento) in place of the cards. "Today" means nothing
+    # for another week, so other weeks — and phones — keep the cards.
+    @bento = @this_week && !@nothing_planned
+    load_bento if @bento
   end
 
   private
+
+  def load_bento
+    today = Date.current
+    section = ->(klass) { @sections.find { |s| s.key == klass::KEY } }
+    @calendar_section = section.(Dashboard::CalendarSection)
+    @todays_chores    = section.(Dashboard::ChoresSection).chores_this_week.select { |chore| chore.scheduled_date == today }
+    # In the order "Plan your week" set for working through them.
+    @up_next_todos    = Todo.up_next(current_household)
+    # { "breakfast" => [...], "lunch" => [...], "dinner" => [...] }.
+    @todays_meals     = section.(Dashboard::MealsSection).meals_this_week.select { |meal| meal.date == today }
+                               .group_by { |meal| meal.meal_name.downcase }
+  end
 
   def week_start_from_params
     (Date.iso8601(params[:date].to_s) rescue Date.current).beginning_of_week

@@ -83,7 +83,12 @@
     </p>
   <% end %>
 
-  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+  <% if @bento %>
+    <%= render "dashboard/bento" %>
+  <% end %>
+
+  <%# The bento grid takes their place on desktop when it shows. %>
+  <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 <%= 'lg:hidden' if @bento %>">
     <% @sections.each do |section| %>
       <%= render "dashboard/section_card", section: section %>
     <% end %>

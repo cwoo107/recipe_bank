@@ -27,6 +27,44 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "p", text: /1 of 7 dinners planned/
   end
 
+  test "a planned week gets the bento grid with today's meals, chores and the next to-do" do
+    household = households(:one)
+    today = Date.current
+    household.meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner", date: today, servings: 4)
+    household.meals.create!(user: users(:one), meal_name: "Breakfast", note: "Bagels out", date: today)
+    household.meals.create!(user: users(:one), meal_name: "Dinner", note: "Leftovers", date: today)
+    chore = household.chores.create!(name: "Water plants", frequency: "weekly")
+    household.weekly_chores.create!(chore: chore, week_start: today.beginning_of_week, scheduled_date: today)
+    todo = household.todos.create!(user: users(:one), title: "Fix the gate", status: "in_progress", planned_week: today.beginning_of_week, position: -1)
+
+    sign_in users(:one)
+    get dashboard_url
+    assert_response :success
+
+    assert_select "h2", text: "Up next"
+    assert_select "#dashboard_up_next #dashboard_todo_#{todo.id} input[type=checkbox]"
+    assert_select "#dashboard_up_next [id^=dashboard_todo_]", count: [ Todo.up_next(household).size, 2 ].min
+    # Breakfast, lunch, dinner across; both dinners stacked in theirs.
+    assert_select "section", text: /Today's meals.*Breakfast.*Bagels out.*Lunch.*Nothing planned.*Dinner.*(#{recipes(:one).title}.*Leftovers|Leftovers.*#{recipes(:one).title})/m
+    assert_select "section", text: /Today's chores.*Water plants/m
+    # Chores, then the to-do, down the right; meals across the bottom.
+    headings = css_select("h2").map { |h| h.text.strip }
+    assert_equal [ "Today's chores", "Up next", "Today's meals" ], headings & [ "Today's chores", "Up next", "Today's meals" ]
+  end
+
+  test "no bento grid while nothing's planned, or for another week" do
+    sign_in users(:three) # household :two has nothing this week
+    todos(:two).update!(status: "todo")
+    get dashboard_url
+    assert_select "h2", text: "Up next", count: 0
+
+    sign_in users(:one)
+    households(:one).meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner",
+                                   date: Date.current.beginning_of_week + 7, servings: 4)
+    get dashboard_url(date: (Date.current.beginning_of_week + 7).iso8601)
+    assert_select "h2", text: "Up next", count: 0
+  end
+
   test "landing on the dashboard turns off currently_planning" do
     sign_in users(:one)
     plan = WeeklyPlan.current_for(households(:one))

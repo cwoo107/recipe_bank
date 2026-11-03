@@ -138,4 +138,40 @@ class TodosControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-stream[action=replace][target=todo_budget]"
     assert_select "turbo-stream[action=replace][target=gantt_chart]"
   end
+
+  test "ticking an Up next to-do on the dashboard completes it and brings in the next one" do
+    household = households(:one)
+    household.todos.where(status: "in_progress").update_all(status: "todo")
+    week = Todo.current_week_start(household)
+    first, second, third = %w[First Second Third].each_with_index.map do |title, i|
+      household.todos.create!(user: users(:one), title: title, status: "in_progress", planned_week: week, position: i + 1)
+    end
+
+    post move_todo_url(first, from: "dashboard"), params: { status: "done" }, as: :turbo_stream
+    assert_response :success
+    assert first.reload.completed?
+    assert_select "turbo-stream[action=remove][target=dashboard_todo_#{first.id}]"
+    assert_select "turbo-stream[action=append][target=dashboard_up_next]" do
+      assert_select "template", text: /#{third.title}/
+    end
+
+    # With only one left, nothing comes in after it.
+    post move_todo_url(second, from: "dashboard"), params: { status: "done" }, as: :turbo_stream
+    post move_todo_url(third, from: "dashboard"), params: { status: "done" }, as: :turbo_stream
+    assert_select "turbo-stream[action=remove][target=dashboard_todo_#{third.id}]"
+    assert_select "turbo-stream[action=append]", count: 0
+  end
+
+  test "deleting an Up next to-do from the dashboard swaps in the next one" do
+    household = households(:one)
+    household.todos.where(status: "in_progress").update_all(status: "todo")
+    week = Todo.current_week_start(household)
+    first, _second, third = %w[First Second Third].each_with_index.map do |title, i|
+      household.todos.create!(user: users(:one), title: title, status: "in_progress", planned_week: week, position: i + 1)
+    end
+
+    delete todo_url(first, from: "dashboard"), as: :turbo_stream
+    assert_select "turbo-stream[action=remove][target=dashboard_todo_#{first.id}]"
+    assert_select "turbo-stream[action=append][target=dashboard_up_next] template", text: /#{third.title}/
+  end
 end

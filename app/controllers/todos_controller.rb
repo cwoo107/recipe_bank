@@ -68,6 +68,7 @@ class TodosController < ApplicationController
 
     # Removing a planned to-do frees up the week's time.
     Todo.broadcast_gantt(current_household) if was_planned
+    return render_dashboard_up_next if params[:from] == "dashboard"
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.remove("todo_#{@todo.id}") }
@@ -157,6 +158,7 @@ class TodosController < ApplicationController
     @todo.apply_status_side_effects!(previous_status)
     Todo.broadcast_gantt(current_household)
     @todo.reload
+    return render_dashboard_up_next if params[:from] == "dashboard"
 
     respond_to do |format|
       format.turbo_stream
@@ -165,6 +167,13 @@ class TodosController < ApplicationController
   end
 
   private
+
+  # Ticked done (move) or deleted (destroy) from the dashboard's Up next:
+  # its card goes, and the to-do that's now second fades in below the other.
+  def render_dashboard_up_next
+    @up_next = Todo.up_next(current_household)
+    render :dashboard_up_next, formats: :turbo_stream
+  end
 
   def set_todo
     @todo = current_household.todos.find(params[:id])

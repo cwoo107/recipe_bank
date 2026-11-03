@@ -1,0 +1,87 @@
+<%# Desktop only, once this week has been planned (DashboardController#show):
+    what's on now, in place of the section cards. The week's calendar as on
+    "Plan your week" takes the big tile; down the right, today's chores (the
+    chore chart's own cards, so they can be ticked off here) and the next two
+    to-dos; across the bottom, today's breakfast, lunch and dinner. %>
+<% empty    = "text-sm text-gray-400 dark:text-gray-600 italic" %>
+
+<div class="hidden lg:grid grid-cols-3 gap-6">
+  <%# ── The week's calendar ── %>
+  <%= render layout: "dashboard/tile",
+             locals: { title: "This week", icon: "calendar", classes: "col-start-1 col-span-2 row-start-1 row-span-2",
+                       link_label: "Calendar", link_path: week_calendars_path(date: @week_start) } do %>
+    <% if @calendar_section.connected? %>
+      <%= render "calendars/week_grid", date: @calendar_section.week_start, range_end: @calendar_section.week_end,
+                 events_by_day: @calendar_section.events_by_day, all_day_events: @calendar_section.all_day_events, height: 480 %>
+    <% else %>
+      <p class="<%= empty %>">No calendar connected yet. Connect Google, Outlook, or an iCal feed to see the week's events here.</p>
+      <% if household_admin? %>
+        <%= link_to "Connect a calendar", new_calendar_source_path,
+                    class: "self-start inline-flex items-center gap-x-2 rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] dark:bg-[#7a8f62] dark:shadow-none dark:hover:bg-[#5f734c]" %>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <%# ── Today's chores ── %>
+  <%= render layout: "dashboard/tile",
+             locals: { title: "Today's chores", icon: "chores", classes: "col-start-3 row-start-1",
+                       link_label: "Chore chart", link_path: weekly_chores_path(date: @week_start.iso8601) } do %>
+    <% if @todays_chores.any? %>
+      <div class="flex flex-col gap-2">
+        <% @todays_chores.each do |weekly_chore| %>
+          <%= render "weekly_chores/weekly_chore", weekly_chore: weekly_chore %>
+        <% end %>
+      </div>
+    <% else %>
+      <p class="<%= empty %>">No chores today.</p>
+    <% end %>
+  <% end %>
+
+  <%# ── The next to-dos, as cards (dashboard/_todo_card). Ticking one off
+      fades in the one after; the note shows only once none are left. ── %>
+  <%= render layout: "dashboard/tile",
+             locals: { title: "Up next", icon: "todos", classes: "col-start-3 row-start-2",
+                       link_label: "To-dos", link_path: todos_path } do %>
+    <div id="dashboard_up_next" class="flex flex-col gap-2">
+      <p class="hidden only:block <%= empty %>">Nothing left on this week's list.</p>
+      <% @up_next_todos.each do |todo| %>
+        <%= render "dashboard/todo_card", todo: todo %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <%# ── Today's meals: breakfast, lunch and dinner side by side, more
+      than one in a slot stacked, as on the meal planner ── %>
+  <%= render layout: "dashboard/tile",
+             locals: { title: "Today's menu", icon: "meals", classes: "col-span-3 row-start-3",
+                       link_label: "Meals", link_path: meals_path(date: @week_start) } do %>
+    <div class="grid grid-cols-3 gap-4">
+      <% Meal::CALENDAR_TYPES.each do |type| %>
+        <div>
+          <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"><%= type.capitalize %></h3>
+          <% if (meals = @todays_meals[type]) %>
+            <ul class="flex flex-col gap-2">
+              <% meals.each do |meal| %>
+                <% colors = meal_color_classes(meal) %>
+                <li class="relative rounded-lg px-3 py-2 inset-ring <%= colors[:bg] %> <%= colors[:ring] %> <%= colors[:dark_bg] %> <%= colors[:dark_ring] %> <%= colors[:hover] unless meal.note_only? %>">
+                  <p class="text-sm font-semibold <%= colors[:title] %>">
+                    <% if meal.note_only? %>
+                      <%= meal.title %>
+                    <% else %>
+                      <%= link_to meal.title, recipe_path(meal.recipe), class: "after:absolute after:inset-0 after:rounded-lg" %>
+                    <% end %>
+                  </p>
+                  <% if meal.eaters.any? %>
+                    <p class="text-xs <%= colors[:subtitle] %>">For <%= meal.eaters.map(&:name).to_sentence %></p>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="<%= empty %>">Nothing planned.</p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>

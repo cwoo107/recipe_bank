@@ -1,0 +1,22 @@
+<%# locals: (title:, icon:, link_label: nil, link_path: nil, classes: "") %>
+<%# A bento tile (dashboard/_bento), rendered as a layout around its body:
+    the section cards' heading — icon and title — with an optional link to
+    the feature's page on the right. %>
+<section class="flex flex-col min-h-0 rounded-lg border border-gray-200 dark:border-white/10 bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden <%= classes %>">
+  <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-gray-200 dark:border-white/10">
+    <div class="flex items-center gap-2.5">
+      <%= render "dashboard/icon", name: icon %>
+      <h2 class="text-xl font-semibold text-olive-800 dark:text-[#e8ede3]" style="font-family: 'Instrument Serif', serif;">
+        <%= title %>
+      </h2>
+    </div>
+    <% if link_path %>
+      <%= link_to link_label, link_path,
+                  class: "text-sm font-medium text-[#5f734c] dark:text-[#7a8f62] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5f734c] rounded" %>
+    <% end %>
+  </div>
+
+  <div class="p-4 flex-1 min-h-0 flex flex-col gap-3">
+    <%= yield %>
+  </div>
+</section>

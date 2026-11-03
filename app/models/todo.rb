@@ -159,6 +159,13 @@ class Todo < ApplicationRecord
     open.ordered
   end
 
+  # The dashboard's "Up next": the next to-dos to work through this week.
+  UP_NEXT_COUNT = 2
+
+  def self.up_next(household)
+    open_for_week(household, current_week_start(household)).includes(:assignee).limit(UP_NEXT_COUNT).to_a
+  end
+
   def self.done_for_week(household, week_start)
     household.todos.where(status: "done", planned_week: week_start).order(:end_date, :id)
   end

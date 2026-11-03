@@ -10,3 +10,7 @@
 <%= turbo_stream.replace "todo_#{@todo.id}" do %>
   <%= render "todos/todo", todo: @todo, priority_config: priority_config %>
 <% end %>
+<%# The same to-do's card in the dashboard's Up next, if that's where it was edited. %>
+<%= turbo_stream.replace "dashboard_todo_#{@todo.id}" do %>
+  <%= render "dashboard/todo_card", todo: @todo %>
+<% end %>

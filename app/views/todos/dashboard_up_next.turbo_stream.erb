@@ -1,0 +1,11 @@
+<%# A to-do ticked done or deleted from the dashboard's Up next (see
+    TodosController#render_dashboard_up_next). Its card had already faded
+    out; it goes, and the to-do that's now second — the one that wasn't
+    showing — fades in at the end. With fewer left, nothing comes in, and
+    once the list is empty its "nothing left" note shows. %>
+<%= turbo_stream.remove "dashboard_todo_#{@todo.id}" %>
+<% if (newcomer = @up_next[Todo::UP_NEXT_COUNT - 1]) %>
+  <%= turbo_stream.append "dashboard_up_next" do %>
+    <%= render "dashboard/todo_card", todo: newcomer, fade_in: true %>
+  <% end %>
+<% end %>
