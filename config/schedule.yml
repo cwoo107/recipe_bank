@@ -6,6 +6,9 @@ sync_all_calendars:
 trial_reminders:
   cron: "0 15 * * *" # daily, 15:00 UTC (morning in the US)
   class: "TrialRemindersJob"
+referral_rewards:
+  cron: "30 15 * * *" # daily, 15:30 UTC
+  class: "ReferralRewardsJob"
 delete_lapsed_recurring_meals:
   cron: "15 10 * * *" # daily, 10:15 UTC (overnight in the US)
   class: "DeleteLapsedRecurringMealsJob"

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_03_120000) do
   create_table "action_text_rich_texts", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -223,9 +223,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
     t.json "excluded_planner_sections", default: [], null: false
     t.string "family_name"
     t.integer "family_size", default: 1, null: false
+    t.integer "free_months_banked", default: 0, null: false
+    t.boolean "launch_offer", default: false, null: false
     t.integer "minutes_per_day", default: 30, null: false
     t.integer "owner_id", null: false
     t.string "plan_interval"
+    t.string "referral_code"
     t.string "stripe_customer_id"
     t.string "stripe_subscription_id"
     t.string "subscription_status", default: "trialing", null: false
@@ -237,6 +240,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
     t.datetime "updated_at", null: false
     t.integer "week_start_day", default: 1, null: false
     t.index ["owner_id"], name: "index_households_on_owner_id"
+    t.index ["referral_code"], name: "index_households_on_referral_code", unique: true
     t.index ["stripe_customer_id"], name: "index_households_on_stripe_customer_id", unique: true
     t.index ["stripe_subscription_id"], name: "index_households_on_stripe_subscription_id", unique: true
     t.index ["subscription_status", "trial_ends_at"], name: "index_households_on_subscription_status_and_trial_ends_at"
@@ -334,6 +338,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
 
   create_table "receipt_scans", force: :cascade do |t|
     t.datetime "created_at", null: false
+    t.text "error_detail"
     t.text "error_message"
     t.integer "household_id", null: false
     t.json "items"
@@ -365,6 +370,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
   create_table "recipe_import_jobs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "current_step"
+    t.text "error_detail"
     t.text "error_message"
     t.string "failed_step"
     t.json "matched_ingredients"
@@ -458,6 +464,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
     t.index ["household_id"], name: "index_recurring_meals_on_household_id"
     t.index ["recipe_id"], name: "index_recurring_meals_on_recipe_id"
     t.index ["user_id"], name: "index_recurring_meals_on_user_id"
+  end
+
+  create_table "referrals", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "paid_at"
+    t.datetime "qualifies_at"
+    t.integer "referred_id", null: false
+    t.integer "referrer_id", null: false
+    t.datetime "rewarded_at"
+    t.string "stripe_invoice_id"
+    t.datetime "updated_at", null: false
+    t.datetime "voided_at"
+    t.index ["qualifies_at"], name: "index_referrals_on_qualifies_at"
+    t.index ["referred_id"], name: "index_referrals_on_referred_id", unique: true
+    t.index ["referrer_id"], name: "index_referrals_on_referrer_id"
   end
 
   create_table "restock_categories", force: :cascade do |t|
@@ -726,6 +747,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_29_130000) do
   add_foreign_key "recurring_meals", "households"
   add_foreign_key "recurring_meals", "recipes"
   add_foreign_key "recurring_meals", "users"
+  add_foreign_key "referrals", "households", column: "referred_id"
+  add_foreign_key "referrals", "households", column: "referrer_id"
   add_foreign_key "restock_categories", "households"
   add_foreign_key "restock_item_ingredients", "ingredients"
   add_foreign_key "restock_item_ingredients", "restock_items"

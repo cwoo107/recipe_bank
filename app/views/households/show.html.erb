@@ -65,6 +65,10 @@
 
   <%= render "households/billing", household: @household %>
 
+  <% if @household.admin?(current_user) %>
+    <%= render "households/referrals", household: @household %>
+  <% end %>
+
   <% if @household.owner?(current_user) %>
     <%# The owner's copy of every recipe the household has created — always
         available, subscribed or not (RecipeExportsController). %>

@@ -10,7 +10,7 @@ class EmailDesignTest < ActionMailer::TestCase
 
     assert_equal [ @bob.email ], email.to
     assert_equal "You're invited to join the Doe Household on HomemakersHaven", email.subject
-    assert_match "HomemakersHaven <no-reply@example.com>", email[:from].to_s
+    assert_match "HomemakersHaven <no-reply@thehomemakershaven.com>", email[:from].to_s
 
     html = email.html_part.body.to_s
     assert_match "invited, Bob", html

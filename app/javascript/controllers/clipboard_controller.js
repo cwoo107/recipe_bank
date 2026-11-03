@@ -1,7 +1,8 @@
 import { Controller } from "@hotwired/stimulus"
 
 // Copies the source field's value, and says so on the button for a moment.
-// Admin beta invite links (admin/beta_invites).
+// Admin beta invite links (admin/beta_invites), the household's share link
+// (households/_referrals).
 export default class extends Controller {
     static targets = ["source", "button"]
 

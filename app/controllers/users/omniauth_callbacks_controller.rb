@@ -3,8 +3,10 @@
 #
 # Making a new account follows the same rule as the sign-up form
 # (Users::RegistrationsController): until launch, only with a beta invite
-# link, which the new account then uses up.
+# link, which the new account then uses up, or a share link (ReferralSignUp).
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  include ReferralSignUp
+
   def google_oauth2 = sign_in_with_provider
   def apple         = sign_in_with_provider
 
@@ -29,7 +31,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   # them to the launch list and returns nil.
   def sign_up_with(auth)
     beta_invite = BetaInvite.usable(session[:beta_invite_token])
-    unless Launch.registrations_open? || beta_invite
+    unless Launch.registrations_open? || beta_invite || referral_sign_up?
       redirect_to root_path(anchor: "launch-list"),
                   alert: "Sign-ups aren't open yet — join the list and we'll let you know when they are."
       return
@@ -40,6 +42,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
         beta_invite.redeem!(user)
         session.delete(:beta_invite_token)
       end
+      record_referral(user)
     end
   end
 end

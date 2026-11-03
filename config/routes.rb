@@ -9,6 +9,8 @@ Rails.application.routes.draw do
   # Before launch: beta invite links open sign-up; everyone else can join the
   # launch mailing list.
   get  "beta/:token", to: "beta_invites#show", as: :beta_invite
+  # A household's share link (ReferralsController) — also opens sign-up.
+  get  "r/:code", to: "referrals#show", as: :referral_link
   resources :launch_subscribers, only: :create, path: "launch-list"
   get  "launch-list/unsubscribe/:token", to: "launch_subscribers#unsubscribe", as: :unsubscribe_launch_list
 

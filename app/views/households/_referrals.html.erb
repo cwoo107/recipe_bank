@@ -1,0 +1,28 @@
+<%# The household's share link and what it's earned (Household::Referrals).
+    Admins only — a reward changes the household's billing. %>
+<% rewarded = household.referrals_made.rewarded.count %>
+<% pending  = household.referrals_made.pending.count %>
+<div id="referrals" class="mt-8 overflow-hidden rounded-xl border border-sage-100 bg-white shadow-sm dark:border-white/10 dark:bg-[#1a1f16]">
+  <div class="px-5 py-4">
+    <h2 class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Share HomemakersHaven</h2>
+  </div>
+  <div class="border-t border-sage-100 px-5 py-8 sm:px-8 dark:border-white/10">
+    <p class="text-sm text-olive-500 dark:text-gray-400">
+      Send this link to a friend. When a household that signs up for an annual plan,
+      you get <%= Referral::FREE_MONTHS %> free months.
+    </p>
+    <div class="mt-4 flex items-center gap-2" data-controller="clipboard">
+      <input type="text" readonly value="<%= referral_link_url(household.referral_code) %>"
+             data-clipboard-target="source" data-action="focus->clipboard#select"
+             aria-label="Your share link"
+             class="min-w-0 flex-1 rounded-md bg-white px-3 py-2 font-mono text-sm text-gray-700 outline-1 -outline-offset-1 outline-gray-300 dark:bg-white/5 dark:text-gray-200 dark:outline-white/10">
+      <button type="button" data-clipboard-target="button" data-action="clipboard#copy"
+              class="shrink-0 rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] cursor-pointer dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]">Copy link</button>
+    </div>
+    <% if rewarded.positive? || pending.positive? %>
+      <p class="mt-4 text-sm text-olive-500 dark:text-gray-400">
+        <%= pluralize(rewarded * Referral::FREE_MONTHS, "free month") %> earned so far<%= ", and #{pluralize(pending, 'annual sign-up')} waiting out the #{Referral::REFUND_WINDOW.in_days.to_i} days" if pending.positive? %>.
+      </p>
+    <% end %>
+  </div>
+</div>

@@ -32,12 +32,7 @@ class RecipeImporter
       Rails.logger.error e.message
       Rails.logger.error e.backtrace.join("\n")
 
-      @job.update!(
-        failed_step: @job.status, # the step it was on, for the progress list
-        status: :failed,
-        error_message: e.message,
-        current_step: "Error: #{e.message}"
-      )
+      record_failure(e)
       raise
     end
   end
@@ -78,12 +73,7 @@ class RecipeImporter
       Rails.logger.error e.message
       Rails.logger.error e.backtrace.join("\n")
 
-      @job.update!(
-        failed_step: @job.status, # the step it was on, for the progress list
-        status: :failed,
-        error_message: e.message,
-        current_step: "Error: #{e.message}"
-      )
+      record_failure(e)
       raise
     end
   end
@@ -133,12 +123,7 @@ class RecipeImporter
       return @recipe
     end
 
-    @job.update!(
-      failed_step: @job.status, # the step it was on, for the progress list
-      status: :failed,
-      error_message: e.message,
-      current_step: "Error: #{e.message}"
-    )
+    record_failure(e)
     raise
   end
 
@@ -172,6 +157,20 @@ class RecipeImporter
   end
 
   private
+
+  # Marks the import failed on the step it was on (for the progress list).
+  # Claude being unavailable is shown as the import being unavailable; the
+  # API's own error is kept for admins (error_detail).
+  def record_failure(error)
+    message = error.is_a?(ClaudeUnavailableError) ? ClaudeUnavailableError.user_message("Recipe import") : error.message
+    @job.update!(
+      failed_step: @job.status,
+      status: :failed,
+      error_message: message,
+      error_detail: (error.message if error.is_a?(ClaudeUnavailableError)),
+      current_step: "Error: #{message}"
+    )
+  end
 
   # Steps 3a/3b: fuzzy match, then let the AI take a pass at whatever came
   # back weak — so the confirmation screen shows our best proposal rather

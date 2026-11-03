@@ -1,9 +1,8 @@
 # Someone who asked to hear when HomemakersHaven opens (the "Coming soon"
-# home page). Signing up with the same email gets the household three free
-# months instead of one (Household::Billing#start_trial).
+# home page). Signing up with the same email takes three months off the
+# household's first annual payment, after the usual free month
+# (Household#launch_offer, StripeBilling::LAUNCH_COUPON).
 class LaunchSubscriber < ApplicationRecord
-  FREE_TRIAL_LENGTH = 3.months
-
   has_secure_token :unsubscribe_token
 
   normalizes :email, with: ->(email) { email.strip.downcase }
@@ -16,7 +15,7 @@ class LaunchSubscriber < ApplicationRecord
   scope :newest_first, -> { order(created_at: :desc) }
 
   # On the list before launch — whether or not they've since unsubscribed
-  # from the emails, the free months were promised to them.
+  # from the emails, the three months were promised to them.
   def self.listed?(email)
     email.present? && exists?(email: email.to_s.strip.downcase)
   end

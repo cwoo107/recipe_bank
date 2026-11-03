@@ -203,16 +203,19 @@ class PreLaunchTest < ActionDispatch::IntegrationTest
     assert_no_match "gone@example.com", response.body
   end
 
-  test "signing up with an email from the launch list gets three free months" do
+  test "signing up with an email from the launch list gets the free month and the annual discount" do
     LaunchSubscriber.create!(email: "early@example.com")
     Rails.application.config.x.registrations_open = true
 
     sign_up(email: "Early@Example.com")
     sign_up_household = User.find_by(email: "early@example.com").household
-    assert_in_delta 3.months.from_now, sign_up_household.trial_ends_at, 1.minute
+    assert_in_delta Household::Billing::TRIAL_LENGTH.from_now, sign_up_household.trial_ends_at, 1.minute
+    assert sign_up_household.launch_offer?
 
     delete destroy_user_session_url
     sign_up(email: "late@example.com")
-    assert_in_delta Household::Billing::TRIAL_LENGTH.from_now, User.find_by(email: "late@example.com").household.trial_ends_at, 1.minute
+    late_household = User.find_by(email: "late@example.com").household
+    assert_in_delta Household::Billing::TRIAL_LENGTH.from_now, late_household.trial_ends_at, 1.minute
+    assert_not late_household.launch_offer?
   end
 end

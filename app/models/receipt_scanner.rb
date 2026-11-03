@@ -31,7 +31,11 @@ class ReceiptScanner
     Rails.logger.error e.message
     Rails.logger.error e.backtrace&.join("\n")
 
-    @scan.update!(status: :failed, error_message: e.message)
+    if e.is_a?(ClaudeUnavailableError)
+      @scan.update!(status: :failed, error_message: ClaudeUnavailableError.user_message("Receipt upload"), error_detail: e.message)
+    else
+      @scan.update!(status: :failed, error_message: e.message)
+    end
     raise
   end
 

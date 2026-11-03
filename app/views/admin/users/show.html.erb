@@ -102,7 +102,8 @@
               </div>
               <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                 <%= l import.created_at, format: :long %>
-                <% if import.error_message.present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300"><%= import.error_message.truncate(160) %></span><% end %>
+                <%# The full error where there is one (error_detail) — the user saw the friendlier error_message. %>
+                <% if (error = import.error_detail.presence || import.error_message).present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300" title="<%= error %>"><%= error.truncate(160) %></span><% end %>
               </p>
             </li>
           <% end %>
@@ -124,7 +125,8 @@
               </div>
               <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                 <%= l scan.created_at, format: :long %>
-                <% if scan.error_message.present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300"><%= scan.error_message.truncate(160) %></span><% end %>
+                <%# The full error where there is one (error_detail) — the user saw the friendlier error_message. %>
+                <% if (error = scan.error_detail.presence || scan.error_message).present? %> · <span class="text-dusty-rose-700 dark:text-dusty-rose-300" title="<%= error %>"><%= error.truncate(160) %></span><% end %>
               </p>
             </li>
           <% end %>

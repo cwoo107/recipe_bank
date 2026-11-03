@@ -1,5 +1,6 @@
 class Household < ApplicationRecord
   include Household::Billing
+  include Household::Referrals
 
   belongs_to :owner, class_name: "User", inverse_of: :owned_household
 

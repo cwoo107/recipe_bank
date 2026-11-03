@@ -2,6 +2,8 @@
     whose trial has run out still gets (see household_locked?). Plan buttons
     are for admins; everyone else is pointed to them. %>
 <% plans = Household::Billing::PLANS %>
+<%# The first annual payment for a launch-list household (StripeBilling::LAUNCH_COUPON). %>
+<% launch_annual_cents = plans.dig("annual", :price_cents) * (100 - StripeBilling::LAUNCH_COUPON[:percent_off]) / 100 %>
 <% can_pay = household.admin?(current_user) %>
 <% secondary = "rounded-md bg-white px-3.5 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/5 dark:hover:bg-white/20" %>
 
@@ -26,7 +28,7 @@
             Your last payment didn't go through. Update your card to keep your plan.
           </p>
         <% elsif household.stripe_trialing? && household.trial_ends_at %>
-          <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">Free until <%= l household.trial_ends_at.to_date, format: :long %> — your first payment is then.</p>
+          <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">Free until <%= l household.trial_ends_at.to_date, format: :long %> — your next payment is then.</p>
         <% elsif household.current_period_ends_at %>
           <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">Renews on <%= l household.current_period_ends_at.to_date, format: :long %>.</p>
         <% end %>
@@ -41,12 +43,23 @@
           Your trial ends on <%= l household.trial_ends_at.to_date, format: :long %>.
           Pick a plan any time to keep going after that — no card needed until then.
         </p>
+        <% if household.launch_offer? %>
+          <p class="mt-2 text-sm text-olive-500 dark:text-gray-400">
+            Because you joined our launch list, your first three months on the annual plan are free:
+            after your free month, your first year is <%= plan_price(launch_annual_cents) %> instead of <%= plan_price(plans.dig("annual", :price_cents)) %>.
+          </p>
+        <% end %>
       <% else %>
         <h3 class="text-base/7 font-semibold text-gray-900 dark:text-white">
           <%= household.trial_expired? ? "Your free trial has ended" : "Your subscription has ended" %>
         </h3>
         <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
           Your recipes, meal plans and lists are all still here. Pick a plan to pick up where you left off.
+        </p>
+      <% end %>
+      <% if household.free_months_banked.positive? %>
+        <p class="mt-2 text-sm font-medium text-[#5f734c] dark:text-[#7a8f62]">
+          You've earned <%= pluralize(household.free_months_banked, "free month") %> from referrals. They'll be added when you choose a plan.
         </p>
       <% end %>
     </div>
@@ -63,6 +76,16 @@
               </p>
               <p class="mt-1 text-sm text-olive-500 dark:text-gray-400">
                 <%= key == "annual" ? "Billed #{plan_price(plan[:price_cents])} once a year" : "Billed monthly" %>
+              </p>
+              <% if key == "annual" && household.launch_offer? %>
+                <p class="mt-1 text-sm font-medium text-[#5f734c] dark:text-[#7a8f62]">
+                  <%= plan_price(launch_annual_cents) %> for your first year — three months free from the launch list
+                </p>
+              <% end %>
+              <%# When the free month (and any referral months) end (StripeBilling.free_until). %>
+              <% first_charge = StripeBilling.free_until(household, plan: key) %>
+              <p class="mt-1 text-sm font-medium text-[#5f734c] dark:text-[#7a8f62]">
+                <%= first_charge && first_charge > StripeBilling::MIN_TRIAL_CARRYOVER.from_now ? "First payment on #{l first_charge.to_date, format: :long}" : "First payment today" %>
               </p>
               <%= button_to "Choose #{plan[:label].downcase}", checkout_billing_path, params: { plan: key },
                     class: "mt-6 w-full rounded-md bg-[#5f734c] px-3.5 py-2 text-sm font-semibold text-white shadow-xs hover:bg-[#4b5a3d] dark:bg-[#7a8f62] dark:hover:bg-[#5f734c]" %>

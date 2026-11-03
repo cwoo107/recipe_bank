@@ -1,6 +1,7 @@
 # Devise's sign-up, closed to the public until launch (Launch): until then
 # the form only opens from a beta invite link (BetaInvitesController puts its
-# token in the session), and the account it makes uses the invite up.
+# token in the session), and the account it makes uses the invite up — or
+# from a household's share link (ReferralSignUp), which records the referral.
 #
 # Accounts made with Google / Apple skip the current password on account
 # changes until they've set one of their own (update_resource).
@@ -8,6 +9,8 @@
 # Deleting an account needs "Delete Account" typed into its confirmation
 # box (devise/registrations/edit) — see User::AccountDeletion for what goes.
 class Users::RegistrationsController < Devise::RegistrationsController
+  include ReferralSignUp
+
   before_action :require_open_registrations_or_invite, only: %i[new create]
 
   def create
@@ -16,6 +19,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
         @beta_invite.redeem!(user)
         session.delete(:beta_invite_token)
       end
+      record_referral(user)
     end
   end
 
@@ -51,7 +55,7 @@ class Users::RegistrationsController < Devise::RegistrationsController
   private
 
   def require_open_registrations_or_invite
-    return if Launch.registrations_open?
+    return if Launch.registrations_open? || referral_sign_up?
 
     @beta_invite = BetaInvite.usable(session[:beta_invite_token])
     return if @beta_invite

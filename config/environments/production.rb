@@ -61,16 +61,29 @@ Rails.application.configure do
   # config.action_mailer.raise_delivery_errors = false
 
   # Set host to be used by links generated in mailer templates.
-  config.action_mailer.default_url_options = { host: "example.com" }
+  config.action_mailer.default_url_options = { host: ENV.fetch("APP_HOST", "thehomemakershaven.com"), protocol: "https" }
 
-  # Specify outgoing SMTP server. Remember to add smtp/* credentials via bin/rails credentials:edit.
-  # config.action_mailer.smtp_settings = {
-  #   user_name: Rails.application.credentials.dig(:smtp, :user_name),
-  #   password: Rails.application.credentials.dig(:smtp, :password),
-  #   address: "smtp.example.com",
-  #   port: 587,
-  #   authentication: :plain
-  # }
+  # Transactional email goes out through Mailgun's SMTP relay. From the
+  # sending domain's page in Mailgun (Domain settings → SMTP credentials):
+  #   MAILGUN_SMTP_LOGIN     postmaster@<sending domain>
+  #   MAILGUN_SMTP_PASSWORD  that login's password
+  #   MAILGUN_SMTP_SERVER    smtp.mailgun.org (smtp.eu.mailgun.org for an EU domain)
+  # Without a login nothing is sent — mail is dropped rather than failing the
+  # job or request that sent it.
+  if ENV["MAILGUN_SMTP_LOGIN"].present?
+    config.action_mailer.delivery_method = :smtp
+    config.action_mailer.smtp_settings = {
+      address: ENV.fetch("MAILGUN_SMTP_SERVER", "smtp.mailgun.org"),
+      port: 587,
+      domain: ENV.fetch("APP_HOST", "thehomemakershaven.com"),
+      user_name: ENV["MAILGUN_SMTP_LOGIN"],
+      password: ENV["MAILGUN_SMTP_PASSWORD"],
+      authentication: :plain,
+      enable_starttls_auto: true
+    }
+  else
+    config.action_mailer.perform_deliveries = false
+  end
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).

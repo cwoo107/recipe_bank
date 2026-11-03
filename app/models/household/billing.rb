@@ -1,7 +1,9 @@
 # One subscription per household: the owner pays, every member gets in.
 #
-# A new household gets a free month with no card (trial_ends_at) — three if
-# its owner joined the launch mailing list (LaunchSubscriber). After
+# A new household gets a free month with no card (trial_ends_at). If its
+# owner joined the launch mailing list (LaunchSubscriber), its first annual
+# payment is three months less too (launch_offer, StripeBilling::LAUNCH_COUPON).
+# After
 # that it needs a paid plan — or an app admin's comp (comped_until) — to use
 # the app; until then everything but the billing page and the recipe export
 # is locked (ApplicationController#require_active_subscription!).
@@ -156,12 +158,10 @@ module Household::Billing
 
   private
 
-  # Owners who joined the launch mailing list before launch get three months.
+  # Everyone gets the one free month. Owners who joined the launch list
+  # before launch also have the annual discount waiting (launch_offer).
   def start_trial
-    self.trial_ends_at ||= trial_length.from_now
-  end
-
-  def trial_length
-    LaunchSubscriber.listed?(owner&.email) ? LaunchSubscriber::FREE_TRIAL_LENGTH : TRIAL_LENGTH
+    self.launch_offer = LaunchSubscriber.listed?(owner&.email)
+    self.trial_ends_at ||= TRIAL_LENGTH.from_now
   end
 end

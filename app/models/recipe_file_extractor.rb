@@ -59,8 +59,8 @@ class RecipeFileExtractor
 
     # The answer is the text block — Haiku can put thinking blocks first.
     response.content.find { |block| block.type == :text }&.text
-  rescue Anthropic::Errors::APIStatusError => e
-    raise "Claude API error: #{e.status} — #{e.message}"
+  rescue Anthropic::Errors::APIStatusError, Anthropic::Errors::APIConnectionError => e
+    raise ClaudeUnavailableError.from(e)
   end
 
   def extraction_prompt

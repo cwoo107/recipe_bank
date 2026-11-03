@@ -9,6 +9,19 @@
   <p class="text-xs font-semibold uppercase tracking-widest text-sage-400 dark:text-gray-400">Admin</p>
   <h1 class="mt-1 font-serif text-4xl text-sage-900 dark:text-[#e8ede3]">Overview</h1>
 
+  <%# Claude failing (Admin::DashboardController#claude_outage) — users only
+      see "currently unavailable", so this is where the reason shows. %>
+  <% if @claude_outage %>
+    <div id="admin_claude_outage" role="alert" class="mt-8 rounded-xl border border-dusty-rose-200 bg-dusty-rose-50 px-5 py-4 dark:border-dusty-rose-800/40 dark:bg-dusty-rose-900/20">
+      <p class="text-sm font-semibold text-dusty-rose-800 dark:text-dusty-rose-200">
+        Claude requests are failing — receipt uploads and recipe file imports may be unavailable
+      </p>
+      <p class="mt-1 text-sm text-dusty-rose-700 dark:text-dusty-rose-300">
+        Last failure <%= time_ago_in_words(@claude_outage.updated_at) %> ago: <%= @claude_outage.error_detail %>
+      </p>
+    </div>
+  <% end %>
+
   <%# Households by billing state — each links to the filtered list %>
   <div id="admin_billing_counts" class="mt-8 <%= card %>">
     <div class="flex items-baseline justify-between px-5 py-4">
