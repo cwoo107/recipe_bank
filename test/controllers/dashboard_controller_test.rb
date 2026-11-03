@@ -16,13 +16,15 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "a", text: "Plan your week"
   end
 
-  test "shows a real summary for a household with data this week" do
+  # Next week, since a planned current week shows the bento grid instead.
+  test "shows a real summary for a household with data that week" do
     household = households(:one)
+    next_week = Date.current.beginning_of_week + 7
     household.meals.create!(user: users(:one), recipe: recipes(:one), meal_name: "Dinner",
-                             date: Date.current.beginning_of_week, servings: 4)
+                             date: next_week, servings: 4)
 
     sign_in users(:one)
-    get dashboard_url
+    get dashboard_url(date: next_week.iso8601)
     assert_response :success
     assert_select "p", text: /1 of 7 dinners planned/
   end
@@ -42,14 +44,17 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_select "h2", text: "Up next"
+    # The week for desktop and today for phones, and no section cards.
+    assert_select "h2", text: /This week\s*Today/
+    assert_select "section[aria-labelledby^=section-]", count: 0
     assert_select "#dashboard_up_next #dashboard_todo_#{todo.id} input[type=checkbox]"
     assert_select "#dashboard_up_next [id^=dashboard_todo_]", count: [ Todo.up_next(household).size, 2 ].min
     # Breakfast, lunch, dinner across; both dinners stacked in theirs.
-    assert_select "section", text: /Today's meals.*Breakfast.*Bagels out.*Lunch.*Nothing planned.*Dinner.*(#{recipes(:one).title}.*Leftovers|Leftovers.*#{recipes(:one).title})/m
+    assert_select "section", text: /Today's menu.*Breakfast.*Bagels out.*Lunch.*Nothing planned.*Dinner.*(#{recipes(:one).title}.*Leftovers|Leftovers.*#{recipes(:one).title})/m
     assert_select "section", text: /Today's chores.*Water plants/m
     # Chores, then the to-do, down the right; meals across the bottom.
     headings = css_select("h2").map { |h| h.text.strip }
-    assert_equal [ "Today's chores", "Up next", "Today's meals" ], headings & [ "Today's chores", "Up next", "Today's meals" ]
+    assert_equal [ "Today's chores", "Up next", "Today's menu" ], headings & [ "Today's chores", "Up next", "Today's menu" ]
   end
 
   test "no bento grid while nothing's planned, or for another week" do

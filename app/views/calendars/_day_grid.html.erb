@@ -1,0 +1,95 @@
+<%# locals: (date:, all_day_events:, timed_events:, height: 640) %>
+<%# A day's events — all-day ones in a strip on top, then an hour per row
+    from 4 AM with timed events laid over it. The Calendar's Day view, and
+    the dashboard's calendar on phones (dashboard/_bento). %>
+<%# All-day events %>
+<% if all_day_events.any? %>
+  <div class="mb-4 rounded-lg border border-gray-200 dark:border-white/10
+              bg-[var(--ivory)] dark:bg-[#1a1f16] p-3 flex flex-wrap gap-2">
+    <% all_day_events.each do |event| %>
+      <%= render "calendars/event_chip_week", event: event, day: date %>
+    <% end %>
+  </div>
+<% end %>
+
+<%# Hourly timeline %>
+<% day_start = 4 %>   <%# 4 AM %>
+<% day_end   = 23 %>  <%# 11 PM %>
+<% hour_h    = 3.5 %>
+<% rows      = (day_end - day_start) + 1 %>
+<% grid_h    = rows * hour_h %>
+
+<div class="rounded-lg border border-gray-200 dark:border-white/10
+      bg-[var(--ivory)] dark:bg-[#1a1f16] overflow-hidden">
+  <div class="relative overflow-y-auto" style="height: <%= height %>px;">
+    <%# Hour grid %>
+    <div class="grid" style="grid-template-columns: 4.5rem 1fr; grid-template-rows: repeat(<%= rows %>, <%= hour_h %>rem);">
+      <% rows.times do |i| %>
+        <% h = day_start + i %>
+        <div class="relative border-t border-gray-100 dark:border-white/5">
+    <span class="absolute top-0.5 right-3 text-xs font-medium text-gray-400 dark:text-gray-500">
+      <%= hour_label(h) %>
+    </span>
+        </div>
+        <div class="border-t border-gray-100 dark:border-white/5"></div>
+      <% end %>
+    </div>
+
+    <%# Events overlay %>
+    <div class="absolute top-0 left-[4.5rem] right-0" style="height: <%= grid_h %>rem;">
+      <% timed_events.each do |event| %>
+        <% style = event_position_style(event, hour_height_rem: hour_h, start_hour: day_start, end_hour: day_end + 1) %>
+        <% next if style.nil? %>
+        <div data-controller="dialog event-stack event-tooltip"
+             data-action="click->dialog#backdropClose click->event-tooltip#hide mouseenter->event-stack#lift mouseleave->event-stack#drop
+                          mouseenter->event-tooltip#show mouseleave->event-tooltip#hide focusin->event-tooltip#show focusout->event-tooltip#hide"
+             class="absolute left-2 right-2"
+             style="<%= style %>">
+          <dialog data-dialog-target="dialog"
+                  class="dark:bg-[#1a1f16] w-11/12 sm:w-[480px] rounded-xl p-0 shadow-2xl backdrop:bg-black/50 overflow-hidden">
+            <%= turbo_frame_tag "calendar_event_#{event.id}", src: calendar_event_path(event), loading: "lazy" %>
+            <div class="px-6 py-4">
+              <button type="button" data-action="dialog#close"
+                      class="rounded-lg px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/10 dark:hover:bg-white/20
+                       text-sm font-medium text-gray-700 dark:text-white transition">Close</button>
+            </div>
+          </dialog>
+          <button type="button"
+                  data-action="dialog#open" aria-describedby="event_tooltip_<%= event.id %>"
+                  class="absolute inset-0 w-full text-left rounded-lg overflow-hidden px-3 py-2
+                   ring-1 ring-inset hover:ring-2 transition <%= event_chip_classes(event) %>">
+            <div class="font-semibold text-sm truncate"><%= event.title %></div>
+            <div class="text-xs opacity-75"><%= event.time_range %></div>
+            <% if event.location.present? %>
+              <div class="text-xs opacity-60 truncate mt-0.5"><%= event.location %></div>
+            <% end %>
+          </button>
+          <%= render "calendars/event_tooltip", event: event, id: "event_tooltip_#{event.id}" %>
+        </div>
+      <% end %>
+
+      <%# Empty state %>
+      <% if timed_events.empty? && all_day_events.empty? %>
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-300 dark:text-gray-700">
+          <svg class="size-12 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+          <p class="text-sm">Nothing scheduled</p>
+        </div>
+      <% end %>
+    </div>
+
+    <%# Current time line %>
+    <% if date == Time.zone.today %>
+      <% now = Time.zone.now %>
+      <% if now.hour >= day_start && now.hour <= day_end %>
+        <% now_top = ((now.hour * 60 + now.min) - day_start * 60) * hour_h / 60.0 %>
+        <div class="absolute left-0 right-0 flex items-center pointer-events-none z-20"
+             style="top: <%= now_top.round(4) %>rem;">
+          <div class="w-[4.5rem] flex justify-end pr-1.5">
+            <div class="size-2.5 rounded-full bg-[#5f734c]"></div>
+          </div>
+          <div class="flex-1 h-px bg-[#5f734c]"></div>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

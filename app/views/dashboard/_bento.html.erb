@@ -1,18 +1,27 @@
-<%# Desktop only, once this week has been planned (DashboardController#show):
-    what's on now, in place of the section cards. The week's calendar as on
+<%# Once this week has been planned (DashboardController#show): what's on
+    now, in place of the section cards. On desktop the week's calendar as on
     "Plan your week" takes the big tile; down the right, today's chores (the
     chore chart's own cards, so they can be ticked off here) and the next two
-    to-dos; across the bottom, today's breakfast, lunch and dinner. %>
+    to-dos; across the bottom, today's breakfast, lunch and dinner. Narrower
+    screens stack it all in that order, with the calendar showing just today
+    (the Calendar's Day view) and the meals one under another. %>
 <% empty    = "text-sm text-gray-400 dark:text-gray-600 italic" %>
 
-<div class="hidden lg:grid grid-cols-3 gap-6">
-  <%# ── The week's calendar ── %>
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+  <%# ── The calendar: the week on desktop, today on narrower screens ── %>
   <%= render layout: "dashboard/tile",
-             locals: { title: "This week", icon: "calendar", classes: "col-start-1 col-span-2 row-start-1 row-span-2",
+             locals: { title: safe_join([ tag.span("This week", class: "hidden lg:inline"), tag.span("Today", class: "lg:hidden") ]),
+                       icon: "calendar", classes: "lg:col-start-1 lg:col-span-2 lg:row-start-1 lg:row-span-2",
                        link_label: "Calendar", link_path: week_calendars_path(date: @week_start) } do %>
     <% if @calendar_section.connected? %>
-      <%= render "calendars/week_grid", date: @calendar_section.week_start, range_end: @calendar_section.week_end,
-                 events_by_day: @calendar_section.events_by_day, all_day_events: @calendar_section.all_day_events, height: 480 %>
+      <div class="hidden lg:block">
+        <%= render "calendars/week_grid", date: @calendar_section.week_start, range_end: @calendar_section.week_end,
+                   events_by_day: @calendar_section.events_by_day, all_day_events: @calendar_section.all_day_events, height: 480 %>
+      </div>
+      <div class="lg:hidden">
+        <%= render "calendars/day_grid", date: Date.current, all_day_events: @todays_all_day_events,
+                   timed_events: @todays_timed_events, height: 420 %>
+      </div>
     <% else %>
       <p class="<%= empty %>">No calendar connected yet. Connect Google, Outlook, or an iCal feed to see the week's events here.</p>
       <% if household_admin? %>
@@ -24,7 +33,7 @@
 
   <%# ── Today's chores ── %>
   <%= render layout: "dashboard/tile",
-             locals: { title: "Today's chores", icon: "chores", classes: "col-start-3 row-start-1",
+             locals: { title: "Today's chores", icon: "chores", classes: "lg:col-start-3 lg:row-start-1",
                        link_label: "Chore chart", link_path: weekly_chores_path(date: @week_start.iso8601) } do %>
     <% if @todays_chores.any? %>
       <div class="flex flex-col gap-2">
@@ -40,7 +49,7 @@
   <%# ── The next to-dos, as cards (dashboard/_todo_card). Ticking one off
       fades in the one after; the note shows only once none are left. ── %>
   <%= render layout: "dashboard/tile",
-             locals: { title: "Up next", icon: "todos", classes: "col-start-3 row-start-2",
+             locals: { title: "Up next", icon: "todos", classes: "lg:col-start-3 lg:row-start-2",
                        link_label: "To-dos", link_path: todos_path } do %>
     <div id="dashboard_up_next" class="flex flex-col gap-2">
       <p class="hidden only:block <%= empty %>">Nothing left on this week's list.</p>
@@ -53,9 +62,9 @@
   <%# ── Today's meals: breakfast, lunch and dinner side by side, more
       than one in a slot stacked, as on the meal planner ── %>
   <%= render layout: "dashboard/tile",
-             locals: { title: "Today's menu", icon: "meals", classes: "col-span-3 row-start-3",
+             locals: { title: "Today's menu", icon: "meals", classes: "lg:col-span-3 lg:row-start-3",
                        link_label: "Meals", link_path: meals_path(date: @week_start) } do %>
-    <div class="grid grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <% Meal::CALENDAR_TYPES.each do |type| %>
         <div>
           <h3 class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400"><%= type.capitalize %></h3>

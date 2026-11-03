@@ -36,9 +36,9 @@ class DashboardController < ApplicationController
     @everything_done = planned_sections.none?(&:empty?)
     @planned_steps   = planned_sections.map { |section| PLANNING_PHRASES.fetch(section.key, section.label.downcase) }
 
-    # Once this week has been planned, desktop gets a bento grid of what's on
-    # now (dashboard/_bento) in place of the cards. "Today" means nothing
-    # for another week, so other weeks — and phones — keep the cards.
+    # Once this week has been planned, a bento grid of what's on now
+    # (dashboard/_bento) takes the cards' place. "Today" means nothing for
+    # another week, so other weeks keep the cards.
     @bento = @this_week && !@nothing_planned
     load_bento if @bento
   end
@@ -49,6 +49,11 @@ class DashboardController < ApplicationController
     today = Date.current
     section = ->(klass) { @sections.find { |s| s.key == klass::KEY } }
     @calendar_section = section.(Dashboard::CalendarSection)
+    # Today's events for the calendar on phones, which shows the day — loaded
+    # as the Calendar's Day view does.
+    todays_events     = current_household.calendar_events.visible.in_range(today.beginning_of_day, today.end_of_day)
+                                         .includes(:calendar_source).chronological.to_a
+    @todays_all_day_events, @todays_timed_events = todays_events.partition(&:all_day?)
     @todays_chores    = section.(Dashboard::ChoresSection).chores_this_week.select { |chore| chore.scheduled_date == today }
     # In the order "Plan your week" set for working through them.
     @up_next_todos    = Todo.up_next(current_household)
